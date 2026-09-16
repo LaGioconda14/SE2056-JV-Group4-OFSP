@@ -1,0 +1,11 @@
+{
+    "java.project.sourcePaths": [
+        "src/java"
+    ],
+    "java.project.referencedLibraries": [
+        "C:/Java/apache-tomcat-9.0.105/lib/servlet-api.jar",
+        "C:/Java/apache-tomcat-9.0.105/lib/jsp-api.jar",
+        "C:/Java/apache-tomcat-9.0.105/lib/el-api.jar",
+        "web/WEB-INF/lib/*.jar"
+    ]
+}

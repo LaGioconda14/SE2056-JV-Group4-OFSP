@@ -1,0 +1,18 @@
+# NetBeans private user-specific settings (DO NOT COMMIT to avoid breaking team members' paths)
+nbproject/private/
+
+# Build and distribution directories
+build/
+dist/
+
+# Local database scripts (keep local)
+database.sql
+*.sql
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Operating system files
+Thumbs.db
+.DS_Store
