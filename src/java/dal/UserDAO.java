@@ -11,6 +11,7 @@ import service.PasswordUtil;
 
 /**
  * Data Access Object for User entity handling SQL Server operations.
+ * Compatible with [dbo].[users] and [dbo].[roles] tables.
  */
 public class UserDAO extends DBContext {
 
@@ -25,21 +26,25 @@ public class UserDAO extends DBContext {
      * @return User object if authentication is successful, null otherwise
      */
     public User checkLogin(String email, String password) {
-        String sql = "SELECT id, email, password, full_name, phone, role, status, reset_otp, otp_expiry_time, created_at "
-                   + "FROM Users WHERE LOWER(email) = LOWER(?)";
+        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
+                   + "       r.role_name AS role, u.status, u.created_at "
+                   + "FROM users u "
+                   + "INNER JOIN roles r ON u.role_id = r.role_id "
+                   + "WHERE LOWER(u.email) = LOWER(?)";
 
-        try (Connection conn = getConnection();
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in checkLogin");
+            return null;
+        }
+
+        try (conn;
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            if (conn == null) {
-                LOGGER.severe("Cannot establish DB connection in checkLogin");
-                return null;
-            }
 
             ps.setString(1, email.trim());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    String storedPassword = rs.getString("password");
+                    String storedPassword = rs.getString("password_hash");
                     if (PasswordUtil.verifyPassword(password, storedPassword)) {
                         return mapResultSetToUser(rs);
                     }
@@ -58,16 +63,20 @@ public class UserDAO extends DBContext {
      * @return User object or null if not found
      */
     public User findByEmail(String email) {
-        String sql = "SELECT id, email, password, full_name, phone, role, status, reset_otp, otp_expiry_time, created_at "
-                   + "FROM Users WHERE LOWER(email) = LOWER(?)";
+        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
+                   + "       r.role_name AS role, u.status, u.created_at "
+                   + "FROM users u "
+                   + "INNER JOIN roles r ON u.role_id = r.role_id "
+                   + "WHERE LOWER(u.email) = LOWER(?)";
 
-        try (Connection conn = getConnection();
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in findByEmail");
+            return null;
+        }
+
+        try (conn;
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            if (conn == null) {
-                LOGGER.severe("Cannot establish DB connection in findByEmail");
-                return null;
-            }
 
             ps.setString(1, email.trim());
             try (ResultSet rs = ps.executeQuery()) {
@@ -88,16 +97,20 @@ public class UserDAO extends DBContext {
      * @return User object or null if not found
      */
     public User findById(int id) {
-        String sql = "SELECT id, email, password, full_name, phone, role, status, reset_otp, otp_expiry_time, created_at "
-                   + "FROM Users WHERE id = ?";
+        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
+                   + "       r.role_name AS role, u.status, u.created_at "
+                   + "FROM users u "
+                   + "INNER JOIN roles r ON u.role_id = r.role_id "
+                   + "WHERE u.user_id = ?";
 
-        try (Connection conn = getConnection();
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in findById");
+            return null;
+        }
+
+        try (conn;
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            if (conn == null) {
-                LOGGER.severe("Cannot establish DB connection in findById");
-                return null;
-            }
 
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -120,15 +133,19 @@ public class UserDAO extends DBContext {
      * @return true if updated successfully
      */
     public boolean saveOTP(String email, String otp, int expiryMinutes) {
-        String sql = "UPDATE Users "
+        String sql = "UPDATE users "
                    + "SET reset_otp = ?, "
                    + "    otp_expiry_time = DATEADD(minute, ?, GETDATE()) "
                    + "WHERE LOWER(email) = LOWER(?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in saveOTP");
+            return false;
+        }
 
-            if (conn == null) return false;
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, otp);
             ps.setInt(2, expiryMinutes);
@@ -149,15 +166,19 @@ public class UserDAO extends DBContext {
      * @return true if OTP is valid and within expiry time
      */
     public boolean verifyOTP(String email, String otp) {
-        String sql = "SELECT id FROM Users "
+        String sql = "SELECT user_id FROM users "
                    + "WHERE LOWER(email) = LOWER(?) "
                    + "  AND reset_otp = ? "
                    + "  AND otp_expiry_time >= GETDATE()";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in verifyOTP");
+            return false;
+        }
 
-            if (conn == null) return false;
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, email.trim());
             ps.setString(2, otp.trim());
@@ -179,16 +200,20 @@ public class UserDAO extends DBContext {
      * @return true if updated successfully
      */
     public boolean resetPassword(String email, String newPassword) {
-        String sql = "UPDATE Users "
-                   + "SET password = ?, "
+        String sql = "UPDATE users "
+                   + "SET password_hash = ?, "
                    + "    reset_otp = NULL, "
                    + "    otp_expiry_time = NULL "
                    + "WHERE LOWER(email) = LOWER(?)";
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in resetPassword");
+            return false;
+        }
 
-            if (conn == null) return false;
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             String passwordToStore = PasswordUtil.hashPassword(newPassword);
             ps.setString(1, passwordToStore);
@@ -209,12 +234,16 @@ public class UserDAO extends DBContext {
      * @return true if updated successfully
      */
     public boolean updatePassword(int userId, String newPassword) {
-        String sql = "UPDATE Users SET password = ? WHERE id = ?";
+        String sql = "UPDATE users SET password_hash = ? WHERE user_id = ?";
 
-        try (Connection conn = getConnection();
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in updatePassword");
+            return false;
+        }
+
+        try (conn;
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            if (conn == null) return false;
 
             String passwordToStore = PasswordUtil.hashPassword(newPassword);
             ps.setString(1, passwordToStore);
@@ -228,21 +257,91 @@ public class UserDAO extends DBContext {
     }
 
     /**
+     * Check if an email is already registered in the system.
+     *
+     * @param email User's email to check
+     * @return true if email exists, false otherwise
+     */
+    public boolean isEmailExists(String email) {
+        String sql = "SELECT 1 FROM users WHERE LOWER(email) = LOWER(?)";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in isEmailExists");
+            return false;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error checking email existence: " + email, ex);
+        }
+        return false;
+    }
+
+    /**
+     * Register a new user account with CUSTOMER role (role_id = 3).
+     *
+     * @param user User object containing fullName, email, phone, and hashed password
+     * @return true if registration succeeded, false otherwise
+     */
+    public boolean register(User user) {
+        String sql = "INSERT INTO users (role_id, email, phone, password_hash, full_name, avatar_url, status, created_at) "
+                   + "VALUES (3, ?, ?, ?, ?, NULL, 'ACTIVE', GETDATE())";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in register");
+            return false;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, user.getEmail().trim());
+            ps.setString(2, user.getPhone() != null && !user.getPhone().trim().isEmpty() ? user.getPhone().trim() : null);
+            ps.setString(3, user.getPassword());
+            ps.setString(4, user.getFullName().trim());
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error registering new user with email: " + user.getEmail(), ex);
+        }
+        return false;
+    }
+
+    /**
      * Helper to map a ResultSet row to a User object.
      */
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
         User user = new User();
-        user.setId(rs.getInt("id"));
+        user.setId((int) rs.getLong("user_id"));
         user.setEmail(rs.getString("email"));
-        user.setPassword(rs.getString("password"));
+        user.setPassword(rs.getString("password_hash"));
         user.setFullName(rs.getString("full_name"));
         user.setPhone(rs.getString("phone"));
         user.setRole(rs.getString("role"));
-        user.setStatus(rs.getInt("status"));
-        user.setResetOtp(rs.getString("reset_otp"));
-        user.setOtpExpiryTime(rs.getTimestamp("otp_expiry_time"));
+
+        // Status in DB is VARCHAR ('ACTIVE', 'LOCKED', etc.)
+        String statusStr = rs.getString("status");
+        user.setStatus("ACTIVE".equalsIgnoreCase(statusStr) ? 1 : 0);
+
+        // Optional OTP fields (if present in the ResultSet)
+        try {
+            user.setResetOtp(rs.getString("reset_otp"));
+        } catch (SQLException ignored) {
+        }
+        try {
+            user.setOtpExpiryTime(rs.getTimestamp("otp_expiry_time"));
+        } catch (SQLException ignored) {
+        }
+
         user.setCreatedAt(rs.getTimestamp("created_at"));
         return user;
     }
 }
-

@@ -5,12 +5,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập - Online Fruit Shop</title>
+    <title>Đăng ký tài khoản - Online Fruit Shop</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -21,7 +21,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 30px 20px;
         }
         .auth-card {
             background: #ffffff;
@@ -29,27 +29,30 @@
             box-shadow: 0 15px 35px rgba(34, 139, 34, 0.12);
             border: 1px solid rgba(40, 167, 69, 0.15);
             width: 100%;
-            max-width: 440px;
+            max-width: 480px;
             overflow: hidden;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .auth-header {
             background: linear-gradient(135deg, #2e7d32, #43a047);
             color: #ffffff;
-            padding: 30px 25px 20px;
+            padding: 26px 25px 20px;
             text-align: center;
         }
         .auth-header .logo-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 60px;
-            height: 60px;
+            width: 58px;
+            height: 58px;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
-            font-size: 28px;
-            margin-bottom: 12px;
+            font-size: 26px;
+            margin-bottom: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .auth-body {
+            padding: 26px 30px;
         }
         .btn-fruit {
             background: linear-gradient(135deg, #2e7d32, #43a047);
@@ -71,52 +74,51 @@
             box-shadow: 0 0 0 0.25rem rgba(67, 160, 71, 0.2);
         }
         .input-group-text {
-            background-color: #f8faf9;
+            background-color: #f8f9fa;
             border-right: none;
             color: #2e7d32;
         }
         .form-control {
             border-left: none;
         }
-        .form-control:focus + .input-group-text,
-        .input-group-text:focus-within {
+        .input-group:focus-within .input-group-text {
             border-color: #43a047;
-        }
-        .form-check-input:checked {
-            background-color: #2e7d32;
-            border-color: #2e7d32;
         }
         .auth-link {
             color: #2e7d32;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
         }
         .auth-link:hover {
             color: #1b5e20;
             text-decoration: underline;
         }
-        .password-toggle {
-            cursor: pointer;
+        .btn-toggle-pass {
             border-left: none;
-            border-right: 1px solid #dee2e6;
-            background-color: #fff;
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
             color: #6c757d;
         }
-        .password-toggle:hover {
+        .btn-toggle-pass:hover {
             color: #2e7d32;
+            background-color: #e9ecef;
         }
     </style>
 </head>
 <body>
 
 <div class="auth-card">
+    <!-- Header -->
     <div class="auth-header">
-        <div class="logo-badge">🍎</div>
-        <h4 class="fw-bold mb-1">Online Fruit Shop</h4>
-        <p class="text-white-50 small mb-0">Đăng nhập tài khoản của bạn</p>
+        <div class="logo-badge">
+            🍎
+        </div>
+        <h4 class="fw-bold mb-1">Tạo Tài Khoản Mới</h4>
+        <p class="small mb-0 opacity-75">Tham gia cùng Online Fruit Shop ngay hôm nay</p>
     </div>
 
-    <div class="p-4 pt-3">
+    <!-- Body -->
+    <div class="auth-body">
         <!-- Thông báo Lỗi -->
         <c:if test="${not empty errorMessage}">
             <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
@@ -126,84 +128,104 @@
             </div>
         </c:if>
 
-        <!-- Thông báo Thành công -->
-        <c:if test="${not empty successMessage}">
-            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
-                <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0"></i>
-                <div>${successMessage}</div>
-                <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        <form action="${pageContext.request.contextPath}/register" method="POST" novalidate>
+            <!-- Họ và tên -->
+            <div class="mb-3">
+                <label for="fullName" class="form-label small fw-semibold text-secondary">Họ và tên <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" 
+                           class="form-control" 
+                           id="fullName" 
+                           name="fullName" 
+                           value="${not empty fullName ? fullName : ''}" 
+                           placeholder="Nguyễn Văn A" 
+                           required 
+                           autofocus>
+                </div>
             </div>
-        </c:if>
 
-        <form action="${pageContext.request.contextPath}/login" method="POST" novalidate>
             <!-- Email -->
             <div class="mb-3">
-                <label for="email" class="form-label small fw-semibold text-secondary">Địa chỉ Email</label>
+                <label for="email" class="form-label small fw-semibold text-secondary">Địa chỉ Email <span class="text-danger">*</span></label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                     <input type="email" 
                            class="form-control" 
                            id="email" 
                            name="email" 
-                           value="${not empty rememberEmail ? rememberEmail : (not empty email ? email : '')}" 
-                           placeholder="name@example.com" 
-                           required 
-                           autofocus>
+                           value="${not empty email ? email : ''}" 
+                           placeholder="example@fruitshop.com" 
+                           required>
+                </div>
+            </div>
+
+            <!-- Số điện thoại -->
+            <div class="mb-3">
+                <label for="phone" class="form-label small fw-semibold text-secondary">Số điện thoại</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                    <input type="tel" 
+                           class="form-control" 
+                           id="phone" 
+                           name="phone" 
+                           value="${not empty phone ? phone : ''}" 
+                           placeholder="0912345678">
                 </div>
             </div>
 
             <!-- Mật khẩu -->
             <div class="mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label for="password" class="form-label small fw-semibold text-secondary mb-0">Mật khẩu</label>
-                    <a href="${pageContext.request.contextPath}/forgot-password" class="auth-link small">Quên mật khẩu?</a>
-                </div>
+                <label for="password" class="form-label small fw-semibold text-secondary">Mật khẩu <span class="text-danger">*</span></label>
                 <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
                     <input type="password" 
                            class="form-control" 
                            id="password" 
                            name="password" 
-                           value="${not empty rememberPassword ? rememberPassword : ''}" 
-                           placeholder="••••••••" 
+                           placeholder="Tối thiểu 6 ký tự" 
                            required>
-                    <span class="input-group-text password-toggle" onclick="togglePasswordVisibility('password', this)">
+                    <button class="btn btn-outline-secondary btn-toggle-pass" 
+                            type="button" 
+                            onclick="togglePasswordVisibility('password', this)"
+                            tabindex="-1">
                         <i class="bi bi-eye"></i>
-                    </span>
+                    </button>
                 </div>
             </div>
 
-            <!-- Ghi nhớ đăng nhập -->
-            <div class="form-check mb-4">
-                <input class="form-check-input" 
-                       type="checkbox" 
-                       name="remember" 
-                       id="remember" 
-                       value="1" 
-                       ${not empty rememberChecked ? 'checked' : ''}>
-                <label class="form-check-label small text-secondary" for="remember">
-                    Ghi nhớ đăng nhập (Remember Me)
-                </label>
+            <!-- Xác nhận Mật khẩu -->
+            <div class="mb-4">
+                <label for="confirmPassword" class="form-label small fw-semibold text-secondary">Xác nhận mật khẩu <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                    <input type="password" 
+                           class="form-control" 
+                           id="confirmPassword" 
+                           name="confirmPassword" 
+                           placeholder="Nhập lại mật khẩu" 
+                           required>
+                    <button class="btn btn-outline-secondary btn-toggle-pass" 
+                            type="button" 
+                            onclick="togglePasswordVisibility('confirmPassword', this)"
+                            tabindex="-1">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
             </div>
 
-            <!-- Nút Đăng nhập -->
+            <!-- Nút Đăng ký -->
             <div class="d-grid mb-3">
                 <button type="submit" class="btn btn-fruit d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-box-arrow-in-right"></i>
-                    <span>Đăng Nhập</span>
+                    <i class="bi bi-person-plus-fill"></i>
+                    <span>Đăng Ký Tài Khoản</span>
                 </button>
             </div>
 
-            <!-- Chuyển sang Đăng ký -->
-            <div class="text-center small text-secondary mb-3">
-                Chưa có tài khoản? 
-                <a href="${pageContext.request.contextPath}/register" class="auth-link">Đăng ký ngay</a>
-            </div>
-
-            <div class="text-center text-secondary small">
-                Tài khoản mẫu thử nghiệm:
-                <br>
-                <span class="badge bg-light text-dark border mt-1">customer@fruitshop.com / 123456</span>
+            <!-- Link chuyển sang Đăng nhập -->
+            <div class="text-center small text-secondary">
+                Đã có tài khoản? 
+                <a href="${pageContext.request.contextPath}/login" class="auth-link">Đăng nhập ngay</a>
             </div>
         </form>
     </div>
