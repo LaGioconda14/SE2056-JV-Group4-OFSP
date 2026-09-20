@@ -1,6 +1,6 @@
-package controller;
+package controller.auth;
 
-import dal.UserDAO;
+import dao.UserDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -60,7 +60,7 @@ public class LoginServlet extends HttpServlet {
             }
         }
 
-        request.getRequestDispatcher("/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class LoginServlet extends HttpServlet {
         if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
             request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ Email và Mật khẩu!");
             request.setAttribute("email", email);
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
             return;
         }
 
@@ -88,7 +88,7 @@ public class LoginServlet extends HttpServlet {
         if (user == null) {
             request.setAttribute("errorMessage", "Email hoặc mật khẩu không chính xác!");
             request.setAttribute("email", email);
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
             return;
         }
 
@@ -96,7 +96,7 @@ public class LoginServlet extends HttpServlet {
         if (!user.isActive()) {
             request.setAttribute("errorMessage", "Tài khoản của bạn đang bị khóa. Vui lòng liên hệ hỗ trợ!");
             request.setAttribute("email", email);
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
             return;
         }
 
@@ -126,4 +126,5 @@ public class LoginServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/home.jsp");
     }
 }
+
 

@@ -18,7 +18,7 @@
     <!-- Servlets -->
     <servlet>
         <servlet-name>LoginServlet</servlet-name>
-        <servlet-class>controller.LoginServlet</servlet-class>
+        <servlet-class>controller.auth.LoginServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>LoginServlet</servlet-name>
@@ -27,7 +27,7 @@
 
     <servlet>
         <servlet-name>RegisterServlet</servlet-name>
-        <servlet-class>controller.RegisterServlet</servlet-class>
+        <servlet-class>controller.auth.RegisterServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>RegisterServlet</servlet-name>
@@ -36,7 +36,7 @@
 
     <servlet>
         <servlet-name>LogoutServlet</servlet-name>
-        <servlet-class>controller.LogoutServlet</servlet-class>
+        <servlet-class>controller.auth.LogoutServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>LogoutServlet</servlet-name>
@@ -45,7 +45,7 @@
 
     <servlet>
         <servlet-name>ForgotPasswordServlet</servlet-name>
-        <servlet-class>controller.ForgotPasswordServlet</servlet-class>
+        <servlet-class>controller.auth.ForgotPasswordServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>ForgotPasswordServlet</servlet-name>
@@ -54,7 +54,7 @@
 
     <servlet>
         <servlet-name>ResetPasswordServlet</servlet-name>
-        <servlet-class>controller.ResetPasswordServlet</servlet-class>
+        <servlet-class>controller.auth.ResetPasswordServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>ResetPasswordServlet</servlet-name>
@@ -63,7 +63,7 @@
 
     <servlet>
         <servlet-name>ChangePasswordServlet</servlet-name>
-        <servlet-class>controller.ChangePasswordServlet</servlet-class>
+        <servlet-class>controller.auth.ChangePasswordServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>ChangePasswordServlet</servlet-name>
@@ -77,8 +77,8 @@
 
     <!-- Welcome File List -->
     <welcome-file-list>
-        <welcome-file>login.jsp</welcome-file>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 
 </web-app>
+

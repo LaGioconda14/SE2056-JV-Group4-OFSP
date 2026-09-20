@@ -1,4 +1,7 @@
-package dal;
+package dao;
+
+import util.DBContext;
+import util.PasswordUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,7 +10,7 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.User;
-import service.PasswordUtil;
+
 
 /**
  * Data Access Object for User entity handling SQL Server operations.
@@ -345,3 +348,4 @@ public class UserDAO extends DBContext {
         return user;
     }
 }
+

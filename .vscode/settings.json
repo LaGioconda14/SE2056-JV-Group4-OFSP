@@ -6,6 +6,9 @@
         "C:/Java/apache-tomcat-9.0.105/lib/servlet-api.jar",
         "C:/Java/apache-tomcat-9.0.105/lib/jsp-api.jar",
         "C:/Java/apache-tomcat-9.0.105/lib/el-api.jar",
+        "C:/FA26/apache-tomcat-9.0.122/apache-tomcat-9.0.122/lib/servlet-api.jar",
+        "C:/FA26/apache-tomcat-9.0.122/apache-tomcat-9.0.122/lib/jsp-api.jar",
+        "C:/FA26/apache-tomcat-9.0.122/apache-tomcat-9.0.122/lib/el-api.jar",
         "web/WEB-INF/lib/*.jar"
     ]
 }

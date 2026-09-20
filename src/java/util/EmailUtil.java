@@ -1,4 +1,4 @@
-package service;
+package util;
 
 import java.io.UnsupportedEncodingException;
 import java.security.SecureRandom;
@@ -17,9 +17,9 @@ import jakarta.mail.internet.MimeMessage;
 /**
  * Service to generate OTP and send emails via Gmail SMTP using JavaMail API.
  */
-public class EmailService {
+public class EmailUtil {
 
-    private static final Logger LOGGER = Logger.getLogger(EmailService.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(EmailUtil.class.getName());
 
     // CẤU HÌNH GMAIL SMTP (Thay bằng Email & Mật khẩu ứng dụng - App Password của bạn)
     // Để lấy App Password: Google Account -> Security -> 2-Step Verification -> App Passwords
@@ -52,8 +52,8 @@ public class EmailService {
     public static boolean sendOtpEmail(String recipientEmail, String recipientName, String otp) {
         // If not configured, log reminder
         if ("your_email@gmail.com".equals(SENDER_EMAIL) || "your_app_password_here".equals(SENDER_PASSWORD)) {
-            LOGGER.warning("=== [EmailService WARNING] ===");
-            LOGGER.warning("Gmail sender email or App Password has NOT been configured yet in EmailService.java!");
+            LOGGER.warning("=== [EmailUtil WARNING] ===");
+            LOGGER.warning("Gmail sender email or App Password has NOT been configured yet in EmailUtil.java!");
             LOGGER.warning("OTP for " + recipientEmail + " is: [" + otp + "]");
             LOGGER.warning("You can use this OTP directly from database or terminal to complete the password reset flow.");
             LOGGER.warning("==============================");
@@ -125,4 +125,5 @@ public class EmailService {
         }
     }
 }
+
 

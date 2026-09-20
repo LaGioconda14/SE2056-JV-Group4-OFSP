@@ -1,11 +1,11 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập - Online Fruit Shop</title>
+    <title>─É─âng nhß║¡p - Online Fruit Shop</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -111,13 +111,13 @@
 
 <div class="auth-card">
     <div class="auth-header">
-        <div class="logo-badge">🍎</div>
+        <div class="logo-badge">≡ƒìÄ</div>
         <h4 class="fw-bold mb-1">Online Fruit Shop</h4>
-        <p class="text-white-50 small mb-0">Đăng nhập tài khoản của bạn</p>
+        <p class="text-white-50 small mb-0">─É─âng nhß║¡p t├ái khoß║ún cß╗ºa bß║ín</p>
     </div>
 
     <div class="p-4 pt-3">
-        <!-- Thông báo Lỗi -->
+        <!-- Th├┤ng b├ío Lß╗ùi -->
         <c:if test="${not empty errorMessage}">
             <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
                 <i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0"></i>
@@ -126,7 +126,7 @@
             </div>
         </c:if>
 
-        <!-- Thông báo Thành công -->
+        <!-- Th├┤ng b├ío Th├ánh c├┤ng -->
         <c:if test="${not empty successMessage}">
             <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
                 <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0"></i>
@@ -138,7 +138,7 @@
         <form action="${pageContext.request.contextPath}/login" method="POST" novalidate>
             <!-- Email -->
             <div class="mb-3">
-                <label for="email" class="form-label small fw-semibold text-secondary">Địa chỉ Email</label>
+                <label for="email" class="form-label small fw-semibold text-secondary">─Éß╗ïa chß╗ë Email</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                     <input type="email" 
@@ -152,11 +152,11 @@
                 </div>
             </div>
 
-            <!-- Mật khẩu -->
+            <!-- Mß║¡t khß║⌐u -->
             <div class="mb-3">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label for="password" class="form-label small fw-semibold text-secondary mb-0">Mật khẩu</label>
-                    <a href="${pageContext.request.contextPath}/forgot-password" class="auth-link small">Quên mật khẩu?</a>
+                    <label for="password" class="form-label small fw-semibold text-secondary mb-0">Mß║¡t khß║⌐u</label>
+                    <a href="${pageContext.request.contextPath}/forgot-password" class="auth-link small">Qu├¬n mß║¡t khß║⌐u?</a>
                 </div>
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
@@ -165,7 +165,7 @@
                            id="password" 
                            name="password" 
                            value="${not empty rememberPassword ? rememberPassword : ''}" 
-                           placeholder="••••••••" 
+                           placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó" 
                            required>
                     <span class="input-group-text password-toggle" onclick="togglePasswordVisibility('password', this)">
                         <i class="bi bi-eye"></i>
@@ -173,7 +173,7 @@
                 </div>
             </div>
 
-            <!-- Ghi nhớ đăng nhập -->
+            <!-- Ghi nhß╗¢ ─æ─âng nhß║¡p -->
             <div class="form-check mb-4">
                 <input class="form-check-input" 
                        type="checkbox" 
@@ -182,26 +182,26 @@
                        value="1" 
                        ${not empty rememberChecked ? 'checked' : ''}>
                 <label class="form-check-label small text-secondary" for="remember">
-                    Ghi nhớ đăng nhập (Remember Me)
+                    Ghi nhß╗¢ ─æ─âng nhß║¡p (Remember Me)
                 </label>
             </div>
 
-            <!-- Nút Đăng nhập -->
+            <!-- N├║t ─É─âng nhß║¡p -->
             <div class="d-grid mb-3">
                 <button type="submit" class="btn btn-fruit d-flex align-items-center justify-content-center gap-2">
                     <i class="bi bi-box-arrow-in-right"></i>
-                    <span>Đăng Nhập</span>
+                    <span>─É─âng Nhß║¡p</span>
                 </button>
             </div>
 
-            <!-- Chuyển sang Đăng ký -->
+            <!-- Chuyß╗ân sang ─É─âng k├╜ -->
             <div class="text-center small text-secondary mb-3">
-                Chưa có tài khoản? 
-                <a href="${pageContext.request.contextPath}/register" class="auth-link">Đăng ký ngay</a>
+                Ch╞░a c├│ t├ái khoß║ún? 
+                <a href="${pageContext.request.contextPath}/register" class="auth-link">─É─âng k├╜ ngay</a>
             </div>
 
             <div class="text-center text-secondary small">
-                Tài khoản mẫu thử nghiệm:
+                T├ái khoß║ún mß║½u thß╗¡ nghiß╗çm:
                 <br>
                 <span class="badge bg-light text-dark border mt-1">customer@fruitshop.com / 123456</span>
             </div>

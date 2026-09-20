@@ -1,6 +1,6 @@
-package controller;
+package controller.auth;
 
-import dal.UserDAO;
+import dao.UserDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.User;
-import service.EmailService;
+import util.EmailUtil;
 
 /**
  * Controller handling Forgot Password request and OTP generation.
@@ -23,7 +23,7 @@ public class ForgotPasswordServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        request.getRequestDispatcher("/forgot-password.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class ForgotPasswordServlet extends HttpServlet {
 
         if (email == null || email.trim().isEmpty()) {
             request.setAttribute("errorMessage", "Vui lòng nhập địa chỉ Email!");
-            request.getRequestDispatcher("/forgot-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
             return;
         }
 
@@ -47,31 +47,31 @@ public class ForgotPasswordServlet extends HttpServlet {
         if (user == null) {
             request.setAttribute("errorMessage", "Email không tồn tại trong hệ thống Online Fruit Shop!");
             request.setAttribute("email", email);
-            request.getRequestDispatcher("/forgot-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
             return;
         }
 
         if (!user.isActive()) {
             request.setAttribute("errorMessage", "Tài khoản này đang bị khóa. Vui lòng liên hệ quản trị viên!");
             request.setAttribute("email", email);
-            request.getRequestDispatcher("/forgot-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
             return;
         }
 
         // Generate 6-digit OTP
-        String otp = EmailService.generateOTP();
+        String otp = EmailUtil.generateOTP();
 
         // Save OTP with 5 minutes expiry time
         boolean saved = userDAO.saveOTP(email, otp, 5);
 
         if (!saved) {
             request.setAttribute("errorMessage", "Có lỗi xảy ra trong quá trình tạo mã OTP. Vui lòng thử lại!");
-            request.getRequestDispatcher("/forgot-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
             return;
         }
 
         // Send OTP via Email (JavaMail API)
-        EmailService.sendOtpEmail(email, user.getFullName(), otp);
+        EmailUtil.sendOtpEmail(email, user.getFullName(), otp);
 
         // Store resetEmail in session to facilitate next step
         HttpSession session = request.getSession(true);
@@ -81,4 +81,5 @@ public class ForgotPasswordServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/reset-password");
     }
 }
+
 

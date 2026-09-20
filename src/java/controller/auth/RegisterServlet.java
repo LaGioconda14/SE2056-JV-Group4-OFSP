@@ -1,6 +1,6 @@
-package controller;
+package controller.auth;
 
-import dal.UserDAO;
+import dao.UserDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.User;
-import service.PasswordUtil;
+import util.PasswordUtil;
 
 /**
  * Controller handling Customer Account Registration.
@@ -30,7 +30,7 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("/register.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class RegisterServlet extends HttpServlet {
             confirmPassword == null || confirmPassword.trim().isEmpty()) {
             
             request.setAttribute("errorMessage", "Vui lòng điền đầy đủ các thông tin bắt buộc!");
-            request.getRequestDispatcher("/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
             return;
         }
 
@@ -69,7 +69,7 @@ public class RegisterServlet extends HttpServlet {
         // 2. Validation - Full Name length
         if (fullName.length() < 2 || fullName.length() > 100) {
             request.setAttribute("errorMessage", "Họ và tên phải từ 2 đến 100 ký tự!");
-            request.getRequestDispatcher("/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
             return;
         }
 
@@ -77,7 +77,7 @@ public class RegisterServlet extends HttpServlet {
         String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$";
         if (!email.matches(emailRegex)) {
             request.setAttribute("errorMessage", "Định dạng Email không hợp lệ (Ví dụ: user@example.com)!");
-            request.getRequestDispatcher("/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
             return;
         }
 
@@ -86,7 +86,7 @@ public class RegisterServlet extends HttpServlet {
             String phoneRegex = "^(0[3|5|7|8|9])[0-9]{8}$";
             if (!phone.matches(phoneRegex)) {
                 request.setAttribute("errorMessage", "Số điện thoại không hợp lệ (cần 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)!");
-                request.getRequestDispatcher("/register.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
                 return;
             }
         }
@@ -94,21 +94,21 @@ public class RegisterServlet extends HttpServlet {
         // 5. Validation - Password length
         if (password.length() < 6) {
             request.setAttribute("errorMessage", "Mật khẩu phải chứa ít nhất 6 ký tự!");
-            request.getRequestDispatcher("/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
             return;
         }
 
         // 6. Validation - Password confirmation
         if (!password.equals(confirmPassword)) {
             request.setAttribute("errorMessage", "Mật khẩu xác nhận không trùng khớp!");
-            request.getRequestDispatcher("/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
             return;
         }
 
         // 7. Check if Email already exists
         if (userDAO.isEmailExists(email)) {
             request.setAttribute("errorMessage", "Địa chỉ Email này đã được đăng ký. Vui lòng chọn Email khác hoặc Đăng nhập!");
-            request.getRequestDispatcher("/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
             return;
         }
 
@@ -129,8 +129,9 @@ public class RegisterServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
         } else {
             request.setAttribute("errorMessage", "Đăng ký không thành công do lỗi hệ thống. Vui lòng thử lại sau!");
-            request.getRequestDispatcher("/register.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/register.jsp").forward(request, response);
         }
     }
 }
+
 

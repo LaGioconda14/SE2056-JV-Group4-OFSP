@@ -1,6 +1,6 @@
-package controller;
+package controller.auth;
 
-import dal.UserDAO;
+import dao.UserDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -39,7 +39,7 @@ public class ResetPasswordServlet extends HttpServlet {
             }
         }
 
-        request.getRequestDispatcher("/reset-password.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class ResetPasswordServlet extends HttpServlet {
             confirmPassword == null || confirmPassword.trim().isEmpty()) {
             
             request.setAttribute("errorMessage", "Vui lòng điền đầy đủ tất cả các trường thông tin!");
-            request.getRequestDispatcher("/reset-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
 
@@ -73,13 +73,13 @@ public class ResetPasswordServlet extends HttpServlet {
 
         if (newPassword.length() < 6) {
             request.setAttribute("errorMessage", "Mật khẩu mới phải có ít nhất 6 ký tự!");
-            request.getRequestDispatcher("/reset-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
 
         if (!newPassword.equals(confirmPassword)) {
             request.setAttribute("errorMessage", "Mật khẩu xác nhận không khớp với mật khẩu mới!");
-            request.getRequestDispatcher("/reset-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
 
@@ -87,7 +87,7 @@ public class ResetPasswordServlet extends HttpServlet {
         boolean isOtpValid = userDAO.verifyOTP(email, otp);
         if (!isOtpValid) {
             request.setAttribute("errorMessage", "Mã OTP không chính xác hoặc đã hết hiệu lực (quá 5 phút). Vui lòng kiểm tra lại hoặc yêu cầu mã mới!");
-            request.getRequestDispatcher("/reset-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
 
@@ -100,8 +100,9 @@ public class ResetPasswordServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
         } else {
             request.setAttribute("errorMessage", "Có lỗi xảy ra trong quá trình cập nhật mật khẩu. Vui lòng thử lại!");
-            request.getRequestDispatcher("/reset-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
         }
     }
 }
+
 

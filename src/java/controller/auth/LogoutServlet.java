@@ -1,4 +1,4 @@
-package controller;
+package controller.auth;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -36,4 +36,5 @@ public class LogoutServlet extends HttpServlet {
         doGet(request, response);
     }
 }
+
 

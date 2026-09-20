@@ -1,6 +1,6 @@
-package controller;
+package controller.auth;
 
-import dal.UserDAO;
+import dao.UserDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.User;
-import service.PasswordUtil;
+import util.PasswordUtil;
 
 /**
  * Controller handling Change Password for authenticated users.
@@ -23,7 +23,7 @@ public class ChangePasswordServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
-        request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
     }
 
     @Override
@@ -51,25 +51,25 @@ public class ChangePasswordServlet extends HttpServlet {
             confirmPassword == null || confirmPassword.trim().isEmpty()) {
             
             request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tất cả các trường mật khẩu!");
-            request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
             return;
         }
 
         if (newPassword.length() < 6) {
             request.setAttribute("errorMessage", "Mật khẩu mới phải có ít nhất 6 ký tự!");
-            request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
             return;
         }
 
         if (oldPassword.equals(newPassword)) {
             request.setAttribute("errorMessage", "Mật khẩu mới không được trùng với mật khẩu cũ!");
-            request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
             return;
         }
 
         if (!newPassword.equals(confirmPassword)) {
             request.setAttribute("errorMessage", "Mật khẩu xác nhận không khớp với mật khẩu mới!");
-            request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
             return;
         }
 
@@ -84,7 +84,7 @@ public class ChangePasswordServlet extends HttpServlet {
         boolean isOldPasswordCorrect = PasswordUtil.verifyPassword(oldPassword, freshUser.getPassword());
         if (!isOldPasswordCorrect) {
             request.setAttribute("errorMessage", "Mật khẩu hiện tại (mật khẩu cũ) không chính xác!");
-            request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
             return;
         }
 
@@ -96,11 +96,12 @@ public class ChangePasswordServlet extends HttpServlet {
             session.setAttribute("user", freshUser);
 
             request.setAttribute("successMessage", "Đổi mật khẩu thành công! Mật khẩu mới đã được áp dụng.");
-            request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
         } else {
             request.setAttribute("errorMessage", "Có lỗi xảy ra trong quá trình cập nhật cơ sở dữ liệu. Vui lòng thử lại!");
-            request.getRequestDispatcher("/change-password.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
         }
     }
 }
+
 

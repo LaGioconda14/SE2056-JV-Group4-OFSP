@@ -1,6 +1,11 @@
 # NetBeans private user-specific settings (DO NOT COMMIT to avoid breaking team members' paths)
 nbproject/private/
 
+# VS Code local run scripts and tasks (keep local for VS Code users)
+.vscode/tasks.json
+.vscode/*.ps1
+
+
 # Build and distribution directories
 build/
 dist/
@@ -16,3 +21,6 @@ database.sql
 # Operating system files
 Thumbs.db
 .DS_Store
+docs
+.vscode
+.vscode
