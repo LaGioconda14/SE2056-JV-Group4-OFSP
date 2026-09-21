@@ -4,6 +4,7 @@
     --accent-green: #2ecc71;
     --light-green-bg: #eafaf1;
     --text-heading: #0f172a;
+    --text-body: #334155;
     --text-muted: #64748b;
     --border-color: #e2e8f0;
     --input-bg: #f8fafc;
@@ -45,7 +46,7 @@ body {
     background: linear-gradient(180deg, rgba(7, 36, 22, 0.82) 0%, rgba(5, 22, 14, 0.94) 100%),
                 url('https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat;
     color: #ffffff;
-    padding: 40px 36px 30px;
+    padding: 44px 38px 34px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -70,7 +71,7 @@ body {
 }
 
 .brand-name {
-    font-size: 20px;
+    font-size: 21px;
     font-weight: 800;
     letter-spacing: -0.5px;
     line-height: 1.1;
@@ -108,71 +109,6 @@ body {
     width: fit-content;
 }
 
-/* Review Card */
-.review-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-    border-radius: 18px;
-    padding: 18px 20px;
-    color: #1e293b;
-    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
-    margin-top: 24px;
-    margin-bottom: 18px;
-}
-
-.star-row {
-    color: #f59e0b;
-    font-size: 14px;
-    margin-bottom: 8px;
-    display: flex;
-    gap: 2px;
-}
-
-.review-quote {
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: #334155;
-    font-style: italic;
-    margin-bottom: 12px;
-}
-
-.reviewer-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.reviewer-user {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.avatar-initials {
-    width: 34px;
-    height: 34px;
-    background: #86efac;
-    color: #064e3b;
-    font-weight: 700;
-    font-size: 13px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.reviewer-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1.2;
-}
-
-.reviewer-tier {
-    font-size: 11px;
-    color: #64748b;
-}
-
 /* 3 Metric Badges */
 .metrics-grid {
     display: grid;
@@ -190,7 +126,7 @@ body {
 }
 
 .metric-box i {
-    font-size: 17px;
+    font-size: 18px;
     color: #86efac;
     margin-bottom: 4px;
     display: inline-block;
@@ -206,7 +142,7 @@ body {
 /* Right Form Panel (55%) */
 .form-panel {
     flex: 0 0 55%;
-    padding: 40px 48px;
+    padding: 44px 48px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -257,7 +193,7 @@ body {
     color: var(--primary-green);
 }
 
-/* Tabs Switcher */
+/* Navigation Tabs Switcher */
 .auth-nav-tabs {
     background: #f1f5f9;
     padding: 4px;
@@ -304,33 +240,37 @@ body {
     margin-bottom: 20px;
 }
 
-/* Social Buttons */
-.social-btn-group {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 18px;
-}
-
+/* Social Login Button (Full width matching inputs) */
 .social-btn {
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 9px 16px;
+    height: 46px;
+    padding: 0 16px;
     border-radius: 12px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 600;
     color: #1e293b;
+    cursor: pointer;
     text-decoration: none;
     transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 .social-btn:hover {
     background: #f1f5f9;
     border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.social-btn img {
+    width: 18px;
+    height: 18px;
+    display: block;
 }
 
 /* Divider */
@@ -356,7 +296,7 @@ body {
     padding: 0 14px;
 }
 
-/* Custom Input Groups */
+/* Form Input Groups */
 .field-group {
     margin-bottom: 16px;
 }
@@ -422,6 +362,15 @@ body {
     cursor: default;
 }
 
+.form-hint {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* Actions Row */
 .form-actions-row {
     display: flex;
@@ -459,7 +408,7 @@ body {
     text-decoration: underline;
 }
 
-/* Submit Button */
+/* Main Action Submit Button */
 .btn-submit-main {
     width: 100%;
     background: var(--primary-green);
@@ -484,6 +433,53 @@ body {
     box-shadow: 0 6px 18px rgba(4, 106, 56, 0.35);
 }
 
+.btn-submit-main:active {
+    transform: translateY(0);
+}
+
+/* 2-column layout for Register Form */
+.form-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Back Link for sub pages */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-green);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--primary-green-hover);
+    text-decoration: underline;
+}
+
+/* Footer note */
+.auth-bottom-switch {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.auth-bottom-switch a {
+    color: var(--primary-green);
+    font-weight: 600;
+    text-decoration: none;
+    margin-left: 4px;
+}
+
+.auth-bottom-switch a:hover {
+    text-decoration: underline;
+}
+
 /* Security Note */
 .security-footer-note {
     display: flex;
@@ -501,89 +497,23 @@ body {
     font-size: 14px;
 }
 
-/* Test State Bar */
-.test-state-bar {
-    margin-top: 18px;
-    padding: 8px 12px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px dashed #cbd5e1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11px;
-}
-
-.test-state-label {
-    font-weight: 800;
-    color: #475569;
-    letter-spacing: 0.8px;
-}
-
-.test-state-links {
-    display: flex;
-    gap: 6px;
-}
-
-.test-state-pill {
-    padding: 3px 9px;
-    border-radius: 6px;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    color: #334155;
-    text-decoration: none;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.test-state-pill.active {
-    background: #0f172a;
-    color: #ffffff;
-    border-color: #0f172a;
-}
-
-/* Responsive Breakpoint */
+/* Responsive Breakpoints */
 @media (max-width: 900px) {
     .login-wrapper {
         flex-direction: column;
-        max-width: 500px;
+        max-width: 520px;
     }
     .showcase-panel {
         flex: none;
-        padding: 28px 24px;
+        padding: 30px 24px;
     }
     .form-panel {
         flex: none;
-        padding: 28px 24px;
+        padding: 30px 24px;
     }
-    .review-card, .metrics-grid {
+    .metrics-grid {
         display: none;
     }
-}
-
-
-/* 2-column layout for Register Form */
-.form-row-2col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--primary-green);
-    text-decoration: none;
-    margin-top: 14px;
-    transition: color 0.2s;
-}
-
-.back-link:hover {
-    color: var(--primary-green-hover);
-    text-decoration: underline;
 }
 
 @media (max-width: 576px) {

@@ -1,11 +1,11 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký tài khoản - FreshFruit Platform</title>
+    <title>Create Account - FreshFruit Platform</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,12 +15,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Custom Auth Stylesheet -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css?v=2">
 </head>
 <body>
 
 <div class="login-wrapper">
-    <!-- LEFT PANEL: Brand, Orchard Background, Social Proof & Metrics -->
+    <!-- LEFT PANEL: Brand, Showcase & Metrics -->
     <div class="showcase-panel">
         <div>
             <div class="brand-logo-wrap">
@@ -34,35 +34,6 @@
             <p class="hero-desc">
                 Fresh organic produce delivered right from local family orchards straight to your table.
             </p>
-
-            <div class="pill-badge">
-                <i class="bi bi-patch-check-fill text-warning"></i>
-                <span>100% Organically Grown & Harvested</span>
-            </div>
-        </div>
-
-        <!-- Floating Customer Review Card -->
-        <div class="review-card">
-            <div class="star-row">
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-            </div>
-            <div class="review-quote">
-                "Signing up was seamless! The fruits arrived chilled and orchard-fresh within a few hours."
-            </div>
-            <div class="reviewer-meta">
-                <div class="reviewer-user">
-                    <div class="avatar-initials">TN</div>
-                    <div>
-                        <div class="reviewer-name">Thành Nam</div>
-                        <div class="reviewer-tier">New Member • Fresh Fruit Club</div>
-                    </div>
-                </div>
-                <i class="bi bi-patch-check-fill text-success fs-5"></i>
-            </div>
         </div>
 
         <!-- 3 Feature Metrics -->
@@ -107,7 +78,7 @@
             <h1 class="form-title">Create account</h1>
             <p class="form-subtitle">Join FreshFruit today to enjoy fresh harvests and member discounts.</p>
 
-            <!-- Alert Lỗi -->
+            <!-- Error Alert -->
             <c:if test="${not empty errorMessage}">
                 <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-6 flex-shrink-0"></i>
@@ -116,18 +87,34 @@
                 </div>
             </c:if>
 
+            <!-- Social Sign-up Button -->
+            <button type="button" class="social-btn w-100" id="btnGoogleLogin">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Google</span>
+            </button>
+
+            <!-- Divider -->
+            <div class="or-divider">
+                <span>OR EMAIL</span>
+            </div>
+
             <!-- Registration Form -->
             <form action="${pageContext.request.contextPath}/register" method="POST" id="registerForm">
                 <!-- Row 1: Full Name & Phone -->
                 <div class="form-row-2col">
                     <div class="field-group">
-                        <label class="field-label" for="fullName">Họ và tên *</label>
+                        <label class="field-label" for="fullName">Full Name *</label>
                         <div class="input-box-wrapper">
                             <i class="bi bi-person leading-icon"></i>
                             <input type="text" 
                                    id="fullName" 
                                    name="fullName" 
-                                   placeholder="Nguyễn Văn A" 
+                                   placeholder="Nguyen Van A" 
                                    value="${not empty fullName ? fullName : ''}" 
                                    required 
                                    autocomplete="name">
@@ -135,13 +122,13 @@
                     </div>
 
                     <div class="field-group">
-                        <label class="field-label" for="phone">Số điện thoại</label>
+                        <label class="field-label" for="phone">Phone Number</label>
                         <div class="input-box-wrapper">
                             <i class="bi bi-telephone leading-icon"></i>
                             <input type="tel" 
                                    id="phone" 
                                    name="phone" 
-                                   placeholder="0912345678" 
+                                   placeholder="0912 345 678" 
                                    value="${not empty phone ? phone : ''}" 
                                    autocomplete="tel">
                         </div>
@@ -156,7 +143,7 @@
                         <input type="email" 
                                id="email" 
                                name="email" 
-                               placeholder="user@example.com" 
+                               placeholder="nguyenvana@example.com" 
                                value="${not empty email ? email : ''}" 
                                required 
                                autocomplete="email"
@@ -168,43 +155,44 @@
                 <!-- Row 2: Password & Confirm Password -->
                 <div class="form-row-2col">
                     <div class="field-group">
-                        <label class="field-label" for="password">Mật khẩu *</label>
+                        <label class="field-label" for="password">Password *</label>
                         <div class="input-box-wrapper">
                             <i class="bi bi-lock leading-icon"></i>
                             <input type="password" 
                                    id="password" 
                                    name="password" 
-                                   placeholder="Tối thiểu 6 ký tự" 
+                                   placeholder="Min. 6 characters" 
                                    required 
                                    autocomplete="new-password">
-                            <span class="trailing-action" onclick="togglePasswordVisibility('password', this)" title="Ẩn/Hiện">
+                            <span class="trailing-action" onclick="togglePasswordVisibility('password', this)" title="Show/Hide password">
                                 <i class="bi bi-eye"></i>
                             </span>
                         </div>
                     </div>
 
                     <div class="field-group">
-                        <label class="field-label" for="confirmPassword">Xác nhận mật khẩu *</label>
+                        <label class="field-label" for="confirmPassword">Confirm Password *</label>
                         <div class="input-box-wrapper">
                             <i class="bi bi-shield-check leading-icon"></i>
                             <input type="password" 
                                    id="confirmPassword" 
                                    name="confirmPassword" 
-                                   placeholder="Nhập lại mật khẩu" 
+                                   placeholder="Re-enter password" 
                                    required 
                                    autocomplete="new-password">
-                            <span class="trailing-action" onclick="togglePasswordVisibility('confirmPassword', this)" title="Ẩn/Hiện">
+                            <span class="trailing-action" onclick="togglePasswordVisibility('confirmPassword', this)" title="Show/Hide password">
                                 <i class="bi bi-eye"></i>
                             </span>
                         </div>
+                        <span id="passwordMatchHint" class="form-hint"></span>
                     </div>
                 </div>
 
-                <!-- Policy Agreement -->
+                <!-- Terms & Privacy Agreement -->
                 <div class="form-actions-row">
                     <label class="remember-label" for="terms">
                         <input type="checkbox" id="terms" required checked>
-                        <span>Tôi đồng ý với Điều khoản dịch vụ & Chính sách bảo mật</span>
+                        <span>I agree to the Terms of Service and Privacy Policy</span>
                     </label>
                 </div>
 
@@ -215,26 +203,9 @@
                 </button>
             </form>
 
-            <div class="text-center mt-3">
-                <span class="text-muted small">Đã có tài khoản? </span>
-                <a href="${pageContext.request.contextPath}/login" class="forgot-link small">Sign In</a>
-            </div>
-
-            <!-- Security Footer -->
-            <div class="security-footer-note">
-                <i class="bi bi-shield-fill-check"></i>
-                <span>Protected by 256-bit SSL encryption. We never sell your personal data.</span>
-            </div>
-        </div>
-
-        <!-- Test State Switcher Bar -->
-        <div class="test-state-bar">
-            <span class="test-state-label">TEST STATE:</span>
-            <div class="test-state-links">
-                <a href="${pageContext.request.contextPath}/login" class="test-state-pill">Sign In</a>
-                <a href="${pageContext.request.contextPath}/register" class="test-state-pill active">Register</a>
-                <a href="${pageContext.request.contextPath}/verify-otp" class="test-state-pill">OTP Screen</a>
-                <a href="${pageContext.request.contextPath}/forgot-password" class="test-state-pill">Reset Sent</a>
+            <div class="auth-bottom-switch">
+                <span>Already have an account?</span>
+                <a href="${pageContext.request.contextPath}/login">Sign In</a>
             </div>
         </div>
     </div>

@@ -1,11 +1,11 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quên mật khẩu - FreshFruit Platform</title>
+    <title>Forgot Password - FreshFruit Platform</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,12 +15,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Custom Auth Stylesheet -->
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css?v=2">
 </head>
 <body>
 
 <div class="login-wrapper">
-    <!-- LEFT PANEL: Brand, Orchard Background, Social Proof & Metrics -->
+    <!-- LEFT PANEL: Brand, Showcase & Metrics -->
     <div class="showcase-panel">
         <div>
             <div class="brand-logo-wrap">
@@ -38,30 +38,6 @@
             <div class="pill-badge">
                 <i class="bi bi-shield-lock-fill text-warning"></i>
                 <span>Account Security & Recovery</span>
-            </div>
-        </div>
-
-        <!-- Floating Customer Review Card -->
-        <div class="review-card">
-            <div class="star-row">
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-                <i class="bi bi-star-fill"></i>
-            </div>
-            <div class="review-quote">
-                "Instant OTP verification via email kept my account completely secure. Very professional service!"
-            </div>
-            <div class="reviewer-meta">
-                <div class="reviewer-user">
-                    <div class="avatar-initials">MK</div>
-                    <div>
-                        <div class="reviewer-name">Minh Khang</div>
-                        <div class="reviewer-tier">Verified Customer • VIP</div>
-                    </div>
-                </div>
-                <i class="bi bi-patch-check-fill text-success fs-5"></i>
             </div>
         </div>
 
@@ -107,7 +83,7 @@
             <h1 class="form-title">Reset password</h1>
             <p class="form-subtitle">Enter your registered email address to receive a 6-digit OTP verification code.</p>
 
-            <!-- Alert Lỗi -->
+            <!-- Error Alert -->
             <c:if test="${not empty errorMessage}">
                 <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-6 flex-shrink-0"></i>
@@ -116,7 +92,7 @@
                 </div>
             </c:if>
 
-            <!-- Alert Thành công -->
+            <!-- Success Alert -->
             <c:if test="${not empty successMessage}">
                 <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
                     <i class="bi bi-check-circle-fill me-2 fs-6 flex-shrink-0"></i>
@@ -129,22 +105,22 @@
             <form action="${pageContext.request.contextPath}/forgot-password" method="POST" id="forgotForm">
                 <!-- Email Address -->
                 <div class="field-group mb-4">
-                    <label class="field-label" for="email">Địa chỉ Email đã đăng ký *</label>
+                    <label class="field-label" for="email">Registered Email Address *</label>
                     <div class="input-box-wrapper">
                         <i class="bi bi-envelope leading-icon"></i>
                         <input type="email" 
                                id="email" 
                                name="email" 
-                               placeholder="user@example.com" 
+                               placeholder="nguyenvana@example.com" 
                                value="${not empty email ? email : ''}" 
                                required 
                                autocomplete="email"
                                oninput="checkEmailValidity(this)">
                         <span class="trailing-action" id="emailStatusIcon"></span>
                     </div>
-                    <div class="text-muted small mt-1">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Mã OTP sẽ được gửi đến hộp thư này và có hiệu lực trong vòng 5 phút.
+                    <div class="form-hint">
+                        <i class="bi bi-info-circle"></i>
+                        <span>A 6-digit OTP code will be sent to this email and expires in 5 minutes.</span>
                     </div>
                 </div>
 
@@ -158,25 +134,8 @@
             <div class="text-center mt-4">
                 <a href="${pageContext.request.contextPath}/login" class="back-link">
                     <i class="bi bi-arrow-left"></i>
-                    <span>Quay lại Đăng nhập</span>
+                    <span>Back to Sign In</span>
                 </a>
-            </div>
-
-            <!-- Security Footer -->
-            <div class="security-footer-note">
-                <i class="bi bi-shield-fill-check"></i>
-                <span>Protected by 256-bit SSL encryption. We never sell your personal data.</span>
-            </div>
-        </div>
-
-        <!-- Test State Switcher Bar -->
-        <div class="test-state-bar">
-            <span class="test-state-label">TEST STATE:</span>
-            <div class="test-state-links">
-                <a href="${pageContext.request.contextPath}/login" class="test-state-pill">Sign In</a>
-                <a href="${pageContext.request.contextPath}/register" class="test-state-pill">Register</a>
-                <a href="${pageContext.request.contextPath}/verify-otp" class="test-state-pill">OTP Screen</a>
-                <a href="${pageContext.request.contextPath}/forgot-password" class="test-state-pill active">Reset Sent</a>
             </div>
         </div>
     </div>
