@@ -19,7 +19,7 @@ public class DBContext {
     private final String portNumber = "1433";
     private final String instanceName = ""; // Leave empty if default instance MSSQLSERVER
     private final String userId = "sa";
-    private final String password = "your_password"; // CHANGE TO YOUR SQL SERVER SA PASSWORD
+    private final String password = "141020"; // CHANGE TO YOUR SQL SERVER SA PASSWORD
 
     /**
      * Get a Connection object to SQL Server database.

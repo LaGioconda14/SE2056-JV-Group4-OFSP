@@ -5,155 +5,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quên mật khẩu - Online Fruit Shop</title>
+    <title>Quên mật khẩu - FreshFruit Platform</title>
+    
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e0f2f1 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .auth-card {
-            background: #ffffff;
-            border-radius: 1.25rem;
-            box-shadow: 0 15px 35px rgba(34, 139, 34, 0.12);
-            border: 1px solid rgba(40, 167, 69, 0.15);
-            width: 100%;
-            max-width: 440px;
-            overflow: hidden;
-        }
-        .auth-header {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: #ffffff;
-            padding: 30px 25px 20px;
-            text-align: center;
-        }
-        .auth-header .logo-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            font-size: 28px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .btn-fruit {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            border: none;
-            color: #ffffff;
-            font-weight: 600;
-            padding: 12px;
-            border-radius: 0.75rem;
-            transition: all 0.3s ease;
-        }
-        .btn-fruit:hover {
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            color: #ffffff;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.3);
-        }
-        .form-control:focus {
-            border-color: #43a047;
-            box-shadow: 0 0 0 0.25rem rgba(67, 160, 71, 0.2);
-        }
-        .input-group-text {
-            background-color: #f8faf9;
-            border-right: none;
-            color: #2e7d32;
-        }
-        .form-control {
-            border-left: none;
-        }
-        .auth-link {
-            color: #2e7d32;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .auth-link:hover {
-            color: #1b5e20;
-            text-decoration: underline;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom Auth Stylesheet -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css">
 </head>
 <body>
 
-<div class="auth-card">
-    <div class="auth-header">
-        <div class="logo-badge">🔐</div>
-        <h4 class="fw-bold mb-1">Khôi Phục Mật Khẩu</h4>
-        <p class="text-white-50 small mb-0">Nhập email để nhận mã OTP xác thực</p>
+<div class="login-wrapper">
+    <!-- LEFT PANEL: Brand, Orchard Background, Social Proof & Metrics -->
+    <div class="showcase-panel">
+        <div>
+            <div class="brand-logo-wrap">
+                <div class="brand-logo-icon">🍎</div>
+                <div>
+                    <div class="brand-name">FreshFruit</div>
+                    <div class="brand-sub">DIRECT FROM ORCHARD</div>
+                </div>
+            </div>
+            
+            <p class="hero-desc">
+                Fresh organic produce delivered right from local family orchards straight to your table.
+            </p>
+
+            <div class="pill-badge">
+                <i class="bi bi-shield-lock-fill text-warning"></i>
+                <span>Account Security & Recovery</span>
+            </div>
+        </div>
+
+        <!-- Floating Customer Review Card -->
+        <div class="review-card">
+            <div class="star-row">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div class="review-quote">
+                "Instant OTP verification via email kept my account completely secure. Very professional service!"
+            </div>
+            <div class="reviewer-meta">
+                <div class="reviewer-user">
+                    <div class="avatar-initials">MK</div>
+                    <div>
+                        <div class="reviewer-name">Minh Khang</div>
+                        <div class="reviewer-tier">Verified Customer • VIP</div>
+                    </div>
+                </div>
+                <i class="bi bi-patch-check-fill text-success fs-5"></i>
+            </div>
+        </div>
+
+        <!-- 3 Feature Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <i class="bi bi-shield-check"></i>
+                <div class="metric-label">100% Certified Organic</div>
+            </div>
+            <div class="metric-box">
+                <i class="bi bi-truck"></i>
+                <div class="metric-label">Same-Day Dispatch</div>
+            </div>
+            <div class="metric-box">
+                <i class="bi bi-heart-fill"></i>
+                <div class="metric-label">15,000+ Happy Homes</div>
+            </div>
+        </div>
     </div>
 
-    <div class="p-4 pt-3">
-        <!-- Thông báo Lỗi -->
-        <c:if test="${not empty errorMessage}">
-            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0"></i>
-                <div>${errorMessage}</div>
-                <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:if>
-
-        <!-- Thông báo Thành công -->
-        <c:if test="${not empty successMessage}">
-            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
-                <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0"></i>
-                <div>${successMessage}</div>
-                <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:if>
-
-        <form action="${pageContext.request.contextPath}/forgot-password" method="POST">
-            <div class="mb-3">
-                <label for="email" class="form-label small fw-semibold text-secondary">Email đã đăng ký</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                    <input type="email" 
-                           class="form-control" 
-                           id="email" 
-                           name="email" 
-                           value="${email}" 
-                           placeholder="name@example.com" 
-                           required 
-                           autofocus>
+    <!-- RIGHT PANEL: Forgot Password Form -->
+    <div class="form-panel">
+        <div>
+            <!-- Top Status Bar -->
+            <div class="top-status-bar">
+                <div class="secure-pill">
+                    <span class="secure-dot"></span>
+                    <span>Recovery Portal</span>
                 </div>
-                <div class="form-text small">
-                    Hệ thống sẽ gửi mã xác thực gồm 6 chữ số đến hộp thư của bạn.
-                </div>
-            </div>
-
-            <div class="d-grid mb-3">
-                <button type="submit" class="btn btn-fruit d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-send"></i>
-                    <span>Gửi Mã Xác Thực OTP</span>
-                </button>
-            </div>
-
-            <div class="text-center pt-2">
-                <a href="${pageContext.request.contextPath}/login" class="auth-link small d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-arrow-left"></i>
-                    <span>Quay lại trang Đăng nhập</span>
+                <a href="${pageContext.request.contextPath}/help" class="help-link">
+                    <span>Help Center</span>
+                    <i class="bi bi-box-arrow-up-right small"></i>
                 </a>
             </div>
-        </form>
+
+            <!-- Tab Switcher (Forgot Password is ACTIVE) -->
+            <div class="auth-nav-tabs">
+                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Sign In</a>
+                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Create Account</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn active">Forgot Password</a>
+            </div>
+
+            <h1 class="form-title">Reset password</h1>
+            <p class="form-subtitle">Enter your registered email address to receive a 6-digit OTP verification code.</p>
+
+            <!-- Alert Lỗi -->
+            <c:if test="${not empty errorMessage}">
+                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-6 flex-shrink-0"></i>
+                    <div>${errorMessage}</div>
+                    <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </c:if>
+
+            <!-- Alert Thành công -->
+            <c:if test="${not empty successMessage}">
+                <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
+                    <i class="bi bi-check-circle-fill me-2 fs-6 flex-shrink-0"></i>
+                    <div>${successMessage}</div>
+                    <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </c:if>
+
+            <!-- Forgot Password Form -->
+            <form action="${pageContext.request.contextPath}/forgot-password" method="POST" id="forgotForm">
+                <!-- Email Address -->
+                <div class="field-group mb-4">
+                    <label class="field-label" for="email">Địa chỉ Email đã đăng ký *</label>
+                    <div class="input-box-wrapper">
+                        <i class="bi bi-envelope leading-icon"></i>
+                        <input type="email" 
+                               id="email" 
+                               name="email" 
+                               placeholder="user@example.com" 
+                               value="${not empty email ? email : ''}" 
+                               required 
+                               autocomplete="email"
+                               oninput="checkEmailValidity(this)">
+                        <span class="trailing-action" id="emailStatusIcon"></span>
+                    </div>
+                    <div class="text-muted small mt-1">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Mã OTP sẽ được gửi đến hộp thư này và có hiệu lực trong vòng 5 phút.
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit-main">
+                    <span>Send Reset OTP</span>
+                    <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
+
+            <div class="text-center mt-4">
+                <a href="${pageContext.request.contextPath}/login" class="back-link">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Quay lại Đăng nhập</span>
+                </a>
+            </div>
+
+            <!-- Security Footer -->
+            <div class="security-footer-note">
+                <i class="bi bi-shield-fill-check"></i>
+                <span>Protected by 256-bit SSL encryption. We never sell your personal data.</span>
+            </div>
+        </div>
+
+        <!-- Test State Switcher Bar -->
+        <div class="test-state-bar">
+            <span class="test-state-label">TEST STATE:</span>
+            <div class="test-state-links">
+                <a href="${pageContext.request.contextPath}/login" class="test-state-pill">Sign In</a>
+                <a href="${pageContext.request.contextPath}/register" class="test-state-pill">Register</a>
+                <a href="${pageContext.request.contextPath}/verify-otp" class="test-state-pill">OTP Screen</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="test-state-pill active">Reset Sent</a>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Bootstrap 5 JS Bundle -->
+<!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom Auth JS -->
+<script src="${pageContext.request.contextPath}/assets/js/auth.js"></script>
+
 </body>
 </html>
-

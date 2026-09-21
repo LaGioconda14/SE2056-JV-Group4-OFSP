@@ -5,250 +5,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký tài khoản - Online Fruit Shop</title>
+    <title>Đăng ký tài khoản - FreshFruit Platform</title>
+    
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Google Fonts: Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e0f2f1 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px 20px;
-        }
-        .auth-card {
-            background: #ffffff;
-            border-radius: 1.25rem;
-            box-shadow: 0 15px 35px rgba(34, 139, 34, 0.12);
-            border: 1px solid rgba(40, 167, 69, 0.15);
-            width: 100%;
-            max-width: 480px;
-            overflow: hidden;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .auth-header {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: #ffffff;
-            padding: 26px 25px 20px;
-            text-align: center;
-        }
-        .auth-header .logo-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 58px;
-            height: 58px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            font-size: 26px;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .auth-body {
-            padding: 26px 30px;
-        }
-        .btn-fruit {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            border: none;
-            color: #ffffff;
-            font-weight: 600;
-            padding: 12px;
-            border-radius: 0.75rem;
-            transition: all 0.3s ease;
-        }
-        .btn-fruit:hover {
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            color: #ffffff;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.3);
-        }
-        .form-control:focus {
-            border-color: #43a047;
-            box-shadow: 0 0 0 0.25rem rgba(67, 160, 71, 0.2);
-        }
-        .input-group-text {
-            background-color: #f8f9fa;
-            border-right: none;
-            color: #2e7d32;
-        }
-        .form-control {
-            border-left: none;
-        }
-        .input-group:focus-within .input-group-text {
-            border-color: #43a047;
-        }
-        .auth-link {
-            color: #2e7d32;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .auth-link:hover {
-            color: #1b5e20;
-            text-decoration: underline;
-        }
-        .btn-toggle-pass {
-            border-left: none;
-            background-color: #f8f9fa;
-            border-color: #dee2e6;
-            color: #6c757d;
-        }
-        .btn-toggle-pass:hover {
-            color: #2e7d32;
-            background-color: #e9ecef;
-        }
-    </style>
+    <!-- Custom Auth Stylesheet -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css">
 </head>
 <body>
 
-<div class="auth-card">
-    <!-- Header -->
-    <div class="auth-header">
-        <div class="logo-badge">
-            🍎
+<div class="login-wrapper">
+    <!-- LEFT PANEL: Brand, Orchard Background, Social Proof & Metrics -->
+    <div class="showcase-panel">
+        <div>
+            <div class="brand-logo-wrap">
+                <div class="brand-logo-icon">🍎</div>
+                <div>
+                    <div class="brand-name">FreshFruit</div>
+                    <div class="brand-sub">DIRECT FROM ORCHARD</div>
+                </div>
+            </div>
+            
+            <p class="hero-desc">
+                Fresh organic produce delivered right from local family orchards straight to your table.
+            </p>
+
+            <div class="pill-badge">
+                <i class="bi bi-patch-check-fill text-warning"></i>
+                <span>100% Organically Grown & Harvested</span>
+            </div>
         </div>
-        <h4 class="fw-bold mb-1">Tạo Tài Khoản Mới</h4>
-        <p class="small mb-0 opacity-75">Tham gia cùng Online Fruit Shop ngay hôm nay</p>
+
+        <!-- Floating Customer Review Card -->
+        <div class="review-card">
+            <div class="star-row">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <div class="review-quote">
+                "Signing up was seamless! The fruits arrived chilled and orchard-fresh within a few hours."
+            </div>
+            <div class="reviewer-meta">
+                <div class="reviewer-user">
+                    <div class="avatar-initials">TN</div>
+                    <div>
+                        <div class="reviewer-name">Thành Nam</div>
+                        <div class="reviewer-tier">New Member • Fresh Fruit Club</div>
+                    </div>
+                </div>
+                <i class="bi bi-patch-check-fill text-success fs-5"></i>
+            </div>
+        </div>
+
+        <!-- 3 Feature Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <i class="bi bi-shield-check"></i>
+                <div class="metric-label">100% Certified Organic</div>
+            </div>
+            <div class="metric-box">
+                <i class="bi bi-truck"></i>
+                <div class="metric-label">Same-Day Dispatch</div>
+            </div>
+            <div class="metric-box">
+                <i class="bi bi-heart-fill"></i>
+                <div class="metric-label">15,000+ Happy Homes</div>
+            </div>
+        </div>
     </div>
 
-    <!-- Body -->
-    <div class="auth-body">
-        <!-- Thông báo Lỗi -->
-        <c:if test="${not empty errorMessage}">
-            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0"></i>
-                <div>${errorMessage}</div>
-                <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:if>
-
-        <form action="${pageContext.request.contextPath}/register" method="POST" novalidate>
-            <!-- Họ và tên -->
-            <div class="mb-3">
-                <label for="fullName" class="form-label small fw-semibold text-secondary">Họ và tên <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-person"></i></span>
-                    <input type="text" 
-                           class="form-control" 
-                           id="fullName" 
-                           name="fullName" 
-                           value="${not empty fullName ? fullName : ''}" 
-                           placeholder="Nguyễn Văn A" 
-                           required 
-                           autofocus>
+    <!-- RIGHT PANEL: Registration Form -->
+    <div class="form-panel">
+        <div>
+            <!-- Top Status Bar -->
+            <div class="top-status-bar">
+                <div class="secure-pill">
+                    <span class="secure-dot"></span>
+                    <span>Secure Registration</span>
                 </div>
+                <a href="${pageContext.request.contextPath}/help" class="help-link">
+                    <span>Help Center</span>
+                    <i class="bi bi-box-arrow-up-right small"></i>
+                </a>
             </div>
 
-            <!-- Email -->
-            <div class="mb-3">
-                <label for="email" class="form-label small fw-semibold text-secondary">Địa chỉ Email <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                    <input type="email" 
-                           class="form-control" 
-                           id="email" 
-                           name="email" 
-                           value="${not empty email ? email : ''}" 
-                           placeholder="example@fruitshop.com" 
-                           required>
+            <!-- Tab Switcher (Create Account is ACTIVE) -->
+            <div class="auth-nav-tabs">
+                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Sign In</a>
+                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn active">Create Account</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn">Forgot Password</a>
+            </div>
+
+            <h1 class="form-title">Create account</h1>
+            <p class="form-subtitle">Join FreshFruit today to enjoy fresh harvests and member discounts.</p>
+
+            <!-- Alert Lỗi -->
+            <c:if test="${not empty errorMessage}">
+                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-6 flex-shrink-0"></i>
+                    <div>${errorMessage}</div>
+                    <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            </div>
+            </c:if>
 
-            <!-- Số điện thoại -->
-            <div class="mb-3">
-                <label for="phone" class="form-label small fw-semibold text-secondary">Số điện thoại</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-telephone"></i></span>
-                    <input type="tel" 
-                           class="form-control" 
-                           id="phone" 
-                           name="phone" 
-                           value="${not empty phone ? phone : ''}" 
-                           placeholder="0912345678">
+            <!-- Registration Form -->
+            <form action="${pageContext.request.contextPath}/register" method="POST" id="registerForm">
+                <!-- Row 1: Full Name & Phone -->
+                <div class="form-row-2col">
+                    <div class="field-group">
+                        <label class="field-label" for="fullName">Họ và tên *</label>
+                        <div class="input-box-wrapper">
+                            <i class="bi bi-person leading-icon"></i>
+                            <input type="text" 
+                                   id="fullName" 
+                                   name="fullName" 
+                                   placeholder="Nguyễn Văn A" 
+                                   value="${not empty fullName ? fullName : ''}" 
+                                   required 
+                                   autocomplete="name">
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="phone">Số điện thoại</label>
+                        <div class="input-box-wrapper">
+                            <i class="bi bi-telephone leading-icon"></i>
+                            <input type="tel" 
+                                   id="phone" 
+                                   name="phone" 
+                                   placeholder="0912345678" 
+                                   value="${not empty phone ? phone : ''}" 
+                                   autocomplete="tel">
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Mật khẩu -->
-            <div class="mb-3">
-                <label for="password" class="form-label small fw-semibold text-secondary">Mật khẩu <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                    <input type="password" 
-                           class="form-control" 
-                           id="password" 
-                           name="password" 
-                           placeholder="Tối thiểu 6 ký tự" 
-                           required>
-                    <button class="btn btn-outline-secondary btn-toggle-pass" 
-                            type="button" 
-                            onclick="togglePasswordVisibility('password', this)"
-                            tabindex="-1">
-                        <i class="bi bi-eye"></i>
-                    </button>
+                <!-- Email Address -->
+                <div class="field-group">
+                    <label class="field-label" for="email">Email Address *</label>
+                    <div class="input-box-wrapper">
+                        <i class="bi bi-envelope leading-icon"></i>
+                        <input type="email" 
+                               id="email" 
+                               name="email" 
+                               placeholder="user@example.com" 
+                               value="${not empty email ? email : ''}" 
+                               required 
+                               autocomplete="email"
+                               oninput="checkEmailValidity(this)">
+                        <span class="trailing-action" id="emailStatusIcon"></span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Xác nhận Mật khẩu -->
-            <div class="mb-4">
-                <label for="confirmPassword" class="form-label small fw-semibold text-secondary">Xác nhận mật khẩu <span class="text-danger">*</span></label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
-                    <input type="password" 
-                           class="form-control" 
-                           id="confirmPassword" 
-                           name="confirmPassword" 
-                           placeholder="Nhập lại mật khẩu" 
-                           required>
-                    <button class="btn btn-outline-secondary btn-toggle-pass" 
-                            type="button" 
-                            onclick="togglePasswordVisibility('confirmPassword', this)"
-                            tabindex="-1">
-                        <i class="bi bi-eye"></i>
-                    </button>
+                <!-- Row 2: Password & Confirm Password -->
+                <div class="form-row-2col">
+                    <div class="field-group">
+                        <label class="field-label" for="password">Mật khẩu *</label>
+                        <div class="input-box-wrapper">
+                            <i class="bi bi-lock leading-icon"></i>
+                            <input type="password" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Tối thiểu 6 ký tự" 
+                                   required 
+                                   autocomplete="new-password">
+                            <span class="trailing-action" onclick="togglePasswordVisibility('password', this)" title="Ẩn/Hiện">
+                                <i class="bi bi-eye"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label" for="confirmPassword">Xác nhận mật khẩu *</label>
+                        <div class="input-box-wrapper">
+                            <i class="bi bi-shield-check leading-icon"></i>
+                            <input type="password" 
+                                   id="confirmPassword" 
+                                   name="confirmPassword" 
+                                   placeholder="Nhập lại mật khẩu" 
+                                   required 
+                                   autocomplete="new-password">
+                            <span class="trailing-action" onclick="togglePasswordVisibility('confirmPassword', this)" title="Ẩn/Hiện">
+                                <i class="bi bi-eye"></i>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Nút Đăng ký -->
-            <div class="d-grid mb-3">
-                <button type="submit" class="btn btn-fruit d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-person-plus-fill"></i>
-                    <span>Đăng Ký Tài Khoản</span>
+                <!-- Policy Agreement -->
+                <div class="form-actions-row">
+                    <label class="remember-label" for="terms">
+                        <input type="checkbox" id="terms" required checked>
+                        <span>Tôi đồng ý với Điều khoản dịch vụ & Chính sách bảo mật</span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit-main">
+                    <span>Create Account</span>
+                    <i class="bi bi-arrow-right"></i>
                 </button>
+            </form>
+
+            <div class="text-center mt-3">
+                <span class="text-muted small">Đã có tài khoản? </span>
+                <a href="${pageContext.request.contextPath}/login" class="forgot-link small">Sign In</a>
             </div>
 
-            <!-- Link chuyển sang Đăng nhập -->
-            <div class="text-center small text-secondary">
-                Đã có tài khoản? 
-                <a href="${pageContext.request.contextPath}/login" class="auth-link">Đăng nhập ngay</a>
+            <!-- Security Footer -->
+            <div class="security-footer-note">
+                <i class="bi bi-shield-fill-check"></i>
+                <span>Protected by 256-bit SSL encryption. We never sell your personal data.</span>
             </div>
-        </form>
+        </div>
+
+        <!-- Test State Switcher Bar -->
+        <div class="test-state-bar">
+            <span class="test-state-label">TEST STATE:</span>
+            <div class="test-state-links">
+                <a href="${pageContext.request.contextPath}/login" class="test-state-pill">Sign In</a>
+                <a href="${pageContext.request.contextPath}/register" class="test-state-pill active">Register</a>
+                <a href="${pageContext.request.contextPath}/verify-otp" class="test-state-pill">OTP Screen</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="test-state-pill">Reset Sent</a>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Bootstrap 5 JS Bundle -->
+<!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom Auth JS -->
+<script src="${pageContext.request.contextPath}/assets/js/auth.js"></script>
 
-<script>
-    function togglePasswordVisibility(fieldId, toggleEl) {
-        const input = document.getElementById(fieldId);
-        const icon = toggleEl.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
-        }
-    }
-</script>
 </body>
 </html>
-

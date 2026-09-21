@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.User;
@@ -30,9 +31,10 @@ public class UserDAO extends DBContext {
      */
     public User checkLogin(String email, String password) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
-                   + "       r.role_name AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
                    + "FROM users u "
-                   + "INNER JOIN roles r ON u.role_id = r.role_id "
+                   + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
+                   + "LEFT JOIN roles r ON ur.role_id = r.role_id "
                    + "WHERE LOWER(u.email) = LOWER(?)";
 
         Connection conn = getConnection();
@@ -67,9 +69,10 @@ public class UserDAO extends DBContext {
      */
     public User findByEmail(String email) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
-                   + "       r.role_name AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
                    + "FROM users u "
-                   + "INNER JOIN roles r ON u.role_id = r.role_id "
+                   + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
+                   + "LEFT JOIN roles r ON ur.role_id = r.role_id "
                    + "WHERE LOWER(u.email) = LOWER(?)";
 
         Connection conn = getConnection();
@@ -101,9 +104,10 @@ public class UserDAO extends DBContext {
      */
     public User findById(int id) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
-                   + "       r.role_name AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
                    + "FROM users u "
-                   + "INNER JOIN roles r ON u.role_id = r.role_id "
+                   + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
+                   + "LEFT JOIN roles r ON ur.role_id = r.role_id "
                    + "WHERE u.user_id = ?";
 
         Connection conn = getConnection();
@@ -294,8 +298,11 @@ public class UserDAO extends DBContext {
      * @return true if registration succeeded, false otherwise
      */
     public boolean register(User user) {
-        String sql = "INSERT INTO users (role_id, email, phone, password_hash, full_name, avatar_url, status, created_at) "
-                   + "VALUES (3, ?, ?, ?, ?, NULL, 'ACTIVE', GETDATE())";
+        String sqlUser = "INSERT INTO users (email, phone, password_hash, full_name, avatar_url, status, created_at, updated_at) "
+                       + "VALUES (?, ?, ?, ?, NULL, 'ACTIVE', GETDATE(), GETDATE())";
+        String sqlRole = "INSERT INTO user_roles (user_id, role_id) "
+                       + "SELECT ?, role_id FROM roles WHERE role_name = 'CUSTOMER'";
+        String sqlCart = "INSERT INTO carts (customer_id) VALUES (?)";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -303,15 +310,44 @@ public class UserDAO extends DBContext {
             return false;
         }
 
-        try (conn;
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (conn) {
+            conn.setAutoCommit(false);
+            long newUserId = -1;
 
-            ps.setString(1, user.getEmail().trim());
-            ps.setString(2, user.getPhone() != null && !user.getPhone().trim().isEmpty() ? user.getPhone().trim() : null);
-            ps.setString(3, user.getPassword());
-            ps.setString(4, user.getFullName().trim());
+            try (PreparedStatement ps = conn.prepareStatement(sqlUser, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, user.getEmail().trim().toLowerCase());
+                ps.setString(2, user.getPhone() != null && !user.getPhone().trim().isEmpty() ? user.getPhone().trim() : null);
+                ps.setString(3, user.getPassword());
+                ps.setString(4, user.getFullName().trim());
 
-            return ps.executeUpdate() > 0;
+                int affected = ps.executeUpdate();
+                if (affected > 0) {
+                    try (ResultSet gk = ps.getGeneratedKeys()) {
+                        if (gk.next()) {
+                            newUserId = gk.getLong(1);
+                        }
+                    }
+                }
+            }
+
+            if (newUserId > 0) {
+                // Gán quyền CUSTOMER mặc định
+                try (PreparedStatement psRole = conn.prepareStatement(sqlRole)) {
+                    psRole.setLong(1, newUserId);
+                    psRole.executeUpdate();
+                }
+
+                // Khởi tạo giỏ hàng trống mặc định cho khách
+                try (PreparedStatement psCart = conn.prepareStatement(sqlCart)) {
+                    psCart.setLong(1, newUserId);
+                    psCart.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+            } else {
+                conn.rollback();
+            }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error registering new user with email: " + user.getEmail(), ex);
         }
