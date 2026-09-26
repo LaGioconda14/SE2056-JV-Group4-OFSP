@@ -14,8 +14,11 @@ public class User implements Serializable {
     private String password;
     private String fullName;
     private String phone;
+    private String avatarUrl;
     private String role;
     private int status;
+    private String gender;
+    private java.sql.Date birthDate;
     private Timestamp createdAt;
 
     public User() {
@@ -98,12 +101,68 @@ public class User implements Serializable {
         this.status = status;
     }
 
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
     public Timestamp getCreatedAt() {
         return createdAt;
     }
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public java.sql.Date getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(java.sql.Date birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getMaskedEmail() {
+        if (email == null || email.isEmpty()) return "Chưa cập nhật";
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 1) return email;
+        String name = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        if (name.length() <= 3) {
+            return name.charAt(0) + "****" + domain;
+        }
+        return name.substring(0, 3) + "****" + domain;
+    }
+
+    public String getMaskedPhone() {
+        if (phone == null || phone.isEmpty()) return "Chưa cập nhật";
+        String clean = phone.trim();
+        if (clean.length() <= 4) return clean;
+        if (clean.length() >= 9) {
+            return clean.substring(0, 3) + "****" + clean.substring(clean.length() - 3);
+        }
+        return clean.substring(0, 2) + "****" + clean.substring(clean.length() - 2);
+    }
+
+    public String getMaskedBirthDate() {
+        if (birthDate == null) return "Chưa cập nhật";
+        String s = birthDate.toString(); // YYYY-MM-DD
+        String[] parts = s.split("-");
+        if (parts.length == 3) {
+            return "**/**/" + parts[0];
+        }
+        return "**/**/****";
     }
 
     public boolean isActive() {

@@ -18,9 +18,9 @@ database.sql
 *.log
 *.tmp
 
-# Operating system files
-Thumbs.db
-.DS_Store
-docs
-.vscode
-.vscode
+# Uploaded user avatars
+web/assets/images/avatars/*
+!web/assets/images/avatars/.gitkeep
+
+docs/
+.vscode/

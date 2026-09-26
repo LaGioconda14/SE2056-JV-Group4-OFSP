@@ -65,6 +65,9 @@
                     <span class="text-white small d-none d-md-inline">
                         Xin chào, <strong>${sessionScope.user.fullName}</strong> (${sessionScope.user.role})
                     </span>
+                    <a href="${pageContext.request.contextPath}/profile" class="btn btn-sm btn-light fw-semibold d-flex align-items-center gap-1">
+                        <i class="bi bi-person-circle"></i> Hồ sơ cá nhân
+                    </a>
                     <a href="${pageContext.request.contextPath}/change-password" class="btn btn-sm btn-outline-light d-flex align-items-center gap-1">
                         <i class="bi bi-key"></i> Đổi mật khẩu
                     </a>

@@ -16,7 +16,7 @@ import model.User;
 /**
  * Authentication Filter to protect secure resources (e.g. /change-password).
  */
-@WebFilter(filterName = "AuthFilter", urlPatterns = {"/change-password"})
+@WebFilter(filterName = "AuthFilter", urlPatterns = {"/change-password", "/profile"})
 public class AuthFilter implements Filter {
 
     @Override

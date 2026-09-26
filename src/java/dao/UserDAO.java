@@ -30,7 +30,7 @@ public class UserDAO extends DBContext {
      * @return User object if authentication is successful, null otherwise
      */
     public User checkLogin(String email, String password) {
-        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
+        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
                    + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
@@ -68,7 +68,7 @@ public class UserDAO extends DBContext {
      * @return User object or null if not found
      */
     public User findByEmail(String email) {
-        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
+        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
                    + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
@@ -103,7 +103,7 @@ public class UserDAO extends DBContext {
      * @return User object or null if not found
      */
     public User findById(int id) {
-        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, "
+        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
                    + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
@@ -192,6 +192,77 @@ public class UserDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error updating password for user ID: " + userId, ex);
         }
         return false;
+    }
+
+    /**
+     * Update basic profile information (full_name, phone, gender, birth_date).
+     *
+     * @param userId    User ID
+     * @param fullName  Full Name
+     * @param phone     Phone number
+     * @param gender    Gender (e.g. MALE, FEMALE, OTHER)
+     * @param birthDate Date of birth
+     * @return true if updated successfully
+     */
+    public boolean updateProfile(int userId, String fullName, String phone, String gender, java.sql.Date birthDate) {
+        String sql = "UPDATE users SET full_name = ?, phone = ?, gender = ?, birth_date = ?, updated_at = GETDATE() WHERE user_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in updateProfile");
+            return false;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, fullName != null ? fullName.trim() : null);
+            ps.setString(2, phone != null && !phone.trim().isEmpty() ? phone.trim() : null);
+            ps.setString(3, gender != null && !gender.trim().isEmpty() ? gender.trim() : null);
+            ps.setDate(4, birthDate);
+            ps.setInt(5, userId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating profile for user ID: " + userId, ex);
+        }
+        return false;
+    }
+
+    /**
+     * Update user's avatar URL.
+     *
+     * @param userId    User ID
+     * @param avatarUrl Relative path or URL of avatar image (null to remove)
+     * @return true if updated successfully
+     */
+    public boolean updateAvatar(int userId, String avatarUrl) {
+        String sql = "UPDATE users SET avatar_url = ?, updated_at = GETDATE() WHERE user_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in updateAvatar");
+            return false;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, avatarUrl);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating avatar for user ID: " + userId, ex);
+        }
+        return false;
+    }
+
+    /**
+     * Backward-compatible updateProfile without gender & birthDate.
+     */
+    public boolean updateProfile(int userId, String fullName, String phone) {
+        return updateProfile(userId, fullName, phone, null, null);
     }
 
     /**
@@ -295,6 +366,9 @@ public class UserDAO extends DBContext {
         user.setPassword(rs.getString("password_hash"));
         user.setFullName(rs.getString("full_name"));
         user.setPhone(rs.getString("phone"));
+        user.setAvatarUrl(rs.getString("avatar_url"));
+        user.setGender(rs.getString("gender"));
+        user.setBirthDate(rs.getDate("birth_date"));
         user.setRole(rs.getString("role"));
 
         // Status in DB is VARCHAR ('ACTIVE', 'LOCKED', etc.)
