@@ -72,13 +72,7 @@ function initPasswordMatchCheck() {
 
 // Social Login Button Handler
 function initSocialLogin() {
-    const googleBtn = document.getElementById('btnGoogleLogin');
-    if (googleBtn) {
-        googleBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('Google Sign-In is currently in development.');
-        });
-    }
+    // Google button now directs naturally to /login-google endpoint
 }
 
 // Initialize on DOM Ready
