@@ -61,21 +61,21 @@ public class ForgotPasswordServlet extends HttpServlet {
         // Generate 6-digit OTP
         String otp = EmailUtil.generateOTP();
 
-        // Save OTP with 5 minutes expiry time
-        boolean saved = userDAO.saveOTP(email, otp, 5);
-
-        if (!saved) {
-            request.setAttribute("errorMessage", "Có lỗi xảy ra trong quá trình tạo mã OTP. Vui lòng thử lại!");
+        // Send OTP via Email (JavaMail API)
+        boolean isSent = EmailUtil.sendOtpEmail(email, user.getFullName(), otp);
+        if (!isSent) {
+            request.setAttribute("errorMessage", "Không thể gửi email OTP lúc này. Vui lòng kiểm tra lại hòm thư hoặc thử lại sau!");
+            request.setAttribute("email", email);
             request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
             return;
         }
 
-        // Send OTP via Email (JavaMail API)
-        EmailUtil.sendOtpEmail(email, user.getFullName(), otp);
-
-        // Store resetEmail in session to facilitate next step
+        // Lưu thông tin OTP và thời gian hết hạn (5 phút) vào Web Session
+        long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000L);
         HttpSession session = request.getSession(true);
         session.setAttribute("resetEmail", email);
+        session.setAttribute("resetOtp", otp);
+        session.setAttribute("otpExpiryTime", expiryTime);
         session.setAttribute("successMessage", "Mã xác thực OTP đã được gửi đến email: " + email + ". Mã có hiệu lực trong 5 phút!");
 
         response.sendRedirect(request.getContextPath() + "/reset-password");

@@ -5,241 +5,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đặt lại mật khẩu - Online Fruit Shop</title>
+    <title>Đặt lại mật khẩu - FreshFruit Platform</title>
+    
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #e0f2f1 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .auth-card {
-            background: #ffffff;
-            border-radius: 1.25rem;
-            box-shadow: 0 15px 35px rgba(34, 139, 34, 0.12);
-            border: 1px solid rgba(40, 167, 69, 0.15);
-            width: 100%;
-            max-width: 480px;
-            overflow: hidden;
-        }
-        .auth-header {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            color: #ffffff;
-            padding: 30px 25px 20px;
-            text-align: center;
-        }
-        .auth-header .logo-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            font-size: 28px;
-            margin-bottom: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .btn-fruit {
-            background: linear-gradient(135deg, #2e7d32, #43a047);
-            border: none;
-            color: #ffffff;
-            font-weight: 600;
-            padding: 12px;
-            border-radius: 0.75rem;
-            transition: all 0.3s ease;
-        }
-        .btn-fruit:hover {
-            background: linear-gradient(135deg, #1b5e20, #2e7d32);
-            color: #ffffff;
-            transform: translateY(-1px);
-            box-shadow: 0 6px 15px rgba(46, 125, 50, 0.3);
-        }
-        .form-control:focus {
-            border-color: #43a047;
-            box-shadow: 0 0 0 0.25rem rgba(67, 160, 71, 0.2);
-        }
-        .input-group-text {
-            background-color: #f8faf9;
-            border-right: none;
-            color: #2e7d32;
-        }
-        .form-control {
-            border-left: none;
-        }
-        .auth-link {
-            color: #2e7d32;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .auth-link:hover {
-            color: #1b5e20;
-            text-decoration: underline;
-        }
-        .otp-input {
-            letter-spacing: 6px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #2e7d32;
-            text-align: center;
-        }
-        .password-toggle {
-            cursor: pointer;
-            border-left: none;
-            border-right: 1px solid #dee2e6;
-            background-color: #fff;
-            color: #6c757d;
-        }
-        .password-toggle:hover {
-            color: #2e7d32;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Custom Auth Stylesheet -->
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css?v=2">
 </head>
 <body>
 
-<div class="auth-card">
-    <div class="auth-header">
-        <div class="logo-badge">🔑</div>
-        <h4 class="fw-bold mb-1">Xác Nhận Đặt Lại Mật Khẩu</h4>
-        <p class="text-white-50 small mb-0">Nhập mã OTP và mật khẩu mới của bạn</p>
+<div class="login-wrapper">
+    <!-- LEFT PANEL: Brand, Showcase & Metrics -->
+    <div class="showcase-panel">
+        <div>
+            <div class="brand-logo-wrap">
+                <div class="brand-logo-icon">🍎</div>
+                <div>
+                    <div class="brand-name">FreshFruit</div>
+                    <div class="brand-sub">DIRECT FROM ORCHARD</div>
+                </div>
+            </div>
+            
+            <p class="hero-desc">
+                Fresh organic produce delivered right from local family orchards straight to your table.
+            </p>
+
+            <div class="pill-badge">
+                <i class="bi bi-shield-check text-warning"></i>
+                <span>Password Recovery Portal</span>
+            </div>
+        </div>
+
+        <!-- 3 Feature Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <i class="bi bi-shield-check"></i>
+                <div class="metric-label">100% Certified Organic</div>
+            </div>
+            <div class="metric-box">
+                <i class="bi bi-truck"></i>
+                <div class="metric-label">Same-Day Dispatch</div>
+            </div>
+            <div class="metric-box">
+                <i class="bi bi-heart-fill"></i>
+                <div class="metric-label">15,000+ Happy Homes</div>
+            </div>
+        </div>
     </div>
 
-    <div class="p-4 pt-3">
-        <!-- Thông báo Lỗi -->
-        <c:if test="${not empty errorMessage}">
-            <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0"></i>
-                <div>${errorMessage}</div>
-                <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:if>
-
-        <!-- Thông báo Thành công -->
-        <c:if test="${not empty successMessage}">
-            <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 small" role="alert">
-                <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0"></i>
-                <div>${successMessage}</div>
-                <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </c:if>
-
-        <form action="${pageContext.request.contextPath}/reset-password" method="POST">
-            <!-- Email -->
-            <div class="mb-3">
-                <label for="email" class="form-label small fw-semibold text-secondary">Email nhận mã</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                    <input type="email" 
-                           class="form-control" 
-                           id="email" 
-                           name="email" 
-                           value="${email}" 
-                           placeholder="name@example.com" 
-                           required>
+    <!-- RIGHT PANEL: Reset Password Form -->
+    <div class="form-panel">
+        <div>
+            <!-- Top Status Bar -->
+            <div class="top-status-bar">
+                <div class="secure-pill">
+                    <span class="secure-dot"></span>
+                    <span>Reset Password</span>
                 </div>
+                <a href="${pageContext.request.contextPath}/help" class="help-link">
+                    <span>Help Center</span>
+                    <i class="bi bi-box-arrow-up-right small"></i>
+                </a>
             </div>
 
-            <!-- Mã OTP -->
-            <div class="mb-3">
-                <label for="otp" class="form-label small fw-semibold text-secondary">Mã OTP (6 chữ số)</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-shield-check"></i></span>
-                    <input type="text" 
-                           class="form-control otp-input" 
-                           id="otp" 
-                           name="otp" 
-                           value="${otp}" 
-                           maxlength="6" 
-                           placeholder="123456" 
-                           required 
-                           autofocus>
-                </div>
-                <div class="d-flex justify-content-between align-items-center mt-1">
-                    <span class="text-muted small">Thời hạn OTP: 5 phút</span>
-                    <a href="${pageContext.request.contextPath}/forgot-password" class="auth-link small">Gửi lại mã OTP?</a>
-                </div>
+            <!-- Tab Switcher -->
+            <div class="auth-nav-tabs">
+                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Sign In</a>
+                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Create Account</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn active">Reset Password</a>
             </div>
 
-            <!-- Mật khẩu mới -->
-            <div class="mb-3">
-                <label for="newPassword" class="form-label small fw-semibold text-secondary">Mật khẩu mới</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                    <input type="password" 
-                           class="form-control" 
-                           id="newPassword" 
-                           name="newPassword" 
-                           placeholder="Tối thiểu 6 ký tự" 
-                           required>
-                    <span class="input-group-text password-toggle" onclick="togglePasswordVisibility('newPassword', this)">
-                        <i class="bi bi-eye"></i>
-                    </span>
-                </div>
-            </div>
+            <h1 class="form-title">Đặt lại mật khẩu</h1>
+            <p class="form-subtitle">Nhập mã xác thực OTP 6 số đã được gửi qua email và tạo mật khẩu mới.</p>
 
-            <!-- Xác nhận mật khẩu mới -->
-            <div class="mb-4">
-                <label for="confirmPassword" class="form-label small fw-semibold text-secondary">Xác nhận mật khẩu mới</label>
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                    <input type="password" 
-                           class="form-control" 
-                           id="confirmPassword" 
-                           name="confirmPassword" 
-                           placeholder="Nhập lại mật khẩu mới" 
-                           required>
-                    <span class="input-group-text password-toggle" onclick="togglePasswordVisibility('confirmPassword', this)">
-                        <i class="bi bi-eye"></i>
-                    </span>
+            <!-- Error Alert -->
+            <c:if test="${not empty errorMessage}">
+                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-6 flex-shrink-0"></i>
+                    <div>${errorMessage}</div>
+                    <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            </div>
+            </c:if>
 
-            <!-- Nút Xác nhận -->
-            <div class="d-grid mb-3">
-                <button type="submit" class="btn btn-fruit d-flex align-items-center justify-content-center gap-2">
-                    <i class="bi bi-check2-circle"></i>
+            <!-- Success Alert -->
+            <c:if test="${not empty successMessage}">
+                <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
+                    <i class="bi bi-check-circle-fill me-2 fs-6 flex-shrink-0"></i>
+                    <div>${successMessage}</div>
+                    <button type="button" class="btn-close ms-auto py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </c:if>
+
+            <!-- Form -->
+            <form action="${pageContext.request.contextPath}/reset-password" method="POST" id="resetForm">
+                <!-- Email Address -->
+                <div class="field-group">
+                    <label class="field-label" for="email">Email nhận mã OTP *</label>
+                    <div class="input-box-wrapper">
+                        <i class="bi bi-envelope leading-icon"></i>
+                        <input type="email" 
+                               id="email" 
+                               name="email" 
+                               placeholder="nguyenvana@example.com" 
+                               value="${email}" 
+                               required 
+                               autocomplete="email">
+                    </div>
+                </div>
+
+                <!-- 6-digit OTP -->
+                <div class="field-group">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label class="field-label mb-0" for="otp">Mã xác thực OTP (6 chữ số) *</label>
+                        <a href="${pageContext.request.contextPath}/forgot-password" class="small text-decoration-none" style="font-size: 12px; color: var(--primary-green); font-weight: 600;">Gửi lại mã OTP?</a>
+                    </div>
+                    <div class="input-box-wrapper">
+                        <i class="bi bi-shield-check leading-icon"></i>
+                        <input type="text" 
+                               id="otp" 
+                               name="otp" 
+                               placeholder="123456" 
+                               value="${otp}" 
+                               maxlength="6"
+                               style="letter-spacing: 4px; font-weight: 700; color: var(--primary-green);"
+                               required 
+                               autofocus>
+                    </div>
+                    <div class="form-hint">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Mã OTP có hiệu lực trong 5 phút. Vui lòng kiểm tra hộp thư đến và thư rác.</span>
+                    </div>
+                </div>
+
+                <!-- New Password -->
+                <div class="field-group">
+                    <label class="field-label" for="newPassword">Mật khẩu mới *</label>
+                    <div class="input-box-wrapper">
+                        <i class="bi bi-lock leading-icon"></i>
+                        <input type="password" 
+                               id="newPassword" 
+                               name="newPassword" 
+                               placeholder="Tối thiểu 6 ký tự" 
+                               required 
+                               autocomplete="new-password">
+                        <span class="trailing-action" onclick="togglePasswordVisibility('newPassword', this)" title="Ẩn/hiện mật khẩu">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Confirm New Password -->
+                <div class="field-group">
+                    <label class="field-label" for="confirmPassword">Xác nhận mật khẩu mới *</label>
+                    <div class="input-box-wrapper">
+                        <i class="bi bi-lock-fill leading-icon"></i>
+                        <input type="password" 
+                               id="confirmPassword" 
+                               name="confirmPassword" 
+                               placeholder="Nhập lại mật khẩu mới" 
+                               required 
+                               autocomplete="new-password">
+                        <span class="trailing-action" onclick="togglePasswordVisibility('confirmPassword', this)" title="Ẩn/hiện mật khẩu">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </div>
+                    <div class="form-hint" id="passwordMatchHint"></div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit-main mt-2">
                     <span>Cập Nhật Mật Khẩu</span>
+                    <i class="bi bi-arrow-right"></i>
                 </button>
-            </div>
+            </form>
 
-            <div class="text-center pt-2">
-                <a href="${pageContext.request.contextPath}/login" class="auth-link small d-inline-flex align-items-center gap-1">
+            <div class="text-center mt-3">
+                <a href="${pageContext.request.contextPath}/login" class="back-link">
                     <i class="bi bi-arrow-left"></i>
                     <span>Quay lại Đăng nhập</span>
                 </a>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<!-- Bootstrap 5 JS Bundle -->
+<!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom Auth JS -->
+<script src="${pageContext.request.contextPath}/assets/js/auth.js"></script>
 
 <script>
-    function togglePasswordVisibility(fieldId, toggleEl) {
-        const input = document.getElementById(fieldId);
-        const icon = toggleEl.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('bi-eye');
-            icon.classList.add('bi-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye');
+    // Live match check for newPassword & confirmPassword
+    document.addEventListener('DOMContentLoaded', function() {
+        const pass = document.getElementById('newPassword');
+        const confirm = document.getElementById('confirmPassword');
+        const hint = document.getElementById('passwordMatchHint');
+        if (!pass || !confirm) return;
+
+        function checkMatch() {
+            if (!confirm.value) {
+                if (hint) hint.textContent = '';
+                confirm.setCustomValidity('');
+                return;
+            }
+            if (pass.value !== confirm.value) {
+                if (hint) {
+                    hint.textContent = 'Mật khẩu xác nhận không khớp!';
+                    hint.className = 'form-hint text-danger';
+                }
+                confirm.setCustomValidity('Mật khẩu xác nhận không khớp!');
+            } else {
+                if (hint) {
+                    hint.textContent = 'Mật khẩu khớp nhau';
+                    hint.className = 'form-hint text-success';
+                }
+                confirm.setCustomValidity('');
+            }
         }
-    }
+
+        pass.addEventListener('input', checkMatch);
+        confirm.addEventListener('input', checkMatch);
+    });
 </script>
+
 </body>
 </html>
-

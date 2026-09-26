@@ -50,13 +50,14 @@ public class EmailUtil {
      * @return true if email sent successfully, false otherwise
      */
     public static boolean sendOtpEmail(String recipientEmail, String recipientName, String otp) {
-        // If not configured, log reminder
+        // If not configured, log reminder and return true for local development
         if ("your_email@gmail.com".equals(SENDER_EMAIL) || "your_app_password_here".equals(SENDER_PASSWORD)) {
-            LOGGER.warning("=== [EmailUtil WARNING] ===");
+            LOGGER.warning("=== [EmailUtil DEV MODE] ===");
             LOGGER.warning("Gmail sender email or App Password has NOT been configured yet in EmailUtil.java!");
             LOGGER.warning("OTP for " + recipientEmail + " is: [" + otp + "]");
-            LOGGER.warning("You can use this OTP directly from database or terminal to complete the password reset flow.");
+            LOGGER.warning("Dev mode: Simulating successful OTP email sending. Use the OTP above to proceed.");
             LOGGER.warning("==============================");
+            return true;
         }
 
         Properties props = new Properties();
@@ -65,6 +66,9 @@ public class EmailUtil {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+        props.put("mail.smtp.connectiontimeout", "10000");
+        props.put("mail.smtp.timeout", "10000");
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override

@@ -132,85 +132,16 @@ public class UserDAO extends DBContext {
     }
 
     /**
-     * Save generated OTP and its expiry time for password recovery.
-     *
-     * @param email         User's email
-     * @param otp           6-digit OTP
-     * @param expiryMinutes Validity duration in minutes (e.g., 5)
-     * @return true if updated successfully
-     */
-    public boolean saveOTP(String email, String otp, int expiryMinutes) {
-        String sql = "UPDATE users "
-                   + "SET reset_otp = ?, "
-                   + "    otp_expiry_time = DATEADD(minute, ?, GETDATE()) "
-                   + "WHERE LOWER(email) = LOWER(?)";
-
-        Connection conn = getConnection();
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in saveOTP");
-            return false;
-        }
-
-        try (conn;
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, otp);
-            ps.setInt(2, expiryMinutes);
-            ps.setString(3, email.trim());
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error saving OTP for email: " + email, ex);
-        }
-        return false;
-    }
-
-    /**
-     * Verify if the provided OTP matches and has not expired.
-     *
-     * @param email User's email
-     * @param otp   OTP code to verify
-     * @return true if OTP is valid and within expiry time
-     */
-    public boolean verifyOTP(String email, String otp) {
-        String sql = "SELECT user_id FROM users "
-                   + "WHERE LOWER(email) = LOWER(?) "
-                   + "  AND reset_otp = ? "
-                   + "  AND otp_expiry_time >= GETDATE()";
-
-        Connection conn = getConnection();
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in verifyOTP");
-            return false;
-        }
-
-        try (conn;
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, email.trim());
-            ps.setString(2, otp.trim());
-
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error verifying OTP for email: " + email, ex);
-        }
-        return false;
-    }
-
-    /**
-     * Reset password after successful OTP verification, clear OTP fields.
+     * Reset password for a user.
      *
      * @param email       User's email
-     * @param newPassword Raw or hashed new password
+     * @param newPassword Raw new password (will be hashed)
      * @return true if updated successfully
      */
     public boolean resetPassword(String email, String newPassword) {
         String sql = "UPDATE users "
                    + "SET password_hash = ?, "
-                   + "    reset_otp = NULL, "
-                   + "    otp_expiry_time = NULL "
+                   + "    updated_at = GETDATE() "
                    + "WHERE LOWER(email) = LOWER(?)";
 
         Connection conn = getConnection();
@@ -369,16 +300,6 @@ public class UserDAO extends DBContext {
         // Status in DB is VARCHAR ('ACTIVE', 'LOCKED', etc.)
         String statusStr = rs.getString("status");
         user.setStatus("ACTIVE".equalsIgnoreCase(statusStr) ? 1 : 0);
-
-        // Optional OTP fields (if present in the ResultSet)
-        try {
-            user.setResetOtp(rs.getString("reset_otp"));
-        } catch (SQLException ignored) {
-        }
-        try {
-            user.setOtpExpiryTime(rs.getTimestamp("otp_expiry_time"));
-        } catch (SQLException ignored) {
-        }
 
         user.setCreatedAt(rs.getTimestamp("created_at"));
         return user;

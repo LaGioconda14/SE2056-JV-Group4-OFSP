@@ -16,8 +16,6 @@ public class User implements Serializable {
     private String phone;
     private String role;
     private int status;
-    private String resetOtp;
-    private Timestamp otpExpiryTime;
     private Timestamp createdAt;
 
     public User() {
@@ -33,8 +31,7 @@ public class User implements Serializable {
         this.status = status;
     }
 
-    public User(int id, String email, String password, String fullName, String phone, String role, int status, 
-                String resetOtp, Timestamp otpExpiryTime, Timestamp createdAt) {
+    public User(int id, String email, String password, String fullName, String phone, String role, int status, Timestamp createdAt) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -42,8 +39,6 @@ public class User implements Serializable {
         this.phone = phone;
         this.role = role;
         this.status = status;
-        this.resetOtp = resetOtp;
-        this.otpExpiryTime = otpExpiryTime;
         this.createdAt = createdAt;
     }
 
@@ -101,22 +96,6 @@ public class User implements Serializable {
 
     public void setStatus(int status) {
         this.status = status;
-    }
-
-    public String getResetOtp() {
-        return resetOtp;
-    }
-
-    public void setResetOtp(String resetOtp) {
-        this.resetOtp = resetOtp;
-    }
-
-    public Timestamp getOtpExpiryTime() {
-        return otpExpiryTime;
-    }
-
-    public void setOtpExpiryTime(Timestamp otpExpiryTime) {
-        this.otpExpiryTime = otpExpiryTime;
     }
 
     public Timestamp getCreatedAt() {
