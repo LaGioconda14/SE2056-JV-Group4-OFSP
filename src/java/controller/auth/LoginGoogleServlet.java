@@ -1,8 +1,6 @@
 package controller.auth;
 
-import dao.UserDAO;
 import java.io.IOException;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
@@ -13,8 +11,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.GoogleAccount;
 import model.User;
+import service.IUserService;
+import service.impl.UserServiceImpl;
 import util.GoogleOAuthUtil;
-import util.PasswordUtil;
 
 /**
  * Controller handling Google OAuth 2.0 Sign-In and Registration.
@@ -23,7 +22,7 @@ import util.PasswordUtil;
 public class LoginGoogleServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(LoginGoogleServlet.class.getName());
-    private final UserDAO userDAO = new UserDAO();
+    private final IUserService userService = new UserServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -68,48 +67,8 @@ public class LoginGoogleServlet extends HttpServlet {
             String accessToken = GoogleOAuthUtil.getToken(code);
             GoogleAccount googleUser = GoogleOAuthUtil.getUserInfo(accessToken);
 
-            if (googleUser == null || googleUser.getEmail() == null || googleUser.getEmail().trim().isEmpty()) {
-                session.setAttribute("errorMessage", "Không thể lấy thông tin tài khoản Google. Vui lòng thử lại!");
-                response.sendRedirect(request.getContextPath() + "/login");
-                return;
-            }
-
-            String googleEmail = googleUser.getEmail().trim().toLowerCase();
-            User user = userDAO.findByEmail(googleEmail);
-
-            // Step 3: Handle Auto-Registration if user does not exist
-            if (user == null) {
-                User newUser = new User();
-                newUser.setEmail(googleEmail);
-
-                String name = googleUser.getName();
-                if (name == null || name.trim().isEmpty()) {
-                    name = googleEmail.split("@")[0];
-                }
-                newUser.setFullName(name);
-
-                // Generate random secure password for OAuth account
-                newUser.setPassword(PasswordUtil.hashPassword(UUID.randomUUID().toString()));
-                newUser.setPhone(null);
-                newUser.setRole("CUSTOMER");
-                newUser.setStatus(1); // ACTIVE
-
-                boolean registered = userDAO.register(newUser);
-                if (!registered) {
-                    session.setAttribute("errorMessage", "Đăng ký tài khoản Google mới thất bại. Vui lòng thử lại!");
-                    response.sendRedirect(request.getContextPath() + "/login");
-                    return;
-                }
-
-                user = userDAO.findByEmail(googleEmail);
-            }
-
-            // Step 4: Validate user active status
-            if (user == null || !user.isActive()) {
-                session.setAttribute("errorMessage", "Tài khoản của bạn đang bị khóa. Vui lòng liên hệ quản trị viên!");
-                response.sendRedirect(request.getContextPath() + "/login");
-                return;
-            }
+            // Step 3 & 4: Process login or auto-register via Service
+            User user = userService.processGoogleLogin(googleUser);
 
             // Step 5: Login successful -> Save to session
             session.setAttribute("user", user);

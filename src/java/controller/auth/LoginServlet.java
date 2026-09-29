@@ -1,6 +1,5 @@
 package controller.auth;
 
-import dao.UserDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -10,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import model.User;
+import service.IUserService;
+import service.impl.UserServiceImpl;
 
 /**
  * Controller handling User Login and Remember Me Cookies.
@@ -17,7 +18,7 @@ import model.User;
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
+    private final IUserService userService = new UserServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -74,27 +75,11 @@ public class LoginServlet extends HttpServlet {
         String password = request.getParameter("password");
         String remember = request.getParameter("remember");
 
-        // Basic input validation
-        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
-            request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ Email và Mật khẩu!");
-            request.setAttribute("email", email);
-            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
-            return;
-        }
-
-        email = email.trim();
-        User user = userDAO.checkLogin(email, password);
-
-        if (user == null) {
-            request.setAttribute("errorMessage", "Email hoặc mật khẩu không chính xác!");
-            request.setAttribute("email", email);
-            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
-            return;
-        }
-
-        // Check active status
-        if (!user.isActive()) {
-            request.setAttribute("errorMessage", "Tài khoản của bạn đang bị khóa. Vui lòng liên hệ hỗ trợ!");
+        User user;
+        try {
+            user = userService.login(email, password);
+        } catch (Exception ex) {
+            request.setAttribute("errorMessage", ex.getMessage());
             request.setAttribute("email", email);
             request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
             return;

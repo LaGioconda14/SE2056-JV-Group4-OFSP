@@ -1,6 +1,5 @@
 package controller.auth;
 
-import dao.UserDAO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -8,6 +7,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import service.IUserService;
+import service.impl.UserServiceImpl;
 
 /**
  * Controller handling OTP verification and Password Reset.
@@ -15,7 +16,7 @@ import javax.servlet.http.HttpSession;
 @WebServlet(name = "ResetPasswordServlet", urlPatterns = {"/reset-password"})
 public class ResetPasswordServlet extends HttpServlet {
 
-    private final UserDAO userDAO = new UserDAO();
+    private final IUserService userService = new UserServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -57,28 +58,9 @@ public class ResetPasswordServlet extends HttpServlet {
         request.setAttribute("email", email);
         request.setAttribute("otp", otp);
 
-        // Validation
-        if (email == null || email.trim().isEmpty() ||
-            otp == null || otp.trim().isEmpty() ||
-            newPassword == null || newPassword.trim().isEmpty() ||
-            confirmPassword == null || confirmPassword.trim().isEmpty()) {
-            
-            request.setAttribute("errorMessage", "Vui lòng điền đầy đủ tất cả các trường thông tin!");
-            request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
-            return;
-        }
-
-        email = email.trim();
-        otp = otp.trim();
-
-        if (newPassword.length() < 6) {
-            request.setAttribute("errorMessage", "Mật khẩu mới phải có ít nhất 6 ký tự!");
-            request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
-            return;
-        }
-
-        if (!newPassword.equals(confirmPassword)) {
-            request.setAttribute("errorMessage", "Mật khẩu xác nhận không khớp với mật khẩu mới!");
+        // Basic check for empty OTP
+        if (otp == null || otp.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "Vui lòng nhập mã OTP!");
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
@@ -111,7 +93,7 @@ public class ResetPasswordServlet extends HttpServlet {
         }
 
         // Kiểm tra email khớp với email đã nhận mã OTP
-        if (!email.trim().equalsIgnoreCase(sessionEmail.trim())) {
+        if (email == null || !email.trim().equalsIgnoreCase(sessionEmail.trim())) {
             request.setAttribute("errorMessage", "Email không khớp với địa chỉ đã nhận mã xác thực OTP!");
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
@@ -124,17 +106,18 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        // Reset password in database
-        boolean isReset = userDAO.resetPassword(email, newPassword);
-        if (isReset) {
+        // Reset password via Service
+        try {
+            userService.resetPassword(email, newPassword, confirmPassword);
+
             session.removeAttribute("resetEmail");
             session.removeAttribute("resetOtp");
             session.removeAttribute("otpExpiryTime");
 
             session.setAttribute("successMessage", "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.");
             response.sendRedirect(request.getContextPath() + "/login");
-        } else {
-            request.setAttribute("errorMessage", "Có lỗi xảy ra trong quá trình cập nhật mật khẩu. Vui lòng thử lại!");
+        } catch (Exception ex) {
+            request.setAttribute("errorMessage", ex.getMessage());
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
         }
     }
