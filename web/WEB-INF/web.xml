@@ -89,6 +89,81 @@
         <url-pattern>/profile</url-pattern>
     </servlet-mapping>
 
+    <!-- Admin Servlets -->
+    <servlet>
+        <servlet-name>AdminDashboardServlet</servlet-name>
+        <servlet-class>controller.admin.AdminDashboardServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminDashboardServlet</servlet-name>
+        <url-pattern>/admin</url-pattern>
+        <url-pattern>/admin/dashboard</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminOrderServlet</servlet-name>
+        <servlet-class>controller.admin.AdminOrderServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminOrderServlet</servlet-name>
+        <url-pattern>/admin/orders</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminProductServlet</servlet-name>
+        <servlet-class>controller.admin.AdminProductServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminProductServlet</servlet-name>
+        <url-pattern>/admin/products</url-pattern>
+        <url-pattern>/admin/product-moderation</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminCategoryServlet</servlet-name>
+        <servlet-class>controller.admin.AdminCategoryServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminCategoryServlet</servlet-name>
+        <url-pattern>/admin/categories</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminUserServlet</servlet-name>
+        <servlet-class>controller.admin.AdminUserServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminUserServlet</servlet-name>
+        <url-pattern>/admin/users</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminShopServlet</servlet-name>
+        <servlet-class>controller.admin.AdminShopServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminShopServlet</servlet-name>
+        <url-pattern>/admin/shops</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminVoucherServlet</servlet-name>
+        <servlet-class>controller.admin.AdminVoucherServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminVoucherServlet</servlet-name>
+        <url-pattern>/admin/vouchers</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>AdminDisputeServlet</servlet-name>
+        <servlet-class>controller.admin.AdminDisputeServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AdminDisputeServlet</servlet-name>
+        <url-pattern>/admin/disputes</url-pattern>
+    </servlet-mapping>
+
     <!-- Session Configuration (30 minutes) -->
     <session-config>
         <session-timeout>30</session-timeout>

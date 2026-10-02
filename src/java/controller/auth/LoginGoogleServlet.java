@@ -77,7 +77,11 @@ public class LoginGoogleServlet extends HttpServlet {
             }
 
             session.setAttribute("successMessage", "Đăng nhập Google thành công! Xin chào " + user.getFullName() + ".");
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/admin");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home.jsp");
+            }
 
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Google Authentication Error", ex);
