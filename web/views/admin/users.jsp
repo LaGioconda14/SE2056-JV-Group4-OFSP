@@ -28,12 +28,7 @@
             <!-- 1. Page Header & Actions -->
             <div class="users-page-header">
                 <div>
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge-protocol-tag">HỆ THỐNG QUẢN TRỊ FRESHFRUIT</span>
-                        <span class="protocol-subtext">• RBAC Security Protocol v2.4</span>
-                    </div>
                     <h1 class="users-header-title">Quản Lý Người Dùng & Phân Quyền (Users & Permissions)</h1>
-                    <p class="users-header-desc">Quản trị danh sách người dùng toàn sàn, tài khoản nhân sự nội bộ và ma trận phân quyền vai trò (RBAC).</p>
                 </div>
                 <div class="users-header-actions">
                     <button type="button" class="btn-export-list" onclick="alert('Đang xuất danh sách tài khoản & ma trận phân quyền (CSV/Excel)...');">
@@ -114,73 +109,68 @@
 
             <!-- 3. Segmented Navigation Tabs -->
             <div class="users-rbac-tabs">
-                <a href="${pageContext.request.contextPath}/admin/users?role=ADMIN_STAFF" class="rbac-tab-item active">
-                    <i class="bi bi-person-badge"></i>
-                    <span>Nhân sự & Phân quyền nội bộ</span>
-                    <span class="rbac-badge">46</span>
+                <a href="${pageContext.request.contextPath}/admin/users?role=ALL" class="rbac-tab-item ${selectedRole == 'ALL' ? 'active' : ''}">
+                    <i class="bi bi-people"></i>
+                    <span>Tất cả tài khoản</span>
+                    <span class="rbac-badge">${not empty roleCounts.total ? roleCounts.total : 0}</span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/users?role=CUSTOMER" class="rbac-tab-item">
+                <a href="${pageContext.request.contextPath}/admin/users?role=ADMIN_STAFF" class="rbac-tab-item ${selectedRole == 'ADMIN_STAFF' ? 'active' : ''}">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Nhân sự nội bộ</span>
+                    <span class="rbac-badge">${not empty roleCounts.adminStaff ? roleCounts.adminStaff : 0}</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/admin/users?role=SHOP_OWNER" class="rbac-tab-item ${selectedRole == 'SHOP_OWNER' ? 'active' : ''}">
+                    <i class="bi bi-shop"></i>
+                    <span>Chủ gian hàng</span>
+                    <span class="rbac-badge">${not empty roleCounts.shopOwner ? roleCounts.shopOwner : 0}</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/admin/users?role=CUSTOMER" class="rbac-tab-item ${selectedRole == 'CUSTOMER' ? 'active' : ''}">
                     <i class="bi bi-person"></i>
-                    <span>Tài khoản Khách hàng</span>
-                    <span class="rbac-badge">12,216</span>
+                    <span>Khách hàng</span>
+                    <span class="rbac-badge">${not empty roleCounts.customer ? roleCounts.customer : 0}</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/admin/users?role=DRIVER" class="rbac-tab-item ${selectedRole == 'DRIVER' ? 'active' : ''}">
+                    <i class="bi bi-truck"></i>
+                    <span>Tài xế giao nhận</span>
+                    <span class="rbac-badge">${not empty roleCounts.driver ? roleCounts.driver : 0}</span>
                 </a>
                 <a href="#roleMatrixSection" class="rbac-tab-item">
                     <i class="bi bi-diagram-3"></i>
-                    <span>Ma trận Vai trò & Quyền hạn (Roles & RBAC)</span>
-                    <span class="rbac-badge">6</span>
+                    <span>Ma trận RBAC</span>
                 </a>
             </div>
 
             <!-- 4. Filter Toolbar -->
-            <div class="users-filter-card">
+            <form method="GET" action="${pageContext.request.contextPath}/admin/users" class="users-filter-card" id="userFilterForm">
+                <!-- Giữ vai trò đang chọn từ hàng tab phía trên -->
+                <input type="hidden" name="role" value="${selectedRole}">
+
                 <div class="users-search-pill">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="userSearchInput" placeholder="Tìm theo tên, email, mã nhân viên, vai trò...">
+                    <input type="text" name="search" id="userSearchInput" value="<c:out value='${searchKeyword}'/>" placeholder="Tìm theo tên, email, sđt, ID, gian hàng...">
                 </div>
 
                 <div class="users-dropdown-filters">
-                    <!-- Dropdown: Vai trò -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span>Vai trò: Tất cả vai trò (46)</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">Tất cả vai trò (46)</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">Super Admin (4)</a></li>
-                            <li><a class="dropdown-item" href="#">Moderator Sản phẩm (18)</a></li>
-                            <li><a class="dropdown-item" href="#">Kế toán Tài chính (14)</a></li>
-                            <li><a class="dropdown-item" href="#">CSKH & Trọng tài (10)</a></li>
-                        </ul>
-                    </div>
+                    <!-- Dropdown: Trạng thái tài khoản -->
+                    <select name="status" id="statusFilterSelect" class="filter-select-btn" onchange="this.form.submit()">
+                        <option value="ALL" ${selectedStatus == 'ALL' ? 'selected' : ''}>Trạng thái: Tất cả</option>
+                        <option value="ACTIVE" ${selectedStatus == 'ACTIVE' ? 'selected' : ''}>Đang hoạt động (ACTIVE)</option>
+                        <option value="INACTIVE" ${selectedStatus == 'INACTIVE' ? 'selected' : ''}>Chưa kích hoạt (INACTIVE)</option>
+                        <option value="BLOCKED" ${selectedStatus == 'BLOCKED' ? 'selected' : ''}>Bị khóa (BLOCKED)</option>
+                    </select>
 
-                    <!-- Dropdown: Trạng thái -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span>Trạng thái: Tất cả</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">Tất cả trạng thái</a></li>
-                            <li><a class="dropdown-item" href="#">Đang hoạt động</a></li>
-                            <li><a class="dropdown-item" href="#">Tạm dừng</a></li>
-                        </ul>
-                    </div>
+                    <button type="submit" class="btn btn-sm text-white d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px; background: #15803d; border: 1px solid #15803d; font-weight: 600;">
+                        <i class="bi bi-funnel"></i> Lọc
+                    </button>
 
-                    <!-- Dropdown: 2FA -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span>2FA: Đã bật</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">2FA: Đã bật</a></li>
-                            <li><a class="dropdown-item" href="#">Google Auth</a></li>
-                            <li><a class="dropdown-item" href="#">FIDO2 Security Key</a></li>
-                            <li><a class="dropdown-item" href="#">SMS OTP</a></li>
-                            <li><a class="dropdown-item" href="#">Chưa kích hoạt 2FA</a></li>
-                        </ul>
-                    </div>
+                    <!-- Nút Đặt lại / Reset -->
+                    <c:if test="${(not empty selectedRole && selectedRole != 'ALL') || (not empty selectedStatus && selectedStatus != 'ALL') || not empty searchKeyword}">
+                        <a href="${pageContext.request.contextPath}/admin/users" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px;">
+                            <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
+                        </a>
+                    </c:if>
                 </div>
-            </div>
+            </form>
 
             <!-- 5. Staff & Permissions Table -->
             <div class="users-table-container">
@@ -206,7 +196,13 @@
                                         <div>
                                             <div class="d-flex align-items-center">
                                                 <span class="user-meta-name">${u.fullName}</span>
-                                                <span class="role-pill-super ms-1">${u.roleName}</span>
+                                                <c:choose>
+                                                    <c:when test="${u.roleName == 'ADMIN'}"><span class="role-pill-super ms-1">ADMIN</span></c:when>
+                                                    <c:when test="${u.roleName == 'STAFF'}"><span class="role-pill-mod ms-1">STAFF</span></c:when>
+                                                    <c:when test="${u.roleName == 'SHOP_OWNER'}"><span class="role-pill-shopmgr ms-1">SHOP OWNER</span></c:when>
+                                                    <c:when test="${u.roleName == 'DRIVER'}"><span class="role-pill-cskh ms-1">DRIVER</span></c:when>
+                                                    <c:otherwise><span class="role-pill-accountant ms-1">${u.roleName}</span></c:otherwise>
+                                                </c:choose>
                                             </div>
                                             <div class="user-meta-sub">${u.email} • ${u.phone} • ID: #${u.userId}</div>
                                         </div>

@@ -59,23 +59,23 @@
                             <i class="bi bi-diagram-3"></i>
                         </div>
                     </div>
-                    <div class="user-summary-val">${not empty categoriesList ? categoriesList.size() : 6} <span class="fs-6 fw-normal text-muted">Ngành hàng</span></div>
+                    <div class="user-summary-val">${not empty totalCategories ? totalCategories : 26} <span class="fs-6 fw-normal text-muted">Ngành & Phân loại</span></div>
                     <div class="text-success d-flex align-items-center gap-1" style="font-size: 0.72rem;">
-                        <i class="bi bi-check-circle-fill"></i> 100% đang hiển thị live
+                        <i class="bi bi-check-circle-fill"></i> ${not empty activeCategoriesCount ? activeCategoriesCount : 26} đang kích hoạt
                     </div>
                 </div>
 
-                <!-- Card 2: DANH MỤC PHỤ (CẤP 2) -->
+                <!-- Card 2: TỔNG SẢN PHẨM / SKU -->
                 <div class="user-summary-card">
                     <div class="d-flex align-items-center justify-content-between mb-1">
-                        <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">DANH MỤC PHỤ (CẤP 2)</span>
+                        <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">TỔNG SKU SẢN PHẨM</span>
                         <div class="user-summary-icon-box bg-purple-subtle">
                             <i class="bi bi-share"></i>
                         </div>
                     </div>
-                    <div class="user-summary-val">28 <span class="fs-6 fw-normal text-muted">Phân loại quả</span></div>
+                    <div class="user-summary-val">${not empty totalActiveSkus ? totalActiveSkus : 11} <span class="fs-6 fw-normal text-muted">SKU liên kết</span></div>
                     <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.72rem;">
-                        <i class="bi bi-box-seam"></i> 350+ sản phẩm liên kết sàn
+                        <i class="bi bi-box-seam"></i> Đang mở bán trên toàn sàn
                     </div>
                 </div>
 
@@ -101,10 +101,62 @@
                             <i class="bi bi-percent"></i>
                         </div>
                     </div>
-                    <div class="user-summary-val">5.0%</div>
+                    <div class="user-summary-val">8.0%</div>
                     <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.72rem;">
-                        <i class="bi bi-graph-up"></i> Biên độ dao động: 3.5% - 8.0%
+                        <i class="bi bi-graph-up"></i> Biên độ chiết khấu sàn
                     </div>
+                </div>
+            </div>
+
+            <!-- 2.5 Visual Fruit Mega Menu Showcase (Farmers Market Style) -->
+            <div class="fruit-showcase-panel">
+                <div class="fruit-showcase-header">
+                    <div class="fruit-showcase-title-box">
+                        <div class="fruit-showcase-icon">
+                            <i class="bi bi-basket-fill"></i>
+                        </div>
+                        <div>
+                            <h2 class="fruit-showcase-title">MỤC TRÁI CÂY (KIẾN TRÚC PHÂN LOẠI & MEGA MENU)</h2>
+                            <p class="fruit-showcase-desc">Thiết kế theo chuẩn chuỗi Farmers Market: 5 nhóm ngành quả chiến lược, phân loại chuyên sâu theo xuất xứ, sơ chế và mùa vụ.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.72rem; font-weight: 700;">
+                            <i class="bi bi-patch-check-fill me-1"></i> Chuẩn Farmers Market
+                        </span>
+                        <a href="${pageContext.request.contextPath}/admin/categories" class="btn btn-sm btn-outline-secondary" style="font-size: 0.72rem; border-radius: 8px;">
+                            <i class="bi bi-grid-fill me-1"></i> Xem tất cả
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5 Circular Category Groups Grid -->
+                <div class="fruit-categories-grid">
+                    <c:forEach items="${fruitMegaMenu}" var="g">
+                        <div class="fruit-cat-card">
+                            <div class="fruit-cat-img-box">
+                                <img src="${g.imageUrl}" alt="${g.categoryName}" class="fruit-cat-circle-img" onerror="this.src='https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=300&h=300&fit=crop'">
+                            </div>
+                            <a href="${pageContext.request.contextPath}/admin/categories?parent=${g.categoryId}" class="fruit-cat-title" title="Lọc theo nhóm ${g.categoryName}">
+                                ${g.categoryName}
+                            </a>
+                            <span class="fruit-cat-sku-badge">${g.totalSkus} SKU liên kết</span>
+
+                            <!-- Subcategories Link List -->
+                            <ul class="fruit-cat-sub-list">
+                                <c:forEach items="${g.subCategories}" var="sub">
+                                    <li>
+                                        <a href="${pageContext.request.contextPath}/admin/categories?search=${sub.slug}" class="fruit-cat-sub-link" title="Xem sản phẩm ${sub.categoryName}">
+                                            <span>${sub.categoryName}</span>
+                                            <c:if test="${sub.activeSkus > 0}">
+                                                <span class="sub-count badge bg-light text-muted border">${sub.activeSkus}</span>
+                                            </c:if>
+                                        </a>
+                                    </li>
+                                </c:forEach>
+                            </ul>
+                        </div>
+                    </c:forEach>
                 </div>
             </div>
 
@@ -119,106 +171,48 @@
                                 <i class="bi bi-diagram-3-fill text-success"></i>
                                 <strong class="text-dark" style="font-size: 0.85rem;">Cây Danh Mục Toàn Sàn</strong>
                             </div>
-                            <span class="badge bg-light text-muted border" style="font-size: 0.65rem;">6 Cấp 1</span>
-                        </div>
-
-                        <!-- Tree Search Box -->
-                        <div class="users-search-pill w-100 mb-3" style="max-width: 100%;">
-                            <i class="bi bi-search"></i>
-                            <input type="text" id="catTreeSearch" placeholder="Tìm kiếm nhanh danh mục...">
+                            <span class="badge bg-light text-muted border" style="font-size: 0.65rem;">${not empty totalCategories ? totalCategories : 26} Phân Loại</span>
                         </div>
 
                         <!-- Tree Nodes List -->
-                        <div class="d-flex flex-column">
-                            <!-- Node 1: Active / Expanded -->
-                            <div>
-                                <a href="javascript:void(0)" class="tree-node-root active">
-                                    <div class="d-flex align-items-center gap-2 text-truncate">
-                                        <i class="bi bi-chevron-down" style="font-size: 0.65rem;"></i>
-                                        <i class="bi bi-folder-fill"></i>
-                                        <span class="text-truncate">Trái Cây Nội Địa & Đặc...</span>
-                                    </div>
-                                    <span class="tree-badge">14</span>
-                                </a>
-
-                                <!-- Children Nodes -->
-                                <div class="tree-sub-container">
-                                    <a href="javascript:void(0)" class="tree-sub-item">
-                                        <div class="d-flex align-items-center gap-2 text-truncate">
-                                            <span class="dot-green" style="width: 5px; height: 5px;"></span>
-                                            <span class="text-truncate">Quả Có Múi (Bưởi, Cam, ...</span>
-                                        </div>
-                                        <span class="sub-badge">3 SP</span>
-                                    </a>
-                                    <a href="javascript:void(0)" class="tree-sub-item">
-                                        <div class="d-flex align-items-center gap-2 text-truncate">
-                                            <span class="dot-green" style="width: 5px; height: 5px;"></span>
-                                            <span class="text-truncate">Quả Nhiệt Đới (Xoài, Bơ, ...</span>
-                                        </div>
-                                        <span class="sub-badge">4 SP</span>
-                                    </a>
-                                    <a href="javascript:void(0)" class="tree-sub-item">
-                                        <div class="d-flex align-items-center gap-2 text-truncate">
-                                            <span class="dot-green" style="width: 5px; height: 5px;"></span>
-                                            <span class="text-truncate">Sầu Riêng & Mít Đắc Nông</span>
-                                        </div>
-                                        <span class="sub-badge">2 SP</span>
-                                    </a>
-                                    <a href="javascript:void(0)" class="tree-sub-item">
-                                        <div class="d-flex align-items-center gap-2 text-truncate">
-                                            <span class="dot-green" style="width: 5px; height: 5px;"></span>
-                                            <span class="text-truncate">Dâu Tây & Quả Mọng Xứ L...</span>
-                                        </div>
-                                        <span class="sub-badge">5 SP</span>
-                                    </a>
+                        <div class="d-flex flex-column" id="catTreeList">
+                            <!-- Root: Trái Cây -->
+                            <a href="${pageContext.request.contextPath}/admin/categories?search=trai-cay" class="tree-node-root ${searchKeyword == 'trai-cay' ? 'active' : ''}">
+                                <div class="d-flex align-items-center gap-2 text-truncate">
+                                    <i class="bi bi-basket-fill text-success"></i>
+                                    <strong>Trái Cây (Root)</strong>
                                 </div>
+                                <span class="tree-badge">${not empty totalActiveSkus ? totalActiveSkus : 11} SKU</span>
+                            </a>
+
+                            <!-- 5 Nhóm Trái Cây Sub-container -->
+                            <div class="tree-sub-container">
+                                <c:forEach items="${fruitMegaMenu}" var="fmg">
+                                    <a href="${pageContext.request.contextPath}/admin/categories?parent=${fmg.categoryId}" class="tree-sub-item ${selectedParent == fmg.categoryId.toString() ? 'bg-success text-white' : ''}">
+                                        <span class="text-truncate">• ${fmg.categoryName}</span>
+                                        <span class="sub-badge ${selectedParent == fmg.categoryId.toString() ? 'text-white' : ''}">${fmg.totalSkus} SKU</span>
+                                    </a>
+                                </c:forEach>
                             </div>
 
-                            <!-- Node 2 -->
-                            <a href="javascript:void(0)" class="tree-node-root">
-                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                    <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
-                                    <i class="bi bi-folder text-muted"></i>
-                                    <span class="text-truncate">Trái Cây Nhập Khẩu Ca...</span>
-                                </div>
-                                <span class="tree-badge">8</span>
-                            </a>
-
-                            <!-- Node 3 -->
-                            <a href="javascript:void(0)" class="tree-node-root">
-                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                    <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
-                                    <i class="bi bi-folder text-muted"></i>
-                                    <span class="text-truncate">Giỏ Quà Trái Cây & Hộp ...</span>
-                                </div>
-                                <span class="tree-badge">4</span>
-                            </a>
-
-                            <!-- Node 4 -->
-                            <a href="javascript:void(0)" class="tree-node-root">
-                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                    <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
-                                    <i class="bi bi-folder text-muted"></i>
-                                    <span class="text-truncate">Trái Cây Sấy Thăng Hoa ...</span>
-                                </div>
-                                <span class="tree-badge">6</span>
-                            </a>
-
-                            <!-- Node 5 -->
-                            <a href="javascript:void(0)" class="tree-node-root">
-                                <div class="d-flex align-items-center gap-2 text-truncate">
-                                    <i class="bi bi-chevron-right text-muted" style="font-size: 0.65rem;"></i>
-                                    <i class="bi bi-folder text-muted"></i>
-                                    <span class="text-truncate">Trái Cây Cắt Sẵn Eat-Cl...</span>
-                                </div>
-                                <span class="tree-badge">3</span>
-                            </a>
+                            <!-- Other Root Categories -->
+                            <c:forEach items="${allCategories}" var="node">
+                                <c:if test="${empty node.parentId && node.categoryId != 1}">
+                                    <a href="${pageContext.request.contextPath}/admin/categories?search=${node.slug}" class="tree-node-root ${searchKeyword == node.slug ? 'active' : ''}">
+                                        <div class="d-flex align-items-center gap-2 text-truncate">
+                                            <i class="bi ${not empty node.iconClass ? node.iconClass : 'bi-folder'}"></i>
+                                            <span class="text-truncate">${node.categoryName}</span>
+                                        </div>
+                                        <span class="tree-badge">${node.activeSkus} SKU</span>
+                                    </a>
+                                </c:if>
+                            </c:forEach>
                         </div>
 
                         <!-- Button Create Root Category -->
-                        <button type="button" class="btn-create-category-root" onclick="alert('Đang mở form tạo Ngành hàng Cấp 1...');">
+                        <button type="button" class="btn-create-category-root mt-3" onclick="alert('Đang mở form tạo Ngành hàng Cấp 1...');">
                             <i class="bi bi-folder-plus text-success"></i>
-                            <span>Tạo Ngành Hàng Cấp 1 Mới</span>
+                            <span>Tạo Ngành Hàng Mới</span>
                         </button>
                     </div>
 
@@ -248,18 +242,18 @@
                     </div>
                 </div>
 
-                <!-- Right Column: Detail Header & Sub-categories Table -->
+                <!-- Right Column: Detail Header, Filter & Categories Table -->
                 <div>
                     <!-- Detail Header Banner -->
-                    <div class="cat-detail-card">
+                    <div class="cat-detail-card mb-3">
                         <div class="d-flex align-items-center gap-2">
                             <div class="user-summary-icon-box bg-green-subtle">
-                                <i class="bi bi-flower1"></i>
+                                <i class="bi bi-diagram-3-fill text-success"></i>
                             </div>
                             <div>
-                                <h2 class="role-matrix-title mb-0" style="font-size: 1.05rem;">Trái Cây Nội Địa & Đặc Sản Vùng Miền</h2>
+                                <h2 class="role-matrix-title mb-0" style="font-size: 1.05rem;">Bảng Quản Trị Danh Mục & Chuỗi Lạnh</h2>
                                 <div class="text-muted" style="font-size: 0.72rem;">
-                                    Đang quản lý 14 danh mục con | Mã nhận diện ID: <code class="text-success fw-bold">CAT-VN-DOMESTIC</code>
+                                    Đang hiển thị <strong>${not empty categoriesList ? categoriesList.size() : 0}</strong> danh mục phân cấp • Chuỗi cung ứng nông sản tươi
                                 </div>
                             </div>
                         </div>
@@ -267,26 +261,68 @@
                         <div class="d-flex align-items-center gap-2">
                             <button type="button" class="btn-export-list" onclick="alert('Đang mở bảng cập nhật Take Rate hàng loạt...');">
                                 <i class="bi bi-percent"></i>
-                                <span>Cập nhật hoa hồng loạt</span>
+                                <span>Cập nhật hoa hồng</span>
                             </button>
-                            <button type="button" class="btn-add-admin" onclick="alert('Đang mở form thêm phân loại con...');">
-                                <i class="bi bi-plus-circle"></i>
-                                <span>Thêm Phân Loại Con</span>
+                            <button type="button" class="btn-add-admin" onclick="alert('Đang mở form thêm danh mục mới...');">
+                                <i class="bi bi-plus-circle-fill"></i>
+                                <span>Thêm Danh Mục Mới</span>
                             </button>
                         </div>
                     </div>
 
+                    <!-- Filter Toolbar -->
+                    <form method="GET" action="${pageContext.request.contextPath}/admin/categories" class="users-filter-card mb-3" id="catFilterForm">
+                        <!-- Giữ nhóm trực thuộc đang chọn từ Showcase / Cây danh mục phía trên -->
+                        <input type="hidden" name="parent" value="${selectedParent}">
+
+                        <div class="users-search-pill">
+                            <i class="bi bi-search"></i>
+                            <input type="text" name="search" id="catSearchInput" value="<c:out value='${searchKeyword}'/>" placeholder="Tìm tên danh mục, slug, mô tả...">
+                        </div>
+
+                        <div class="users-dropdown-filters">
+
+                            <!-- Dropdown: Trạng thái hiển thị -->
+                            <select name="status" id="catStatusSelect" class="filter-select-btn" onchange="this.form.submit()">
+                                <option value="ALL" ${selectedStatus == 'ALL' ? 'selected' : ''}>Trạng thái: Tất cả</option>
+                                <option value="ACTIVE" ${selectedStatus == 'ACTIVE' ? 'selected' : ''}>Đang hiển thị</option>
+                                <option value="INACTIVE" ${selectedStatus == 'INACTIVE' ? 'selected' : ''}>Đang tạm ẩn</option>
+                            </select>
+
+                            <button type="submit" class="btn btn-sm text-white d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px; background: #15803d; border: 1px solid #15803d; font-weight: 600;">
+                                <i class="bi bi-funnel"></i> Lọc
+                            </button>
+
+                            <!-- Nút Đặt lại / Reset -->
+                            <c:if test="${(not empty selectedStatus && selectedStatus != 'ALL') || not empty searchKeyword || (not empty selectedParent && selectedParent != 'ALL')}">
+                                <a href="${pageContext.request.contextPath}/admin/categories" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px;">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
+                                </a>
+                            </c:if>
+                        </div>
+                    </form>
+
                     <!-- Sub-items Table Card -->
                     <div class="shops-table-container">
                         <div class="shops-table-header">
-                            <div class="text-muted" style="font-size: 0.74rem;">
-                                <strong>5</strong> phân loại quả tiêu biểu • Bộ lọc: <span class="text-dark fw-bold">Tất cả mùa vụ</span>
+                            <div class="text-muted d-flex align-items-center flex-wrap gap-2" style="font-size: 0.74rem;">
+                                <span>Tìm thấy <strong>${not empty categoriesList ? categoriesList.size() : 0}</strong> danh mục</span>
+                                <span>• Trạng thái: <strong class="text-dark">${selectedStatus == 'ACTIVE' ? 'Đang hiển thị' : (selectedStatus == 'INACTIVE' ? 'Đang tạm ẩn' : 'Tất cả')}</strong></span>
+                                <c:if test="${not empty selectedParent && selectedParent != 'ALL'}">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-folder2-open"></i> Nhóm:
+                                        <c:forEach items="${fruitMegaMenu}" var="fm">
+                                            <c:if test="${selectedParent == fm.categoryId.toString()}">${fm.categoryName}</c:if>
+                                        </c:forEach>
+                                        <a href="${pageContext.request.contextPath}/admin/categories?status=${selectedStatus}&search=${searchKeyword}" class="text-danger ms-1 text-decoration-none fw-bold" title="Bỏ lọc nhóm">✕</a>
+                                    </span>
+                                </c:if>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Lọc mùa vụ">
-                                    <i class="bi bi-filter"></i>
+                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Làm mới" onclick="location.reload();">
+                                    <i class="bi bi-arrow-clockwise"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Tải xuống dữ liệu">
+                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Tải xuống dữ liệu" onclick="alert('Đang tải danh sách danh mục (.CSV)...');">
                                     <i class="bi bi-download"></i>
                                 </button>
                             </div>
@@ -295,10 +331,11 @@
                         <table class="shops-modern-table">
                             <thead>
                                 <tr>
-                                    <th>TÊN DANH MỤC & SLUG</th>
-                                    <th>MÙA VỤ THU HOẠCH</th>
+                                    <th>HÌNH ẢNH & TÊN DANH MỤC</th>
+                                    <th>CẤP BẬC / TRỰC THUỘC</th>
+                                    <th>BẢO QUẢN LẠNH</th>
                                     <th>TAKE RATE</th>
-                                    <th>SHOP & SẢN PHẨM</th>
+                                    <th>SKU LIÊN KẾT</th>
                                     <th>HIỂN THỊ</th>
                                     <th class="text-end">THAO TÁC</th>
                                 </tr>
@@ -308,14 +345,35 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <div class="user-summary-icon-box bg-green-subtle" style="width: 34px; height: 34px; font-size: 0.9rem; flex-shrink: 0;">
-                                                    <i class="bi bi-tag text-success"></i>
-                                                </div>
+                                                <c:choose>
+                                                    <c:when test="${not empty c.imageUrl}">
+                                                        <img src="${c.imageUrl}" alt="${c.categoryName}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid #86efac; flex-shrink: 0;" onerror="this.style.display='none'">
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <div class="user-summary-icon-box bg-green-subtle" style="width: 36px; height: 36px; font-size: 0.9rem; flex-shrink: 0;">
+                                                            <i class="bi ${not empty c.iconClass ? c.iconClass : 'bi-tag'} text-success"></i>
+                                                        </div>
+                                                    </c:otherwise>
+                                                </c:choose>
                                                 <div>
                                                     <strong class="text-dark" style="font-size: 0.82rem;">${c.categoryName}</strong>
                                                     <div class="text-muted" style="font-size: 0.68rem;">/${c.slug}</div>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${not empty c.parentName}">
+                                                    <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.7rem; font-weight: 600;">
+                                                        <i class="bi bi-folder2-open text-success me-1"></i>${c.parentName}
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.7rem; font-weight: 700;">
+                                                        <i class="bi bi-star-fill me-1"></i>Ngành Hàng Gốc (L1)
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                         <td>
                                             <span class="cert-pill-green" style="font-size: 0.65rem;">
@@ -345,7 +403,7 @@
                                 </c:forEach>
                                 <c:if test="${empty categoriesList}">
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">Chưa có danh mục nào.</td>
+                                        <td colspan="7" class="text-center text-muted py-4">Chưa có danh mục nào phù hợp điều kiện lọc.</td>
                                     </tr>
                                 </c:if>
                             </tbody>
@@ -353,8 +411,9 @@
 
                         <!-- Pagination Footer -->
                         <div class="users-table-footer">
-                            <span>Tổng cộng <strong>${not empty categoriesList ? categoriesList.size() : 0}</strong> danh mục toàn sàn</span>
+                            <span>Tổng cộng <strong>${not empty categoriesList ? categoriesList.size() : 0}</strong> danh mục hiển thị</span>
                         </div>
+                    </div>
                 </div>
             </div>
 

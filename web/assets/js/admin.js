@@ -492,9 +492,9 @@ document.addEventListener('DOMContentLoaded', function () {
         gradient.addColorStop(0, 'rgba(21, 128, 61, 0.35)');
         gradient.addColorStop(1, 'rgba(21, 128, 61, 0.01)');
 
-        const gmvLabels = window.platformChartLabels || ['01 May', '05 May', '10 May', '15 May', '20 May', '24 May', '30 May'];
-        const gmvValues = window.platformGmvData || [8, 18, 28, 42, 48, 55, 47];
-        const commValues = window.platformCommData || [2, 3.5, 5, 7, 8, 9.5, 9.2];
+        const gmvLabels = window.platformChartLabels || [];
+        const gmvValues = window.platformGmvData || [];
+        const commValues = window.platformCommData || [];
 
         new Chart(revenueCtx, {
             type: 'line',
@@ -509,20 +509,20 @@ document.addEventListener('DOMContentLoaded', function () {
                         borderWidth: 2.5,
                         fill: true,
                         tension: 0.4,
-                        pointRadius: [0, 0, 0, 0, 0, 5, 0],
+                        pointRadius: gmvValues.length > 0 ? 4 : 0,
                         pointBackgroundColor: '#15803d',
                         pointBorderColor: '#ffffff',
                         pointBorderWidth: 2
                     },
                     {
-                        label: 'Hoa Hồng 5%',
+                        label: 'Hoa Hồng Sàn',
                         data: commValues,
                         borderColor: '#ea580c',
                         borderWidth: 2,
                         borderDash: [4, 4],
                         fill: false,
                         tension: 0.4,
-                        pointRadius: 0
+                        pointRadius: commValues.length > 0 ? 3 : 0
                     }
                 ]
             },
@@ -538,11 +538,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         ticks: { color: '#94a3b8', font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" } }
                     },
                     y: {
-                        min: 0,
-                        max: 60,
+                        beginAtZero: true,
                         grid: { color: '#f8fafc' },
                         ticks: {
-                            stepSize: 10,
                             color: '#94a3b8',
                             font: { size: 10, family: "'Plus Jakarta Sans', sans-serif" },
                             callback: function(val) { return '₫' + val + 'M'; }
@@ -555,8 +553,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const categoryCtx = document.getElementById('categoryYieldChart');
     if (categoryCtx && typeof Chart !== 'undefined') {
-        const catLabels = window.platformCatLabels || ['Trái Cây Nhập Khẩu', 'Nông Sản & Nội Địa', 'Giỏ Quà Tặng & Hộp Biếu', 'Trái Cây Sấy & Snack Mộc'];
-        const catData = window.platformCatData || [38, 32, 20, 10];
+        const catLabels = window.platformCatLabels || [];
+        const catData = window.platformCatData || [];
 
         new Chart(categoryCtx, {
             type: 'doughnut',
@@ -564,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 labels: catLabels,
                 datasets: [{
                     data: catData,
-                    backgroundColor: ['#15803d', '#22c55e', '#ea580c', '#fb923c'],
+                    backgroundColor: ['#15803d', '#22c55e', '#ea580c', '#fb923c', '#3b82f6', '#06b6d4'],
                     borderWidth: 3,
                     borderColor: '#ffffff'
                 }]
@@ -587,8 +585,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const query = this.value.toLowerCase().trim();
             const rows = document.querySelectorAll('#usersTableBody tr');
             rows.forEach(row => {
+                if (row.querySelector('td[colspan]')) return;
                 const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
+                row.style.display = (!query || text.includes(query)) ? '' : 'none';
             });
         });
     }
@@ -600,8 +599,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const query = this.value.toLowerCase().trim();
             const rows = document.querySelectorAll('#shopsTableBody tr');
             rows.forEach(row => {
+                if (row.querySelector('td[colspan]')) return;
                 const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(query) ? '' : 'none';
+                row.style.display = (!query || text.includes(query)) ? '' : 'none';
             });
         });
     }
@@ -624,6 +624,33 @@ document.addEventListener('DOMContentLoaded', function () {
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    }
+
+    // Client-side quick filter for categories table
+    const catSearchInput = document.getElementById('catSearchInput');
+    if (catSearchInput) {
+        catSearchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#catSubTableBody tr');
+            rows.forEach(row => {
+                if (row.querySelector('td[colspan]')) return;
+                const text = row.textContent.toLowerCase();
+                row.style.display = (!query || text.includes(query)) ? '' : 'none';
+            });
+        });
+    }
+
+    // Client-side quick filter for category tree list
+    const catTreeSearch = document.getElementById('catTreeSearch');
+    if (catTreeSearch) {
+        catTreeSearch.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            const nodes = document.querySelectorAll('#catTreeList .tree-node-root');
+            nodes.forEach(node => {
+                const text = node.textContent.toLowerCase();
+                node.style.display = (!query || text.includes(query)) ? '' : 'none';
             });
         });
     }

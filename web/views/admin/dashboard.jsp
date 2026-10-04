@@ -31,7 +31,6 @@
                     <div>
                         <div class="d-flex align-items-center gap-2 mb-1">
                             <span class="badge-live-engine"><i class="bi bi-circle-fill text-success" style="font-size: 0.55rem;"></i> LIVE E-COMMERCE ENGINE</span>
-                            <span class="text-muted small">Cập nhật: Hôm nay, 14:35 (GMT+7)</span>
                         </div>
                         <h1 class="telemetry-banner-title">Tổng Quan Hoạt Động Sàn Nông Sản</h1>
                         <p class="telemetry-banner-desc mb-0">Giám sát dòng tiền GMV, chất lượng nhà vườn và phê duyệt kiểm định sản phẩm toàn hệ thống FreshFruit.</p>
@@ -40,14 +39,14 @@
                         <div class="banner-pill-stat">
                             <i class="bi bi-shop text-success fs-5"></i>
                             <div>
-                                <span class="fw-bold text-dark fs-6">${not empty stats.activeShopsCount ? stats.activeShopsCount : 4}</span>
+                                <span class="fw-bold text-dark fs-6">${stats.activeShopsCount}</span>
                                 <div class="text-muted" style="font-size: 0.65rem; line-height: 1.1;">Gian hàng<br>hoạt động</div>
                             </div>
                         </div>
                         <div class="banner-pill-stat">
                             <i class="bi bi-shield-check text-primary fs-5"></i>
                             <div>
-                                <span class="fw-bold text-dark fs-6">100%</span>
+                                <span class="fw-bold text-dark fs-6">${stats.certifiedProductRate}%</span>
                                 <div class="text-muted" style="font-size: 0.65rem; line-height: 1.1;">Chuẩn VietGAP /<br>GlobalGAP</div>
                             </div>
                         </div>
@@ -63,13 +62,13 @@
                         <span class="kpi-label">TỔNG GMV TOÀN SÀN</span>
                         <div class="kpi-icon-box bg-green-subtle"><i class="bi bi-cash-stack"></i></div>
                     </div>
-                    <div class="kpi-main-val">${not empty stats.totalGmvFullFormatted ? stats.totalGmvFullFormatted : '₫1,139,800,000'}</div>
+                    <div class="kpi-main-val">${stats.totalGmvFullFormatted}</div>
                     <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-growth">+12.4%</span>
-                        <span class="text-muted" style="font-size: 0.7rem;">so với tháng trước</span>
+                        <span class="badge-kpi-growth">${stats.gmvGrowthFormatted}</span>
+                        <span class="text-muted" style="font-size: 0.7rem;">so với chu kỳ trước</span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
-                        <span class="text-muted" style="font-size: 0.68rem;">GMV từ ${not empty stats.activeShopsCount ? stats.activeShopsCount : 4} shop hoạt động</span>
+                        <span class="text-muted" style="font-size: 0.68rem;">GMV từ ${stats.activeShopsCount} shop hoạt động</span>
                         <svg width="65" height="18" viewBox="0 0 65 18" fill="none">
                             <path d="M1 14C10 14 16 5 26 10C36 15 48 2 64 6" stroke="#15803d" stroke-width="2" stroke-linecap="round"/>
                         </svg>
@@ -82,13 +81,13 @@
                         <span class="kpi-label">DOANH THU HOA HỒNG SÀN</span>
                         <div class="kpi-icon-box bg-green-subtle"><i class="bi bi-wallet2"></i></div>
                     </div>
-                    <div class="kpi-main-val text-success">${not empty stats.netCommissionFullFormatted ? stats.netCommissionFullFormatted : '₫88,873,500'}</div>
+                    <div class="kpi-main-val text-success">${stats.netCommissionFullFormatted}</div>
                     <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-growth">+8.6%</span>
-                        <span class="text-muted" style="font-size: 0.7rem;">chu kỳ trước</span>
+                        <span class="badge-kpi-growth">${stats.commissionGrowthFormatted}</span>
+                        <span class="text-muted" style="font-size: 0.7rem;">so với chu kỳ trước</span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
-                        <span class="text-muted" style="font-size: 0.68rem;">Takerate định mức: ${not empty stats.avgTakeRate ? stats.avgTakeRate : 7.8}%</span>
+                        <span class="text-muted" style="font-size: 0.68rem;">Takerate định mức: ${stats.avgTakeRate}%</span>
                         <div class="d-flex align-items-end gap-1" style="height: 16px;">
                             <span style="width: 3px; height: 8px; background: #15803d; border-radius: 1px;"></span>
                             <span style="width: 3px; height: 11px; background: #15803d; border-radius: 1px;"></span>
@@ -105,13 +104,13 @@
                         <span class="kpi-label">TỔNG ĐƠN HÀNG ĐÃ XỬ LÝ</span>
                         <div class="kpi-icon-box bg-purple-subtle"><i class="bi bi-bag-check-fill"></i></div>
                     </div>
-                    <div class="kpi-main-val">${not empty stats.totalOrdersFormatted ? stats.totalOrdersFormatted : '4,780'} <span class="fs-6 fw-normal text-muted">đơn</span></div>
+                    <div class="kpi-main-val">${stats.totalOrdersFormatted} <span class="fs-6 fw-normal text-muted">đơn</span></div>
                     <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-growth">+15.1% YoY</span>
-                        <span class="text-muted" style="font-size: 0.7rem;">94.2% hoàn tất</span>
+                        <span class="badge-kpi-growth">${stats.orderGrowthFormatted}</span>
+                        <span class="text-muted" style="font-size: 0.7rem;">${stats.orderCompletionRate}% hoàn tất</span>
                     </div>
                     <div class="progress mt-2" style="height: 4px; background-color: #f1f5f9;">
-                        <div class="progress-bar bg-success" style="width: 94.2%;"></div>
+                        <div class="progress-bar bg-success" style="width: ${stats.orderCompletionRate}%;"></div>
                     </div>
                 </div>
 
@@ -121,12 +120,12 @@
                         <span class="kpi-label">TÀI KHOẢN HOẠT ĐỘNG</span>
                         <div class="kpi-icon-box bg-green-subtle"><i class="bi bi-people-fill"></i></div>
                     </div>
-                    <div class="kpi-main-val">${not empty stats.activeUsersFormatted ? stats.activeUsersFormatted : '17'}</div>
+                    <div class="kpi-main-val">${stats.activeUsersFormatted}</div>
                     <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-purple">Tỷ lệ Active 100%</span>
+                        <span class="badge-kpi-purple">Tỷ lệ Active ${stats.activeUserRate}%</span>
                     </div>
                     <div class="mt-2 pt-2 border-top text-muted" style="font-size: 0.68rem; border-color: #f1f5f9 !important;">
-                        +${not empty stats.totalBuyersCount ? stats.totalBuyersCount : 8} khách mua & ${not empty stats.activeShopsCount ? stats.activeShopsCount : 4} shop đối tác
+                        +${stats.totalBuyersCount} khách mua & ${stats.activeShopsCount} shop đối tác
                     </div>
                 </div>
             </div>
@@ -140,18 +139,22 @@
                             <span class="action-tag-pill action-tag-orange">
                                 <i class="bi bi-shop text-warning-emphasis"></i> XÉT DUYỆT GIAN HÀNG
                             </span>
-                            <span class="badge-counter badge-counter-orange">${not empty stats.pendingKycCount ? stats.pendingKycCount : 2} Đang Chờ</span>
+                            <span class="badge-counter badge-counter-orange">${stats.pendingKycCount} Đang Chờ</span>
                         </div>
-                        <h3 class="action-card-title">${not empty stats.pendingKycCount ? stats.pendingKycCount : 2} Đơn đăng ký mở Shop đang chờ duyệt</h3>
+                        <h3 class="action-card-title">${stats.pendingKycCount} Đơn đăng ký mở Shop đang chờ duyệt</h3>
                         <p class="action-card-desc">Hồ sơ KYC thương nhân & chứng chỉ VietGAP/GlobalGAP cần thẩm định pháp lý trước khi cấp quyền mở bán.</p>
                     </div>
                     <div class="action-card-footer">
                         <div class="avatar-stack">
-                            <span class="avatar-stack-item bg-orange">VB</span>
-                            <span class="avatar-stack-item bg-blue">NK</span>
+                            <c:forEach items="${stats.pendingShops}" var="ps" begin="0" end="2">
+                                <span class="avatar-stack-item bg-orange">${ps.avatarAbbr}</span>
+                            </c:forEach>
+                            <c:if test="${empty stats.pendingShops}">
+                                <span class="avatar-stack-item bg-secondary">-</span>
+                            </c:if>
                         </div>
-                        <a href="${pageContext.request.contextPath}/admin/shops" class="btn-action-pill btn-action-orange">
-                            Xét duyệt Shop (${not empty stats.pendingKycCount ? stats.pendingKycCount : 2}) →
+                        <a href="${pageContext.request.contextPath}/admin/shops?status=PENDING_KYC" class="btn-action-pill btn-action-orange">
+                            Xét duyệt Shop (${stats.pendingKycCount}) →
                         </a>
                     </div>
                 </div>
@@ -163,17 +166,17 @@
                             <span class="action-tag-pill action-tag-red">
                                 <i class="bi bi-shield-exclamation text-danger"></i> KIỂM DUYỆT SẢN PHẨM
                             </span>
-                            <span class="badge-counter badge-counter-red">1 Báo Cáo</span>
+                            <span class="badge-counter badge-counter-red">${stats.flaggedProductsCount} Báo Cáo</span>
                         </div>
-                        <h3 class="action-card-title">1 Sản phẩm bị AI cảnh báo hình ảnh</h3>
-                        <p class="action-card-desc">Nghi vấn sai lệch xuất xứ nguồn gốc nông sản hoặc hình ảnh nghi sao chép trên mạng cần thẩm định.</p>
+                        <h3 class="action-card-title">${stats.flaggedProductsCount} Sản phẩm đang chờ kiểm duyệt / tạm ẩn</h3>
+                        <p class="action-card-desc">Thẩm định chứng nhận nguồn gốc xuất xứ nông sản, tiêu chuẩn an toàn thực phẩm trước khi mở bán.</p>
                     </div>
                     <div class="action-card-footer">
                         <span class="text-danger fw-bold" style="font-size: 0.72rem;">
                             <i class="bi bi-exclamation-triangle-fill me-1"></i> Cần xử lý trước 24h
                         </span>
-                        <a href="${pageContext.request.contextPath}/admin/product-moderation" class="btn-action-pill btn-action-red">
-                            Kiểm định vi phạm (1) →
+                        <a href="${pageContext.request.contextPath}/admin/categories" class="btn-action-pill btn-action-red">
+                            Kiểm định sản phẩm (${stats.flaggedProductsCount}) →
                         </a>
                     </div>
                 </div>
@@ -185,17 +188,17 @@
                             <span class="action-tag-pill action-tag-navy">
                                 <i class="bi bi-scale"></i> HÒA GIẢI TRANH CHẤP
                             </span>
-                            <span class="badge-counter badge-counter-navy">${not empty stats.openDisputesCount ? stats.openDisputesCount : 2} Yêu Cầu</span>
+                            <span class="badge-counter badge-counter-navy">${stats.openDisputesCount} Yêu Cầu</span>
                         </div>
-                        <h3 class="action-card-title">${not empty stats.openDisputesCount ? stats.openDisputesCount : 2} Khiếu nại chất lượng cần hòa giải</h3>
+                        <h3 class="action-card-title">${stats.openDisputesCount} Khiếu nại chất lượng cần hòa giải</h3>
                         <p class="action-card-desc">Tranh chấp giữa Khách hàng và Nhà vườn về hoa quả dập nát, lên men trong khâu vận chuyển hàng tươi.</p>
                     </div>
                     <div class="action-card-footer">
                         <span class="text-muted" style="font-size: 0.72rem;">
-                            Tạm giữ ví: <strong class="text-dark">₫890,000</strong>
+                            Tạm giữ ví: <strong class="text-dark">${stats.totalEscrowFormatted}</strong>
                         </span>
                         <a href="${pageContext.request.contextPath}/admin/disputes" class="btn-action-pill btn-action-navy">
-                            Xử lý tranh chấp (${not empty stats.openDisputesCount ? stats.openDisputesCount : 2}) →
+                            Xử lý tranh chấp (${stats.openDisputesCount}) →
                         </a>
                     </div>
                 </div>
@@ -208,7 +211,7 @@
                     <div class="chart-card-header flex-wrap gap-2">
                         <div>
                             <h2 class="chart-title">Xu Hướng Doanh Thu Sàn & Sản Lượng Đơn</h2>
-                            <span class="chart-subtitle">Dữ liệu 30 ngày qua (01 May – 30 May 2024)</span>
+                            <span class="chart-subtitle">Biểu đồ tổng hợp dữ liệu giao dịch từ các đơn hàng</span>
                         </div>
                         <div class="d-flex align-items-center gap-3">
                             <div class="chart-filter-pills">
@@ -262,34 +265,18 @@
                     </div>
 
                     <div class="donut-legend-list">
-                        <div>
-                            <div class="donut-legend-item">
-                                <span><span class="dot-green me-1 d-inline-block"></span> Trái Cây Nhập Khẩu</span>
-                                <strong>38% (₫56.5M)</strong>
+                        <c:forEach items="${stats.categoryStats}" var="cs">
+                            <div>
+                                <div class="donut-legend-item">
+                                    <span><span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background: ${cs.color};"></span> ${cs.name}</span>
+                                    <strong>${cs.percent}% (${cs.volumeFormatted})</strong>
+                                </div>
+                                <div class="donut-bar-track"><div class="donut-bar-fill" style="width: ${cs.percent}%; background: ${cs.color};"></div></div>
                             </div>
-                            <div class="donut-bar-track"><div class="donut-bar-fill" style="width: 38%; background: #15803d;"></div></div>
-                        </div>
-                        <div>
-                            <div class="donut-legend-item">
-                                <span><span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background: #22c55e;"></span> Nông Sản & Nội Địa</span>
-                                <strong>32% (₫47.6M)</strong>
-                            </div>
-                            <div class="donut-bar-track"><div class="donut-bar-fill" style="width: 32%; background: #22c55e;"></div></div>
-                        </div>
-                        <div>
-                            <div class="donut-legend-item">
-                                <span><span class="dot-orange me-1 d-inline-block"></span> Giỏ Quà Tặng & Hộp Biếu</span>
-                                <strong>20% (₫29.8M)</strong>
-                            </div>
-                            <div class="donut-bar-track"><div class="donut-bar-fill" style="width: 20%; background: #ea580c;"></div></div>
-                        </div>
-                        <div>
-                            <div class="donut-legend-item">
-                                <span><span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background: #fb923c;"></span> Trái Cây Sấy & Snack Mộc</span>
-                                <strong>10% (₫14.9M)</strong>
-                            </div>
-                            <div class="donut-bar-track"><div class="donut-bar-fill" style="width: 10%; background: #fb923c;"></div></div>
-                        </div>
+                        </c:forEach>
+                        <c:if test="${empty stats.categoryStats}">
+                            <div class="text-muted small py-2 text-center">Chưa có phân loại danh mục</div>
+                        </c:if>
                     </div>
                 </div>
             </div>
@@ -400,7 +387,14 @@
     </div>
 </div>
 
+<script>
+    window.platformChartLabels = ${not empty stats.chartLabelsJson ? stats.chartLabelsJson : '[]'};
+    window.platformGmvData = ${not empty stats.chartGmvJson ? stats.chartGmvJson : '[]'};
+    window.platformCommData = ${not empty stats.chartCommissionJson ? stats.chartCommissionJson : '[]'};
+    window.platformCatLabels = ${not empty stats.categoryLabelsJson ? stats.categoryLabelsJson : '[]'};
+    window.platformCatData = ${not empty stats.categoryDataJson ? stats.categoryDataJson : '[]'};
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=10"></script>
+<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=11"></script>
 </body>
 </html>

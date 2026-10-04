@@ -125,86 +125,85 @@
 
             <!-- 3. Segmented Navigation Tabs -->
             <div class="users-rbac-tabs">
-                <a href="${pageContext.request.contextPath}/admin/shops?tab=KYC_QUEUE" class="rbac-tab-item active">
+                <a href="${pageContext.request.contextPath}/admin/shops?status=ALL" class="rbac-tab-item ${selectedStatus == 'ALL' ? 'active' : ''}">
+                    <i class="bi bi-shop"></i>
+                    <span>Tất cả gian hàng</span>
+                    <span class="rbac-badge">${not empty shopStats.totalShops ? shopStats.totalShops : 0}</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/admin/shops?status=ACTIVE" class="rbac-tab-item ${selectedStatus == 'ACTIVE' ? 'active' : ''}">
+                    <i class="bi bi-check-circle"></i>
+                    <span>Đang hoạt động</span>
+                    <span class="rbac-badge">${not empty shopStats.activeShops ? shopStats.activeShops : 0}</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/admin/shops?status=PENDING_KYC" class="rbac-tab-item ${selectedStatus == 'PENDING_KYC' ? 'active' : ''}">
                     <i class="bi bi-file-earmark-check"></i>
                     <span>Chờ xét duyệt KYC</span>
-                    <span class="rbac-badge">12</span>
+                    <span class="rbac-badge">${not empty shopStats.pendingKyc ? shopStats.pendingKyc : 0}</span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/shops?tab=ACTIVE" class="rbac-tab-item">
-                    <i class="bi bi-shop"></i>
-                    <span>Đang hoạt động</span>
-                    <span class="rbac-badge">84</span>
-                </a>
-                <a href="${pageContext.request.contextPath}/admin/shops?tab=VIETGAP_RECHECK" class="rbac-tab-item">
-                    <i class="bi bi-shield-exclamation"></i>
-                    <span>Cần tái thẩm định chứng chỉ VietGAP</span>
-                    <span class="rbac-badge">5</span>
-                </a>
-                <a href="${pageContext.request.contextPath}/admin/shops?tab=WARNED" class="rbac-tab-item">
+                <a href="${pageContext.request.contextPath}/admin/shops?status=SUSPENDED" class="rbac-tab-item ${selectedStatus == 'SUSPENDED' ? 'active' : ''}">
                     <i class="bi bi-exclamation-diamond"></i>
                     <span>Bị cảnh báo / Tạm khóa</span>
-                    <span class="rbac-badge">3</span>
+                    <span class="rbac-badge">${not empty shopStats.suspended ? shopStats.suspended : 0}</span>
                 </a>
             </div>
 
             <!-- 4. Filter Toolbar -->
-            <div class="users-filter-card">
+            <form method="GET" action="${pageContext.request.contextPath}/admin/shops" class="users-filter-card" id="shopFilterForm">
+                <!-- Giữ trạng thái đang chọn từ hàng tab phía trên -->
+                <input type="hidden" name="status" value="${selectedStatus}">
+
                 <div class="users-search-pill">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="shopSearchInput" placeholder="Tìm tên nhà vườn, mã số thuế, chủ...">
+                    <input type="text" name="search" id="shopSearchInput" value="<c:out value='${searchKeyword}'/>" placeholder="Tìm tên nhà vườn, chủ sở hữu, email, tỉnh thành...">
                 </div>
 
                 <div class="users-dropdown-filters">
+
                     <!-- Dropdown: Loại hình -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span>Loại hình: Tất cả</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">Tất cả loại hình</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">Farm-to-Door Trực Tiếp</a></li>
-                            <li><a class="dropdown-item" href="#">HTX Nông Nghiệp CNC</a></li>
-                            <li><a class="dropdown-item" href="#">Nhà Nhập Khẩu Ủy Quyền</a></li>
-                            <li><a class="dropdown-item" href="#">Nhà Vườn Sinh Thái</a></li>
-                        </ul>
-                    </div>
+                    <select name="type" id="typeFilterSelect" class="filter-select-btn" onchange="this.form.submit()">
+                        <option value="ALL" ${selectedType == 'ALL' ? 'selected' : ''}>Loại hình: Tất cả</option>
+                        <option value="Nhà vườn trực tiếp" ${selectedType == 'Nhà vườn trực tiếp' ? 'selected' : ''}>Nhà vườn trực tiếp</option>
+                        <option value="Hợp tác xã" ${selectedType == 'Hợp tác xã' ? 'selected' : ''}>Hợp tác xã</option>
+                        <option value="Hộ gia đình" ${selectedType == 'Hộ gia đình' ? 'selected' : ''}>Hộ gia đình</option>
+                        <option value="Doanh nghiệp bao tiêu" ${selectedType == 'Doanh nghiệp bao tiêu' ? 'selected' : ''}>Doanh nghiệp bao tiêu</option>
+                        <option value="Doanh nghiệp nhập khẩu" ${selectedType == 'Doanh nghiệp nhập khẩu' ? 'selected' : ''}>Doanh nghiệp nhập khẩu</option>
+                    </select>
 
                     <!-- Dropdown: Chứng nhận -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span>Chứng nhận: Tất cả</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">Tất cả chứng nhận</a></li>
-                            <li><a class="dropdown-item" href="#">VietGAP</a></li>
-                            <li><a class="dropdown-item" href="#">GlobalGAP</a></li>
-                            <li><a class="dropdown-item" href="#">OCOP 4-5 Sao</a></li>
-                            <li><a class="dropdown-item" href="#">HACCP Cold-Chain</a></li>
-                        </ul>
-                    </div>
+                    <select name="cert" id="certFilterSelect" class="filter-select-btn" onchange="this.form.submit()">
+                        <option value="ALL" ${selectedCert == 'ALL' ? 'selected' : ''}>Chứng nhận: Tất cả</option>
+                        <option value="VietGAP" ${selectedCert == 'VietGAP' ? 'selected' : ''}>VietGAP</option>
+                        <option value="GlobalGAP" ${selectedCert == 'GlobalGAP' ? 'selected' : ''}>GlobalGAP</option>
+                        <option value="Organic" ${selectedCert == 'Organic' ? 'selected' : ''}>Hữu cơ Organic</option>
+                        <option value="Kiểm dịch" ${selectedCert == 'Kiểm dịch' ? 'selected' : ''}>Kiểm dịch</option>
+                    </select>
 
-                    <!-- Dropdown: Khu vực -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span>Khu vực: Tất cả</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">Tất cả khu vực</a></li>
-                            <li><a class="dropdown-item" href="#">Miền Bắc (Sơn La, Bắc Giang...)</a></li>
-                            <li><a class="dropdown-item" href="#">Miền Trung & Tây Nguyên (Đắk Lắk, Đà Lạt...)</a></li>
-                            <li><a class="dropdown-item" href="#">Đồng Bằng Sông Cửu Long (Bến Tre, Tiền Giang...)</a></li>
-                        </ul>
-                    </div>
+                    <button type="submit" class="btn btn-sm text-white d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px; background: #15803d; border: 1px solid #15803d; font-weight: 600;">
+                        <i class="bi bi-funnel"></i> Lọc
+                    </button>
+
+                    <!-- Nút Đặt lại / Reset -->
+                    <c:if test="${(not empty selectedStatus && selectedStatus != 'ALL') || (not empty selectedType && selectedType != 'ALL') || (not empty selectedCert && selectedCert != 'ALL') || not empty searchKeyword}">
+                        <a href="${pageContext.request.contextPath}/admin/shops" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px;">
+                            <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
+                        </a>
+                    </c:if>
                 </div>
-            </div>
+            </form>
 
             <!-- 5. Applications Queue Table -->
             <div class="shops-table-container">
                 <div class="shops-table-header">
                     <div class="shops-table-title">
-                        <span>Danh sách Hồ sơ Đăng ký chờ xét duyệt (KYC Queue)</span>
-                        <span class="badge-live-engine" style="background: #dcfce7; padding: 3px 8px; border-radius: 9999px;">12 Hồ Sơ Mới</span>
+                        <span>
+                            <c:choose>
+                                <c:when test="${selectedStatus == 'ACTIVE'}">Danh sách Gian hàng Đang hoạt động</c:when>
+                                <c:when test="${selectedStatus == 'PENDING_KYC'}">Danh sách Hồ sơ Đăng ký chờ xét duyệt (KYC Queue)</c:when>
+                                <c:when test="${selectedStatus == 'SUSPENDED'}">Danh sách Gian hàng Bị cảnh báo / Tạm khóa</c:when>
+                                <c:otherwise>Danh sách Toàn bộ Gian hàng Đối tác</c:otherwise>
+                            </c:choose>
+                        </span>
+                        <span class="badge-live-engine" style="background: #dcfce7; padding: 3px 8px; border-radius: 9999px;">${not empty shopsList ? shopsList.size() : 0} Gian Hàng</span>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Làm mới" onclick="location.reload();">
@@ -265,6 +264,12 @@
                                     <c:choose>
                                         <c:when test="${s.status == 'ACTIVE'}">
                                             <span class="status-pill-green">Hoạt động</span>
+                                        </c:when>
+                                        <c:when test="${s.status == 'PENDING_KYC'}">
+                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.68rem; font-weight: 700;">Chờ duyệt KYC</span>
+                                        </c:when>
+                                        <c:when test="${s.status == 'SUSPENDED'}">
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.68rem; font-weight: 700;">Tạm khóa</span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="status-pill-warning">${s.status}</span>

@@ -53,9 +53,18 @@
                 <div class="page-title-wrapper">
                     <div class="d-flex align-items-center flex-wrap gap-2">
                         <h1 class="mb-0">Kiểm Duyệt Sản Phẩm & Nông Sản Toàn Sàn</h1>
-                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fs-7 fw-bold">
-                            <i class="bi bi-circle-fill text-warning me-1" style="font-size: 0.45rem;"></i>7 CẦN XỬ LÝ
-                        </span>
+                        <c:choose>
+                            <c:when test="${productStats.inactiveCount > 0}">
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fs-7 fw-bold">
+                                    <i class="bi bi-circle-fill text-warning me-1" style="font-size: 0.45rem;"></i>${productStats.inactiveCount} CẦN XỬ LÝ
+                                </span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fs-7 fw-bold">
+                                    <i class="bi bi-check-circle-fill me-1" style="font-size: 0.75rem;"></i>TẤT CẢ HỢP LỆ (${productStats.activeCount})
+                                </span>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                     <p class="text-muted mt-1 mb-0 fs-7">
                         Quy trình kiểm định 3 lớp: Đối soát thị giác AI (Vision AI) + Thẩm tra chứng nhận VietGAP/GlobalGAP + Kiểm duyệt nhân sự.
@@ -66,70 +75,70 @@
                         <i class="bi bi-book me-1"></i> Quy chuẩn kiểm duyệt nông sản
                     </button>
                     <button class="btn btn-admin-primary btn-sm fw-bold shadow-xs" onclick="quickApproveSafeProducts()">
-                        <i class="bi bi-lightning-charge-fill me-1"></i> Duyệt nhanh (3 sản phẩm an toàn)
+                        <i class="bi bi-lightning-charge-fill me-1"></i> Duyệt nhanh (${productStats.safeCount} mã an toàn)
                     </button>
                 </div>
             </div>
 
             <!-- 4 KPI Summary Cards -->
             <div class="kpi-grid-4 mb-3">
-                <!-- Card 1: Chờ duyệt mới -->
+                <!-- Card 1: Tổng nông sản niêm yết -->
                 <div class="stat-card-kpi">
                     <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">CHỜ DUYỆT MỚI</span>
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">TỔNG SẢN PHẨM NIÊM YẾT</span>
+                        <div class="kpi-icon-box" style="background: #f0fdf4; color: #16a34a;">
+                            <i class="bi bi-boxes"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-main-val">${productStats.totalCount} <span class="kpi-unit">sản phẩm</span></div>
+                    <div class="kpi-sub-text text-success">
+                        <i class="bi bi-check-circle-fill" style="font-size: 0.45rem;"></i>
+                        ${productStats.activeCount} mã đang mở bán (${productStats.activeRate}%)
+                    </div>
+                </div>
+
+                <!-- Card 2: Chờ duyệt / Tạm ẩn -->
+                <div class="stat-card-kpi">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">CHỜ DUYỆT / TẠM ẨN</span>
                         <div class="kpi-icon-box" style="background: #fff7ed; color: #ea580c;">
                             <i class="bi bi-clock-history"></i>
                         </div>
                     </div>
-                    <div class="kpi-main-val">07 <span class="kpi-unit">sản phẩm</span></div>
+                    <div class="kpi-main-val text-warning-emphasis">${productStats.inactiveCount} <span class="kpi-unit">yêu cầu</span></div>
                     <div class="kpi-sub-text text-warning-emphasis">
                         <i class="bi bi-circle-fill" style="font-size: 0.4rem; color: #ea580c;"></i>
-                        2 chỉnh sửa giấy phép VietGAP
+                        Cần nhân sự sàn kiểm tra
                     </div>
                 </div>
 
-                <!-- Card 2: Báo cáo vi phạm -->
+                <!-- Card 3: Đạt chuẩn kiểm định -->
                 <div class="stat-card-kpi">
                     <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">BÁO CÁO VI PHẠM</span>
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">ĐẠT CHUẨN KIỂM ĐỊNH</span>
+                        <div class="kpi-icon-box" style="background: #eff6ff; color: #2563eb;">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-main-val text-primary">${productStats.certifiedCount} <span class="kpi-unit">mã đạt chuẩn</span></div>
+                    <div class="kpi-sub-text text-primary">
+                        <i class="bi bi-patch-check-fill" style="font-size: 0.45rem;"></i>
+                        Tỷ lệ đạt chuẩn: ${productStats.complianceRate}%
+                    </div>
+                </div>
+
+                <!-- Card 4: Cảnh báo tồn kho -->
+                <div class="stat-card-kpi">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">CẢNH BÁO TỒN KHO</span>
                         <div class="kpi-icon-box" style="background: #fef2f2; color: #dc2626;">
-                            <i class="bi bi-exclamation-octagon"></i>
+                            <i class="bi bi-exclamation-triangle"></i>
                         </div>
                     </div>
-                    <div class="kpi-main-val text-danger">04 <span class="kpi-unit">cảnh báo</span></div>
-                    <div class="kpi-sub-text text-danger">
-                        <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
-                        Nghi vấn mạo danh giống Musang K...
-                    </div>
-                </div>
-
-                <!-- Card 3: Đã duyệt tuần này -->
-                <div class="stat-card-kpi">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">ĐÃ DUYỆT TUẦN NÀY</span>
-                        <div class="kpi-icon-box" style="background: #f0fdf4; color: #16a34a;">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                    </div>
-                    <div class="kpi-main-val">142 <span class="kpi-unit">mã nông sản</span></div>
-                    <div class="kpi-sub-text text-success">
-                        <i class="bi bi-arrow-up-short"></i>
-                        Tỷ lệ đạt chuẩn: 93.5% (+14%)
-                    </div>
-                </div>
-
-                <!-- Card 4: Đã gỡ / Từ chối -->
-                <div class="stat-card-kpi">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">ĐÃ GỠ / TỪ CHỐI</span>
-                        <div class="kpi-icon-box" style="background: #f1f5f9; color: #64748b;">
-                            <i class="bi bi-slash-circle"></i>
-                        </div>
-                    </div>
-                    <div class="kpi-main-val">11 <span class="kpi-unit">sản phẩm</span></div>
+                    <div class="kpi-main-val text-danger">${productStats.lowStockCount} <span class="kpi-unit">mã tồn thấp</span></div>
                     <div class="kpi-sub-text text-muted">
-                        <i class="bi bi-circle-fill" style="font-size: 0.4rem;"></i>
-                        Lỗi chứng nhận hết hạn &amp; can...
+                        <i class="bi bi-box-seam" style="font-size: 0.45rem;"></i>
+                        Dưới ngưỡng an toàn kho lạnh
                     </div>
                 </div>
             </div>
@@ -137,28 +146,27 @@
             <!-- Segmented Tabs & Sort Bar -->
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <div class="d-flex align-items-center flex-wrap gap-2" id="modTabButtons">
-                    <button class="tab-btn-pill active" onclick="switchModTab(this, 'pending')">
-                        Chờ duyệt mới <span class="badge bg-white text-success px-1 py-0 fs-8">7</span>
-                    </button>
-                    <button class="tab-btn-pill" onclick="switchModTab(this, 'reported')">
-                        Bị tố cáo vi phạm <span class="badge bg-danger-subtle text-danger px-1 py-0 fs-8">4</span>
+                    <button class="tab-btn-pill active" onclick="switchModTab(this, 'all')">
+                        Tất cả <span class="badge bg-light text-dark px-1 py-0 fs-8">${productStats.totalCount}</span>
                     </button>
                     <button class="tab-btn-pill" onclick="switchModTab(this, 'approved')">
-                        Đang hiển thị hợp lệ <span class="badge bg-light text-muted px-1 py-0 fs-8">351</span>
+                        Đang mở bán <span class="badge bg-success-subtle text-success px-1 py-0 fs-8">${productStats.activeCount}</span>
                     </button>
-                    <button class="tab-btn-pill" onclick="switchModTab(this, 'rejected')">
-                        Bị tạm khóa / Gỡ bỏ <span class="badge bg-light text-muted px-1 py-0 fs-8">15</span>
+                    <button class="tab-btn-pill" onclick="switchModTab(this, 'pending')">
+                        Chờ duyệt / Tạm ẩn <span class="badge bg-warning-subtle text-warning-emphasis px-1 py-0 fs-8">${productStats.inactiveCount}</span>
+                    </button>
+                    <button class="tab-btn-pill" onclick="switchModTab(this, 'safe')">
+                        Đạt chuẩn VietGAP/GlobalGAP <span class="badge bg-light text-muted px-1 py-0 fs-8">${productStats.certifiedCount}</span>
                     </button>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <div class="dropdown">
                         <button class="custom-filter-select dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-arrow-down-up text-muted me-1"></i> Sắp xếp: Ưu tiên độ rủi ro AI
+                            <i class="bi bi-arrow-down-up text-muted me-1"></i> Sắp xếp: Ưu tiên chứng nhận
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm fs-7">
-                            <li><a class="dropdown-item active" href="javascript:void(0)" onclick="sortModerationFeed('risk')">Ưu tiên độ rủi ro AI cao nhất</a></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="sortModerationFeed('time_asc')">Thời gian gửi duyệt: Mới nhất</a></li>
-                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="sortModerationFeed('time_desc')">Thời gian gửi duyệt: Cũ nhất</a></li>
+                            <li><a class="dropdown-item active" href="javascript:void(0)" onclick="sortModerationFeed('risk')">Ưu tiên đạt chuẩn kiểm định</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="sortModerationFeed('time_asc')">Thời gian: Mới nhất</a></li>
                             <li><a class="dropdown-item" href="javascript:void(0)" onclick="sortModerationFeed('price')">Giá niêm yết: Cao đến thấp</a></li>
                         </ul>
                     </div>
@@ -180,17 +188,14 @@
                 <div class="d-flex align-items-center gap-2">
                     <select class="custom-filter-select" id="catFilterSelect" onchange="filterModCards()">
                         <option value="all">Tất cả ngành hàng</option>
-                        <option value="durian">Sầu riêng & Quả đặc sản</option>
-                        <option value="mango">Xoài & Trái cây Nam Bộ</option>
-                        <option value="apple">Hoa quả nhập khẩu</option>
-                        <option value="dried">Nông sản chế biến & Sấy khô</option>
-                        <option value="plum">Trái cây vùng cao Tây Bắc</option>
+                        <c:forEach items="${categoriesList}" var="c">
+                            <option value="${c.categoryName}">${c.categoryName}</option>
+                        </c:forEach>
                     </select>
                     <select class="custom-filter-select" id="riskFilterSelect" onchange="filterModCards()">
-                        <option value="all">Mức độ rủi ro: Tất cả</option>
-                        <option value="high">Rủi ro: Cao (Vision AI cảnh báo)</option>
-                        <option value="warning">Rủi ro: Cần bổ sung thông tin</option>
-                        <option value="safe">An toàn: Điểm số AI cao (≥90)</option>
+                        <option value="all">Tiêu chuẩn kiểm định: Tất cả</option>
+                        <option value="safe">Đạt chuẩn VietGAP / GlobalGAP / Organic</option>
+                        <option value="warning">Chưa có chứng nhận</option>
                     </select>
                 </div>
             </div>
@@ -266,16 +271,24 @@
                                     <!-- Box 3 -->
                                     <div class="mod-sub-box">
                                         <div class="mod-sub-box-title">
-                                            <i class="bi bi-cpu text-info"></i> ĐỐI SOÁT VISION AI
+                                            <i class="bi bi-cpu text-info"></i> ĐỐI SOÁT CHẤT LƯỢNG &amp; TIÊU CHUẨN
                                         </div>
                                         <div class="mod-box-line">
-                                            <strong>Độ tương đồng hình ảnh:</strong> <span class="text-success fw-bold">98.5% ảnh thật tại vườn</span>
+                                            <strong>Đánh giá kiểm định:</strong> 
+                                            <c:choose>
+                                                <c:when test="${not empty p.certification}">
+                                                    <span class="text-success fw-bold"><i class="bi bi-patch-check-fill"></i> ${p.certification}</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-warning fw-bold"><i class="bi bi-exclamation-circle"></i> Đang chờ bổ sung hồ sơ</span>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
                                         <div class="mod-box-line">
-                                            <strong>Cảm quan cuống &amp; vỏ:</strong> Đạt tiêu chuẩn sàn FreshStandard
+                                            <strong>Trạng thái hiển thị:</strong> ${p.isActive ? '<span class="text-success fw-semibold">Đang mở bán</span>' : '<span class="text-warning fw-semibold">Tạm ẩn / Đang xét duyệt</span>'}
                                         </div>
                                         <div class="mod-box-line">
-                                            <strong>Ngoại quan trái cây:</strong> Không phát hiện dập úng
+                                            <strong>Phân hạng sản phẩm:</strong> ${p.isFeatured ? '<span class="badge bg-primary-subtle text-primary">Sản Phẩm Tiêu Biểu</span>' : 'Tiêu chuẩn sàn FreshFruit'}
                                         </div>
                                     </div>
                                 </div>
@@ -296,7 +309,10 @@
                                                 </button>
                                             </c:when>
                                             <c:otherwise>
-                                                <button class="btn btn-outline-secondary btn-sm fw-bold bg-white text-dark" onclick="previewProductModal('${p.sku}')">
+                                                <button class="btn btn-outline-secondary btn-sm fw-bold bg-white text-dark" 
+                                                        data-sku="${p.sku}" data-name="${p.productName} (${p.unit})" data-price="${p.priceFormatted}" 
+                                                        data-img="${p.thumbnailUrl}" data-shop="${p.shopName}" data-cert="${p.certification}"
+                                                        onclick="previewProductModal(this)">
                                                     <i class="bi bi-eye me-1"></i> Xem trước trang sản phẩm
                                                 </button>
                                                 <button class="btn btn-admin-primary btn-sm fw-bold" onclick="approveSku('${p.sku}')">
@@ -413,12 +429,12 @@
             </div>
             <div class="modal-body text-center p-4">
                 <div class="mb-3">
-                    <img id="previewModalImg" src="https://images.unsplash.com/photo-1553279768-865429fa0078?w=300&h=200&fit=crop" 
-                         alt="Preview" class="rounded-3 border img-fluid" style="max-height: 200px;">
+                    <img id="previewModalImg" src="" 
+                         alt="Preview" class="rounded-3 border img-fluid" style="max-height: 200px; display: none;">
                 </div>
-                <h5 class="fw-bold mb-1" id="previewModalTitle">Xoài Cát Chu Cao Lãnh OCOP 4 Sao</h5>
-                <div class="text-success fw-bold fs-5 mb-2" id="previewModalPrice">75.000 đ/kg</div>
-                <div class="text-muted fs-7">Gian hàng: Nông Trại Xanh Cao Lãnh • Đạt chuẩn VietGAP 2024</div>
+                <h5 class="fw-bold mb-1" id="previewModalTitle"></h5>
+                <div class="text-success fw-bold fs-5 mb-2" id="previewModalPrice"></div>
+                <div class="text-muted fs-7" id="previewModalSub"></div>
             </div>
             <div class="modal-footer border-top">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
@@ -571,7 +587,34 @@
 
     // Preview product modal
     let currentPreviewSku = '';
-    function previewProductModal(sku) {
+    function previewProductModal(btnOrSku) {
+        let sku = '';
+        if (typeof btnOrSku === 'object' && btnOrSku !== null) {
+            sku = btnOrSku.getAttribute('data-sku') || '';
+            const imgUrl = btnOrSku.getAttribute('data-img') || '';
+            const name = btnOrSku.getAttribute('data-name') || '';
+            const price = btnOrSku.getAttribute('data-price') || '';
+            const shop = btnOrSku.getAttribute('data-shop') || '';
+            const cert = btnOrSku.getAttribute('data-cert') || '';
+
+            const imgEl = document.getElementById('previewModalImg');
+            if (imgEl) {
+                if (imgUrl) {
+                    imgEl.src = imgUrl;
+                    imgEl.style.display = 'inline-block';
+                } else {
+                    imgEl.style.display = 'none';
+                }
+            }
+            const titleEl = document.getElementById('previewModalTitle');
+            if (titleEl) titleEl.textContent = name;
+            const priceEl = document.getElementById('previewModalPrice');
+            if (priceEl) priceEl.textContent = price;
+            const subEl = document.getElementById('previewModalSub');
+            if (subEl) subEl.textContent = 'Gian hàng: ' + shop + (cert ? (' • ' + cert) : '');
+        } else {
+            sku = btnOrSku || '';
+        }
         currentPreviewSku = sku;
         const myModal = new bootstrap.Modal(document.getElementById('productPreviewModal'));
         myModal.show();
