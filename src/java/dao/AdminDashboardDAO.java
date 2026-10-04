@@ -2,7 +2,6 @@ package dao;
 
 import com.google.gson.Gson;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -10,6 +9,7 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,8 +82,16 @@ public class AdminDashboardDAO extends DBContext {
                    + "    (SELECT COUNT(DISTINCT u.user_id) FROM users u "
                    + "     JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "     JOIN roles r ON ur.role_id = r.role_id WHERE r.role_name = 'CUSTOMER') AS TotalBuyers, "
+                   + "    (SELECT COUNT(*) FROM users) AS TotalUsers, "
                    + "    (SELECT COUNT(*) FROM users WHERE status = 'ACTIVE') AS ActiveUsers, "
-                   + "    (SELECT COUNT(*) FROM disputes WHERE status IN ('OPEN', 'MEDIATING')) AS OpenDisputes";
+                   + "    (SELECT COUNT(*) FROM disputes WHERE status IN ('OPEN', 'MEDIATING')) AS OpenDisputes, "
+                   + "    (SELECT COALESCE(SUM(claim_amount), 0) FROM disputes WHERE status IN ('OPEN', 'MEDIATING')) AS TotalEscrow, "
+                   + "    (SELECT COUNT(*) FROM products WHERE is_active = 0) AS FlaggedProducts, "
+                   + "    (SELECT COUNT(*) FROM orders) AS TotalOrdersInDb, "
+                   + "    (SELECT COUNT(*) FROM orders WHERE order_status = 'COMPLETED') AS CompletedOrders, "
+                   + "    (SELECT COUNT(*) FROM orders WHERE order_status = 'PROCESSING') AS ProcessingOrders, "
+                   + "    (SELECT COUNT(*) FROM products) AS TotalProducts, "
+                   + "    (SELECT COUNT(*) FROM products WHERE certification IS NOT NULL AND certification != '') AS CertifiedProducts";
 
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
@@ -94,24 +102,78 @@ public class AdminDashboardDAO extends DBContext {
                 stats.setActiveShopsCount(rs.getInt("ActiveShops"));
                 stats.setPendingKycCount(rs.getInt("PendingKyc"));
                 stats.setTotalBuyersCount(rs.getInt("TotalBuyers"));
-                stats.setActiveUsersCount(rs.getInt("ActiveUsers"));
+
+                int totalUsers = rs.getInt("TotalUsers");
+                int activeUsers = rs.getInt("ActiveUsers");
+                stats.setTotalUsersCount(totalUsers);
+                stats.setActiveUsersCount(activeUsers);
+                double userRate = totalUsers > 0 ? (activeUsers * 100.0 / totalUsers) : 100.0;
+                stats.setActiveUserRate(Math.round(userRate * 10.0) / 10.0);
+
                 stats.setOpenDisputesCount(rs.getInt("OpenDisputes"));
+                stats.setTotalEscrowAmount(rs.getDouble("TotalEscrow"));
+                stats.setFlaggedProductsCount(rs.getInt("FlaggedProducts"));
+
+                int totalOrdersInDb = rs.getInt("TotalOrdersInDb");
+                int completedOrders = rs.getInt("CompletedOrders");
+                int processingOrders = rs.getInt("ProcessingOrders");
+                stats.setCompletedOrdersCount(completedOrders);
+                stats.setProcessingOrdersCount(processingOrders);
+                double compRate = totalOrdersInDb > 0 ? (completedOrders * 100.0 / totalOrdersInDb) : 100.0;
+                stats.setOrderCompletionRate(Math.round(compRate * 10.0) / 10.0);
+
+                int totalProds = rs.getInt("TotalProducts");
+                int certifiedProds = rs.getInt("CertifiedProducts");
+                double certRate = totalProds > 0 ? (certifiedProds * 100.0 / totalProds) : 100.0;
+                stats.setCertifiedProductRate(Math.round(certRate * 10.0) / 10.0);
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Failed to load core KPIs: " + ex.getMessage());
-            stats.setTotalGmv(1139800000.0);
-            stats.setNetCommission(88873500.0);
-            stats.setTotalOrdersCount(4780);
-            stats.setActiveShopsCount(4);
-            stats.setPendingKycCount(2);
-            stats.setTotalBuyersCount(8);
-            stats.setActiveUsersCount(17);
-            stats.setOpenDisputesCount(2);
+        }
+
+        // Query growth rates between payout settlement cycles
+        String growthSql = "WITH PayoutCycles AS ("
+                         + "    SELECT cycle_name, MIN(period_start) as start_date, "
+                         + "           SUM(gross_sales) as total_gross, "
+                         + "           SUM(commission_withheld) as total_comm, "
+                         + "           SUM(total_orders_count) as total_orders, "
+                         + "           ROW_NUMBER() OVER (ORDER BY MIN(period_start) DESC) as rn "
+                         + "    FROM vendor_payouts "
+                         + "    GROUP BY cycle_name"
+                         + ") "
+                         + "SELECT curr.total_gross as curr_gmv, prev.total_gross as prev_gmv, "
+                         + "       curr.total_comm as curr_comm, prev.total_comm as prev_comm, "
+                         + "       curr.total_orders as curr_orders, prev.total_orders as prev_orders "
+                         + "FROM PayoutCycles curr "
+                         + "LEFT JOIN PayoutCycles prev ON prev.rn = curr.rn + 1 "
+                         + "WHERE curr.rn = 1";
+
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(growthSql)) {
+            if (rs.next()) {
+                double currGmv = rs.getDouble("curr_gmv");
+                double prevGmv = rs.getDouble("prev_gmv");
+                double currComm = rs.getDouble("curr_comm");
+                double prevComm = rs.getDouble("prev_comm");
+                int currOrders = rs.getInt("curr_orders");
+                int prevOrders = rs.getInt("prev_orders");
+
+                double gmvGrowth = prevGmv > 0 ? ((currGmv - prevGmv) / prevGmv * 100.0) : 0.0;
+                double commGrowth = prevComm > 0 ? ((currComm - prevComm) / prevComm * 100.0) : 0.0;
+                double ordGrowth = prevOrders > 0 ? ((currOrders - prevOrders) / (double) prevOrders * 100.0) : 0.0;
+
+                stats.setGmvGrowth(Math.round(gmvGrowth * 10.0) / 10.0);
+                stats.setCommissionGrowth(Math.round(commGrowth * 10.0) / 10.0);
+                stats.setOrderGrowth(Math.round(ordGrowth * 10.0) / 10.0);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Failed to load growth metrics: " + ex.getMessage());
         }
     }
 
     private void loadPayoutSummary(Connection conn, AdminDashboardStats stats) {
-        String sql = "SELECT COUNT(*) as vendor_count, COALESCE(SUM(net_payout), 0) as total_payout "
+        String sql = "SELECT COUNT(*) as vendor_count, COALESCE(SUM(net_payout), 0) as total_payout, "
+                   + "       MAX(period_end) as next_period_end "
                    + "FROM vendor_payouts WHERE status = 'PROCESSING'";
 
         try (Statement st = conn.createStatement();
@@ -119,14 +181,22 @@ public class AdminDashboardDAO extends DBContext {
             if (rs.next()) {
                 int vendors = rs.getInt("vendor_count");
                 double payout = rs.getDouble("total_payout");
-                stats.setNextPayoutVendorsCount(vendors > 0 ? vendors : 2);
-                stats.setNextPayoutVolume(payout > 0 ? payout : 102558500.0);
+                stats.setNextPayoutVendorsCount(vendors);
+                stats.setNextPayoutVolume(payout);
+                Timestamp periodEnd = rs.getTimestamp("next_period_end");
+                if (periodEnd != null) {
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                    stats.setNextPayoutDate("Hạn: " + sdf.format(periodEnd));
+                } else {
+                    stats.setNextPayoutDate("Chưa có kỳ mới");
+                }
             }
         } catch (SQLException ex) {
-            stats.setNextPayoutVendorsCount(2);
-            stats.setNextPayoutVolume(102558500.0);
+            LOGGER.log(Level.WARNING, "Failed to load payout summary: " + ex.getMessage());
+            stats.setNextPayoutVendorsCount(0);
+            stats.setNextPayoutVolume(0.0);
+            stats.setNextPayoutDate("Chưa có kỳ mới");
         }
-        stats.setNextPayoutDate("Thứ Sáu, 04/10");
     }
 
     private void loadPendingShops(Connection conn, AdminDashboardStats stats) {
@@ -163,9 +233,6 @@ public class AdminDashboardDAO extends DBContext {
             LOGGER.log(Level.WARNING, "Failed to load pending shop requests: " + ex.getMessage());
         }
 
-        if (list.isEmpty()) {
-            list = getMockPendingShops();
-        }
         stats.setPendingShops(list);
     }
 
@@ -199,54 +266,40 @@ public class AdminDashboardDAO extends DBContext {
             LOGGER.log(Level.WARNING, "Failed to load active disputes: " + ex.getMessage());
         }
 
-        if (list.isEmpty()) {
-            list = getMockDisputes();
-        }
         stats.setActiveDisputes(list);
     }
 
     private void loadCategoryShare(Connection conn, AdminDashboardStats stats) {
-        String sql = "SELECT c.category_name, COUNT(p.product_id) as product_count, "
-                   + "       COALESCE(SUM(pv.price * 10), 0) as estimated_volume "
-                   + "FROM categories c "
-                   + "LEFT JOIN products p ON c.category_id = p.category_id "
+        String sql = "SELECT COALESCE(pcat.category_name, c.category_name) as group_name, "
+                   + "       COUNT(p.product_id) as product_count, "
+                   + "       COALESCE(SUM(pv.price * pv.stock_quantity), 0) as inventory_volume "
+                   + "FROM products p "
+                   + "JOIN categories c ON p.category_id = c.category_id "
+                   + "LEFT JOIN categories pcat ON c.parent_id = pcat.category_id "
                    + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
-                   + "GROUP BY c.category_id, c.category_name "
-                   + "ORDER BY estimated_volume DESC";
+                   + "GROUP BY COALESCE(pcat.category_name, c.category_name) "
+                   + "ORDER BY inventory_volume DESC";
 
         List<String> labels = new ArrayList<>();
         List<Double> volumes = new ArrayList<>();
         List<Map<String, Object>> catList = new ArrayList<>();
         double grandTotal = 0;
 
-        String[] colors = {"#15803d", "#22c55e", "#f59e0b", "#78350f", "#334155"};
+        String[] colors = {"#15803d", "#22c55e", "#ea580c", "#fb923c", "#3b82f6"};
 
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
-                String catName = rs.getString("category_name");
-                double vol = rs.getDouble("estimated_volume");
-                if (vol <= 0) vol = 1000000.0;
-                labels.add(catName);
-                volumes.add(vol);
-                grandTotal += vol;
+                String catName = rs.getString("group_name");
+                double vol = rs.getDouble("inventory_volume");
+                if (vol > 0) {
+                    labels.add(catName);
+                    volumes.add(vol);
+                    grandTotal += vol;
+                }
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Failed to load category share: " + ex.getMessage());
-        }
-
-        if (labels.isEmpty()) {
-            labels.add("Cam, Bưởi & Táo Lê");
-            labels.add("Nhiệt Đới & Đặc Sản");
-            labels.add("Dâu Tây & Quả Mọng");
-            labels.add("Dưa Lưới & Nho");
-            labels.add("Hộp Quà Biếu Tặng");
-            volumes.add(4450000.0);
-            volumes.add(4650000.0);
-            volumes.add(7100000.0);
-            volumes.add(950000.0);
-            volumes.add(7500000.0);
-            grandTotal = 24650000.0;
         }
 
         List<Integer> percentages = new ArrayList<>();
@@ -269,9 +322,33 @@ public class AdminDashboardDAO extends DBContext {
     }
 
     private void loadRevenueTrajectory(Connection conn, AdminDashboardStats stats) {
-        List<String> days = List.of("01/10", "06/10", "11/10", "16/10", "21/10", "26/10", "Hôm nay");
-        List<Double> gmv = List.of(42000.0, 68000.0, 54000.0, 78000.0, 98400.0, 89000.0, 114000.0);
-        List<Double> comm = List.of(3360.0, 5440.0, 4320.0, 6240.0, 7872.0, 7120.0, 9120.0);
+        String sql = "SELECT FORMAT(created_at, 'dd/MM') as day_label, "
+                   + "       COALESCE(SUM(shop_total), 0) / 1000000.0 as gmv_m, "
+                   + "       COALESCE(SUM(commission_amount), 0) / 1000000.0 as comm_m "
+                   + "FROM sub_orders "
+                   + "GROUP BY FORMAT(created_at, 'dd/MM'), CAST(created_at AS DATE) "
+                   + "ORDER BY CAST(created_at AS DATE) ASC";
+
+        List<String> days = new ArrayList<>();
+        List<Double> gmv = new ArrayList<>();
+        List<Double> comm = new ArrayList<>();
+
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                days.add(rs.getString("day_label"));
+                gmv.add(Math.round(rs.getDouble("gmv_m") * 100.0) / 100.0);
+                comm.add(Math.round(rs.getDouble("comm_m") * 100.0) / 100.0);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Failed to load revenue trajectory: " + ex.getMessage());
+        }
+
+        if (days.isEmpty()) {
+            days.add("Hôm nay");
+            gmv.add(0.0);
+            comm.add(0.0);
+        }
 
         stats.setChartLabelsJson(GSON.toJson(days));
         stats.setChartGmvJson(GSON.toJson(gmv));
@@ -279,69 +356,36 @@ public class AdminDashboardDAO extends DBContext {
     }
 
     private void initFallbackStats(AdminDashboardStats stats) {
-        stats.setTotalGmv(1139800000.0);
-        stats.setNetCommission(88873500.0);
-        stats.setTotalOrdersCount(4780);
-        stats.setActiveShopsCount(4);
-        stats.setPendingKycCount(2);
-        stats.setTotalBuyersCount(8);
-        stats.setActiveUsersCount(17);
-        stats.setOpenDisputesCount(2);
-        stats.setNextPayoutVolume(102558500.0);
-        stats.setNextPayoutVendorsCount(2);
-        stats.setNextPayoutDate("Thứ Sáu, 04/10");
-        stats.setPendingShops(getMockPendingShops());
-        stats.setActiveDisputes(getMockDisputes());
-    }
-
-    private List<Map<String, Object>> getMockPendingShops() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        Map<String, Object> s1 = new HashMap<>();
-        s1.put("requestId", 5L);
-        s1.put("shopName", "Vườn Bơ Đắk Lắk");
-        s1.put("businessType", "Nhà vườn trực tiếp");
-        s1.put("produceSpecialty", "Bơ sáp 034, Chanh leo ngọt Columbia, Sầu riêng Dona");
-        s1.put("certificationName", "VietGAP (Đang bổ sung)");
-        s1.put("province", "Đắk Lắk");
-        s1.put("createdAtFormatted", "30/10/2024 08:20");
-        s1.put("avatarAbbr", "VB");
-        list.add(s1);
-
-        Map<String, Object> s2 = new HashMap<>();
-        s2.put("requestId", 6L);
-        s2.put("shopName", "Công Ty Nhập Khẩu Toàn Cầu");
-        s2.put("businessType", "Doanh nghiệp nhập khẩu");
-        s2.put("produceSpecialty", "Táo Envy New Zealand, Cherry Mỹ, Nho mẫu đơn Nhật");
-        s2.put("certificationName", "Chứng nhận Kiểm dịch thực vật");
-        s2.put("province", "TP. Hồ Chí Minh");
-        s2.put("createdAtFormatted", "30/10/2024 11:45");
-        s2.put("avatarAbbr", "NK");
-        list.add(s2);
-        return list;
-    }
-
-    private List<Map<String, Object>> getMockDisputes() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        Map<String, Object> d1 = new HashMap<>();
-        d1.put("disputeCode", "DIS-892");
-        d1.put("reasonCategory", "Quả dập nát/úng hỏng");
-        d1.put("complaintText", "Tôi nhận 2 hộp sầu riêng Ri6 nhưng múi bên trong bị chua ủng, có mùi rượu lên men không thể ăn được. Yêu cầu bồi hoàn.");
-        d1.put("claimAmountFormatted", "420.000 ₫");
-        d1.put("status", "OPEN");
-        d1.put("customerName", "Nguyễn Thu Hà");
-        d1.put("shopName", "HTX Trái Cây Miền Tây");
-        list.add(d1);
-
-        Map<String, Object> d2 = new HashMap<>();
-        d2.put("disputeCode", "DIS-891");
-        d2.put("reasonCategory", "Đứt gãy bảo quản lạnh");
-        d2.put("complaintText", "Shipper giao trễ hơn 6 tiếng so với cam kết, thùng xốp không còn đá gel dẫn đến dâu tây bị hấp hơi ủng nước.");
-        d2.put("claimAmountFormatted", "310.000 ₫");
-        d2.put("status", "MEDIATING");
-        d2.put("customerName", "Marcus Vance");
-        d2.put("shopName", "Nông Trại Dâu Đà Lạt");
-        list.add(d2);
-        return list;
+        stats.setTotalGmv(0.0);
+        stats.setNetCommission(0.0);
+        stats.setTotalOrdersCount(0);
+        stats.setActiveShopsCount(0);
+        stats.setPendingKycCount(0);
+        stats.setTotalBuyersCount(0);
+        stats.setActiveUsersCount(0);
+        stats.setOpenDisputesCount(0);
+        stats.setTotalEscrowAmount(0.0);
+        stats.setFlaggedProductsCount(0);
+        stats.setNextPayoutVolume(0.0);
+        stats.setNextPayoutVendorsCount(0);
+        stats.setNextPayoutDate("Chưa có kỳ mới");
+        stats.setGmvGrowth(0.0);
+        stats.setCommissionGrowth(0.0);
+        stats.setOrderGrowth(0.0);
+        stats.setOrderCompletionRate(100.0);
+        stats.setTotalUsersCount(0);
+        stats.setActiveUserRate(100.0);
+        stats.setCertifiedProductRate(100.0);
+        stats.setPendingShops(Collections.emptyList());
+        stats.setActiveDisputes(Collections.emptyList());
+        stats.setTopShops(Collections.emptyList());
+        stats.setTopProducts(Collections.emptyList());
+        stats.setChartLabelsJson("[]");
+        stats.setChartGmvJson("[]");
+        stats.setChartCommissionJson("[]");
+        stats.setCategoryLabelsJson("[]");
+        stats.setCategoryDataJson("[]");
+        stats.setCategoryStats(Collections.emptyList());
     }
 
     private void loadTopShops(Connection conn, AdminDashboardStats stats) {
@@ -376,13 +420,16 @@ public class AdminDashboardDAO extends DBContext {
     }
 
     private void loadTopProducts(Connection conn, AdminDashboardStats stats) {
-        String sql = "SELECT TOP 5 p.product_id, p.name as product_name, s.shop_name, c.category_name, "
-                   + "       pv.stock_quantity, pv.unit "
+        String sql = "SELECT TOP 5 p.product_id, p.name AS product_name, s.shop_name, c.category_name, "
+                   + "       COALESCE(SUM(oi.quantity), 0) AS total_sold, "
+                   + "       COALESCE(MAX(oi.unit), MAX(pv.unit), 'kg') AS unit "
                    + "FROM products p "
                    + "JOIN shops s ON p.shop_id = s.shop_id "
                    + "JOIN categories c ON p.category_id = c.category_id "
                    + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
-                   + "ORDER BY p.product_id ASC";
+                   + "LEFT JOIN order_items oi ON pv.variant_id = oi.variant_id "
+                   + "GROUP BY p.product_id, p.name, s.shop_name, c.category_name "
+                   + "ORDER BY total_sold DESC, p.product_id ASC";
 
         List<Map<String, Object>> list = new ArrayList<>();
         try (Statement st = conn.createStatement();
@@ -392,10 +439,10 @@ public class AdminDashboardDAO extends DBContext {
                 map.put("productName", rs.getString("product_name"));
                 map.put("shopName", rs.getString("shop_name"));
                 map.put("categoryName", rs.getString("category_name"));
-                int stock = rs.getInt("stock_quantity");
+                int sold = rs.getInt("total_sold");
                 String unit = rs.getString("unit") != null ? rs.getString("unit") : "kg";
-                map.put("soldFormatted", (stock > 0 ? (stock * 12) : 500) + " " + unit);
-                map.put("statusLabel", "Đang mở bán");
+                map.put("soldFormatted", sold + " " + unit);
+                map.put("statusLabel", sold > 0 ? "Bán chạy" : "Đang mở bán");
                 list.add(map);
             }
         } catch (SQLException ex) {

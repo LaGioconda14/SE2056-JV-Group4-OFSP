@@ -15,8 +15,35 @@ public class AdminShopServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String status = request.getParameter("status");
+        if (status == null || status.trim().isEmpty()) {
+            status = request.getParameter("tab");
+        }
+        if (status == null || status.trim().isEmpty()) {
+            status = "ALL";
+        }
+
+        String type = request.getParameter("type");
+        if (type == null || type.trim().isEmpty()) {
+            type = "ALL";
+        }
+
+        String cert = request.getParameter("cert");
+        if (cert == null || cert.trim().isEmpty()) {
+            cert = "ALL";
+        }
+
+        String search = request.getParameter("search");
+        if (search != null) {
+            search = search.trim();
+        }
+
+        request.setAttribute("selectedStatus", status.toUpperCase());
+        request.setAttribute("selectedType", type);
+        request.setAttribute("selectedCert", cert);
+        request.setAttribute("searchKeyword", search != null ? search : "");
         request.setAttribute("shopStats", dao.getShopStats());
-        request.setAttribute("shopsList", dao.getShopsList());
+        request.setAttribute("shopsList", dao.getShopsList(status, type, cert, search));
         request.getRequestDispatcher("/views/admin/shops.jsp").forward(request, response);
     }
 }

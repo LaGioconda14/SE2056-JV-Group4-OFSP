@@ -31,6 +31,7 @@ public class AdminManagementDAO extends DBContext {
     public Map<String, Object> getShopStats() {
         Map<String, Object> stats = new HashMap<>();
         String sql = "SELECT COUNT(*) as total_shops, "
+                   + "       SUM(CASE WHEN status = 'ACTIVE' THEN 1 ELSE 0 END) as active_shops, "
                    + "       SUM(CASE WHEN status = 'PENDING_KYC' THEN 1 ELSE 0 END) as pending_kyc, "
                    + "       AVG(commission_rate) as avg_comm, "
                    + "       SUM(CASE WHEN status = 'SUSPENDED' THEN 1 ELSE 0 END) as suspended "
@@ -41,6 +42,7 @@ public class AdminManagementDAO extends DBContext {
              ResultSet rs = st.executeQuery(sql)) {
             if (rs.next()) {
                 stats.put("totalShops", rs.getInt("total_shops"));
+                stats.put("activeShops", rs.getInt("active_shops"));
                 stats.put("pendingKyc", rs.getInt("pending_kyc"));
                 stats.put("avgComm", String.format("%.1f%%", rs.getDouble("avg_comm")));
                 stats.put("suspended", rs.getInt("suspended"));
@@ -48,6 +50,7 @@ public class AdminManagementDAO extends DBContext {
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Error in getShopStats: " + ex.getMessage());
             stats.put("totalShops", 6);
+            stats.put("activeShops", 4);
             stats.put("pendingKyc", 2);
             stats.put("avgComm", "8.0%");
             stats.put("suspended", 0);
@@ -56,31 +59,74 @@ public class AdminManagementDAO extends DBContext {
     }
 
     public List<Map<String, Object>> getShopsList() {
+        return getShopsList(null, null, null, null);
+    }
+
+    public List<Map<String, Object>> getShopsList(String statusFilter, String typeFilter, String certFilter, String searchKeyword) {
         List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "SELECT s.shop_id, s.shop_name, s.business_type, s.province, s.certification_name, "
-                   + "       s.commission_rate, s.total_sales_amount, s.total_orders_count, s.status, "
-                   + "       u.full_name as owner_name, u.email as owner_email "
-                   + "FROM shops s "
-                   + "JOIN users u ON s.owner_id = u.user_id "
-                   + "ORDER BY s.shop_id ASC";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT s.shop_id, s.shop_name, s.business_type, s.province, s.certification_name, ")
+           .append("       s.commission_rate, s.total_sales_amount, s.total_orders_count, s.status, ")
+           .append("       u.full_name as owner_name, u.email as owner_email ")
+           .append("FROM shops s ")
+           .append("JOIN users u ON s.owner_id = u.user_id ");
+
+        List<String> conditions = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
+            conditions.add("s.status = ?");
+            params.add(statusFilter.trim());
+        }
+
+        if (typeFilter != null && !typeFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(typeFilter.trim())) {
+            conditions.add("s.business_type = ?");
+            params.add(typeFilter.trim());
+        }
+
+        if (certFilter != null && !certFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(certFilter.trim())) {
+            conditions.add("LOWER(s.certification_name) LIKE ?");
+            params.add("%" + certFilter.trim().toLowerCase() + "%");
+        }
+
+        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+            String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
+            conditions.add("(LOWER(s.shop_name) LIKE ? OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(s.province) LIKE ? OR CAST(s.shop_id AS VARCHAR(20)) LIKE ?)");
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
+        }
+        sql.append("ORDER BY s.shop_id ASC");
 
         try (Connection conn = getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            while (rs.next()) {
-                Map<String, Object> item = new HashMap<>();
-                item.put("shopId", rs.getLong("shop_id"));
-                item.put("shopName", rs.getString("shop_name"));
-                item.put("businessType", rs.getString("business_type"));
-                item.put("province", rs.getString("province"));
-                item.put("certificationName", rs.getString("certification_name"));
-                item.put("commissionRate", String.format("%.1f%%", rs.getDouble("commission_rate")));
-                item.put("totalSalesFormatted", CURRENCY_FORMAT.format(rs.getDouble("total_sales_amount")));
-                item.put("totalOrdersCount", rs.getInt("total_orders_count"));
-                item.put("status", rs.getString("status"));
-                item.put("ownerName", rs.getString("owner_name"));
-                item.put("ownerEmail", rs.getString("owner_email"));
-                list.add(item);
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("shopId", rs.getLong("shop_id"));
+                    item.put("shopName", rs.getString("shop_name"));
+                    item.put("businessType", rs.getString("business_type"));
+                    item.put("province", rs.getString("province"));
+                    item.put("certificationName", rs.getString("certification_name"));
+                    item.put("commissionRate", String.format("%.1f%%", rs.getDouble("commission_rate")));
+                    item.put("totalSalesFormatted", CURRENCY_FORMAT.format(rs.getDouble("total_sales_amount")));
+                    item.put("totalOrdersCount", rs.getInt("total_orders_count"));
+                    item.put("status", rs.getString("status"));
+                    item.put("ownerName", rs.getString("owner_name"));
+                    item.put("ownerEmail", rs.getString("owner_email"));
+                    list.add(item);
+                }
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Error in getShopsList: " + ex.getMessage());
@@ -139,10 +185,14 @@ public class AdminManagementDAO extends DBContext {
     }
 
     public List<Map<String, Object>> getUsersList() {
-        return getUsersList(null);
+        return getUsersList(null, null, null);
     }
 
     public List<Map<String, Object>> getUsersList(String roleFilter) {
+        return getUsersList(roleFilter, null, null);
+    }
+
+    public List<Map<String, Object>> getUsersList(String roleFilter, String statusFilter, String searchKeyword) {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT u.user_id, u.full_name, u.email, u.phone, u.status, u.created_at, ")
@@ -159,32 +209,50 @@ public class AdminManagementDAO extends DBContext {
            .append("    FROM orders GROUP BY customer_id")
            .append(") o ON u.user_id = o.customer_id ");
 
-        if (roleFilter != null && !roleFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(roleFilter)) {
-            if ("ADMIN_STAFF".equalsIgnoreCase(roleFilter)) {
-                sql.append("WHERE r.role_name IN ('ADMIN', 'STAFF') ");
-            } else if ("SHOP_OWNER".equalsIgnoreCase(roleFilter)) {
-                sql.append("WHERE r.role_name = 'SHOP_OWNER' ");
-            } else if ("DRIVER".equalsIgnoreCase(roleFilter)) {
-                sql.append("WHERE r.role_name = 'DRIVER' ");
-            } else if ("CUSTOMER".equalsIgnoreCase(roleFilter)) {
-                sql.append("WHERE (r.role_name = 'CUSTOMER' OR r.role_name IS NULL) ");
+        List<String> conditions = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
+        if (roleFilter != null && !roleFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(roleFilter.trim())) {
+            String rf = roleFilter.trim();
+            if ("ADMIN_STAFF".equalsIgnoreCase(rf)) {
+                conditions.add("r.role_name IN ('ADMIN', 'STAFF')");
+            } else if ("SHOP_OWNER".equalsIgnoreCase(rf)) {
+                conditions.add("r.role_name = 'SHOP_OWNER'");
+            } else if ("DRIVER".equalsIgnoreCase(rf)) {
+                conditions.add("r.role_name = 'DRIVER'");
+            } else if ("CUSTOMER".equalsIgnoreCase(rf)) {
+                conditions.add("(r.role_name = 'CUSTOMER' OR r.role_name IS NULL)");
             } else {
-                sql.append("WHERE r.role_name = ? ");
+                conditions.add("r.role_name = ?");
+                params.add(rf);
             }
+        }
+
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
+            conditions.add("u.status = ?");
+            params.add(statusFilter.trim());
+        }
+
+        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+            String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
+            conditions.add("(LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(u.phone) LIKE ? OR LOWER(s.shop_name) LIKE ? OR CAST(u.user_id AS VARCHAR(20)) LIKE ?)");
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
         }
         sql.append("ORDER BY u.user_id ASC");
 
-        try (Connection conn = getConnection()) {
-            PreparedStatement ps;
-            if (roleFilter != null && !roleFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(roleFilter)
-                    && !"ADMIN_STAFF".equalsIgnoreCase(roleFilter)
-                    && !"SHOP_OWNER".equalsIgnoreCase(roleFilter)
-                    && !"DRIVER".equalsIgnoreCase(roleFilter)
-                    && !"CUSTOMER".equalsIgnoreCase(roleFilter)) {
-                ps = conn.prepareStatement(sql.toString());
-                ps.setString(1, roleFilter);
-            } else {
-                ps = conn.prepareStatement(sql.toString());
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -238,56 +306,163 @@ public class AdminManagementDAO extends DBContext {
     // 3. CATEGORIES
     // -------------------------------------------------------------------------
     public List<Map<String, Object>> getCategoriesList() {
+        return getCategoriesList(null, null, null);
+    }
+
+    public List<Map<String, Object>> getCategoriesList(String statusFilter, String searchKeyword) {
+        return getCategoriesList(statusFilter, searchKeyword, null);
+    }
+
+    public List<Map<String, Object>> getCategoriesList(String statusFilter, String searchKeyword, String parentIdFilter) {
         List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "SELECT c.category_id, c.category_name, c.slug, c.description, c.is_active, "
-                   + "       COALESCE(p.active_skus, 0) as active_skus "
-                   + "FROM categories c "
-                   + "LEFT JOIN ("
-                   + "    SELECT category_id, COUNT(product_id) as active_skus "
-                   + "    FROM products WHERE is_active = 1 GROUP BY category_id"
-                   + ") p ON c.category_id = p.category_id "
-                   + "ORDER BY c.category_id ASC";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.is_active, ")
+           .append("       pcat.category_name as parent_name, ")
+           .append("       COALESCE(p.active_skus, 0) as active_skus ")
+           .append("FROM categories c ")
+           .append("LEFT JOIN categories pcat ON c.parent_id = pcat.category_id ")
+           .append("LEFT JOIN (")
+           .append("    SELECT category_id, COUNT(product_id) as active_skus ")
+           .append("    FROM products WHERE is_active = 1 GROUP BY category_id")
+           .append(") p ON c.category_id = p.category_id ");
+
+        List<String> conditions = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
+        if (parentIdFilter != null && !parentIdFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(parentIdFilter.trim())) {
+            try {
+                int pid = Integer.parseInt(parentIdFilter.trim());
+                conditions.add("c.parent_id = ?");
+                params.add(pid);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
+            if ("ACTIVE".equalsIgnoreCase(statusFilter.trim()) || "1".equals(statusFilter.trim())) {
+                conditions.add("c.is_active = 1");
+            } else if ("INACTIVE".equalsIgnoreCase(statusFilter.trim()) || "0".equals(statusFilter.trim())) {
+                conditions.add("c.is_active = 0");
+            }
+        }
+
+        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+            String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
+            conditions.add("(LOWER(c.category_name) LIKE ? OR LOWER(c.slug) LIKE ? OR LOWER(c.description) LIKE ? OR LOWER(pcat.category_name) LIKE ? OR CAST(c.category_id AS VARCHAR(20)) LIKE ?)");
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
+        }
+        sql.append("ORDER BY COALESCE(c.parent_id, c.category_id) ASC, c.display_order ASC, c.category_id ASC");
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> item = new HashMap<>();
+                    int id = rs.getInt("category_id");
+                    item.put("categoryId", id);
+                    item.put("parentId", rs.getObject("parent_id"));
+                    item.put("parentName", rs.getString("parent_name"));
+                    item.put("categoryName", rs.getString("category_name"));
+                    item.put("slug", rs.getString("slug"));
+                    item.put("description", rs.getString("description"));
+                    item.put("imageUrl", rs.getString("image_url"));
+                    item.put("iconClass", rs.getString("icon_class"));
+                    item.put("activeSkus", rs.getInt("active_skus"));
+                    item.put("isActive", rs.getBoolean("is_active"));
+
+                    // Cold Storage details by category group
+                    int pid = rs.getInt("parent_id");
+                    if (id == 5 || pid == 5) {
+                        item.put("tempRange", "1°C – 3°C");
+                        item.put("recommendedStorage", "Kho lạnh ngoại nhập Hub A");
+                    } else if (id == 6 || pid == 6) {
+                        item.put("tempRange", "10°C – 14°C");
+                        item.put("recommendedStorage", "Kho thoáng mát Vùng 3");
+                    } else if (id == 7 || pid == 7) {
+                        item.put("tempRange", "0°C – 2°C");
+                        item.put("recommendedStorage", "Hầm lạnh sơ chế Eat-Clean");
+                    } else if (id == 8 || pid == 8) {
+                        item.put("tempRange", "4°C – 8°C");
+                        item.put("recommendedStorage", "Kho đóng gói nguyên kiện Hub C");
+                    } else if (id == 9 || pid == 9) {
+                        item.put("tempRange", "8°C – 12°C");
+                        item.put("recommendedStorage", "Kho trữ mát mùa hè");
+                    } else {
+                        item.put("tempRange", "2°C – 5°C");
+                        item.put("recommendedStorage", "Kho lạnh tiêu chuẩn");
+                    }
+                    list.add(item);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Error in getCategoriesList: " + ex.getMessage());
+        }
+        return list;
+    }
+
+    public List<Map<String, Object>> getFruitMegaMenuCategories() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        // Select Level 2 categories under "Trái Cây" (parent_id = 1)
+        String sql = "SELECT c.category_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.is_active "
+                   + "FROM categories c WHERE c.parent_id = 1 ORDER BY c.display_order ASC";
 
         try (Connection conn = getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 Map<String, Object> item = new HashMap<>();
-                int id = rs.getInt("category_id");
-                item.put("categoryId", id);
+                int catId = rs.getInt("category_id");
+                item.put("categoryId", catId);
                 item.put("categoryName", rs.getString("category_name"));
                 item.put("slug", rs.getString("slug"));
                 item.put("description", rs.getString("description"));
-                item.put("activeSkus", rs.getInt("active_skus"));
+                item.put("imageUrl", rs.getString("image_url"));
+                item.put("iconClass", rs.getString("icon_class"));
                 item.put("isActive", rs.getBoolean("is_active"));
 
-                // Cold Storage details by category
-                switch (id) {
-                    case 1:
-                        item.put("tempRange", "2°C – 5°C");
-                        item.put("recommendedStorage", "Kho lạnh Hub A");
-                        break;
-                    case 2:
-                        item.put("tempRange", "10°C – 14°C");
-                        item.put("recommendedStorage", "Kho thoáng mát Vùng 3");
-                        break;
-                    case 3:
-                        item.put("tempRange", "0°C – 2°C");
-                        item.put("recommendedStorage", "Hầm lạnh chuyên dụng B");
-                        break;
-                    case 4:
-                        item.put("tempRange", "4°C – 8°C");
-                        item.put("recommendedStorage", "Kho lạnh Hub C");
-                        break;
-                    default:
-                        item.put("tempRange", "8°C – 12°C");
-                        item.put("recommendedStorage", "Khu đóng gói cao cấp");
-                        break;
+                // Load sub-items (Level 3)
+                List<Map<String, Object>> subItems = new ArrayList<>();
+                String subSql = "SELECT c.category_id, c.category_name, c.slug, COALESCE(p.active_skus, 0) as active_skus "
+                              + "FROM categories c "
+                              + "LEFT JOIN ("
+                              + "    SELECT category_id, COUNT(product_id) as active_skus "
+                              + "    FROM products WHERE is_active = 1 GROUP BY category_id"
+                              + ") p ON c.category_id = p.category_id "
+                              + "WHERE c.parent_id = ? ORDER BY c.display_order ASC";
+                try (PreparedStatement subPs = conn.prepareStatement(subSql)) {
+                    subPs.setInt(1, catId);
+                    try (ResultSet subRs = subPs.executeQuery()) {
+                        int totalGroupSkus = 0;
+                        while (subRs.next()) {
+                            Map<String, Object> sub = new HashMap<>();
+                            sub.put("categoryId", subRs.getInt("category_id"));
+                            sub.put("categoryName", subRs.getString("category_name"));
+                            sub.put("slug", subRs.getString("slug"));
+                            int skus = subRs.getInt("active_skus");
+                            sub.put("activeSkus", skus);
+                            totalGroupSkus += skus;
+                            subItems.add(sub);
+                        }
+                        item.put("subCategories", subItems);
+                        item.put("totalSkus", totalGroupSkus);
+                    }
                 }
                 list.add(item);
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Error in getCategoriesList: " + ex.getMessage());
+            LOGGER.log(Level.WARNING, "Error in getFruitMegaMenuCategories: " + ex.getMessage());
         }
         return list;
     }
@@ -469,100 +644,208 @@ public class AdminManagementDAO extends DBContext {
     // -------------------------------------------------------------------------
     // 7. PRODUCTS & INVENTORY
     // -------------------------------------------------------------------------
-    public List<Map<String, Object>> getProductsList() {
-        List<Map<String, Object>> list = new ArrayList<>();
-        String sql = "SELECT p.product_id, p.name as product_name, p.origin, p.storage_temp, p.certification, "
-                   + "       c.category_name, s.shop_name, pv.sku, pv.price, pv.stock_quantity, pv.unit, "
-                   + "       (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC) as thumbnail_url "
+    public Map<String, Object> getProductModerationStats() {
+        Map<String, Object> stats = new HashMap<>();
+        String sql = "SELECT "
+                   + "    COUNT(p.product_id) as total_count, "
+                   + "    SUM(CASE WHEN p.is_active = 1 THEN 1 ELSE 0 END) as active_count, "
+                   + "    SUM(CASE WHEN p.is_active = 0 THEN 1 ELSE 0 END) as inactive_count, "
+                   + "    SUM(CASE WHEN p.certification IS NOT NULL AND p.certification != '' THEN 1 ELSE 0 END) as certified_count, "
+                   + "    SUM(CASE WHEN pv.stock_quantity <= pv.low_stock_threshold THEN 1 ELSE 0 END) as low_stock_count, "
+                   + "    SUM(CASE WHEN p.is_featured = 1 THEN 1 ELSE 0 END) as featured_count "
                    + "FROM products p "
-                   + "LEFT JOIN categories c ON p.category_id = c.category_id "
-                   + "LEFT JOIN shops s ON p.shop_id = s.shop_id "
-                   + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
-                   + "ORDER BY p.product_id ASC";
+                   + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id";
 
         try (Connection conn = getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
-            int idx = 0;
-            while (rs.next()) {
-                idx++;
-                Map<String, Object> item = new HashMap<>();
-                long pid = rs.getLong("product_id");
-                item.put("productId", pid);
-                String pName = rs.getString("product_name");
-                item.put("productName", pName);
-                item.put("origin", rs.getString("origin") != null ? rs.getString("origin") : "Đà Lạt, Lâm Đồng");
-                item.put("storageTemp", rs.getString("storage_temp") != null ? rs.getString("storage_temp") : "2-5°C");
-                String cert = rs.getString("certification") != null ? rs.getString("certification") : "VietGAP Certified";
-                item.put("certification", cert);
-                item.put("categoryName", rs.getString("category_name"));
-                item.put("shopName", rs.getString("shop_name") != null ? rs.getString("shop_name") : "Nông Trại Xanh");
-                String sku = rs.getString("sku") != null ? rs.getString("sku") : "FRU-" + pid;
-                item.put("sku", sku);
-                double price = rs.getDouble("price");
-                item.put("price", price);
-                item.put("priceFormatted", price > 0 ? CURRENCY_FORMAT.format(price) : "120,000 ₫");
-                item.put("unit", rs.getString("unit") != null ? rs.getString("unit") : "kg");
-                item.put("stockFormatted", rs.getInt("stock_quantity") + " " + (rs.getString("unit") != null ? rs.getString("unit") : "kg"));
+            if (rs.next()) {
+                int total = rs.getInt("total_count");
+                int active = rs.getInt("active_count");
+                int inactive = rs.getInt("inactive_count");
+                int certified = rs.getInt("certified_count");
+                int lowStock = rs.getInt("low_stock_count");
+                int featured = rs.getInt("featured_count");
 
-                // Image matching fruit name
-                String img = rs.getString("thumbnail_url");
-                if (img == null || img.trim().isEmpty()) {
-                    String lower = pName.toLowerCase();
-                    if (lower.contains("dâu")) {
-                        img = "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=150&h=150&fit=crop";
-                    } else if (lower.contains("sầu")) {
-                        img = "https://images.unsplash.com/photo-1587334274328-64186a80aeee?w=150&h=150&fit=crop";
-                    } else if (lower.contains("xoài")) {
-                        img = "https://images.unsplash.com/photo-1553279768-865429fa0078?w=150&h=150&fit=crop";
-                    } else if (lower.contains("bưởi")) {
-                        img = "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=150&h=150&fit=crop";
-                    } else if (lower.contains("mận")) {
-                        img = "https://images.unsplash.com/photo-1528825871115-3581a5387919?w=150&h=150&fit=crop";
-                    } else if (lower.contains("lê") || lower.contains("táo")) {
-                        img = "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=150&h=150&fit=crop";
-                    } else if (lower.contains("thanh long")) {
-                        img = "https://images.unsplash.com/photo-1527325678964-54921661f888?w=150&h=150&fit=crop";
+                stats.put("totalCount", total);
+                stats.put("activeCount", active);
+                stats.put("inactiveCount", inactive);
+                stats.put("pendingCount", inactive);
+                stats.put("certifiedCount", certified);
+                stats.put("lowStockCount", lowStock);
+                stats.put("featuredCount", featured);
+                stats.put("safeCount", certified);
+
+                double complianceRate = total > 0 ? (certified * 100.0 / total) : 100.0;
+                stats.put("complianceRate", Math.round(complianceRate * 10.0) / 10.0);
+
+                double activeRate = total > 0 ? (active * 100.0 / total) : 100.0;
+                stats.put("activeRate", Math.round(activeRate * 10.0) / 10.0);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Error in getProductModerationStats: " + ex.getMessage());
+        }
+        return stats;
+    }
+
+    public List<Map<String, Object>> getProductsList() {
+        return getProductsList(null, null, null);
+    }
+
+    public List<Map<String, Object>> getProductsList(String statusFilter, String categoryFilter, String searchKeyword) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT p.product_id, p.name as product_name, p.origin, p.storage_temp, p.certification, ")
+           .append("       p.is_featured, p.is_active, p.created_at, p.updated_at, ")
+           .append("       c.category_id, c.category_name, s.shop_name, pv.sku, pv.price, pv.stock_quantity, pv.unit, ")
+           .append("       pv.low_stock_threshold, ")
+           .append("       (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC) as thumbnail_url ")
+           .append("FROM products p ")
+           .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
+           .append("LEFT JOIN shops s ON p.shop_id = s.shop_id ")
+           .append("LEFT JOIN product_variants pv ON p.product_id = pv.product_id ");
+
+        List<String> conditions = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
+            String sf = statusFilter.trim();
+            if ("approved".equalsIgnoreCase(sf) || "ACTIVE".equalsIgnoreCase(sf)) {
+                conditions.add("p.is_active = 1");
+            } else if ("pending".equalsIgnoreCase(sf) || "rejected".equalsIgnoreCase(sf) || "INACTIVE".equalsIgnoreCase(sf)) {
+                conditions.add("p.is_active = 0");
+            } else if ("safe".equalsIgnoreCase(sf) || "certified".equalsIgnoreCase(sf)) {
+                conditions.add("(p.certification IS NOT NULL AND p.certification != '')");
+            } else if ("featured".equalsIgnoreCase(sf)) {
+                conditions.add("p.is_featured = 1");
+            } else if ("low_stock".equalsIgnoreCase(sf)) {
+                conditions.add("pv.stock_quantity <= pv.low_stock_threshold");
+            }
+        }
+
+        if (categoryFilter != null && !categoryFilter.trim().isEmpty() && !"all".equalsIgnoreCase(categoryFilter.trim())) {
+            conditions.add("(c.category_name = ? OR CAST(c.category_id AS VARCHAR(20)) = ?)");
+            params.add(categoryFilter.trim());
+            params.add(categoryFilter.trim());
+        }
+
+        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+            String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
+            conditions.add("(LOWER(p.name) LIKE ? OR LOWER(pv.sku) LIKE ? OR LOWER(s.shop_name) LIKE ? OR LOWER(p.origin) LIKE ? OR LOWER(p.certification) LIKE ?)");
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
+        }
+        sql.append("ORDER BY p.product_id ASC");
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> item = new HashMap<>();
+                    long pid = rs.getLong("product_id");
+                    item.put("productId", pid);
+                    String pName = rs.getString("product_name");
+                    item.put("productName", pName);
+                    String origin = rs.getString("origin") != null ? rs.getString("origin") : "Đang cập nhật";
+                    item.put("origin", origin);
+                    String storageTemp = rs.getString("storage_temp") != null ? rs.getString("storage_temp") : "2-5°C";
+                    item.put("storageTemp", storageTemp);
+                    String cert = rs.getString("certification") != null ? rs.getString("certification") : "Đang thẩm định";
+                    item.put("certification", cert);
+                    String catName = rs.getString("category_name") != null ? rs.getString("category_name") : "Trái cây mùa vụ";
+                    item.put("categoryName", catName);
+                    item.put("shopName", rs.getString("shop_name") != null ? rs.getString("shop_name") : "Nhà Vườn FreshFruit");
+                    String sku = rs.getString("sku") != null ? rs.getString("sku") : "FRU-" + pid;
+                    item.put("sku", sku);
+                    double price = rs.getDouble("price");
+                    item.put("price", price);
+                    item.put("priceFormatted", price > 0 ? CURRENCY_FORMAT.format(price) : "120,000 ₫");
+                    String unit = rs.getString("unit") != null ? rs.getString("unit") : "kg";
+                    item.put("unit", unit);
+                    int stock = rs.getInt("stock_quantity");
+                    item.put("stock", stock);
+                    item.put("stockFormatted", stock + " " + unit);
+
+                    boolean isActive = rs.getBoolean("is_active");
+                    boolean isFeatured = rs.getBoolean("is_featured");
+                    item.put("isActive", isActive);
+                    item.put("isFeatured", isFeatured);
+
+                    Timestamp createdAt = rs.getTimestamp("created_at");
+                    if (createdAt != null) {
+                        item.put("timeAgo", DATE_FORMAT.format(createdAt));
                     } else {
-                        img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop";
+                        item.put("timeAgo", "Hôm nay");
                     }
-                }
-                item.put("thumbnailUrl", img);
 
-                // Moderation metadata (AI score, status tag)
-                if (idx == 1) {
-                    item.put("modTag", "BÁO CÁO VI PHẠM");
-                    item.put("modTagClass", "bg-danger-subtle text-danger border-danger-subtle");
-                    item.put("modTagIcon", "bi-shield-exclamation");
-                    item.put("riskBadgeClass", "badge-ai-danger");
-                    item.put("riskBadgeIcon", "bi-exclamation-triangle-fill");
-                    item.put("riskBadgeText", "AI Rủi ro: CAO (76% nghi ảnh mạng)");
-                    item.put("riskLevel", "high");
-                    item.put("statusGroup", "reported pending");
-                    item.put("timeAgo", "28 phút trước");
-                } else if (idx % 2 == 0) {
-                    item.put("modTag", "ĐĂNG MỚI");
-                    item.put("modTagClass", "bg-success-subtle text-success border-success-subtle");
-                    item.put("modTagIcon", "bi-plus-circle");
-                    item.put("riskBadgeClass", "badge-ai-success");
-                    item.put("riskBadgeIcon", "bi-shield-check");
-                    item.put("riskBadgeText", "AI Đánh giá: 98/100 An toàn cao");
-                    item.put("riskLevel", "safe");
-                    item.put("statusGroup", "pending approved");
-                    item.put("timeAgo", (idx) + " giờ trước");
-                } else {
-                    item.put("modTag", "CẬP NHẬT GIẤY PHÉP");
-                    item.put("modTagClass", "bg-info-subtle text-info-emphasis border-info-subtle");
-                    item.put("modTagIcon", "bi-arrow-repeat");
-                    item.put("riskBadgeClass", "badge-ai-info");
-                    item.put("riskBadgeIcon", "bi-patch-check-fill");
-                    item.put("riskBadgeText", "AI Đánh giá: 94/100 Chứng chỉ mới");
-                    item.put("riskLevel", "safe");
-                    item.put("statusGroup", "pending approved");
-                    item.put("timeAgo", (idx) + " giờ trước");
-                }
+                    // Image matching fruit name or DB thumbnail
+                    String img = rs.getString("thumbnail_url");
+                    if (img == null || img.trim().isEmpty()) {
+                        String lower = pName.toLowerCase();
+                        if (lower.contains("dâu")) {
+                            img = "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=200&h=200&fit=crop";
+                        } else if (lower.contains("sầu")) {
+                            img = "https://images.unsplash.com/photo-1587334274328-64186a80aeee?w=200&h=200&fit=crop";
+                        } else if (lower.contains("xoài")) {
+                            img = "https://images.unsplash.com/photo-1553279768-865429fa0078?w=200&h=200&fit=crop";
+                        } else if (lower.contains("bưởi")) {
+                            img = "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=200&h=200&fit=crop";
+                        } else if (lower.contains("mận")) {
+                            img = "https://images.unsplash.com/photo-1528825871115-3581a5387919?w=200&h=200&fit=crop";
+                        } else if (lower.contains("lê") || lower.contains("táo")) {
+                            img = "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&h=200&fit=crop";
+                        } else if (lower.contains("thanh long")) {
+                            img = "https://images.unsplash.com/photo-1527325678964-54921661f888?w=200&h=200&fit=crop";
+                        } else {
+                            img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200&h=200&fit=crop";
+                        }
+                    }
+                    item.put("thumbnailUrl", img);
 
-                list.add(item);
+                    // Moderation & compliance tags based on real DB status
+                    if (!isActive) {
+                        item.put("modTag", "CHỜ DUYỆT / TẠM ẨN");
+                        item.put("modTagClass", "bg-warning-subtle text-warning-emphasis border-warning-subtle");
+                        item.put("modTagIcon", "bi-clock-history");
+                        item.put("riskBadgeClass", "badge-ai-warning");
+                        item.put("riskBadgeIcon", "bi-exclamation-circle-fill");
+                        item.put("riskBadgeText", "Chờ thẩm định");
+                        item.put("riskLevel", "warning");
+                        item.put("statusGroup", "pending rejected");
+                    } else if (isFeatured) {
+                        item.put("modTag", "SẢN PHẨM NỔI BẬT");
+                        item.put("modTagClass", "bg-primary-subtle text-primary border-primary-subtle");
+                        item.put("modTagIcon", "bi-star-fill");
+                        item.put("riskBadgeClass", "badge-ai-success");
+                        item.put("riskBadgeIcon", "bi-patch-check-fill");
+                        item.put("riskBadgeText", "Đạt chuẩn: " + cert);
+                        item.put("riskLevel", "safe");
+                        item.put("statusGroup", "approved active safe");
+                    } else {
+                        item.put("modTag", "ĐANG MỞ BÁN");
+                        item.put("modTagClass", "bg-success-subtle text-success border-success-subtle");
+                        item.put("modTagIcon", "bi-check-circle-fill");
+                        item.put("riskBadgeClass", "badge-ai-success");
+                        item.put("riskBadgeIcon", "bi-shield-check");
+                        item.put("riskBadgeText", "Đạt chuẩn: " + cert);
+                        item.put("riskLevel", "safe");
+                        item.put("statusGroup", "approved active safe");
+                    }
+
+                    list.add(item);
+                }
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Error in getProductsList: " + ex.getMessage());

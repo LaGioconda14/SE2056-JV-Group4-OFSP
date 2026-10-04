@@ -19,10 +19,20 @@ public class AdminUserServlet extends HttpServlet {
         if (role == null || role.trim().isEmpty()) {
             role = "ALL";
         }
+        String status = request.getParameter("status");
+        if (status == null || status.trim().isEmpty()) {
+            status = "ALL";
+        }
+        String search = request.getParameter("search");
+        if (search != null) {
+            search = search.trim();
+        }
 
         request.setAttribute("selectedRole", role.toUpperCase());
+        request.setAttribute("selectedStatus", status.toUpperCase());
+        request.setAttribute("searchKeyword", search != null ? search : "");
         request.setAttribute("roleCounts", dao.getUserRoleCounts());
-        request.setAttribute("usersList", dao.getUsersList(role));
+        request.setAttribute("usersList", dao.getUsersList(role, status, search));
         request.getRequestDispatcher("/views/admin/users.jsp").forward(request, response);
     }
 }

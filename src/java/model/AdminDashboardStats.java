@@ -20,7 +20,20 @@ public class AdminDashboardStats implements Serializable {
     private int totalBuyersCount;
     private int openDisputesCount;
     private int totalOrdersCount;
+    private int totalUsersCount;
     private int activeUsersCount;
+    private double totalEscrowAmount;
+    private int flaggedProductsCount;
+
+    // Platform Core KPIs telemetry
+    private double gmvGrowth;
+    private double commissionGrowth;
+    private double orderGrowth;
+    private double orderCompletionRate;
+    private double activeUserRate;
+    private double certifiedProductRate;
+    private int completedOrdersCount;
+    private int processingOrdersCount;
 
     // Next Payout Cycle
     private double nextPayoutVolume;
@@ -159,6 +172,27 @@ public class AdminDashboardStats implements Serializable {
         return df.format(activeUsersCount);
     }
 
+    public double getTotalEscrowAmount() {
+        return totalEscrowAmount;
+    }
+
+    public void setTotalEscrowAmount(double totalEscrowAmount) {
+        this.totalEscrowAmount = totalEscrowAmount;
+    }
+
+    public String getTotalEscrowFormatted() {
+        DecimalFormat df = new DecimalFormat("#,###");
+        return "₫" + df.format(totalEscrowAmount);
+    }
+
+    public int getFlaggedProductsCount() {
+        return flaggedProductsCount;
+    }
+
+    public void setFlaggedProductsCount(int flaggedProductsCount) {
+        this.flaggedProductsCount = flaggedProductsCount;
+    }
+
     public double getNextPayoutVolume() {
         return nextPayoutVolume;
     }
@@ -249,6 +283,90 @@ public class AdminDashboardStats implements Serializable {
 
     public void setActiveDisputes(List<Map<String, Object>> activeDisputes) {
         this.activeDisputes = activeDisputes;
+    }
+
+    public double getGmvGrowth() {
+        return gmvGrowth;
+    }
+
+    public void setGmvGrowth(double gmvGrowth) {
+        this.gmvGrowth = gmvGrowth;
+    }
+
+    public String getGmvGrowthFormatted() {
+        return (gmvGrowth >= 0 ? "+" : "") + String.format("%.1f%%", gmvGrowth);
+    }
+
+    public double getCommissionGrowth() {
+        return commissionGrowth;
+    }
+
+    public void setCommissionGrowth(double commissionGrowth) {
+        this.commissionGrowth = commissionGrowth;
+    }
+
+    public String getCommissionGrowthFormatted() {
+        return (commissionGrowth >= 0 ? "+" : "") + String.format("%.1f%%", commissionGrowth);
+    }
+
+    public double getOrderGrowth() {
+        return orderGrowth;
+    }
+
+    public void setOrderGrowth(double orderGrowth) {
+        this.orderGrowth = orderGrowth;
+    }
+
+    public String getOrderGrowthFormatted() {
+        return (orderGrowth >= 0 ? "+" : "") + String.format("%.1f%%", orderGrowth);
+    }
+
+    public double getOrderCompletionRate() {
+        return orderCompletionRate;
+    }
+
+    public void setOrderCompletionRate(double orderCompletionRate) {
+        this.orderCompletionRate = orderCompletionRate;
+    }
+
+    public int getTotalUsersCount() {
+        return totalUsersCount;
+    }
+
+    public void setTotalUsersCount(int totalUsersCount) {
+        this.totalUsersCount = totalUsersCount;
+    }
+
+    public double getActiveUserRate() {
+        return activeUserRate;
+    }
+
+    public void setActiveUserRate(double activeUserRate) {
+        this.activeUserRate = activeUserRate;
+    }
+
+    public double getCertifiedProductRate() {
+        return certifiedProductRate;
+    }
+
+    public void setCertifiedProductRate(double certifiedProductRate) {
+        this.certifiedProductRate = certifiedProductRate;
+    }
+
+    public int getCompletedOrdersCount() {
+        return completedOrdersCount;
+    }
+
+    public void setCompletedOrdersCount(int completedOrdersCount) {
+        this.completedOrdersCount = completedOrdersCount;
+    }
+
+    public int getProcessingOrdersCount() {
+        return processingOrdersCount;
+    }
+
+    public void setProcessingOrdersCount(int processingOrdersCount) {
+        this.processingOrdersCount = processingOrdersCount;
     }
 
     public static String formatCurrency(double amount) {
