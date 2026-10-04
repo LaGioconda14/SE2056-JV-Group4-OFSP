@@ -24,3 +24,7 @@ web/assets/images/avatars/*
 
 docs/
 .vscode/
+
+# OAuth private credentials (keep secret)
+*oauth.properties
+!*oauth.properties.example

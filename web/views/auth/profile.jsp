@@ -150,6 +150,23 @@
             <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     </c:if>
+    <c:if test="${not empty warningMessage or (not empty user and empty user.phone)}">
+        <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center rounded-3 mb-4 border-warning shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-2 fs-5"></i>
+            <div>
+                <strong>Lưu ý quan trọng:</strong> 
+                <c:choose>
+                    <c:when test="${not empty warningMessage}">
+                        ${warningMessage}
+                    </c:when>
+                    <c:otherwise>
+                        Tài khoản của bạn chưa cập nhật Số điện thoại liên hệ. Vui lòng bổ sung số điện thoại ở form bên dưới để nhân viên giao hàng có thể liên lạc khi giao đơn!
+                    </c:otherwise>
+                </c:choose>
+            </div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </c:if>
     <c:if test="${not empty errorMessage}">
         <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center rounded-3 mb-4" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
