@@ -8,10 +8,6 @@ import model.CartItem;
 import model.ProductVariant;
 import service.ICartService;
 
-/**
- *
- * @author Bac
- */
 public class CartServiceImpl implements ICartService {
 
     private static final Logger LOGGER = Logger.getLogger(CartServiceImpl.class.getName());
@@ -27,62 +23,89 @@ public class CartServiceImpl implements ICartService {
 
     @Override
     public Cart getCart(long customerId) {
-        Cart cart = cartDAO.getCartByCustomerId(customerId);
-        if (cart == null) {
-            return new Cart();
-        }
+        Cart cart = requireCart(customerId);
         List<CartItem> items = cartDAO.getCartItems(cart.getCartId());
+        if (items == null) {
+            LOGGER.severe("Cart item lookup returned no result");
+            throw new IllegalStateException("Không thể tải giỏ hàng. Vui lòng thử lại sau!");
+        }
         cart.setItems(items);
         return cart;
     }
 
     @Override
     public void addItem(long customerId, long variantId, int quantity) throws Exception {
-        if (quantity <= 0) {
-            throw new Exception("Số lượng phải lớn hơn 0!");
-        }
-
-        Cart cart = cartDAO.getCartByCustomerId(customerId);
-        if (cart == null) {
-            throw new Exception("Không thể tạo giỏ hàng. Vui lòng thử lại!");
-        }
-
-        // kiem tra variant da co trong gio chua
-        CartItem existingItem = cartDAO.findCartItem(cart.getCartId(), variantId);
-
-        if (existingItem != null) {
-            // da co -> cong so luong
-            int newQuantity = existingItem.getQuantity() + quantity;
-            boolean updated = cartDAO.updateCartItemQuantity(existingItem.getCartItemID(), newQuantity);
-            if (!updated) {
-                throw new Exception("Cập nhật số lượng thất bại. Vui lòng thử lại!");
-            }
-        } else {
-            // chua co -> them moi
-            boolean inserted = cartDAO.insertCartItem(cart.getCartId(), variantId, quantity);
-            if (!inserted) {
-                throw new Exception("Thêm sản phẩm vào giỏ hàng thất bại. Vui lòng thử lại!");
-            }
+        validateId(customerId);
+        validateId(variantId);
+        validateQuantity(quantity);
+        validateVariant(cartDAO.findAvailableVariant(variantId), quantity);
+        Cart cart = requireCart(customerId);
+        if (!cartDAO.addCartItem(customerId, cart.getCartId(), variantId, quantity)) {
+            throw new IllegalArgumentException("Giỏ hàng không khả dụng!");
         }
     }
 
     @Override
     public void updateQuantity(long customerId, long cartItemId, int quantity) throws Exception {
-        if (quantity <= 0) {
-            throw new Exception("Số lượng phải lớn hơn 0!");
-        }
-
-        boolean updated = cartDAO.updateCartItemQuantity(cartItemId, quantity);
-        if (!updated) {
-            throw new Exception("Cập nhật số lượng thất bại. Vui lòng thử lại!");
+        validateId(customerId);
+        validateId(cartItemId);
+        validateQuantity(quantity);
+        Cart cart = requireCart(customerId);
+        CartItem item = requireItem(cart.getCartId(), cartItemId);
+        validateVariant(cartDAO.findAvailableVariant(item.getVariant().getVariantId()), quantity);
+        if (!cartDAO.updateCartItemQuantity(customerId, cart.getCartId(), cartItemId, quantity)) {
+            throw new IllegalArgumentException("Sản phẩm không có trong giỏ hàng!");
         }
     }
 
     @Override
     public void removeItem(long customerId, long cartItemId) throws Exception {
-        boolean deleted = cartDAO.deleteCartItem(cartItemId);
-        if (!deleted) {
-            throw new Exception("Xóa sản phẩm khỏi giỏ hàng thất bại. Vui lòng thử lại!");
+        validateId(customerId);
+        validateId(cartItemId);
+        Cart cart = requireCart(customerId);
+        requireItem(cart.getCartId(), cartItemId);
+        if (!cartDAO.deleteCartItem(customerId, cart.getCartId(), cartItemId)) {
+            throw new IllegalArgumentException("Sản phẩm không có trong giỏ hàng!");
+        }
+    }
+
+    private Cart requireCart(long customerId) {
+        validateId(customerId);
+        Cart cart = cartDAO.getCartByCustomerId(customerId);
+        if (cart == null || cart.getCartId() <= 0 || cart.getCustomerId() != customerId) {
+            LOGGER.severe("Cart lookup returned an invalid cart");
+            throw new IllegalStateException("Không thể tải giỏ hàng. Vui lòng thử lại sau!");
+        }
+        return cart;
+    }
+
+    private CartItem requireItem(long cartId, long cartItemId) {
+        CartItem item = cartDAO.findCartItemById(cartId, cartItemId);
+        if (item == null) {
+            throw new IllegalArgumentException("Sản phẩm không có trong giỏ hàng!");
+        }
+        return item;
+    }
+
+    private void validateId(long id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("Thông tin giỏ hàng không hợp lệ!");
+        }
+    }
+
+    private void validateQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0!");
+        }
+    }
+
+    private void validateVariant(ProductVariant variant, long quantity) {
+        if (variant == null || !variant.isActive() || variant.getProduct() == null
+                || !variant.getProduct().isActive()) {
+            throw new IllegalArgumentException("Sản phẩm hiện không khả dụng!");
+        }
+        if (quantity > variant.getStockQuantity()) {
+            throw new IllegalArgumentException("Số lượng vượt quá tồn kho!");
         }
     }
 }

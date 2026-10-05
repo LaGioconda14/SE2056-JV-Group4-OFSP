@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
 import java.sql.Connection;
@@ -19,210 +15,320 @@ import model.Product;
 import model.ProductVariant;
 import util.DBContext;
 
-/**
- *
- * @author Admin
- */
 public class CartDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(CartDAO.class.getName());
 
-    // Get Cart by Customer id (tao moi neu chua co)
     public Cart getCartByCustomerId(long customerId) {
-        String sqlSelect = "SELECT cart_id FROM carts WHERE customer_id = ?";
+        String sqlSelect = "SELECT cart_id FROM carts WITH (UPDLOCK, HOLDLOCK) WHERE customer_id = ?";
         String sqlInsert = "INSERT INTO carts (customer_id) VALUES (?)";
-
-        Connection conn = getConnection();
-
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in getCartByCustomerId");
-            return null;
-        }
-        try (conn) {
-            try (PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
-                ps.setLong(1, customerId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        Cart cart = new Cart();
-                        cart.setCartId(rs.getLong("cart_id"));
-                        cart.setCustomerId(customerId);
-                        return cart;
-                    }
-                }
-            }
-            try (PreparedStatement ps = conn.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setLong(1, customerId);
-                int affected = ps.executeUpdate();
-                if (affected > 0) {
-                    try (ResultSet gk = ps.getGeneratedKeys()) {
-                        if (gk.next()) {
-                            Cart cart = new Cart();
-                            cart.setCartId(gk.getLong(1));
-                            cart.setCustomerId(customerId);
-                            return cart;
+        try (Connection conn = requireConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                Cart cart = null;
+                try (PreparedStatement ps = conn.prepareStatement(sqlSelect)) {
+                    ps.setLong(1, customerId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            cart = new Cart(rs.getLong("cart_id"), customerId);
                         }
                     }
                 }
+                if (cart == null) {
+                    try (PreparedStatement ps = conn.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setLong(1, customerId);
+                        if (ps.executeUpdate() != 1) {
+                            throw new SQLException("Cart insert affected an unexpected number of rows");
+                        }
+                        try (ResultSet keys = ps.getGeneratedKeys()) {
+                            if (!keys.next()) {
+                                throw new SQLException("Cart insert did not return a generated key");
+                            }
+                            cart = new Cart(keys.getLong(1), customerId);
+                        }
+                    }
+                }
+                conn.commit();
+                return cart;
+            } catch (SQLException | RuntimeException ex) {
+                rollback(conn, ex);
+                throw ex;
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in getCartByCustomerId for customer: " + customerId, ex);
+            throw databaseFailure(ex);
         }
-        return null;
     }
 
-    // get all cart items (+ variant + product)
     public List<CartItem> getCartItems(long cartId) {
         String sql = "SELECT ci.cart_item_id, ci.quantity, "
-                + "       pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
-                + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
-                + "       p.product_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
-                + "       (SELECT TOP 1 pi2.image_url FROM product_images pi2 "
-                + "        WHERE pi2.product_id = p.product_id AND pi2.is_thumbnail = 1 "
-                + "        ORDER BY pi2.display_order) AS thumbnail_url "
+                + "pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "p.product_id, p.shop_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
+                + "(SELECT TOP 1 pi2.image_url FROM product_images pi2 "
+                + " WHERE pi2.product_id = p.product_id AND pi2.is_thumbnail = 1 "
+                + " ORDER BY pi2.display_order) AS thumbnail_url "
                 + "FROM cart_items ci "
                 + "INNER JOIN product_variants pv ON ci.variant_id = pv.variant_id "
                 + "INNER JOIN products p ON pv.product_id = p.product_id "
-                + "WHERE ci.cart_id = ? "
-                + "ORDER BY ci.created_at DESC";
+                + "WHERE ci.cart_id = ? ORDER BY ci.created_at DESC";
         List<CartItem> items = new ArrayList<>();
-        Connection conn = getConnection();
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in getCartItems");
-            return items;
-        }
-        try (conn;
+        try (Connection conn = requireConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setLong(1, cartId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    items.add(mapResultSetToCartItem(rs));
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting cart items for cart_id: " + cartId, ex);
-        }
-        return items;
-    }
-
-    // find 1 cart item (kiem tra variant da co trong gio chua)
-    public CartItem findCartItem(long cartId, long variantId) {
-        String sql = "SELECT cart_item_id, quantity "
-                + "FROM cart_items "
-                + "WHERE cart_id = ? AND variant_id = ?";
-
-        Connection conn = getConnection();
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in findCartItem");
-            return null;
-        }
-        try (conn;
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, cartId);
-            ps.setLong(2, variantId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
                     CartItem item = new CartItem();
                     item.setCartItemID(rs.getLong("cart_item_id"));
+                    item.setVariant(mapVariant(rs));
+                    item.getVariant().getProduct().setThumbnailUrl(rs.getString("thumbnail_url"));
                     item.setQuantity(rs.getInt("quantity"));
-                    return item;
+                    items.add(item);
                 }
             }
+            return items;
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error finding cart item for cart_id=" + cartId + ", variant_id=" + variantId, ex);
+            throw databaseFailure(ex);
         }
-
-        return null;
     }
 
-    // insert a new item into cart
-    public boolean insertCartItem(long cartId, long variantId, int quantity) {
-        String sql = "INSERT INTO cart_items (cart_id, variant_id, quantity) "
-                + "VALUES (?, ?, ?)";
-        Connection conn = getConnection();
-
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in insertCartItem");
-            return false;
+    public ProductVariant findAvailableVariant(long variantId) {
+        try (Connection conn = requireConnection()) {
+            return findAvailableVariant(conn, variantId);
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
         }
-        try (conn;
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+    }
+
+    private ProductVariant findAvailableVariant(Connection conn, long variantId) throws SQLException {
+        String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "p.product_id, p.shop_id, p.name AS product_name, p.origin, p.is_active AS product_active "
+                + "FROM product_variants pv WITH (HOLDLOCK) "
+                + "INNER JOIN products p WITH (HOLDLOCK) ON pv.product_id = p.product_id "
+                + "INNER JOIN shops s WITH (HOLDLOCK) ON p.shop_id = s.shop_id "
+                + "WHERE pv.variant_id = ? AND pv.is_active = 1 AND p.is_active = 1 AND s.status = 'ACTIVE'";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, variantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapVariant(rs) : null;
+            }
+        }
+    }
+
+    public CartItem findCartItem(long cartId, long variantId) {
+        try (Connection conn = requireConnection()) {
+            return findCartItem(conn, cartId, variantId, false);
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
+        }
+    }
+
+    public CartItem findCartItemById(long cartId, long cartItemId) {
+        try (Connection conn = requireConnection()) {
+            return findCartItem(conn, cartId, cartItemId, true);
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
+        }
+    }
+
+    private CartItem findCartItem(Connection conn, long cartId, long id, boolean byItemId) throws SQLException {
+        String sql = "SELECT cart_item_id, variant_id, quantity FROM cart_items WHERE cart_id = ? AND "
+                + (byItemId ? "cart_item_id = ?" : "variant_id = ?");
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, cartId);
-            ps.setLong(2, variantId);
-            ps.setInt(3, quantity);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error inserting cart item: cart_id=" + cartId + ", variant_id=" + variantId, ex);
+            ps.setLong(2, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                ProductVariant variant = new ProductVariant();
+                variant.setVariantId(rs.getLong("variant_id"));
+                CartItem item = new CartItem(rs.getLong("cart_item_id"), variant, rs.getInt("quantity"));
+                if (rs.next()) {
+                    throw new SQLException("Duplicate cart items for a variant");
+                }
+                return item;
+            }
         }
-        return false;
     }
 
-    // update so luong
-    public boolean updateCartItemQuantity(long cartItemId, int quantity) {
-        String sql = "UPDATE cart_items SET quantity = ?, updated_at = GETDATE() WHERE cart_item_id = ?";
-        Connection conn = getConnection();
-
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in updateCartItemQuantity");
-            return false;
+    public boolean addCartItem(long customerId, long cartId, long variantId, int quantity) {
+        validateQuantity(quantity);
+        try (Connection conn = requireConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                if (!lockCart(conn, customerId, cartId)) {
+                    conn.rollback();
+                    return false;
+                }
+                CartItem existing = findCartItem(conn, cartId, variantId, false);
+                long total = (existing == null ? 0L : existing.getQuantity()) + quantity;
+                validateStock(findAvailableVariant(conn, variantId), total);
+                boolean changed;
+                if (existing == null) {
+                    String sql = "INSERT INTO cart_items (cart_id, variant_id, quantity) "
+                            + "SELECT cart_id, ?, ? FROM carts WHERE cart_id = ? AND customer_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setLong(1, variantId);
+                        ps.setInt(2, (int) total);
+                        ps.setLong(3, cartId);
+                        ps.setLong(4, customerId);
+                        changed = ps.executeUpdate() == 1;
+                    }
+                } else {
+                    changed = updateQuantity(conn, customerId, cartId, existing.getCartItemID(), (int) total);
+                }
+                if (!changed) {
+                    throw new SQLException("Cart add affected an unexpected number of rows");
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException | RuntimeException ex) {
+                rollback(conn, ex);
+                throw ex;
+            }
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
         }
-        try (conn;
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+    }
+
+    public boolean updateCartItemQuantity(long customerId, long cartId, long cartItemId, int quantity) {
+        validateQuantity(quantity);
+        try (Connection conn = requireConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                if (!lockCart(conn, customerId, cartId)) {
+                    conn.rollback();
+                    return false;
+                }
+                CartItem item = findCartItem(conn, cartId, cartItemId, true);
+                if (item == null) {
+                    conn.rollback();
+                    return false;
+                }
+                validateStock(findAvailableVariant(conn, item.getVariant().getVariantId()), quantity);
+                if (!updateQuantity(conn, customerId, cartId, cartItemId, quantity)) {
+                    throw new SQLException("Cart update affected an unexpected number of rows");
+                }
+                conn.commit();
+                return true;
+            } catch (SQLException | RuntimeException ex) {
+                rollback(conn, ex);
+                throw ex;
+            }
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
+        }
+    }
+
+    private boolean updateQuantity(Connection conn, long customerId, long cartId, long cartItemId, int quantity)
+            throws SQLException {
+        String sql = "UPDATE ci SET quantity = ?, updated_at = GETDATE() FROM cart_items ci "
+                + "INNER JOIN carts c ON ci.cart_id = c.cart_id "
+                + "WHERE ci.cart_item_id = ? AND ci.cart_id = ? AND c.customer_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, quantity);
             ps.setLong(2, cartItemId);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error updating quantity for cart_item_id: " + cartItemId, ex);
+            ps.setLong(3, cartId);
+            ps.setLong(4, customerId);
+            return ps.executeUpdate() == 1;
         }
-        return false;
     }
 
-    // xoa 1 san pham khoi gio
-    public boolean deleteCartItem(long cartItemId) {
-        String sql = "DELETE FROM cart_items WHERE cart_item_id = ?";
-        Connection conn = getConnection();
-
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in deleteCartItem");
-            return false;
-        }
-        try (conn;
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, cartItemId);
-            return ps.executeUpdate() > 0;
+    public boolean deleteCartItem(long customerId, long cartId, long cartItemId) {
+        String sql = "DELETE ci FROM cart_items ci INNER JOIN carts c ON ci.cart_id = c.cart_id "
+                + "WHERE ci.cart_item_id = ? AND ci.cart_id = ? AND c.customer_id = ?";
+        try (Connection conn = requireConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                if (!lockCart(conn, customerId, cartId)) {
+                    conn.rollback();
+                    return false;
+                }
+                boolean deleted;
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setLong(1, cartItemId);
+                    ps.setLong(2, cartId);
+                    ps.setLong(3, customerId);
+                    deleted = ps.executeUpdate() == 1;
+                }
+                conn.commit();
+                return deleted;
+            } catch (SQLException | RuntimeException ex) {
+                rollback(conn, ex);
+                throw ex;
+            }
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error deleting cart_item_id: " + cartItemId, ex);
+            throw databaseFailure(ex);
         }
-        return false;
     }
 
-    // xoa toan bo gio (sau checkout)
     public boolean clearCart(long cartId) {
         String sql = "DELETE FROM cart_items WHERE cart_id = ?";
-        Connection conn = getConnection();
-
-        if (conn == null) {
-            LOGGER.severe("Cannot establish DB connection in clearCart");
-            return false;
-        }
-        try (conn;
+        try (Connection conn = requireConnection();
                 PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, cartId);
             return ps.executeUpdate() >= 0;
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error clearing cart_id: " + cartId, ex);
+            throw databaseFailure(ex);
         }
-        return false;
     }
 
-    // map ResultSet -> CartItem (kem Product + Variant)
-    private CartItem mapResultSetToCartItem(ResultSet rs) throws SQLException {
+    private boolean lockCart(Connection conn, long customerId, long cartId) throws SQLException {
+        String sql = "SELECT cart_id FROM carts WITH (UPDLOCK, HOLDLOCK) WHERE cart_id = ? AND customer_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, cartId);
+            ps.setLong(2, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private void validateQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0!");
+        }
+    }
+
+    private void validateStock(ProductVariant variant, long quantity) {
+        if (variant == null) {
+            throw new IllegalArgumentException("Sản phẩm hiện không khả dụng!");
+        }
+        if (quantity <= 0 || quantity > variant.getStockQuantity()) {
+            throw new IllegalArgumentException("Số lượng vượt quá tồn kho!");
+        }
+    }
+
+    private Connection requireConnection() throws SQLException {
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new SQLException("Cannot establish database connection");
+        }
+        return conn;
+    }
+
+    private void rollback(Connection conn, Exception cause) {
+        try {
+            conn.rollback();
+        } catch (SQLException ex) {
+            cause.addSuppressed(ex);
+            LOGGER.log(Level.SEVERE, "Cannot roll back cart operation", ex);
+        }
+    }
+
+    private IllegalStateException databaseFailure(SQLException cause) {
+        LOGGER.log(Level.SEVERE, "Cart database operation failed", cause);
+        return new IllegalStateException("Không thể xử lý giỏ hàng. Vui lòng thử lại sau!", cause);
+    }
+
+    private ProductVariant mapVariant(ResultSet rs) throws SQLException {
         Product product = new Product();
         product.setProductId(rs.getLong("product_id"));
+        product.setShopId(rs.getLong("shop_id"));
         product.setName(rs.getString("product_name"));
         product.setOrigin(rs.getString("origin"));
         product.setActive(rs.getBoolean("product_active"));
-        product.setThumbnailUrl(rs.getString("thumbnail_url"));
 
         ProductVariant variant = new ProductVariant();
         variant.setVariantId(rs.getLong("variant_id"));
@@ -234,12 +340,6 @@ public class CartDAO extends DBContext {
         variant.setPrice(rs.getBigDecimal("price"));
         variant.setStockQuantity(rs.getInt("stock_quantity"));
         variant.setActive(rs.getBoolean("variant_active"));
-
-        CartItem item = new CartItem();
-        item.setCartItemID(rs.getLong("cart_item_id"));
-        item.setVariant(variant);
-        item.setQuantity(rs.getInt("quantity"));
-
-        return item;
+        return variant;
     }
 }
