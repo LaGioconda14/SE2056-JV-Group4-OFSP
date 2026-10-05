@@ -97,6 +97,46 @@ public class UserDAO extends DBContext {
     }
 
     /**
+     * Find a user by their email address or phone number.
+     *
+     * @param identifier Email or phone number
+     * @return User object or null if not found
+     */
+    public User findByEmailOrPhone(String identifier) {
+        if (identifier == null || identifier.trim().isEmpty()) {
+            return null;
+        }
+        String clean = identifier.trim();
+        String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
+                   + "FROM users u "
+                   + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
+                   + "LEFT JOIN roles r ON ur.role_id = r.role_id "
+                   + "WHERE LOWER(u.email) = LOWER(?) OR u.phone = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in findByEmailOrPhone");
+            return null;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, clean);
+            ps.setString(2, clean);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToUser(rs);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error during findByEmailOrPhone: " + identifier, ex);
+        }
+        return null;
+    }
+
+    /**
      * Find a user by their ID.
      *
      * @param id User ID
@@ -301,7 +341,7 @@ public class UserDAO extends DBContext {
      */
     public boolean register(User user) {
         String sqlUser = "INSERT INTO users (email, phone, password_hash, full_name, avatar_url, status, created_at, updated_at) "
-                       + "VALUES (?, ?, ?, ?, NULL, 'ACTIVE', GETDATE(), GETDATE())";
+                       + "VALUES (?, ?, ?, ?, ?, 'ACTIVE', GETDATE(), GETDATE())";
         String sqlRole = "INSERT INTO user_roles (user_id, role_id) "
                        + "SELECT ?, role_id FROM roles WHERE role_name = 'CUSTOMER'";
         String sqlCart = "INSERT INTO carts (customer_id) VALUES (?)";
@@ -321,6 +361,7 @@ public class UserDAO extends DBContext {
                 ps.setString(2, user.getPhone() != null && !user.getPhone().trim().isEmpty() ? user.getPhone().trim() : null);
                 ps.setString(3, user.getPassword());
                 ps.setString(4, user.getFullName().trim());
+                ps.setString(5, user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty() ? user.getAvatarUrl().trim() : null);
 
                 int affected = ps.executeUpdate();
                 if (affected > 0) {

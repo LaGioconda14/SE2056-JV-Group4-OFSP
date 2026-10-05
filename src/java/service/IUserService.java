@@ -9,14 +9,14 @@ import model.User;
 public interface IUserService {
 
     /**
-     * Authenticates a user with email and raw password.
+     * Authenticates a user with email or phone number and raw password.
      *
-     * @param email       User's email
-     * @param rawPassword User's raw password
+     * @param emailOrPhone User's email or phone number
+     * @param rawPassword  User's raw password
      * @return Authenticated User object
      * @throws Exception with user-facing message if credentials are invalid or account is locked
      */
-    User login(String email, String rawPassword) throws Exception;
+    User login(String emailOrPhone, String rawPassword) throws Exception;
 
     /**
      * Registers a new customer account after validating all inputs.

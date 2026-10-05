@@ -27,16 +27,16 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public User login(String email, String rawPassword) throws Exception {
-        if (email == null || email.trim().isEmpty() || rawPassword == null || rawPassword.trim().isEmpty()) {
-            throw new Exception("Vui lòng nhập đầy đủ Email và Mật khẩu!");
+    public User login(String emailOrPhone, String rawPassword) throws Exception {
+        if (emailOrPhone == null || emailOrPhone.trim().isEmpty() || rawPassword == null || rawPassword.trim().isEmpty()) {
+            throw new Exception("Vui lòng nhập đầy đủ Email / Số điện thoại và Mật khẩu!");
         }
 
-        email = email.trim();
-        User user = userDAO.findByEmail(email);
+        String identifier = emailOrPhone.trim();
+        User user = userDAO.findByEmailOrPhone(identifier);
 
         if (user == null || !PasswordUtil.verifyPassword(rawPassword, user.getPassword())) {
-            throw new Exception("Email hoặc mật khẩu không chính xác!");
+            throw new Exception("Email / Số điện thoại hoặc mật khẩu không chính xác!");
         }
 
         if (!user.isActive()) {
@@ -248,6 +248,9 @@ public class UserServiceImpl implements IUserService {
             newUser.setPhone(null);
             newUser.setRole("CUSTOMER");
             newUser.setStatus(1); // ACTIVE
+            if (googleAccount.getPicture() != null && !googleAccount.getPicture().trim().isEmpty()) {
+                newUser.setAvatarUrl(googleAccount.getPicture().trim());
+            }
 
             boolean registered = userDAO.register(newUser);
             if (!registered) {
@@ -257,6 +260,17 @@ public class UserServiceImpl implements IUserService {
             user = userDAO.findByEmail(googleEmail);
             if (user == null) {
                 throw new Exception("Không thể tải thông tin tài khoản vừa tạo từ Google!");
+            }
+        } else {
+            // Nếu người dùng cũ chưa có avatar và Google có avatar -> cập nhật avatar
+            if ((user.getAvatarUrl() == null || user.getAvatarUrl().trim().isEmpty())
+                    && googleAccount.getPicture() != null && !googleAccount.getPicture().trim().isEmpty()) {
+                try {
+                    userDAO.updateAvatar(user.getId(), googleAccount.getPicture().trim());
+                    user.setAvatarUrl(googleAccount.getPicture().trim());
+                } catch (Exception ex) {
+                    // Không để lỗi avatar chặn tiến trình đăng nhập
+                }
             }
         }
 

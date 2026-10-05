@@ -107,8 +107,12 @@ public class LoginServlet extends HttpServlet {
         cookieRem.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
         response.addCookie(cookieRem);
 
-        // Redirect to home / landing page
-        response.sendRedirect(request.getContextPath() + "/home.jsp");
+        // Redirect based on role
+        if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
+        }
     }
 }
 
