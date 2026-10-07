@@ -334,6 +334,39 @@ public class UserDAO extends DBContext {
     }
 
     /**
+     * Check if a phone number is already registered by another user.
+     *
+     * @param phone Phone number to check
+     * @param excludeUserId User ID to exclude
+     * @return true if phone number exists for another user
+     */
+    public boolean isPhoneExists(String phone, int excludeUserId) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM users WHERE phone = ? AND user_id != ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in isPhoneExists");
+            return false;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, phone.trim());
+            ps.setInt(2, excludeUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error checking phone existence: " + phone, ex);
+        }
+        return false;
+    }
+
+    /**
      * Register a new user account with CUSTOMER role (role_id = 3).
      *
      * @param user User object containing fullName, email, phone, and hashed password

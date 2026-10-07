@@ -209,6 +209,19 @@ public class UserServiceImpl implements IUserService {
             throw new Exception("Họ và tên phải từ 2 đến 100 ký tự!");
         }
 
+        if (phone != null && !phone.trim().isEmpty()) {
+            phone = phone.trim();
+            String phonePattern = "^(0|\\+84)[0-9]{9,10}$";
+            if (!phone.matches(phonePattern)) {
+                throw new Exception("Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại Việt Nam hợp lệ (10 chữ số, bắt đầu bằng 0).");
+            }
+            if (userDAO.isPhoneExists(phone, userId)) {
+                throw new Exception("Số điện thoại '" + phone + "' đã được sử dụng bởi một tài khoản khác. Vui lòng chọn số khác!");
+            }
+        } else {
+            phone = null;
+        }
+
         boolean updated = userDAO.updateProfile(userId, fullName, phone, gender, birthDate);
         if (!updated) {
             throw new Exception("Có lỗi xảy ra khi cập nhật hồ sơ cá nhân. Vui lòng thử lại!");

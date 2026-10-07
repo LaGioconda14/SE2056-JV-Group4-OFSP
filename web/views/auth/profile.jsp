@@ -68,9 +68,11 @@
             <a href="${pageContext.request.contextPath}/cart" class="d-flex align-items-center gap-2 text-decoration-none px-3 py-2 rounded-pill" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
                 <div class="position-relative">
                     <i class="bi bi-cart3 fs-5" style="color: var(--primary-green);"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">3</span>
+                    <c:if test="${not empty sessionScope.cartCount and sessionScope.cartCount > 0}">
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 10px;">${sessionScope.cartCount}</span>
+                    </c:if>
                 </div>
-                <span class="fw-bold small d-none d-sm-inline" style="color: var(--primary-green);">345.000₫</span>
+                <span class="fw-bold small d-none d-sm-inline" style="color: var(--primary-green);">Giỏ hàng</span>
             </a>
 
             <!-- User Menu -->
@@ -226,19 +228,40 @@
                     <!-- 2. Đơn mua -->
                     <button class="sidebar-nav-item text-start border-0" id="nav-orders-tab" data-bs-toggle="pill" data-bs-target="#nav-orders" type="button" role="tab">
                         <span><i class="bi bi-bag-check-fill"></i> Đơn mua</span>
-                        <span class="badge bg-success rounded-pill" style="font-size: 11px;">2 đang giao</span>
+                        <c:choose>
+                            <c:when test="${not empty ordersCount and ordersCount > 0}">
+                                <span class="badge bg-success rounded-pill" style="font-size: 11px;">${ordersCount}</span>
+                            </c:when>
+                            <c:otherwise>
+                                <i class="bi bi-chevron-right small"></i>
+                            </c:otherwise>
+                        </c:choose>
                     </button>
 
                     <!-- 3. Kho voucher -->
                     <button class="sidebar-nav-item text-start border-0" id="nav-vouchers-tab" data-bs-toggle="pill" data-bs-target="#nav-vouchers" type="button" role="tab">
                         <span><i class="bi bi-ticket-perforated-fill"></i> Kho voucher</span>
-                        <span class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size: 11px;">5 mã</span>
+                        <c:choose>
+                            <c:when test="${not empty vouchersCount and vouchersCount > 0}">
+                                <span class="badge bg-warning text-dark rounded-pill fw-bold" style="font-size: 11px;">${vouchersCount} mã</span>
+                            </c:when>
+                            <c:otherwise>
+                                <i class="bi bi-chevron-right small"></i>
+                            </c:otherwise>
+                        </c:choose>
                     </button>
 
                     <!-- 4. Thông báo -->
                     <button class="sidebar-nav-item text-start border-0" id="nav-notifications-tab" data-bs-toggle="pill" data-bs-target="#nav-notifications" type="button" role="tab">
                         <span><i class="bi bi-bell-fill"></i> Thông báo</span>
-                        <span class="badge bg-danger rounded-pill" style="font-size: 11px;">3 mới</span>
+                        <c:choose>
+                            <c:when test="${not empty unreadNotificationsCount and unreadNotificationsCount > 0}">
+                                <span class="badge bg-danger rounded-pill" style="font-size: 11px;">${unreadNotificationsCount} mới</span>
+                            </c:when>
+                            <c:otherwise>
+                                <i class="bi bi-chevron-right small"></i>
+                            </c:otherwise>
+                        </c:choose>
                     </button>
 
                     <!-- 5. Địa chỉ -->
@@ -346,40 +369,30 @@
                                     </div>
                                 </div>
 
-                                <!-- Email (ẩn ****) -->
+                                <!-- Email đăng nhập -->
                                 <div class="col-md-6 field-box">
-                                    <label class="field-label" for="email">Địa chỉ Email nhận hóa đơn *</label>
-                                    <div class="input-icon-group position-relative">
+                                    <label class="field-label" for="email">Địa chỉ Email đăng nhập *</label>
+                                    <div class="input-icon-group">
                                         <i class="bi bi-envelope lead-icon"></i>
-                                        <input type="text" id="email" value="${user.maskedEmail}" readonly style="background-color: #f8fafc; cursor: not-allowed; padding-right: 40px;" title="Email đăng nhập">
-                                        <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted position-absolute end-0 top-50 translate-middle-y me-2 p-1" onclick="toggleEmailMask(this)" title="Ẩn/Hiện Email">
-                                            <i class="bi bi-eye-slash" id="emailEyeIcon"></i>
-                                        </button>
+                                        <input type="text" id="email" value="${user.email}" readonly style="background-color: #f8fafc; cursor: not-allowed;" title="Email tài khoản được cố định để bảo vệ an toàn">
                                     </div>
                                 </div>
 
-                                <!-- Số điện thoại (ẩn ****) -->
+                                <!-- Số điện thoại giao hàng -->
                                 <div class="col-md-6 field-box">
                                     <label class="field-label" for="phone">Số điện thoại giao hàng *</label>
-                                    <div class="input-icon-group position-relative">
+                                    <div class="input-icon-group">
                                         <i class="bi bi-telephone lead-icon"></i>
-                                        <input type="text" id="phone" name="phone" value="${user.maskedPhone}" data-original="${not empty user.phone ? user.phone : ''}" data-masked="${user.maskedPhone}" placeholder="Ví dụ: 0912345678" style="padding-right: 40px;" onfocus="onPhoneFocus(this)" onblur="onPhoneBlur(this)">
-                                        <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted position-absolute end-0 top-50 translate-middle-y me-2 p-1" onclick="togglePhoneMask(this)" title="Ẩn/Hiện Số điện thoại">
-                                            <i class="bi bi-eye-slash" id="phoneEyeIcon"></i>
-                                        </button>
+                                        <input type="tel" id="phone" name="phone" value="${not empty user.phone ? user.phone : ''}" placeholder="Ví dụ: 0912345678" maxlength="11" autocomplete="tel">
                                     </div>
                                 </div>
 
-                                <!-- Ngày sinh (ẩn ****) -->
+                                <!-- Ngày sinh -->
                                 <div class="col-md-6 field-box">
                                     <label class="field-label" for="birthDate">Ngày sinh (để nhận quà quả tươi sinh nhật)</label>
-                                    <div class="input-icon-group position-relative">
+                                    <div class="input-icon-group">
                                         <i class="bi bi-calendar3 lead-icon"></i>
-                                        <input type="text" id="birthDateMasked" value="${user.maskedBirthDate}" readonly style="cursor: pointer; padding-right: 40px;" onclick="enableBirthDateEdit()" title="Bấm để xem hoặc chọn ngày sinh">
-                                        <input type="date" id="birthDate" name="birthDate" value="${user.birthDate}" style="display: none; padding-right: 40px;">
-                                        <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted position-absolute end-0 top-50 translate-middle-y me-2 p-1" onclick="toggleBirthDateMask(this)" title="Ẩn/Hiện Ngày sinh">
-                                            <i class="bi bi-eye-slash" id="birthDateEyeIcon"></i>
-                                        </button>
+                                        <input type="date" id="birthDate" name="birthDate" value="${user.birthDate}" title="Chọn ngày sinh của bạn">
                                     </div>
                                 </div>
 
@@ -448,81 +461,51 @@
                                 <h3 class="section-heading mb-0">Đơn Hàng Của Bạn</h3>
                             </div>
                             <span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-1 rounded-pill small">
-                                4 đơn hàng gần nhất
+                                ${not empty orders ? orders.size() : 0} đơn hàng
                             </span>
                         </div>
 
-                        <!-- Status filter tabs -->
-                        <div class="d-flex flex-wrap gap-2 mb-4 border-bottom pb-3">
-                            <button class="btn btn-fresh-green btn-sm rounded-pill px-3">Tất cả (4)</button>
-                            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3">Đang giao (2)</button>
-                            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3">Đã giao (1)</button>
-                            <button class="btn btn-outline-secondary btn-sm rounded-pill px-3">Đã hủy (1)</button>
-                        </div>
-
-                        <!-- Order Card 1: Delivering -->
-                        <div class="card border rounded-3 p-3 mb-3 shadow-none">
-                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                                <div>
-                                    <strong class="text-dark">Mã đơn: #FF-ORD-8821</strong>
-                                    <span class="text-muted small ms-2"><i class="bi bi-clock"></i> 26/09/2026 14:30</span>
+                        <c:choose>
+                            <c:when test="${not empty orders}">
+                                <div class="d-flex flex-wrap gap-2 mb-4 border-bottom pb-3">
+                                    <button class="btn btn-fresh-green btn-sm rounded-pill px-3">Tất cả (${orders.size()})</button>
                                 </div>
-                                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill fw-semibold">
-                                    <i class="bi bi-truck me-1"></i> Đang giao hàng (Chuỗi lạnh 4.2°C)
-                                </span>
-                            </div>
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="bg-light p-2 rounded-3 fs-3">🍒🥑🍓</div>
-                                        <div>
-                                            <div class="fw-semibold text-dark">Combo Quả Tươi Mùa Thu + Bơ sáp 034 Đắk Lắk (2kg)</div>
-                                            <div class="text-muted small">Kèm hộp dâu tây Mộc Châu Organic 500g</div>
+                                <c:forEach items="${orders}" var="order">
+                                    <div class="card border rounded-3 p-3 mb-3 shadow-none">
+                                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                                            <div>
+                                                <strong class="text-dark">Mã đơn: #${order.id}</strong>
+                                                <span class="text-muted small ms-2"><i class="bi bi-clock"></i> ${order.createdAt}</span>
+                                            </div>
+                                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill fw-semibold">
+                                                ${order.status}
+                                            </span>
+                                        </div>
+                                        <div class="row align-items-center">
+                                            <div class="col-md-8">
+                                                <div class="fw-semibold text-dark">${order.note}</div>
+                                            </div>
+                                            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                                                <div class="text-muted small">Tổng thanh toán:</div>
+                                                <div class="fw-bold fs-5 text-success">${order.totalAmount}₫</div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="col-md-4 text-md-end mt-2 mt-md-0">
-                                    <div class="text-muted small">Tổng thanh toán:</div>
-                                    <div class="fw-bold fs-5 text-success">765.000₫</div>
-                                    <div class="mt-2">
-                                        <button class="btn btn-outline-success btn-sm rounded-pill px-3">Theo dõi đơn</button>
-                                        <button class="btn btn-light btn-sm rounded-pill px-3">Chi tiết</button>
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="text-center py-5">
+                                    <div class="mb-3 text-muted" style="font-size: 3.5rem;">
+                                        <i class="bi bi-bag-x text-secondary opacity-50"></i>
                                     </div>
+                                    <h5 class="fw-bold text-dark">Chưa có đơn hàng nào</h5>
+                                    <p class="text-muted small mb-4">Bạn chưa thực hiện đơn đặt hàng trái cây nào trên hệ thống.</p>
+                                    <a href="${pageContext.request.contextPath}/home.jsp" class="btn btn-fresh-green rounded-pill px-4 py-2 fw-semibold">
+                                        <i class="bi bi-basket2 me-1"></i> Khám phá nông sản ngay
+                                    </a>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Order Card 2: Completed -->
-                        <div class="card border rounded-3 p-3 shadow-none">
-                            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                                <div>
-                                    <strong class="text-dark">Mã đơn: #FF-ORD-8815</strong>
-                                    <span class="text-muted small ms-2"><i class="bi bi-clock"></i> 22/09/2026 09:15</span>
-                                </div>
-                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill fw-semibold">
-                                    <i class="bi bi-check-circle me-1"></i> Đã giao thành công
-                                </span>
-                            </div>
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="bg-light p-2 rounded-3 fs-3">🍇🍊</div>
-                                        <div>
-                                            <div class="fw-semibold text-dark">Nho Mẫu Đơn Shine Muscat Nhật (1 chùm) + Cam Cara Úc (2kg)</div>
-                                            <div class="text-muted small">Đóng hộp quà tặng cao cấp</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-md-end mt-2 mt-md-0">
-                                    <div class="text-muted small">Tổng thanh toán:</div>
-                                    <div class="fw-bold fs-5 text-success">1.150.000₫</div>
-                                    <div class="mt-2">
-                                        <button class="btn btn-fresh-green btn-sm rounded-pill px-3">Mua lại đơn này</button>
-                                        <button class="btn btn-light btn-sm rounded-pill px-3">Đánh giá</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 
@@ -535,77 +518,41 @@
                                 <h3 class="section-heading mb-0">Kho Voucher & Mã Khuyến Mãi</h3>
                             </div>
                             <span class="badge bg-warning bg-opacity-10 text-warning-emphasis fw-bold px-3 py-1 rounded-pill small">
-                                5 voucher sẵn sàng sử dụng
+                                ${not empty vouchers ? vouchers.size() : 0} voucher sẵn sàng sử dụng
                             </span>
                         </div>
 
-                        <div class="row g-3">
-                            <!-- Voucher 1 -->
-                            <div class="col-md-6">
-                                <div class="voucher-ticket">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="badge bg-success mb-2">GIẢM 15%</span>
-                                            <h5 class="fw-bold text-dark mb-1">Mã: FRESHHARVEST</h5>
-                                            <p class="text-muted small mb-2">Giảm tối đa 100.000₫ cho đơn hoa quả từ 400.000₫.</p>
-                                            <div class="text-danger small"><i class="bi bi-clock me-1"></i>Hết hạn: 31/10/2026</div>
+                        <c:choose>
+                            <c:when test="${not empty vouchers}">
+                                <div class="row g-3">
+                                    <c:forEach items="${vouchers}" var="voucher">
+                                        <div class="col-md-6">
+                                            <div class="voucher-ticket">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <span class="badge bg-success mb-2">${voucher.discountPercent}% OFF</span>
+                                                        <h5 class="fw-bold text-dark mb-1">Mã: ${voucher.code}</h5>
+                                                        <p class="text-muted small mb-2">${voucher.description}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <button class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="navigator.clipboard.writeText('FRESHHARVEST'); alert('Đã sao chép mã FRESHHARVEST!');">
-                                            Sao chép
-                                        </button>
-                                    </div>
+                                    </c:forEach>
                                 </div>
-                            </div>
-
-                            <!-- Voucher 2 -->
-                            <div class="col-md-6">
-                                <div class="voucher-ticket">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="badge bg-primary mb-2">FREESHIP</span>
-                                            <h5 class="fw-bold text-dark mb-1">Mã: FREESHIP_COLD</h5>
-                                            <p class="text-muted small mb-2">Miễn phí 100% phí bảo quản chuỗi lạnh cho đơn từ 250.000₫.</p>
-                                            <div class="text-danger small"><i class="bi bi-clock me-1"></i>Hết hạn: 15/10/2026</div>
-                                        </div>
-                                        <button class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="navigator.clipboard.writeText('FREESHIP_COLD'); alert('Đã sao chép mã FREESHIP_COLD!');">
-                                            Sao chép
-                                        </button>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="text-center py-5">
+                                    <div class="mb-3 text-muted" style="font-size: 3.5rem;">
+                                        <i class="bi bi-ticket-perforated text-secondary opacity-50"></i>
                                     </div>
+                                    <h5 class="fw-bold text-dark">Chưa có mã giảm giá nào</h5>
+                                    <p class="text-muted small mb-4">Hiện tại bạn chưa có mã voucher nào. Hãy theo dõi các sự kiện khuyến mãi mới nhất trên sàn nhé!</p>
+                                    <a href="${pageContext.request.contextPath}/home.jsp" class="btn btn-outline-success rounded-pill px-4 py-2 fw-semibold">
+                                        <i class="bi bi-tag me-1"></i> Xem ưu đãi hôm nay
+                                    </a>
                                 </div>
-                            </div>
-
-                            <!-- Voucher 3 -->
-                            <div class="col-md-6">
-                                <div class="voucher-ticket">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="badge bg-warning text-dark mb-2">GOLD VIP</span>
-                                            <h5 class="fw-bold text-dark mb-1">Mã: GOLDVIP50</h5>
-                                            <p class="text-muted small mb-2">Tặng 50.000₫ áp dụng toàn bộ giỏ hoa quả nhập khẩu.</p>
-                                            <div class="text-danger small"><i class="bi bi-clock me-1"></i>Hết hạn: 30/11/2026</div>
-                                        </div>
-                                        <button class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="navigator.clipboard.writeText('GOLDVIP50'); alert('Đã sao chép mã GOLDVIP50!');">
-                                            Sao chép
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Voucher 4 -->
-                            <div class="col-md-6">
-                                <div class="voucher-ticket">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="badge bg-secondary mb-2">SINH NHẬT</span>
-                                            <h5 class="fw-bold text-dark mb-1">Mã: BDAY_ORCHARD</h5>
-                                            <p class="text-muted small mb-2">Tặng 1 hộp Cherry đỏ hoặc dâu tây nhân tháng sinh nhật.</p>
-                                            <div class="text-muted small"><i class="bi bi-gift me-1"></i>Kích hoạt trong tháng sinh</div>
-                                        </div>
-                                        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" disabled>Chờ kích hoạt</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 
@@ -617,60 +564,39 @@
                                 <span class="section-tag">KẾT NỐI & CẬP NHẬT</span>
                                 <h3 class="section-heading mb-0">Hộp Thư Thông Báo</h3>
                             </div>
-                            <button class="btn btn-link text-success text-decoration-none small fw-semibold">
-                                <i class="bi bi-check2-all me-1"></i> Đánh dấu đã đọc tất cả
-                            </button>
+                            <c:if test="${not empty notifications}">
+                                <button class="btn btn-link text-success text-decoration-none small fw-semibold">
+                                    <i class="bi bi-check2-all me-1"></i> Đánh dấu đã đọc tất cả
+                                </button>
+                            </c:if>
                         </div>
 
-                        <div class="list-group list-group-flush border-top">
-                            <!-- Notification 1 -->
-                            <div class="list-group-item px-0 py-3 d-flex gap-3 align-items-start">
-                                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle fs-5 flex-shrink-0">
-                                    <i class="bi bi-truck"></i>
+                        <c:choose>
+                            <c:when test="${not empty notifications}">
+                                <div class="list-group list-group-flush border-top">
+                                    <c:forEach items="${notifications}" var="noti">
+                                        <div class="list-group-item px-0 py-3 d-flex gap-3 align-items-start">
+                                            <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-circle fs-5 flex-shrink-0">
+                                                <i class="bi bi-bell"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <strong class="text-dark small">${noti.title}</strong>
+                                                <p class="text-muted small mb-0 mt-1">${noti.content}</p>
+                                            </div>
+                                        </div>
+                                    </c:forEach>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <strong class="text-dark small">Đơn hàng #FF-ORD-8821 đang trên đường giao!</strong>
-                                        <span class="text-muted" style="font-size: 11px;">10 phút trước</span>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="text-center py-5">
+                                    <div class="mb-3 text-muted" style="font-size: 3.5rem;">
+                                        <i class="bi bi-bell-slash text-secondary opacity-50"></i>
                                     </div>
-                                    <p class="text-muted small mb-0 mt-1">
-                                        Tài xế chuỗi lạnh đang di chuyển. Nhiệt độ thùng bảo quản đạt chuẩn 4.2°C. Dự kiến giao lúc 10:30.
-                                    </p>
+                                    <h5 class="fw-bold text-dark">Chưa có thông báo mới</h5>
+                                    <p class="text-muted small mb-0">Các cập nhật về đơn hàng, vận chuyển chuỗi lạnh và khuyến mãi sẽ xuất hiện tại đây.</p>
                                 </div>
-                            </div>
-
-                            <!-- Notification 2 -->
-                            <div class="list-group-item px-0 py-3 d-flex gap-3 align-items-start">
-                                <div class="bg-success bg-opacity-10 text-success p-2 rounded-circle fs-5 flex-shrink-0">
-                                    <i class="bi bi-basket2-fill"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <strong class="text-dark small">Lô Dâu Tây Mộc Châu vụ mới vừa cập bến!</strong>
-                                        <span class="text-muted" style="font-size: 11px;">2 giờ trước</span>
-                                    </div>
-                                    <p class="text-muted small mb-0 mt-1">
-                                        Dâu tây organic hái tại vườn sáng sớm nay đã về kho lạnh trung tâm. Đặt sớm để nhận quả tươi nhất!
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Notification 3 -->
-                            <div class="list-group-item px-0 py-3 d-flex gap-3 align-items-start">
-                                <div class="bg-warning bg-opacity-10 text-warning-emphasis p-2 rounded-circle fs-5 flex-shrink-0">
-                                    <i class="bi bi-award-fill"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <strong class="text-dark small">+150 Harvest Points được cộng vào ví của bạn</strong>
-                                        <span class="text-muted" style="font-size: 11px;">1 ngày trước</span>
-                                    </div>
-                                    <p class="text-muted small mb-0 mt-1">
-                                        Điểm thưởng từ đơn hàng thành công #FF-ORD-8815 đã được ghi nhận. Bạn chỉ còn 575 điểm để lên hạng Platinum!
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 
@@ -687,26 +613,41 @@
                             </button>
                         </div>
 
-                        <!-- Address card 1 -->
-                        <div class="card border rounded-3 p-3 mb-3" style="border-color: #bbf7d0 !important; background-color: #f0fdf4;">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <strong class="text-dark">${user.fullName}</strong>
-                                        <span class="badge bg-success small">Mặc định</span>
-                                        <span class="badge bg-light text-secondary border small">Nhà riêng</span>
+                        <c:choose>
+                            <c:when test="${not empty addresses}">
+                                <c:forEach items="${addresses}" var="addr">
+                                    <div class="card border rounded-3 p-3 mb-3" style="border-color: #bbf7d0 !important; background-color: #f0fdf4;">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div class="d-flex align-items-center gap-2 mb-1">
+                                                    <strong class="text-dark">${addr.recipientName}</strong>
+                                                    <c:if test="${addr.isDefault}">
+                                                        <span class="badge bg-success small">Mặc định</span>
+                                                    </c:if>
+                                                </div>
+                                                <div class="text-muted small mb-1"><i class="bi bi-telephone me-1"></i>${addr.recipientPhone}</div>
+                                                <div class="text-dark small"><i class="bi bi-geo-alt me-1 text-success"></i>${addr.streetAddress}, ${addr.ward}, ${addr.district}, ${addr.city}</div>
+                                            </div>
+                                            <div>
+                                                <button class="btn btn-outline-success btn-sm rounded-pill">Sửa</button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="text-muted small mb-1"><i class="bi bi-telephone me-1"></i>${user.phone}</div>
-                                    <div class="text-dark small"><i class="bi bi-geo-alt me-1 text-success"></i>Tòa S2.05 VinHomes Smart City, Phường Tây Mỗ, Quận Nam Từ Liêm, Hà Nội</div>
-                                    <div class="mt-2 text-success small">
-                                        <i class="bi bi-shield-check me-1"></i> Ghi chú chuỗi lạnh: Gửi lễ tân bảo quản nếu vắng mặt.
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="text-center py-5">
+                                    <div class="mb-3 text-muted" style="font-size: 3.5rem;">
+                                        <i class="bi bi-geo-alt text-secondary opacity-50"></i>
                                     </div>
+                                    <h5 class="fw-bold text-dark">Chưa lưu địa chỉ nhận hàng</h5>
+                                    <p class="text-muted small mb-3">Thêm địa chỉ giao nhận để đặt hàng và nhận trái cây tươi nhanh chóng hơn.</p>
+                                    <button class="btn btn-outline-success rounded-pill px-4 py-2 fw-semibold">
+                                        <i class="bi bi-plus-lg me-1"></i> Thêm địa chỉ nhận hàng
+                                    </button>
                                 </div>
-                                <div>
-                                    <button class="btn btn-outline-success btn-sm rounded-pill">Sửa</button>
-                                </div>
-                            </div>
-                        </div>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 
