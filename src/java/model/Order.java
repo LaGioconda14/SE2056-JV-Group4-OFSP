@@ -1,51 +1,27 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package model;
 
 import java.math.BigDecimal;
-import java.security.Timestamp;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author Admin
- */
 public class Order {
 
     private long orderId;
     private long customerId;
-    private int couponId;
+    private Integer couponId;
+    private BigDecimal totalGoodsAmount = BigDecimal.ZERO;
+    private BigDecimal totalShippingFee = BigDecimal.ZERO;
+    private BigDecimal platformDiscount = BigDecimal.ZERO;
+    private BigDecimal finalAmount = BigDecimal.ZERO;
+    private String paymentStatus = "PENDING";
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 
-    private BigDecimal totalGoodAmount;
-    private BigDecimal totalShippingFee;
-
-    private BigDecimal platformDiscount;
-    private BigDecimal finalAmount;
-
-    private String paymentStatus;
-
-    private Timestamp createAt;
-    private Timestamp updateAt;
-    
+    private ShippingAddress shippingAddress;
     private List<SubOrder> subOrders = new ArrayList<>();
 
     public Order() {
-    }
-
-    public Order(long orderId, long customerId, int couponId, BigDecimal totalGoodAmount, BigDecimal totalShippingFee, BigDecimal platformDiscount, BigDecimal finalAmount, String paymentStatus, Timestamp createAt, Timestamp updateAt) {
-        this.orderId = orderId;
-        this.customerId = customerId;
-        this.couponId = couponId;
-        this.totalGoodAmount = totalGoodAmount;
-        this.totalShippingFee = totalShippingFee;
-        this.platformDiscount = platformDiscount;
-        this.finalAmount = finalAmount;
-        this.paymentStatus = paymentStatus;
-        this.createAt = createAt;
-        this.updateAt = updateAt;
     }
 
     public long getOrderId() {
@@ -64,20 +40,20 @@ public class Order {
         this.customerId = customerId;
     }
 
-    public int getCouponId() {
+    public Integer getCouponId() {
         return couponId;
     }
 
-    public void setCouponId(int couponId) {
+    public void setCouponId(Integer couponId) {
         this.couponId = couponId;
     }
 
-    public BigDecimal getTotalGoodAmount() {
-        return totalGoodAmount;
+    public BigDecimal getTotalGoodsAmount() {
+        return totalGoodsAmount;
     }
 
-    public void setTotalGoodAmount(BigDecimal totalGoodAmount) {
-        this.totalGoodAmount = totalGoodAmount;
+    public void setTotalGoodsAmount(BigDecimal totalGoodsAmount) {
+        this.totalGoodsAmount = totalGoodsAmount;
     }
 
     public BigDecimal getTotalShippingFee() {
@@ -112,20 +88,28 @@ public class Order {
         this.paymentStatus = paymentStatus;
     }
 
-    public Timestamp getCreateAt() {
-        return createAt;
+    public Timestamp getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreateAt(Timestamp createAt) {
-        this.createAt = createAt;
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
 
-    public Timestamp getUpdateAt() {
-        return updateAt;
+    public Timestamp getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setUpdateAt(Timestamp updateAt) {
-        this.updateAt = updateAt;
+    public void setUpdatedAt(Timestamp updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public ShippingAddress getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(ShippingAddress shippingAddress) {
+        this.shippingAddress = shippingAddress;
     }
 
     public List<SubOrder> getSubOrders() {
@@ -135,5 +119,4 @@ public class Order {
     public void setSubOrders(List<SubOrder> subOrders) {
         this.subOrders = subOrders;
     }
-
 }

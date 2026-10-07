@@ -6,6 +6,8 @@ public class Product {
 
     private long id;
     private long shopId;
+    private String shopName;
+    private String shopStatus;
     private int categoryId;
     private String name;
     private String categoryName;
@@ -61,6 +63,22 @@ public class Product {
 
     public void setShopId(long shopId) {
         this.shopId = shopId;
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
+    }
+
+    public String getShopStatus() {
+        return shopStatus;
+    }
+
+    public void setShopStatus(String shopStatus) {
+        this.shopStatus = shopStatus;
     }
 
     public int getCategoryId() {

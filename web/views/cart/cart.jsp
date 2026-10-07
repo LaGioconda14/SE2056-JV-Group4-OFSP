@@ -376,7 +376,7 @@
                         <!-- Danh sách Cart Items -->
                         <c:forEach var="item" items="${cart.items}" varStatus="status">
                             <div class="p-space-md sm:px-space-lg sm:py-space-lg bg-surface-container-lowest transition-colors hover:bg-surface-container-low/30 border-b border-outline-variant/20 last:border-b-0"
-                                 data-item-id="${item.cartItemID}" id="cart-item-${item.cartItemID}">
+                                 data-item-id="${item.cartItemID}" data-shop-id="${item.variant.product.shopId}" id="cart-item-${item.cartItemID}">
                                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-space-md items-center">
                                     <!-- Cột Sản phẩm & Ảnh -->
                                     <div class="sm:col-span-6 flex items-center gap-space-sm min-w-0">
@@ -429,7 +429,7 @@
                                                 </button>
                                                 <input class="w-10 text-center bg-transparent font-bold text-on-surface text-body-md outline-none"
                                                        id="qty-${item.cartItemID}" name="quantity" type="number" min="1" max="999"
-                                                       value="${item.quantity}" onchange="recalcTotals()">
+                                                       value="${item.quantity}" data-saved-quantity="${item.quantity}" onchange="recalcTotals()">
                                                 <button aria-label="Tăng số lượng" type="button"
                                                         class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-surface-container hover:text-primary transition-all active:scale-95 shadow-sm"
                                                         onclick="incrementQty('qty-${item.cartItemID}', ${item.variant.price}, 'sub-${item.cartItemID}')">
@@ -531,13 +531,22 @@
                                             <fmt:formatNumber value="${cart.totalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
                                         </span>
                                     </div>
-                                    <a href="<c:out value='${checkoutUrl}'/>" class="py-3 px-space-lg rounded-xl bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm hover:bg-on-primary-fixed-variant transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg no-underline cursor-pointer" id="btn-checkout">
+                                    <a href="<c:out value='${checkoutUrl}'/>" onclick="submitCheckout(event)" class="py-3 px-space-lg rounded-xl bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm hover:bg-on-primary-fixed-variant transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg no-underline cursor-pointer" id="btn-checkout">
                                         <span id="btn-checkout-label">Mua hàng (<c:out value="${cart.items.size()}"/>)</span>
                                         <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
                                     </a>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Form ngầm gửi các cartItemId được chọn sang /checkout -->
+                        <form id="checkout-form" method="post" action="${pageContext.request.contextPath}/checkout" class="hidden">
+                            <c:if test="${not empty sessionScope.cartCsrfToken}">
+                                <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
+                            </c:if>
+                            <input type="hidden" name="couponCode" id="checkout-form-coupon" value="">
+                            <div id="checkout-form-items"></div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -598,9 +607,9 @@
                 <div class="flex flex-col gap-1">
                     <div class="flex items-center gap-2">
                         <span class="font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded-md tracking-wider">FREESHIP</span>
-                        <span class="font-semibold text-sm text-on-surface">Miễn phí giao hàng</span>
+                        <span class="font-semibold text-sm text-on-surface">Giảm 25.000 ₫</span>
                     </div>
-                    <p class="text-xs text-on-surface-variant">Giảm 25.000 ₫ phí ship cho đơn từ 150.000 ₫</p>
+                    <p class="text-xs text-on-surface-variant">Giảm cố định 25.000 ₫ cho đơn từ 150.000 ₫</p>
                     <span class="text-[11px] text-outline">HSD: 31/12/2026</span>
                 </div>
                 <button type="button" onclick="chooseVoucher('FREESHIP')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-on-primary-fixed-variant transition-colors shadow-sm shrink-0">
@@ -654,8 +663,7 @@
 
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
-    let couponApplied = true;
-    const DISCOUNT_VAL = 25000;
+    let couponApplied = false;
     const FREE_SHIPPING_GOAL = 200000;
 
     function formatVND(val) {
@@ -719,17 +727,39 @@
         recalcTotals();
     }
 
+    function openVoucherModal() {
+        const modal = document.getElementById('voucher-modal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeVoucherModal() {
+        const modal = document.getElementById('voucher-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function chooseVoucher(code) {
+        const input = document.getElementById('coupon-input');
+        if (input) input.value = code;
+        closeVoucherModal();
+    }
+
     function applyCoupon() {
         const input = document.getElementById('coupon-input');
         const pill = document.getElementById('applied-pill');
         const row = document.getElementById('promo-row');
-        if (input && input.value.trim().toUpperCase() === 'FRESH25') {
+        if (input && input.value.trim() !== '') {
             couponApplied = true;
+            const code = input.value.trim().toUpperCase();
+            input.value = code;
+            const codeOutput = document.getElementById('applied-code-text');
+            const discountOutput = document.getElementById('applied-discount-text');
+            if (codeOutput) codeOutput.innerText = code;
+            if (discountOutput) discountOutput.innerText = '(Kiểm tra ở bước thanh toán)';
             if (pill) pill.style.display = 'inline-flex';
-            if (row) row.style.display = 'flex';
+            if (row) row.style.display = 'none';
             recalcTotals();
         } else {
-            alert('Mã không hợp lệ! Hãy thử mã "FRESH25"');
+            alert('Vui lòng chọn hoặc nhập mã giảm giá!');
         }
     }
 
@@ -780,12 +810,26 @@
 
         // Tính giảm giá & thành tiền
         const promoRow = document.getElementById('promo-row');
-        const discount = (couponApplied && selectedSubtotal >= 50000) ? DISCOUNT_VAL : 0;
+        const discount = 0;
         if (promoRow) {
             promoRow.style.display = (couponApplied && discount > 0) ? 'flex' : 'none';
         }
 
-        const delivery = (selectedSubtotal >= FREE_SHIPPING_GOAL || selectedSubtotal === 0) ? 0 : 25000;
+        const selectedRows = Array.from(document.querySelectorAll('[id^="cart-item-"]'))
+                .filter(row => row.querySelector('.item-checkbox:checked'));
+        const shopGroups = new Map();
+        selectedRows.forEach(row => {
+            const shopId = row.getAttribute('data-shop-id') || 'unknown';
+            const qtyInput = row.querySelector('input[name="quantity"]');
+            const priceEl = row.querySelector('[data-price]');
+            const qty = parseInt(qtyInput ? qtyInput.value : '1') || 1;
+            const price = parseFloat(priceEl ? priceEl.getAttribute('data-price') : '0') || 0;
+            shopGroups.set(shopId, (shopGroups.get(shopId) || 0) + price * qty);
+        });
+        let delivery = 0;
+        shopGroups.forEach(shopSubtotal => {
+            if (shopSubtotal < FREE_SHIPPING_GOAL) delivery += 25000;
+        });
         const grandTotal = Math.max(0, selectedSubtotal - discount + delivery);
 
         const subEl = document.getElementById('summary-subtotal');
@@ -825,6 +869,42 @@
             if (pTitle) pTitle.innerText = 'Gần đạt ưu đãi rồi!';
             if (pDesc) pDesc.innerHTML = 'Mua thêm <span class="font-bold text-tertiary">' + formatVND(rem) + '</span> để được <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>';
         }
+    }
+
+    function submitCheckout(e) {
+        if (e) e.preventDefault();
+        const checkedBoxes = Array.from(document.querySelectorAll('.item-checkbox:checked'));
+        if (checkedBoxes.length === 0) {
+            alert('Vui lòng chọn ít nhất một sản phẩm để mua hàng!');
+            return;
+        }
+        const changedQuantities = checkedBoxes.filter(cb => {
+            const row = cb.closest('[id^="cart-item-"]');
+            const qty = row ? row.querySelector('input[name="quantity"]') : null;
+            return qty && qty.value !== qty.getAttribute('data-saved-quantity');
+        });
+        if (changedQuantities.length > 0) {
+            alert('Bạn đã thay đổi số lượng. Vui lòng bấm biểu tượng lưu tại từng sản phẩm trước khi mua hàng!');
+            return;
+        }
+        const container = document.getElementById('checkout-form-items');
+        if (!container) return;
+        container.innerHTML = '';
+        checkedBoxes.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'cartItemIds';
+            input.value = cb.getAttribute('data-target');
+            container.appendChild(input);
+        });
+
+        const couponInput = document.getElementById('coupon-input');
+        const formCoupon = document.getElementById('checkout-form-coupon');
+        if (couponApplied && couponInput && formCoupon) {
+            formCoupon.value = couponInput.value.trim();
+        }
+
+        document.getElementById('checkout-form').submit();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
