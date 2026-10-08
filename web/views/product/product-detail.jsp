@@ -7,7 +7,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Th&#234;m V&#224;o Gi&#7887; H&#224;ng - Online Fruit Shop</title>
+    <title>Test Thêm Vào Giỏ Hàng - Online Fruit Shop</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -114,7 +114,7 @@
 <body>
 
 <div class="container">
-    <h2>🍎 Test Th&#234;m S&#7843;n Ph&#7849;m V&#224;o Gi&#7887; H&#224;ng</h2>
+    <h2>🍎 Test Thêm Sản Phẩm Vào Giỏ Hàng</h2>
 
     <c:if test="${not empty errorMessage}">
         <div class="alert alert-danger"><c:out value="${errorMessage}"/></div>
@@ -126,16 +126,16 @@
         <div class="alert alert-success"><c:out value="${cartSuccess}"/></div>
     </c:if>
 
-    <h3>1. Danh s&#225;ch s&#7843;n ph&#7849;m c&#243; trong h&#7879; th&#7889;ng</h3>
+    <h3>1. Danh sách sản phẩm có trong hệ thống</h3>
     <table>
         <thead>
             <tr>
                 <th>Variant ID</th>
-                <th>T&#234;n s&#7843;n ph&#7849;m</th>
-                <th>Ph&#226;n lo&#7841;i / Quy c&#225;ch</th>
-                <th>&#272;&#417;n gi&#225;</th>
-                <th>T&#7891;n kho</th>
-                <th>Thao t&#225;c</th>
+                <th>Tên sản phẩm</th>
+                <th>Phân loại / Quy cách</th>
+                <th>Đơn giá</th>
+                <th>Tồn kho</th>
+                <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
@@ -150,7 +150,7 @@
                             <td>${v.stockQuantity}</td>
                             <td>
                                 <button type="button" class="btn-select" onclick="selectVariant('${v.variantId}')">
-                                    Ch&#7885;n m&#227; n&#224;y
+                                    Chọn mã này
                                 </button>
                             </td>
                         </tr>
@@ -159,64 +159,64 @@
                 <c:otherwise>
                     <tr>
                         <td><strong>1</strong></td>
-                        <td>D&#226;u T&#226;y Gi&#7889;ng Nh&#7853;t &#272;&#224; L&#7841;t</td>
-                        <td>H&#7897;p 500g (Lo&#7841;i 1) (h&#7897;p)</td>
-                        <td>120.000 &#8363;</td>
+                        <td>Dâu Tây Giống Nhật Đà Lạt</td>
+                        <td>Hộp 500g (Loại 1) (hộp)</td>
+                        <td>120.000 ₫</td>
                         <td>100</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(1)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><button type="button" class="btn-select" onclick="selectVariant(1)">Chọn mã này</button></td>
                     </tr>
                     <tr>
                         <td><strong>2</strong></td>
-                        <td>D&#226;u T&#226;y Gi&#7889;ng Nh&#7853;t &#272;&#224; L&#7841;t</td>
-                        <td>H&#7897;p 1kg (Lo&#7841;i 1) (h&#7897;p)</td>
-                        <td>230.000 &#8363;</td>
+                        <td>Dâu Tây Giống Nhật Đà Lạt</td>
+                        <td>Hộp 1kg (Loại 1) (hộp)</td>
+                        <td>230.000 ₫</td>
                         <td>50</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(2)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><button type="button" class="btn-select" onclick="selectVariant(2)">Chọn mã này</button></td>
                     </tr>
                     <tr>
                         <td><strong>3</strong></td>
-                        <td>B&#417; S&#225;p 034 &#272;&#7863;c S&#7843;n L&#226;m &#272;&#7891;ng</td>
-                        <td>T&#250;i 1kg (3-4 qu&#7843;/kg) (kg)</td>
-                        <td>65.000 &#8363;</td>
+                        <td>Bơ Sáp 034 Đặc Sản Lâm Đồng</td>
+                        <td>Túi 1kg (3-4 quả/kg) (kg)</td>
+                        <td>65.000 ₫</td>
                         <td>200</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(3)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><button type="button" class="btn-select" onclick="selectVariant(3)">Chọn mã này</button></td>
                     </tr>
                     <tr>
                         <td><strong>4</strong></td>
-                        <td>T&#225;o Envy New Zealand Size 70</td>
-                        <td>T&#250;i 1kg (kho&#7843;ng 3-4 qu&#7843;) (kg)</td>
-                        <td>189.000 &#8363;</td>
+                        <td>Táo Envy New Zealand Size 70</td>
+                        <td>Túi 1kg (khoảng 3-4 quả) (kg)</td>
+                        <td>189.000 ₫</td>
                         <td>150</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(4)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><button type="button" class="btn-select" onclick="selectVariant(4)">Chọn mã này</button></td>
                     </tr>
                 </c:otherwise>
             </c:choose>
         </tbody>
     </table>
 
-    <h3>2. Form g&#7917;i th&#234;m v&#224;o gi&#7887; (POST /cart/add)</h3>
+    <h3>2. Form gửi thêm vào giỏ (POST /cart/add)</h3>
     <form method="post" action="${pageContext.request.contextPath}/cart/add">
         <c:if test="${not empty sessionScope.cartCsrfToken}">
             <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
         </c:if>
         <div class="form-group">
-            <label for="variantId">M&#227; bi&#7871;n th&#7875; (Variant ID):</label>
+            <label for="variantId">Mã biến thể (Variant ID):</label>
             <input type="number" id="variantId" name="variantId" value="1" min="1" required>
         </div>
 
         <div class="form-group">
-            <label for="quantity">S&#7889; l&#432;&#7907;ng mua:</label>
+            <label for="quantity">Số lượng mua:</label>
             <input type="number" id="quantity" name="quantity" value="1" min="1" max="1000" required>
         </div>
 
         <div class="form-group">
-            <button type="submit">🛒 Th&#234;m v&#224;o gi&#7887; h&#224;ng</button>
+            <button type="submit">🛒 Thêm vào giỏ hàng</button>
         </div>
     </form>
 
     <div class="links">
-        <a href="${pageContext.request.contextPath}/cart">👉 Xem gi&#7887; h&#224;ng hi&#7879;n t&#7841;i (/cart)</a>
-        <a href="${pageContext.request.contextPath}/home.jsp">🏠 Trang ch&#7911;</a>
+        <a href="${pageContext.request.contextPath}/cart">👉 Xem giỏ hàng hiện tại (/cart)</a>
+        <a href="${pageContext.request.contextPath}/home.jsp">🏠 Trang chủ</a>
     </div>
 </div>
 
