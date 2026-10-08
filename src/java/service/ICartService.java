@@ -15,4 +15,6 @@ public interface ICartService {
     void updateQuantity(long customerId, long cartItemId, int quantity) throws Exception;
 
     void removeItem(long customerId, long cartItemId) throws Exception;
+
+    void changeVariant(long customerId, long cartItemId, long variantId) throws Exception;
 }

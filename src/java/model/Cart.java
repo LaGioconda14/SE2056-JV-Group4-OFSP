@@ -52,7 +52,9 @@ public class Cart {
     public BigDecimal getTotalAmount() {
         BigDecimal total = BigDecimal.ZERO;
         for (CartItem item : items) {
-            total = total.add(item.getSubtotal());
+            if (item.isPurchasable()) {
+                total = total.add(item.getSubtotal());
+            }
         }
         return total;
     }
@@ -60,7 +62,9 @@ public class Cart {
     public int getTotalQuantity() {
         int total = 0;
         for (CartItem item : items) {
-            total += item.getQuantity();
+            if (item.isPurchasable()) {
+                total += item.getQuantity();
+            }
         }
         return total;
     }

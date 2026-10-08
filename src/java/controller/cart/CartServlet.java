@@ -40,6 +40,10 @@ public class CartServlet extends HttpServlet {
 
         Cart cart = cartService.getCart((long) user.getId());
         request.setAttribute("cart", cart);
+        if (cart.getItems().stream().anyMatch(model.CartItem::isQuantityAdjusted)) {
+            request.setAttribute("stockNotice",
+                    "Một số sản phẩm đã được tự động giảm số lượng theo tồn kho hiện tại.");
+        }
 
         String successMsg = (String) session.getAttribute("cartSuccess");
         String errorMsg = (String) session.getAttribute("cartError");

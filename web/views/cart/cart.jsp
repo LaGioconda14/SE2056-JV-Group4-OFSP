@@ -7,6 +7,7 @@
 <c:url var="cartUrl" value="/cart"/>
 <c:url var="updateUrl" value="/cart/update"/>
 <c:url var="removeUrl" value="/cart/remove"/>
+<c:url var="changeVariantUrl" value="/cart/change-variant"/>
 <c:url var="checkoutUrl" value="/views/order/checkout.jsp"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -255,9 +256,9 @@
                 <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a>
             </nav>
             <div class="flex items-center">
-                <span class="flex items-center gap-1.5 px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded-full font-label-caps text-label-caps font-semibold">
+                <span hidden="" class="flex items-center gap-1.5 px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded-full font-label-caps text-label-caps font-semibold">
                     <span class="material-symbols-outlined text-[14px] text-tertiary">bolt</span>
-                    <span>Flash Sale Hôm Nay: <strong>Giảm 30% Cam &amp; Bưởi Da Xanh</strong></span>
+                    <span hidden="">Flash Sale Hôm Nay: <strong>Giảm 30% Cam &amp; Bưởi Da Xanh</strong></span>
                 </span>
             </div>
         </div>
@@ -278,6 +279,11 @@
     <c:if test="${not empty successMessage}">
         <div class="mb-4 p-4 rounded-xl bg-primary-fixed text-on-primary-fixed font-semibold flex items-center gap-2 shadow-sm">
             <span class="material-symbols-outlined">check_circle</span> <c:out value="${successMessage}"/>
+        </div>
+    </c:if>
+    <c:if test="${not empty stockNotice}">
+        <div class="mb-4 p-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 font-semibold flex items-center gap-2 shadow-sm" role="status">
+            <span class="material-symbols-outlined">inventory</span> <c:out value="${stockNotice}"/>
         </div>
     </c:if>
 
@@ -375,12 +381,14 @@
 
                         <!-- Danh sách Cart Items -->
                         <c:forEach var="item" items="${cart.items}" varStatus="status">
+                            <c:set var="available" value="${item.availabilityStatus eq 'AVAILABLE'}"/>
+                            <c:set var="variantUnavailable" value="${item.availabilityStatus eq 'VARIANT_UNAVAILABLE'}"/>
                             <div class="p-space-md sm:px-space-lg sm:py-space-lg bg-surface-container-lowest transition-colors hover:bg-surface-container-low/30 border-b border-outline-variant/20 last:border-b-0"
-                                 data-item-id="${item.cartItemID}" id="cart-item-${item.cartItemID}">
+                                 data-item-id="${item.cartItemID}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" id="cart-item-${item.cartItemID}">
                                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-space-md items-center">
                                     <!-- Cột Sản phẩm & Ảnh -->
                                     <div class="sm:col-span-6 flex items-center gap-space-sm min-w-0">
-                                        <input checked class="item-checkbox w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 accent-primary cursor-pointer shrink-0"
+                                        <input <c:if test="${available}">checked</c:if> <c:if test="${not available}">disabled</c:if> class="item-checkbox w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 accent-primary cursor-pointer shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
                                                data-target="${item.cartItemID}" onchange="handleItemCheckChange()" type="checkbox">
                                         <div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container shrink-0 shadow-sm ml-1">
                                             <c:choose>
@@ -399,10 +407,14 @@
                                             <span class="text-body-sm font-body-sm text-on-surface-variant">
                                                 <c:out value="${item.variant.variantName}"/> <c:if test="${not empty item.variant.unit}">- <c:out value="${item.variant.unit}"/></c:if>
                                             </span>
-                                            <div class="flex items-center gap-1.5 mt-1 text-primary text-[12px] font-medium">
-                                                <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                                                <span>Còn hàng (Farm Fresh)</span>
-                                            </div>
+                                            <c:choose>
+                                                <c:when test="${available}"><div class="flex items-center gap-1.5 mt-1 text-primary text-[12px] font-medium"><span class="material-symbols-outlined text-[14px]">check_circle</span><span>Còn hàng · Kho: <c:out value="${item.variant.stockQuantity}"/></span></div></c:when>
+                                                <c:when test="${variantUnavailable}"><div class="flex items-center gap-1.5 mt-1 text-amber-700 text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">swap_horiz</span><span>Phân loại này đã hết hàng</span></div></c:when>
+                                                <c:when test="${item.availabilityStatus eq 'SOLD_OUT'}"><div class="flex items-center gap-1.5 mt-1 text-error text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">production_quantity_limits</span><span>Sản phẩm đã bán hết</span></div></c:when>
+                                                <c:when test="${item.availabilityStatus eq 'NOT_FOUND'}"><div class="flex items-center gap-1.5 mt-1 text-error text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">block</span><span>Sản phẩm không tồn tại hoặc đã ngừng bán</span></div></c:when>
+                                                <c:otherwise><div class="flex items-center gap-1.5 mt-1 text-error text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">error</span><span>Sản phẩm hiện không khả dụng</span></div></c:otherwise>
+                                            </c:choose>
+                                            <c:if test="${item.quantityAdjusted}"><div class="mt-1 text-[11px] font-semibold text-tertiary">Số lượng được điều chỉnh từ <c:out value="${item.previousQuantity}"/> xuống <c:out value="${item.quantity}"/> theo tồn kho hiện tại.</div></c:if>
                                         </div>
                                     </div>
 
@@ -416,6 +428,7 @@
 
                                     <!-- Cột Số lượng (Có nút + - và form cập nhật DB) -->
                                     <div class="sm:col-span-2 flex items-center justify-start sm:justify-center">
+                                        <c:if test="${available}">
                                         <form method="post" action="<c:out value='${updateUrl}'/>" class="flex items-center gap-1.5" id="qty-form-${item.cartItemID}">
                                             <input type="hidden" name="cartItemId" value="${item.cartItemID}">
                                             <c:if test="${not empty sessionScope.cartCsrfToken}">
@@ -428,7 +441,7 @@
                                                     <span class="material-symbols-outlined text-[16px]">remove</span>
                                                 </button>
                                                 <input class="w-10 text-center bg-transparent font-bold text-on-surface text-body-md outline-none"
-                                                       id="qty-${item.cartItemID}" name="quantity" type="number" min="1" max="999"
+                                                       id="qty-${item.cartItemID}" name="quantity" type="number" min="1" max="${item.variant.stockQuantity}"
                                                        value="${item.quantity}" onchange="recalcTotals()">
                                                 <button aria-label="Tăng số lượng" type="button"
                                                         class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-surface-container hover:text-primary transition-all active:scale-95 shadow-sm"
@@ -440,6 +453,13 @@
                                                 <span class="material-symbols-outlined text-[18px]">save</span>
                                             </button>
                                         </form>
+                                        </c:if>
+                                        <c:if test="${variantUnavailable}">
+                                            <c:choose>
+                                                <c:when test="${not empty item.alternativeVariants}"><button type="button" class="px-3 py-2 rounded-xl bg-primary text-white text-xs font-bold" onclick="openVariantDialog('${item.cartItemID}')">Đổi phân loại khác</button></c:when>
+                                                <c:otherwise><span class="text-xs text-error font-semibold">Không còn phân loại thay thế</span></c:otherwise>
+                                            </c:choose>
+                                        </c:if>
                                     </div>
 
                                     <!-- Cột Thành tiền & Nút Xóa -->
@@ -462,6 +482,21 @@
                                     </div>
                                 </div>
                             </div>
+                            <c:if test="${variantUnavailable and not empty item.alternativeVariants}">
+                                <dialog id="variant-dialog-${item.cartItemID}" class="rounded-2xl border border-outline-variant/40 shadow-2xl p-0 w-[min(520px,calc(100%-24px))] backdrop:bg-black/40">
+                                    <form method="post" action="<c:out value='${changeVariantUrl}'/>" class="p-5">
+                                        <input type="hidden" name="cartItemId" value="${item.cartItemID}">
+                                        <c:if test="${not empty sessionScope.cartCsrfToken}"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"></c:if>
+                                        <h3 class="font-bold text-lg mb-1">Chọn phân loại thay thế</h3><p class="text-sm text-on-surface-variant mb-4">Số lượng sẽ được giữ lại trong giới hạn tồn kho của phân loại mới.</p>
+                                        <div class="flex flex-col gap-2">
+                                            <c:forEach var="alternative" items="${item.alternativeVariants}" varStatus="alternativeStatus">
+                                                <label class="p-3 border border-outline-variant/40 rounded-xl flex items-center gap-3 cursor-pointer hover:border-primary"><input type="radio" name="variantId" value="${alternative.variantId}" <c:if test="${alternativeStatus.first}">checked</c:if> required><span class="flex-1"><strong class="block"><c:out value="${alternative.variantName}"/></strong><small class="text-on-surface-variant"><fmt:formatNumber value="${alternative.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> · Còn <c:out value="${alternative.stockQuantity}"/></small></span></label>
+                                            </c:forEach>
+                                        </div>
+                                        <div class="flex justify-end gap-2 mt-5"><button type="button" class="px-4 py-2 rounded-xl border border-outline-variant/40" onclick="closeVariantDialog('${item.cartItemID}')">Hủy</button><button type="submit" class="px-4 py-2 rounded-xl bg-primary text-white font-bold">Xác nhận đổi</button></div>
+                                    </form>
+                                </dialog>
+                            </c:if>
                         </c:forEach>
 
                         <!-- Bottom Controls -->
@@ -664,8 +699,10 @@
 
     function incrementQty(qtyId, price, subId) {
         const input = document.getElementById(qtyId);
+        if (!input) return;
         let val = parseInt(input.value) || 1;
-        val += 1;
+        const max = parseInt(input.max) || Number.MAX_SAFE_INTEGER;
+        val = Math.min(val + 1, max);
         input.value = val;
         const sub = document.getElementById(subId);
         if (sub) {
@@ -676,6 +713,7 @@
 
     function decrementQty(qtyId, price, subId) {
         const input = document.getElementById(qtyId);
+        if (!input) return;
         let val = parseInt(input.value) || 1;
         if (val > 1) {
             val -= 1;
@@ -689,7 +727,7 @@
     }
 
     function toggleSelectAll(isChecked) {
-        const checkboxes = document.querySelectorAll('.item-checkbox');
+        const checkboxes = document.querySelectorAll('.item-checkbox:not(:disabled)');
         checkboxes.forEach(cb => {
             cb.checked = isChecked;
         });
@@ -697,7 +735,7 @@
     }
 
     function handleItemCheckChange() {
-        const checkboxes = Array.from(document.querySelectorAll('.item-checkbox'));
+        const checkboxes = Array.from(document.querySelectorAll('.item-checkbox:not(:disabled)'));
         const selectAll = document.getElementById('select-all-checkbox');
         if (selectAll) {
             const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
@@ -735,12 +773,13 @@
 
     function recalcTotals() {
         const allRows = document.querySelectorAll('[id^="cart-item-"]');
-        const totalRowsCount = allRows.length;
+        const purchasableRows = Array.from(allRows).filter(row => row.dataset.cartStatus === 'AVAILABLE');
+        const totalRowsCount = purchasableRows.length;
         let checkedCount = 0;
         let totalItemsQty = 0;
         let selectedSubtotal = 0;
 
-        allRows.forEach(row => {
+        purchasableRows.forEach(row => {
             const checkbox = row.querySelector('.item-checkbox');
             const qtyInput = row.querySelector('input[name="quantity"]');
             const subEl = row.querySelector('[id^="sub-"]');
@@ -825,6 +864,16 @@
             if (pTitle) pTitle.innerText = 'Gần đạt ưu đãi rồi!';
             if (pDesc) pDesc.innerHTML = 'Mua thêm <span class="font-bold text-tertiary">' + formatVND(rem) + '</span> để được <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>';
         }
+    }
+
+    function openVariantDialog(cartItemId) {
+        const dialog = document.getElementById('variant-dialog-' + cartItemId);
+        if (dialog && typeof dialog.showModal === 'function') dialog.showModal();
+    }
+
+    function closeVariantDialog(cartItemId) {
+        const dialog = document.getElementById('variant-dialog-' + cartItemId);
+        if (dialog) dialog.close();
     }
 
     document.addEventListener('DOMContentLoaded', () => {

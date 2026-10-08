@@ -6,7 +6,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Cart;
@@ -64,30 +67,120 @@ public class CartDAO extends DBContext {
                 + "pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
                 + "p.product_id, p.shop_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
+                + "s.status AS shop_status, "
+                + "(SELECT COUNT(*) FROM product_variants pv2 "
+                + " WHERE pv2.product_id = p.product_id AND pv2.is_active = 1 "
+                + " AND pv2.stock_quantity > 0) AS available_variant_count, "
                 + "(SELECT TOP 1 pi2.image_url FROM product_images pi2 "
                 + " WHERE pi2.product_id = p.product_id AND pi2.is_thumbnail = 1 "
                 + " ORDER BY pi2.display_order) AS thumbnail_url "
-                + "FROM cart_items ci "
+                + "FROM cart_items ci WITH (UPDLOCK, HOLDLOCK) "
                 + "INNER JOIN product_variants pv ON ci.variant_id = pv.variant_id "
                 + "INNER JOIN products p ON pv.product_id = p.product_id "
+                + "INNER JOIN shops s ON p.shop_id = s.shop_id "
                 + "WHERE ci.cart_id = ? ORDER BY ci.created_at DESC";
         List<CartItem> items = new ArrayList<>();
-        try (Connection conn = requireConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, cartId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    CartItem item = new CartItem();
-                    item.setCartItemID(rs.getLong("cart_item_id"));
-                    item.setVariant(mapVariant(rs));
-                    item.getVariant().getProduct().setThumbnailUrl(rs.getString("thumbnail_url"));
-                    item.setQuantity(rs.getInt("quantity"));
-                    items.add(item);
+        try (Connection conn = requireConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setLong(1, cartId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            CartItem item = new CartItem();
+                            item.setCartItemID(rs.getLong("cart_item_id"));
+                            item.setVariant(mapVariant(rs));
+                            item.getVariant().getProduct().setThumbnailUrl(rs.getString("thumbnail_url"));
+
+                            int storedQuantity = rs.getInt("quantity");
+                            item.setQuantity(storedQuantity);
+                            item.setPreviousQuantity(storedQuantity);
+
+                            boolean productExists = item.getVariant().getProduct().isActive()
+                                    && "ACTIVE".equalsIgnoreCase(rs.getString("shop_status"));
+                            int availableVariantCount = rs.getInt("available_variant_count");
+
+                            if (!productExists) {
+                                item.setAvailabilityStatus("NOT_FOUND");
+                            } else if (availableVariantCount == 0) {
+                                item.setAvailabilityStatus("SOLD_OUT");
+                            } else if (!item.getVariant().isActive()
+                                    || item.getVariant().getStockQuantity() <= 0) {
+                                item.setAvailabilityStatus("VARIANT_UNAVAILABLE");
+                            } else {
+                                item.setAvailabilityStatus("AVAILABLE");
+                                if (storedQuantity > item.getVariant().getStockQuantity()) {
+                                    item.setQuantityAdjusted(true);
+                                    item.setQuantity(item.getVariant().getStockQuantity());
+                                }
+                            }
+                            items.add(item);
+                        }
+                    }
                 }
+
+                for (CartItem item : items) {
+                    if (item.isQuantityAdjusted()
+                            && !updateQuantityByCart(conn, cartId, item.getCartItemID(), item.getQuantity())) {
+                        throw new SQLException("Cart quantity reconciliation failed");
+                    }
+                    if ("VARIANT_UNAVAILABLE".equals(item.getAvailabilityStatus())) {
+                        item.setAlternativeVariants(findAlternativeVariants(conn,
+                                item.getVariant().getProduct().getProductId(),
+                                item.getVariant().getVariantId()));
+                    }
+                }
+                conn.commit();
+            } catch (SQLException | RuntimeException ex) {
+                rollback(conn, ex);
+                throw ex;
             }
+
+            Map<String, Integer> order = new HashMap<>();
+            order.put("AVAILABLE", 0);
+            order.put("VARIANT_UNAVAILABLE", 1);
+            order.put("SOLD_OUT", 2);
+            order.put("NOT_FOUND", 3);
+            items.sort(Comparator.comparingInt(item -> order.getOrDefault(
+                    item.getAvailabilityStatus(), 4)));
             return items;
         } catch (SQLException ex) {
             throw databaseFailure(ex);
+        }
+    }
+
+    private List<ProductVariant> findAlternativeVariants(Connection conn, long productId,
+            long excludedVariantId) throws SQLException {
+        String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "p.product_id, p.shop_id, p.name AS product_name, p.origin, "
+                + "p.is_active AS product_active "
+                + "FROM product_variants pv "
+                + "INNER JOIN products p ON p.product_id = pv.product_id "
+                + "INNER JOIN shops s ON s.shop_id = p.shop_id "
+                + "WHERE pv.product_id = ? AND pv.variant_id <> ? "
+                + "AND pv.is_active = 1 AND pv.stock_quantity > 0 "
+                + "AND p.is_active = 1 AND s.status = 'ACTIVE' ORDER BY pv.price";
+        List<ProductVariant> variants = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setLong(2, excludedVariantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) variants.add(mapVariant(rs));
+            }
+        }
+        return variants;
+    }
+
+    private boolean updateQuantityByCart(Connection conn, long cartId, long cartItemId,
+            int quantity) throws SQLException {
+        String sql = "UPDATE cart_items SET quantity = ?, updated_at = GETDATE() "
+                + "WHERE cart_id = ? AND cart_item_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setLong(2, cartId);
+            ps.setLong(3, cartItemId);
+            return ps.executeUpdate() == 1;
         }
     }
 
@@ -218,6 +311,98 @@ public class CartDAO extends DBContext {
             }
         } catch (SQLException ex) {
             throw databaseFailure(ex);
+        }
+    }
+
+    public boolean changeCartItemVariant(long customerId, long cartId, long cartItemId,
+            long newVariantId) {
+        try (Connection conn = requireConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                if (!lockCart(conn, customerId, cartId)) {
+                    conn.rollback();
+                    return false;
+                }
+
+                CartItem current = findCartItem(conn, cartId, cartItemId, true);
+                if (current == null) {
+                    conn.rollback();
+                    return false;
+                }
+
+                ProductVariant currentVariant = findVariantIncludingUnavailable(conn,
+                        current.getVariant().getVariantId());
+                ProductVariant newVariant = findAvailableVariant(conn, newVariantId);
+                if (currentVariant == null || newVariant == null
+                        || currentVariant.getProduct().getProductId()
+                        != newVariant.getProduct().getProductId()) {
+                    throw new IllegalArgumentException("Biến thể thay thế không hợp lệ!");
+                }
+
+                CartItem existingTarget = findCartItem(conn, cartId, newVariantId, false);
+                long requestedQuantity = current.getQuantity()
+                        + (existingTarget != null ? existingTarget.getQuantity() : 0L);
+                int finalQuantity = (int) Math.min(requestedQuantity,
+                        (long) newVariant.getStockQuantity());
+                if (finalQuantity <= 0) {
+                    throw new IllegalArgumentException("Biến thể thay thế đã hết hàng!");
+                }
+
+                if (existingTarget != null && existingTarget.getCartItemID() != cartItemId) {
+                    if (!updateQuantityByCart(conn, cartId, existingTarget.getCartItemID(), finalQuantity)) {
+                        throw new SQLException("Target variant quantity update failed");
+                    }
+                    if (!deleteItemByCart(conn, cartId, cartItemId)) {
+                        throw new SQLException("Old cart item removal failed");
+                    }
+                } else {
+                    String sql = "UPDATE cart_items SET variant_id = ?, quantity = ?, "
+                            + "updated_at = GETDATE() WHERE cart_id = ? AND cart_item_id = ?";
+                    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                        ps.setLong(1, newVariantId);
+                        ps.setInt(2, finalQuantity);
+                        ps.setLong(3, cartId);
+                        ps.setLong(4, cartItemId);
+                        if (ps.executeUpdate() != 1) {
+                            throw new SQLException("Cart variant update failed");
+                        }
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException | RuntimeException ex) {
+                rollback(conn, ex);
+                throw ex;
+            }
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
+        }
+    }
+
+    private ProductVariant findVariantIncludingUnavailable(Connection conn, long variantId)
+            throws SQLException {
+        String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "p.product_id, p.shop_id, p.name AS product_name, p.origin, "
+                + "p.is_active AS product_active FROM product_variants pv "
+                + "INNER JOIN products p ON p.product_id = pv.product_id "
+                + "WHERE pv.variant_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, variantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapVariant(rs) : null;
+            }
+        }
+    }
+
+    private boolean deleteItemByCart(Connection conn, long cartId, long cartItemId)
+            throws SQLException {
+        String sql = "DELETE FROM cart_items WHERE cart_id = ? AND cart_item_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, cartId);
+            ps.setLong(2, cartItemId);
+            return ps.executeUpdate() == 1;
         }
     }
 

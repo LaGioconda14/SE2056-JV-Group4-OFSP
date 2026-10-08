@@ -69,6 +69,17 @@ public class CartServiceImpl implements ICartService {
         }
     }
 
+    @Override
+    public void changeVariant(long customerId, long cartItemId, long variantId) throws Exception {
+        validateId(customerId);
+        validateId(cartItemId);
+        validateId(variantId);
+        Cart cart = requireCart(customerId);
+        if (!cartDAO.changeCartItemVariant(customerId, cart.getCartId(), cartItemId, variantId)) {
+            throw new IllegalArgumentException("Không thể đổi biến thể trong giỏ hàng!");
+        }
+    }
+
     private Cart requireCart(long customerId) {
         validateId(customerId);
         Cart cart = cartDAO.getCartByCustomerId(customerId);
