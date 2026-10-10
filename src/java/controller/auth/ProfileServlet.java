@@ -11,22 +11,24 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
+import java.util.List;
+import model.CustomerAddress;
 import model.User;
+import service.ICustomerAddressService;
 import service.IUserService;
+import service.impl.CustomerAddressServiceImpl;
 import service.impl.UserServiceImpl;
 
-/**
- * Controller handling User Profile, Account Settings, Avatar Upload, and Password Updates.
- */
 @WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
 @MultipartConfig(
-    fileSizeThreshold = 1024 * 1024 * 1, // 1MB
-    maxFileSize = 1024 * 1024 * 5,       // 5MB
-    maxRequestSize = 1024 * 1024 * 10    // 10MB
+    fileSizeThreshold = 1024 * 1024 * 1,
+    maxFileSize = 1024 * 1024 * 5,
+    maxRequestSize = 1024 * 1024 * 10
 )
 public class ProfileServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();
+    private final ICustomerAddressService addressService = new CustomerAddressServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -43,7 +45,6 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        // Tải thông tin mới nhất từ cơ sở dữ liệu
         User currentUser = userService.getUserById(sessionUser.getId());
         if (currentUser != null) {
             session.setAttribute("user", currentUser);
@@ -51,8 +52,10 @@ public class ProfileServlet extends HttpServlet {
         } else {
             request.setAttribute("user", sessionUser);
         }
+        long targetUserId = (currentUser != null) ? currentUser.getId() : sessionUser.getId();
+        List<CustomerAddress> addresses = addressService.getAddressesByUserId(targetUserId);
+        request.setAttribute("addresses", addresses);
 
-        // Chuyển flash message từ session sang request (nếu có)
         if (session != null) {
             String successMsg = (String) session.getAttribute("successMessage");
             if (successMsg != null) {
@@ -95,7 +98,6 @@ public class ProfileServlet extends HttpServlet {
         }
 
         if ("uploadAvatar".equals(action)) {
-            // Xử lý tải lên ảnh đại diện mới
             try {
                 Part filePart = request.getPart("avatarFile");
                 if (filePart == null || filePart.getSize() == 0) {
@@ -133,7 +135,6 @@ public class ProfileServlet extends HttpServlet {
                 String savedFilePath = uploadDirRealPath + File.separator + newFileName;
                 filePart.write(savedFilePath);
 
-                // Đường dẫn tương đối lưu vào DB
                 String avatarUrl = "assets/images/avatars/" + newFileName;
                 userService.updateAvatar(sessionUser.getId(), avatarUrl);
 
@@ -150,7 +151,6 @@ public class ProfileServlet extends HttpServlet {
             return;
 
         } else if ("deleteAvatar".equals(action)) {
-            // Xóa ảnh đại diện hiện tại
             try {
                 userService.updateAvatar(sessionUser.getId(), null);
                 User refreshed = userService.getUserById(sessionUser.getId());
@@ -165,7 +165,6 @@ public class ProfileServlet extends HttpServlet {
             return;
 
         } else if ("changePassword".equals(action)) {
-            // Xử lý đổi mật khẩu từ trong trang profile
             String oldPassword = request.getParameter("oldPassword");
             String newPassword = request.getParameter("newPassword");
             String confirmPassword = request.getParameter("confirmPassword");
@@ -177,33 +176,96 @@ public class ProfileServlet extends HttpServlet {
                 session.setAttribute("errorMessage", e.getMessage());
             }
             response.sendRedirect(request.getContextPath() + "/profile#security");
+            return;
+
+        } else if ("addAddress".equals(action)) {
+            String recipientName = request.getParameter("recipientName");
+            String recipientPhone = request.getParameter("recipientPhone");
+            String streetAddress = request.getParameter("streetAddress");
+            String ward = request.getParameter("ward");
+            String district = request.getParameter("district");
+            String city = request.getParameter("city");
+            String isDefaultParam = request.getParameter("isDefault");
+            boolean isDefault = "true".equalsIgnoreCase(isDefaultParam) 
+                             || "on".equalsIgnoreCase(isDefaultParam) 
+                             || "1".equals(isDefaultParam);
+
+            try {
+                CustomerAddress newAddr = new CustomerAddress();
+                newAddr.setUserId(sessionUser.getId());
+                newAddr.setRecipientName(recipientName);
+                newAddr.setRecipientPhone(recipientPhone);
+                newAddr.setStreetAddress(streetAddress);
+                newAddr.setWard(ward);
+                newAddr.setDistrict(district);
+                newAddr.setCity(city);
+                newAddr.setDefault(isDefault);
+
+                boolean success = addressService.addAddress(newAddr);
+                if (success) {
+                    session.setAttribute("successMessage", "Thêm địa chỉ nhận hàng thành công!");
+                } else {
+                    session.setAttribute("errorMessage", "Không thể lưu địa chỉ. Vui lòng kiểm tra lại thông tin!");
+                }
+            } catch (IllegalArgumentException ex) {
+                session.setAttribute("errorMessage", ex.getMessage());
+            } catch (Exception ex) {
+                session.setAttribute("errorMessage", "Lỗi xử lý thêm địa chỉ: " + ex.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/profile#address");
+            return;
+
+        } else if ("setDefaultAddress".equals(action)) {
+            try {
+                long addressId = Long.parseLong(request.getParameter("addressId"));
+                boolean success = addressService.setDefaultAddress(addressId, sessionUser.getId());
+                if (success) {
+                    session.setAttribute("successMessage", "Đã thiết lập địa chỉ mặc định thành công!");
+                } else {
+                    session.setAttribute("errorMessage", "Không thể cập nhật địa chỉ mặc định!");
+                }
+            } catch (Exception ex) {
+                session.setAttribute("errorMessage", "Lỗi: " + ex.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/profile#address");
+            return;
+
+        } else if ("deleteAddress".equals(action)) {
+            try {
+                long addressId = Long.parseLong(request.getParameter("addressId"));
+                boolean success = addressService.deleteAddress(addressId, sessionUser.getId());
+                if (success) {
+                    session.setAttribute("successMessage", "Đã xóa địa chỉ nhận hàng thành công!");
+                } else {
+                    session.setAttribute("errorMessage", "Không thể xóa địa chỉ này!");
+                }
+            } catch (Exception ex) {
+                session.setAttribute("errorMessage", "Lỗi khi xóa địa chỉ: " + ex.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/profile#address");
+            return;
 
         } else {
-            // Mặc định: Cập nhật thông tin cá nhân (Họ tên, SĐT, Giới tính, Ngày sinh)
             String fullName = request.getParameter("fullName");
             String phone = request.getParameter("phone");
             String gender = request.getParameter("gender");
             String birthDateStr = request.getParameter("birthDate");
 
-            // Lấy thông tin hiện tại từ DB để bảo vệ các trường che mặt nạ (masked)
             User currentUser = userService.getUserById(sessionUser.getId());
             if (currentUser == null) {
                 currentUser = sessionUser;
             }
 
-            // Nếu người dùng không sửa SĐT mà để nguyên dạng che sao (chứa '*') hoặc "Chưa cập nhật", giữ nguyên SĐT cũ
             String phoneToUpdate = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
             if (phoneToUpdate != null && (phoneToUpdate.contains("*") || phoneToUpdate.equalsIgnoreCase("Chưa cập nhật"))) {
                 phoneToUpdate = currentUser.getPhone();
             }
 
-            // Xử lý ngày sinh
             java.sql.Date birthDateToUpdate = currentUser.getBirthDate();
             if (birthDateStr != null && !birthDateStr.trim().isEmpty() && !birthDateStr.contains("*")) {
                 try {
                     birthDateToUpdate = java.sql.Date.valueOf(birthDateStr.trim());
                 } catch (IllegalArgumentException e) {
-                    // Định dạng ngày không hợp lệ, giữ nguyên
                 }
             } else if (birthDateStr != null && birthDateStr.trim().isEmpty()) {
                 birthDateToUpdate = null;
