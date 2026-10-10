@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -11,6 +12,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.GoogleAccount;
@@ -22,8 +24,7 @@ public class GoogleOAuthUtil {
 
     private static final Logger LOGGER = Logger.getLogger(GoogleOAuthUtil.class.getName());
 
-    // NOTE: Ban co the thay the Client ID va Client Secret duoc tao tu Google Cloud Console vao day
-    // Hoac dat bien moi truong he thong: GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET
+    // Placeholder mặc định an toàn cho Git (thực tế sẽ đọc từ oauth.properties hoặc biến môi trường)
     public static final String DEFAULT_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
     public static final String DEFAULT_CLIENT_SECRET = "YOUR_GOOGLE_CLIENT_SECRET";
 
@@ -33,8 +34,32 @@ public class GoogleOAuthUtil {
     public static final String GOOGLE_USER_INFO_URL = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=";
 
     private static final Gson gson = new Gson();
+    private static Properties oauthProps = null;
+
+    static {
+        loadProperties();
+    }
+
+    private static synchronized void loadProperties() {
+        if (oauthProps != null) return;
+        oauthProps = new Properties();
+        try (InputStream is = GoogleOAuthUtil.class.getClassLoader().getResourceAsStream("oauth.properties")) {
+            if (is != null) {
+                oauthProps.load(is);
+                LOGGER.info("Successfully loaded Google OAuth credentials from oauth.properties");
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Could not load oauth.properties: " + ex.getMessage());
+        }
+    }
 
     public static String getClientId() {
+        if (oauthProps != null && oauthProps.containsKey("google.client_id")) {
+            String val = oauthProps.getProperty("google.client_id");
+            if (val != null && !val.trim().isEmpty() && !val.contains("YOUR_GOOGLE_CLIENT_ID")) {
+                return val.trim();
+            }
+        }
         String envId = System.getenv("GOOGLE_CLIENT_ID");
         if (envId != null && !envId.trim().isEmpty()) {
             return envId.trim();
@@ -43,6 +68,12 @@ public class GoogleOAuthUtil {
     }
 
     public static String getClientSecret() {
+        if (oauthProps != null && oauthProps.containsKey("google.client_secret")) {
+            String val = oauthProps.getProperty("google.client_secret");
+            if (val != null && !val.trim().isEmpty() && !val.contains("YOUR_GOOGLE_CLIENT_SECRET")) {
+                return val.trim();
+            }
+        }
         String envSecret = System.getenv("GOOGLE_CLIENT_SECRET");
         if (envSecret != null && !envSecret.trim().isEmpty()) {
             return envSecret.trim();

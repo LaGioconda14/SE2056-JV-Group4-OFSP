@@ -87,6 +87,47 @@
 
 <!-- Main Container -->
 <div class="container py-4">
+
+    <!-- Flash Messages (Success / Warning) -->
+    <c:if test="${not empty sessionScope.successMessage}">
+        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-3 shadow-sm rounded-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0"></i>
+            <div>${sessionScope.successMessage}</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <c:remove var="successMessage" scope="session" />
+    </c:if>
+
+    <c:if test="${not empty sessionScope.warningMessage or (not empty sessionScope.user and empty sessionScope.user.phone)}">
+        <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center justify-content-between p-3 mb-3 border-warning shadow-sm rounded-3" role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-warning text-dark p-2 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="alert-heading fw-bold mb-1 text-dark">Cảnh báo: Chưa cập nhật Số điện thoại!</h6>
+                    <div class="small text-secondary">
+                        <c:choose>
+                            <c:when test="${not empty sessionScope.warningMessage}">
+                                ${sessionScope.warningMessage}
+                            </c:when>
+                            <c:otherwise>
+                                Tài khoản của bạn hiện chưa có số điện thoại liên hệ. Vui lòng bổ sung để nhân viên có thể liên lạc giao nhận hàng hóa.
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0 ms-3">
+                <a href="${pageContext.request.contextPath}/profile" class="btn btn-warning btn-sm fw-bold text-dark px-3 shadow-xs">
+                    <i class="bi bi-pencil-square me-1"></i> Bổ sung ngay
+                </a>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+        <c:remove var="warningMessage" scope="session" />
+    </c:if>
+
     <!-- Hero Banner -->
     <div class="hero-banner mb-5 text-center text-md-start">
         <div class="row align-items-center">
@@ -127,7 +168,16 @@
                         </div>
                         <div class="col-sm-6">
                             <span class="text-muted small d-block">Số điện thoại</span>
-                            <span class="fw-semibold">${sessionScope.user.phone}</span>
+                            <c:choose>
+                                <c:when test="${not empty sessionScope.user.phone}">
+                                    <span class="fw-semibold">${sessionScope.user.phone}</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fw-bold">
+                                        <i class="bi bi-exclamation-circle me-1"></i>Chưa cập nhật (<a href="${pageContext.request.contextPath}/profile" class="text-decoration-underline text-warning-emphasis">Bổ sung ngay</a>)
+                                    </span>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                         <div class="col-sm-6">
                             <span class="text-muted small d-block">Vai trò hệ thống</span>

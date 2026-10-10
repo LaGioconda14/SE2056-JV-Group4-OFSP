@@ -3,13 +3,10 @@
         "src/java"
     ],
     "java.project.referencedLibraries": [
-        "C:/Java/apache-tomcat-10.1.60/lib/servlet-api.jar",
-        "C:/Java/apache-tomcat-10.1.60/lib/jsp-api.jar",
-        "C:/Java/apache-tomcat-10.1.60/lib/el-api.jar",
         "C:/FA26/apache-tomcat-10.1.60/lib/servlet-api.jar",
         "C:/FA26/apache-tomcat-10.1.60/lib/jsp-api.jar",
         "C:/FA26/apache-tomcat-10.1.60/lib/el-api.jar",
         "web/WEB-INF/lib/*.jar"
     ],
-    "tomcat.home": "C:/Java/apache-tomcat-10.1.60"
+    "tomcat.home": "C:/FA26/apache-tomcat-10.1.60"
 }

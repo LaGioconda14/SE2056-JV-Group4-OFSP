@@ -64,6 +64,11 @@ public class ProfileServlet extends HttpServlet {
                 request.setAttribute("errorMessage", errorMsg);
                 session.removeAttribute("errorMessage");
             }
+            String warningMsg = (String) session.getAttribute("warningMessage");
+            if (warningMsg != null) {
+                request.setAttribute("warningMessage", warningMsg);
+                session.removeAttribute("warningMessage");
+            }
         }
 
         request.getRequestDispatcher("/views/auth/profile.jsp").forward(request, response);
@@ -186,9 +191,9 @@ public class ProfileServlet extends HttpServlet {
                 currentUser = sessionUser;
             }
 
-            // Nếu người dùng không sửa SĐT mà để nguyên dạng che sao (chứa '*'), giữ nguyên SĐT cũ
+            // Nếu người dùng không sửa SĐT mà để nguyên dạng che sao (chứa '*') hoặc "Chưa cập nhật", giữ nguyên SĐT cũ
             String phoneToUpdate = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
-            if (phoneToUpdate != null && phoneToUpdate.contains("*")) {
+            if (phoneToUpdate != null && (phoneToUpdate.contains("*") || phoneToUpdate.equalsIgnoreCase("Chưa cập nhật"))) {
                 phoneToUpdate = currentUser.getPhone();
             }
 
@@ -200,6 +205,8 @@ public class ProfileServlet extends HttpServlet {
                 } catch (IllegalArgumentException e) {
                     // Định dạng ngày không hợp lệ, giữ nguyên
                 }
+            } else if (birthDateStr != null && birthDateStr.trim().isEmpty()) {
+                birthDateToUpdate = null;
             }
 
             try {
@@ -207,6 +214,10 @@ public class ProfileServlet extends HttpServlet {
                 User refreshedUser = userService.getUserById(sessionUser.getId());
                 if (refreshedUser != null) {
                     session.setAttribute("user", refreshedUser);
+                }
+                if (phoneToUpdate != null && !phoneToUpdate.trim().isEmpty()) {
+                    session.removeAttribute("phoneMissingWarning");
+                    session.removeAttribute("warningMessage");
                 }
                 session.setAttribute("successMessage", "Lưu thay đổi hồ sơ cá nhân thành công!");
             } catch (Exception e) {

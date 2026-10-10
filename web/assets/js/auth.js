@@ -30,8 +30,10 @@ function togglePasswordVisibility(fieldId, triggerEl) {
 function checkEmailValidity(input) {
     const icon = document.getElementById('emailStatusIcon');
     if (!icon) return;
-    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (pattern.test(input.value.trim())) {
+    const val = input.value.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phonePattern = /^(0|\+84)[0-9]{9,10}$/;
+    if (emailPattern.test(val) || phonePattern.test(val)) {
         icon.innerHTML = '<i class="bi bi-check-circle-fill valid-mark"></i>';
     } else {
         icon.innerHTML = '';
