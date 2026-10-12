@@ -12,10 +12,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.User;
 
-
 /**
  * Data Access Object for User entity handling SQL Server operations.
- * Compatible with [dbo].[users] and [dbo].[roles] tables.
+ * Compatible with [dbo].[users], [dbo].[roles], and [dbo].[shops] tables.
  */
 public class UserDAO extends DBContext {
 
@@ -31,10 +30,12 @@ public class UserDAO extends DBContext {
      */
     public User checkLogin(String email, String password) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
-                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at, "
+                   + "       s.shop_name "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
+                   + "LEFT JOIN shops s ON u.user_id = s.owner_id "
                    + "WHERE LOWER(u.email) = LOWER(?)";
 
         Connection conn = getConnection();
@@ -69,10 +70,12 @@ public class UserDAO extends DBContext {
      */
     public User findByEmail(String email) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
-                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at, "
+                   + "       s.shop_name "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
+                   + "LEFT JOIN shops s ON u.user_id = s.owner_id "
                    + "WHERE LOWER(u.email) = LOWER(?)";
 
         Connection conn = getConnection();
@@ -104,10 +107,12 @@ public class UserDAO extends DBContext {
      */
     public User findById(int id) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
-                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at, "
+                   + "       s.shop_name "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
+                   + "LEFT JOIN shops s ON u.user_id = s.owner_id "
                    + "WHERE u.user_id = ?";
 
         Connection conn = getConnection();
@@ -379,4 +384,3 @@ public class UserDAO extends DBContext {
         return user;
     }
 }
-

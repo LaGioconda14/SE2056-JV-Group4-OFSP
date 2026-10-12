@@ -103,38 +103,73 @@
                         </form>
                     </div>
 
-                    <!-- User Actions -->
-                    <div class="flex items-center gap-4">
-                        <c:choose>
-                            <c:when test="${empty sessionScope.account}">
-                                <div class="flex items-center gap-2">
-                                    <a href="${pageContext.request.contextPath}/login" class="text-sm font-semibold text-gray-700 hover:text-emerald-600 transition">Đăng nhập</a>
-                                    <span class="text-gray-300">/</span>
-                                    <a href="${pageContext.request.contextPath}/register" class="text-sm font-semibold bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition shadow-sm">Đăng ký</a>
-                                </div>
-                            </c:when>
-                            <c:otherwise>
-                                <div class="flex items-center gap-3 cursor-pointer group">
-                                    <img src="${not empty sessionScope.account.avatar ? sessionScope.account.avatar : 'https://via.placeholder.com/40'}" 
-                                         alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow-sm">
-                                    <div class="hidden md:block text-left">
-                                        <span class="block text-xs text-gray-500">Xin chào,</span>
-                                        <span class="text-sm font-bold text-gray-800 group-hover:text-emerald-600 transition">
-                                            ${sessionScope.account.fullName}
-                                        </span>
+<!-- User Actions -->
+                        <div class="flex items-center gap-4">
+                            <c:choose>
+                                <%-- Hỗ trợ kiểm tra cả 2 tên biến session phổ biến: account hoặc user --%>
+                                <c:when test="${empty sessionScope.account and empty sessionScope.user}">
+                                    <div class="flex items-center gap-2">
+                                        <a href="${pageContext.request.contextPath}/login" class="text-sm font-semibold text-gray-700 hover:text-emerald-600 transition">Đăng nhập</a>
+                                        <span class="text-gray-300">/</span>
+                                        <a href="${pageContext.request.contextPath}/register" class="text-sm font-semibold bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700 transition shadow-sm">Đăng ký</a>
                                     </div>
-                                    <a href="${pageContext.request.contextPath}/logout" class="text-xs text-red-500 hover:underline ml-2" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></a>
-                                </div>
-                            </c:otherwise>
-                        </c:choose>
+                                </c:when>
+                                <c:otherwise>
+                                    <%-- Lấy đối tượng đang hiển thị (ưu tiên account, nếu không có lấy user) --%>
+                                    <c:set var="currentUser" value="${not empty sessionScope.account ? sessionScope.account : sessionScope.user}" />
+                                    
+                                    <div class="flex items-center gap-3 relative group">
+                                        <div class="flex items-center gap-2.5 cursor-pointer py-1">
+                                            <img src="${not empty currentUser.avatar ? currentUser.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}" 
+                                                 alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow-sm">
+                                            <div class="hidden md:block text-left">
+                                                <span class="block text-[10px] text-gray-400 font-medium leading-none">Xin chào,</span>
+                                                <span class="text-sm font-bold text-gray-800 group-hover:text-emerald-600 transition leading-tight">
+                                                    ${not empty currentUser.fullName ? currentUser.fullName : currentUser.username}
+                                                </span>
+                                            </div>
+                                            <i class="fa-solid fa-chevron-down text-xs text-gray-400 ml-1"></i>
+                                        </div>
 
-                        <!-- Cart Button -->
-                        <a href="${pageContext.request.contextPath}/cart" class="relative p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl transition flex items-center gap-2 group">
-                            <i class="fa-solid fa-bag-shopping text-xl group-hover:scale-110 transition-transform"></i>
-                            <span class="hidden sm:inline font-bold text-sm">Giỏ hàng</span>
-                            <span id="cartBadge" class="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-md border-2 border-white">${sessionScope.cartSize != null ? sessionScope.cartSize : 0}</span>
-                        </a>
-                    </div>
+                                        <!-- Dropdown Menu khi rê chuột vào Avatar -->
+                                        <div class="absolute right-0 top-full pt-2 w-56 hidden group-hover:block z-50">
+                                            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 space-y-1">
+                                                <div class="px-3 py-2 border-b border-gray-100">
+                                                    <p class="text-xs font-bold text-gray-900 truncate">${currentUser.fullName}</p>
+                                                    <p class="text-[11px] text-gray-500 truncate">${currentUser.email}</p>
+                                                </div>
+                                                
+                                                <%-- Nếu tài khoản là Chủ shop (SHOP_OWNER), hiện thêm nút truy cập Kênh Người Bán --%>
+                                                <c:if test="${currentUser.role eq 'SHOP_OWNER'}">
+                                                    <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition">
+                                                        <i class="fa-solid fa-store"></i> Kênh Quản Lý Shop
+                                                    </a>
+                                                </c:if>
+
+                                                <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 rounded-xl hover:bg-gray-100 transition">
+                                                    <i class="fa-solid fa-user-gear text-gray-400"></i> Tài khoản của tôi
+                                                </a>
+                                                <a href="${pageContext.request.contextPath}/orders" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 rounded-xl hover:bg-gray-100 transition">
+                                                    <i class="fa-solid fa-bag-shopping text-gray-400"></i> Đơn mua
+                                                </a>
+                                                <div class="pt-1 border-t border-gray-100">
+                                                    <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 rounded-xl hover:bg-red-50 transition">
+                                                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+
+                            <!-- Cart Button -->
+                            <a href="${pageContext.request.contextPath}/cart" class="relative p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl transition flex items-center gap-2 group">
+                                <i class="fa-solid fa-bag-shopping text-xl group-hover:scale-110 transition-transform"></i>
+                                <span class="hidden sm:inline font-bold text-sm">Giỏ hàng</span>
+                                <span id="cartBadge" class="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-md border-2 border-white">${sessionScope.cartSize != null ? sessionScope.cartSize : 0}</span>
+                            </a>
+                        </div>
                 </div>
             </div>
         </header>

@@ -109,6 +109,15 @@ public class User implements Serializable {
         this.avatarUrl = avatarUrl;
     }
 
+    // --- Tương thích với JSP gọi .avatar ---
+    public String getAvatar() {
+        return avatarUrl;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatarUrl = avatar;
+    }
+
     public Timestamp getCreatedAt() {
         return createdAt;
     }
@@ -181,4 +190,3 @@ public class User implements Serializable {
                 '}';
     }
 }
-

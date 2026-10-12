@@ -1,5 +1,6 @@
 package controller.auth;
 
+import dao.ShopDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Shop;
 import model.User;
 import service.IUserService;
 import service.impl.UserServiceImpl;
@@ -23,7 +25,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         HttpSession session = request.getSession(false);
         // If already logged in, redirect to home page
         if (session != null && session.getAttribute("user") != null) {
@@ -67,7 +69,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -108,8 +110,26 @@ public class LoginServlet extends HttpServlet {
         response.addCookie(cookieRem);
 
         // Redirect to home / landing page
-        response.sendRedirect(request.getContextPath() + "/home.jsp");
+        String role = user.getRole();
+
+        if ("SHOP_OWNER".equalsIgnoreCase(role)) {
+            // Nếu là Chủ shop -> Điều hướng thẳng vào Kênh quản lý sản phẩm
+            ShopDAO shopDAO = new ShopDAO();
+            Shop shop = shopDAO.getShopByOwnerId(user.getId());
+            if (shop != null) {
+                session.setAttribute("shopLogo", shop.getLogoUrl());
+                session.setAttribute("shopId", shop.getShopId());   
+                session.setAttribute("shopName", shop.getShopName());
+                session.setAttribute("shop", shop.getStatus());
+            }
+            session.setAttribute("email", user.getEmail());
+            response.sendRedirect(request.getContextPath() + "/shop/products");
+        } else if ("ADMIN".equalsIgnoreCase(role)) {
+            // Nếu là Quản trị viên -> Điều hướng vào trang admin
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+        } else {
+            // Khách hàng thông thường mới về trang chủ mua sắm
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
+        }
     }
 }
-
-
