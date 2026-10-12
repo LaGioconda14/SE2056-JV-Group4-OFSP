@@ -49,6 +49,16 @@
             background: linear-gradient(135deg, #1b5e20, #2e7d32);
             color: #ffffff;
         }
+        .btn-shop-owner {
+            background: linear-gradient(135deg, #ff8f00, #ffb300);
+            color: #ffffff;
+            font-weight: 600;
+            border: none;
+        }
+        .btn-shop-owner:hover {
+            background: linear-gradient(135deg, #e65100, #ff8f00);
+            color: #ffffff;
+        }
     </style>
 </head>
 <body>
@@ -59,12 +69,27 @@
         <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="${pageContext.request.contextPath}/home.jsp">
             <span>🍎 Online Fruit Shop</span>
         </a>
-        <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
             <c:choose>
                 <c:when test="${not empty sessionScope.user}">
-                    <span class="text-white small d-none d-md-inline">
+                    <span class="text-white small d-none d-md-inline me-2">
                         Xin chào, <strong>${sessionScope.user.fullName}</strong> (${sessionScope.user.role})
                     </span>
+
+                    <!-- Nút Kênh Người Bán / Đăng ký Shop Owner -->
+                    <c:choose>
+                        <c:when test="${sessionScope.user.role eq 'SHOP_OWNER' || sessionScope.user.role eq 'SELLER'}">
+                            <a href="${pageContext.request.contextPath}/seller/dashboard" class="btn btn-sm btn-shop-owner d-flex align-items-center gap-1">
+                                <i class="bi bi-shop"></i> Kênh Bán Hàng
+                            </a>
+                        </c:when>
+                        <c:otherwise>
+                            <a href="${pageContext.request.contextPath}/register-shop" class="btn btn-sm btn-shop-owner d-flex align-items-center gap-1">
+                                <i class="bi bi-shop-window"></i> Đăng ký Shop Owner
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
+
                     <a href="${pageContext.request.contextPath}/profile" class="btn btn-sm btn-light fw-semibold d-flex align-items-center gap-1">
                         <i class="bi bi-person-circle"></i> Hồ sơ cá nhân
                     </a>
@@ -76,6 +101,9 @@
                     </a>
                 </c:when>
                 <c:otherwise>
+                    <a href="${pageContext.request.contextPath}/register-shop" class="btn btn-shop-owner btn-sm fw-bold">
+                        <i class="bi bi-shop-window"></i> Đăng ký làm Shop Owner
+                    </a>
                     <a href="${pageContext.request.contextPath}/login" class="btn btn-light btn-sm fw-bold">
                         Đăng Nhập
                     </a>
@@ -96,11 +124,20 @@
                 <p class="text-secondary mb-3">
                     Nền tảng mua sắm hoa quả tươi sạch trực tuyến. Hệ thống xác thực và bảo mật tài khoản người dùng đã sẵn sàng hoạt động.
                 </p>
-                <c:if test="${empty sessionScope.user}">
-                    <a href="${pageContext.request.contextPath}/login" class="btn btn-fruit px-4 py-2 rounded-pill">
-                        Đăng nhập ngay
-                    </a>
-                </c:if>
+                <div class="d-flex gap-2 flex-wrap">
+                    <c:if test="${empty sessionScope.user}">
+                        <a href="${pageContext.request.contextPath}/login" class="btn btn-fruit px-4 py-2 rounded-pill">
+                            Đăng nhập ngay
+                        </a>
+                    </c:if>
+
+                    <!-- Nút kêu gọi đăng ký gian hàng trên Hero Banner -->
+                    <c:if test="${sessionScope.user.role ne 'SHOP_OWNER'}">
+                        <a href="${pageContext.request.contextPath}/register-shop" class="btn btn-shop-owner px-4 py-2 rounded-pill d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-shop"></i> Trở thành Shop Owner
+                        </a>
+                    </c:if>
+                </div>
             </div>
             <div class="col-md-4 text-center mt-3 mt-md-0">
                 <div style="font-size: 5rem;">🍍🍊🍉</div>
@@ -138,7 +175,12 @@
                             <span class="badge bg-success">Đang hoạt động (Active)</span>
                         </div>
                     </div>
-                    <div class="mt-4 pt-3 border-top d-flex gap-2">
+                    <div class="mt-4 pt-3 border-top d-flex gap-2 flex-wrap">
+                        <c:if test="${sessionScope.user.role ne 'SHOP_OWNER'}">
+                            <a href="${pageContext.request.contextPath}/register-shop" class="btn btn-shop-owner btn-sm px-3">
+                                <i class="bi bi-shop-window"></i> Đăng Ký Shop Owner
+                            </a>
+                        </c:if>
                         <a href="${pageContext.request.contextPath}/change-password" class="btn btn-fruit btn-sm px-3">
                             <i class="bi bi-shield-lock"></i> Đổi Mật Khẩu
                         </a>
@@ -156,4 +198,3 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
