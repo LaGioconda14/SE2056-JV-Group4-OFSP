@@ -76,17 +76,26 @@ public class CartVoucherServiceTest {
         money("40000.00", vouchers.get(0).discountAmount(), "Fixed bounded by product base");
         money("5000.00", vouchers.get(1).discountAmount(), "Percentage total");
         money("2000.00", vouchers.get(2).discountAmount(), "Percentage cap");
-        check("6".equals(vouchers.get(3).couponId()), "Inclusive minimum boundary");
+        check("6".equals(vouchers.get(5).couponId()), "Inclusive minimum boundary");
+        disabled(CartVoucherService.evaluateVouchers(Map.of(1L, bd("39999.99")),
+                List.of(platformMinimum)).get(0),
+                "Tổng giá trị sản phẩm đã chọn chưa đạt mức tối thiểu áp dụng mã.");
         check(vouchers.get(0).shopId() == null, "Platform null shop ID");
         check("1".equals(vouchers.get(2).shopId()), "Shop ID is string");
         check("31/12/2026 23:59".equals(vouchers.get(0).endDate()), "Formatted expiry");
         money("0.13", CartVoucherService.eligibleVouchers(Map.of(1L, bd("1.00")),
                 List.of(percent)).get(0).discountAmount(), "Half up percentage cents");
-        check(CartVoucherService.eligibleVouchers(Map.of(1L, bd("0.01")), List.of(percent)).isEmpty(),
-                "Rounded zero savings omitted");
-        check(CartVoucherService.eligibleVouchers(Map.of(), List.of(fixed)).isEmpty(), "No items no vouchers");
-        check(CartVoucherService.eligibleVouchers(Map.of(1L, bd("0")), List.of(fixed)).isEmpty(),
-                "Zero product base no vouchers");
+        disabled(CartVoucherService.evaluateVouchers(Map.of(1L, bd("0.01")), List.of(percent)).get(0),
+                "Mã không tạo ra giảm giá cho sản phẩm đã chọn.");
+        List<CartVoucher> emptySelection = CartVoucherService.evaluateVouchers(Map.of(),
+                List.of(fixed, missingShop, shopMinimum, platformMinimum));
+        check(emptySelection.size() == 4, "Empty selection lists all campaigns");
+        for (CartVoucher voucher : emptySelection) {
+            disabled(voucher, "Vui lòng chọn sản phẩm để sử dụng mã giảm giá.");
+        }
+        check(CartVoucherService.evaluateVouchers(Map.of(), List.of()).isEmpty(), "No campaigns empty list");
+        disabled(CartVoucherService.evaluateVouchers(Map.of(1L, bd("0")), List.of(fixed)).get(0),
+                "Mã không tạo ra giảm giá cho sản phẩm đã chọn.");
         money("10000.00", CartVoucherService.eligibleVouchers(Map.of(1L, bd("10000")), List.of(
                 coupon(7, 1L, "PRODUCT", "FIXED_AMOUNT", "50000", "0", null))).get(0).discountAmount(),
                 "Shop fixed bounded by shop product base");
@@ -109,29 +118,44 @@ public class CartVoucherServiceTest {
         vouchers = CartVoucherService.eligibleVouchers(Map.of(1L, bd("10000"), 2L, bd("30000")), coupons);
         money("6250.00", vouchers.get(1).discountAmount(), "Unequal shop allocation");
         money("18750.00", vouchers.get(2).discountAmount(), "Unequal remaining allocation");
+        disabled(vouchers.get(3), "Vui lòng chọn sản phẩm của cửa hàng áp dụng mã.");
         for (String total : new String[]{"0", "200000", "200000.01"}) {
-            check(CartVoucherService.eligibleVouchers(Map.of(1L, bd(total)), coupons).isEmpty(),
-                    "Free shipping excludes shipping vouchers at " + total);
+            List<CartVoucher> freeShipping = CartVoucherService.evaluateVouchers(Map.of(1L, bd(total)), coupons);
+            check(freeShipping.size() == coupons.size(), "Free shipping keeps all campaigns at " + total);
+            disabled(freeShipping.get(0), "Không có phí vận chuyển để áp dụng mã.");
+            disabled(freeShipping.get(1), "Không có phí vận chuyển để áp dụng mã.");
+            disabled(freeShipping.get(2), "Vui lòng chọn sản phẩm của cửa hàng áp dụng mã.");
+            disabled(freeShipping.get(3), "Vui lòng chọn sản phẩm của cửa hàng áp dụng mã.");
         }
         money("25000.00", CartVoucherService.eligibleVouchers(Map.of(1L, bd("199999.99")),
                 List.of(platform)).get(0).discountAmount(), "Immediately below free shipping threshold");
-        check(CartVoucherService.eligibleVouchers(Map.of(1L, bd("10000"), 2L, bd("30000")),
-                List.of(coupon(1, 1L, "SHIPPING", "FIXED_AMOUNT", "1000", "20000", null))).isEmpty(),
-                "Shipping shop minimum uses goods subtotal, not whole cart");
+        disabled(CartVoucherService.evaluateVouchers(Map.of(1L, bd("10000"), 2L, bd("30000")),
+                List.of(coupon(1, 1L, "SHIPPING", "FIXED_AMOUNT", "1000", "20000", null))).get(0),
+                "Giá trị sản phẩm đã chọn của cửa hàng chưa đạt mức tối thiểu áp dụng mã.");
     }
 
     private static void serviceBoundary() throws SQLException {
         StubDAO dao = new StubDAO();
         CartVoucherService service = new CartVoucherService(dao);
-        check(service.findEligible(7, null, null).isEmpty() && dao.calls == 0,
-                "Empty selection never opens database");
-        invalid(() -> service.findEligible(7, new String[]{"1", "1"}, new String[]{"1", "2"}));
-        check(dao.calls == 0, "Malformed request rejected before DAO");
-        invalid(() -> service.findEligible(7, new String[]{"2"}, new String[]{"1"}));
-        check(dao.calls == 1, "Foreign item rejected before coupon lookup");
-        money("5000.00", service.findEligible(7, new String[]{"1"}, new String[]{"2"})
-                .get(0).discountAmount(), "Service uses selected quantity and DB price");
-        check(dao.calls == 3, "Valid request reads cart and coupons only");
+        invalid(() -> service.findVouchers(0, null, null));
+        invalid(() -> service.findEligible(-1, null, null));
+        check(dao.calls == 0, "Invalid customer rejected before DAO even for empty selection");
+        List<CartVoucher> emptySelection = service.findVouchers(7, null, null);
+        check(emptySelection.size() == 1 && dao.calls == 1, "Empty selection reads campaigns only");
+        disabled(emptySelection.get(0), "Vui lòng chọn sản phẩm để sử dụng mã giảm giá.");
+        invalid(() -> service.findVouchers(7, new String[]{"1", "1"}, new String[]{"1", "2"}));
+        check(dao.calls == 1, "Malformed request rejected before DAO");
+        invalid(() -> service.findVouchers(7, new String[]{"2"}, new String[]{"1"}));
+        check(dao.calls == 2, "Foreign item rejected before coupon lookup");
+        invalid(() -> service.findVouchers(7, new String[]{"1"}, new String[]{"4"}));
+        check(dao.calls == 3, "Excess stock rejected before coupon lookup");
+        List<CartVoucher> selected = service.findVouchers(7, new String[]{"1"}, new String[]{"2"});
+        money("5000.00", selected.get(0).discountAmount(), "Service uses selected quantity and DB price");
+        enabled(selected.get(0));
+        check(dao.calls == 5, "Valid request reads cart and coupons only");
+        check(selected.equals(service.findEligible(7, new String[]{"1"}, new String[]{"2"})),
+                "Legacy entry point delegates to listing contract");
+        check(service.findEligible(7, null, null).equals(emptySelection), "Legacy empty selection also lists vouchers");
     }
 
     private static class StubDAO extends CartVoucherDAO {
@@ -164,6 +188,18 @@ public class CartVoucherServiceTest {
 
     private static BigDecimal bd(String value) {
         return new BigDecimal(value);
+    }
+
+    private static void enabled(CartVoucher voucher) {
+        check(voucher.eligible(), "Voucher enabled: " + voucher.couponId());
+        check("".equals(voucher.reason()), "Eligible voucher has empty reason");
+        check(voucher.discountAmount().signum() > 0, "Eligible voucher has positive savings");
+    }
+
+    private static void disabled(CartVoucher voucher, String reason) {
+        check(!voucher.eligible(), "Voucher disabled: " + voucher.couponId());
+        check(reason.equals(voucher.reason()), "Ineligibility reason: " + voucher.reason());
+        money("0.00", voucher.discountAmount(), "Disabled voucher never contributes savings");
     }
 
     private static void money(String expected, BigDecimal actual, String message) {

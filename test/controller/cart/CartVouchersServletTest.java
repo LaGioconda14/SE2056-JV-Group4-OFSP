@@ -38,16 +38,32 @@ public class CartVouchersServletTest {
         response = call(servlet, user, Map.of());
         check(response.status == 401, "Inactive user rejected");
         user.setStatus(1);
+        service.result = List.of(new CartVoucher("1", "SAN10K", "PLATFORM", null,
+                null, "PRODUCT", "FIXED_AMOUNT", new BigDecimal("10000.00"),
+                new BigDecimal("20000.00"), null, "31/12/2026 23:59", new BigDecimal("0.00"),
+                false, "Vui lòng chọn sản phẩm để sử dụng mã giảm giá."));
         response = call(servlet, user, Map.of());
         check(response.status == 200, "Authenticated empty selection succeeds");
-        check(response.json().getAsJsonArray("vouchers").isEmpty(), "Empty selection response");
+        JsonObject disabled = response.json().getAsJsonArray("vouchers").get(0).getAsJsonObject();
+        check(!disabled.get("eligible").getAsBoolean(), "Empty selection lists disabled voucher");
+        check("Vui lòng chọn sản phẩm để sử dụng mã giảm giá.".equals(disabled.get("reason").getAsString()),
+                "Empty selection reason preserved");
+        check(disabled.get("discountAmount").getAsBigDecimal().signum() == 0, "Disabled discount zero");
+        check(service.itemIds == null && service.quantities == null, "Empty selection forwarded");
         service.result = List.of(new CartVoucher("9007199254740993", "SAN10K", "PLATFORM", null,
                 null, "PRODUCT", "FIXED_AMOUNT", new BigDecimal("10000.00"),
-                new BigDecimal("20000.00"), null, "31/12/2026 23:59", new BigDecimal("10000.00")));
+                new BigDecimal("20000.00"), null, "31/12/2026 23:59", new BigDecimal("10000.00"),
+                true, ""), service.result.get(0));
         response = call(servlet, user, Map.of("itemId", new String[]{"1", "2"}, "quantity", new String[]{"3", "4"}));
         JsonArray vouchers = response.json().getAsJsonArray("vouchers");
         JsonObject voucher = vouchers.get(0).getAsJsonObject();
-        check(voucher.size() == 12, "Exact voucher field count");
+        check(voucher.size() == 14, "Exact voucher field count");
+        check(vouchers.size() == 2 && !vouchers.get(1).getAsJsonObject().get("eligible").getAsBoolean(),
+                "Eligible and disabled campaigns returned together");
+        check(voucher.get("eligible").getAsJsonPrimitive().isBoolean()
+                && voucher.get("eligible").getAsBoolean(), "Eligibility boolean serialized");
+        check(voucher.get("reason").getAsJsonPrimitive().isString()
+                && "".equals(voucher.get("reason").getAsString()), "Eligible reason is empty string");
         check(voucher.get("couponId").getAsJsonPrimitive().isString(), "Coupon ID serialized as string");
         check("9007199254740993".equals(voucher.get("couponId").getAsString()), "Long ID preserved");
         check(voucher.get("shopId").isJsonNull(), "Nullable shop ID included");
@@ -152,7 +168,7 @@ public class CartVouchersServletTest {
         private Exception failure;
 
         @Override
-        public List<CartVoucher> findEligible(long userId, String[] ids, String[] counts) throws SQLException {
+        public List<CartVoucher> findVouchers(long userId, String[] ids, String[] counts) throws SQLException {
             called = true;
             customerId = userId;
             itemIds = ids;

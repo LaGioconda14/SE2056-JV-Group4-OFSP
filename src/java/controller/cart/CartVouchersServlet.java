@@ -44,7 +44,8 @@ public class CartVouchersServlet extends HttpServlet {
         response.setHeader("Cache-Control", "no-store");
         HttpSession session = request.getSession(false);
         Object sessionUser = session == null ? null : session.getAttribute("user");
-        if (!(sessionUser instanceof User user) || user.getId() <= 0 || !user.isActive()) {
+        User user = sessionUser instanceof User ? (User) sessionUser : null;
+        if (user == null || user.getId() <= 0 || !user.isActive()) {
             writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
             return;
         }
