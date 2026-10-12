@@ -314,7 +314,7 @@
                     <!-- Section 3: Toolbar & Advanced Filtering (Form GET để lọc dữ liệu) -->
                     <form method="GET" action="${pageContext.request.contextPath}/shop/products" class="bg-surface-container-lowest rounded-2xl p-4 shadow-sm flex flex-col gap-4">
                         <div class="flex items-center gap-2 overflow-x-auto pb-1">
-                            <a href="${pageContext.request.contextPath}/shop/products" class="px-4 py-2 rounded-xl bg-primary-container text-on-primary font-semibold text-sm shrink-0 shadow-sm">Tất cả (56)</a>
+                            <a href="${pageContext.request.contextPath}/shop/products" class="px-4 py-2 rounded-xl bg-primary-container text-on-primary font-semibold text-sm shrink-0 shadow-sm"></a>
                             <a href="${pageContext.request.contextPath}/shop/products?status=active" class="px-4 py-2 rounded-xl bg-surface-container-low text-on-surface-variant hover:bg-surface-container text-sm font-semibold shrink-0 transition-all">Đang bán (48)</a>
                             <a href="${pageContext.request.contextPath}/shop/products?stockLevel=low" class="px-4 py-2 rounded-xl bg-surface-container-low text-tertiary hover:bg-tertiary-fixed text-sm font-semibold shrink-0 transition-all flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-tertiary"></span> Sắp hết hàng (3)
