@@ -1,13 +1,13 @@
 package controller.auth;
 
 import java.io.IOException;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import model.User;
 import service.IUserService;
 import service.impl.UserServiceImpl;
@@ -26,8 +26,14 @@ public class LoginServlet extends HttpServlet {
         
         HttpSession session = request.getSession(false);
         // If already logged in, redirect to home page
+        // If already logged in, redirect based on role
         if (session != null && session.getAttribute("user") != null) {
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            User user = (User) session.getAttribute("user");
+            if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/admin");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home.jsp");
+            }
             return;
         }
 
@@ -107,8 +113,12 @@ public class LoginServlet extends HttpServlet {
         cookieRem.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
         response.addCookie(cookieRem);
 
-        // Redirect to home / landing page
-        response.sendRedirect(request.getContextPath() + "/home.jsp");
+        // Redirect based on user role: ADMIN -> /admin, others -> /home.jsp
+        if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/admin");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
+        }
     }
 }
 
