@@ -9,6 +9,7 @@
 <c:url var="removeUrl" value="/cart/remove"/>
 <c:url var="changeVariantUrl" value="/cart/change-variant"/>
 <c:url var="checkoutUrl" value="/views/order/checkout.jsp"/>
+<c:url var="vouchersUrl" value="/cart/vouchers"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -191,13 +192,8 @@
             <a class="flex items-center gap-2.5 py-1.5 px-3.5 rounded-full border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors" data-path="cart" href="<c:out value='${cartUrl}'/>">
                 <div class="relative flex items-center justify-center">
                     <span class="material-symbols-outlined text-primary text-[24px]">shopping_cart</span>
-                    <span class="absolute -top-1.5 -right-2 w-4 h-4 bg-error text-on-error rounded-full font-label-caps text-[10px] flex items-center justify-center" id="nav-cart-badge">
-                        <c:out value="${cart ne null ? cart.totalQuantity : 0}"/>
-                    </span>
-                </div>
-                <div class="flex flex-col text-left">
-                    <span class="text-price-md font-price-md text-primary font-bold leading-tight" id="nav-cart-total">
-                        <fmt:formatNumber value="${cart ne null ? cart.totalAmount : 0}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                    <span class="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 bg-error text-on-error rounded-full font-label-caps text-[10px] flex items-center justify-center" id="nav-cart-badge">
+                        <c:out value="${cart ne null ? (cart.totalQuantity gt 99 ? '99+' : cart.totalQuantity) : 0}"/>
                     </span>
                 </div>
             </a>
@@ -330,33 +326,6 @@
             </div>
         </c:when>
         <c:otherwise>
-            <!-- Banner Tiến Độ Ưu Đãi Giao Hàng -->
-            <div class="mb-space-lg p-space-md rounded-2xl bg-surface-container-low shadow-sm flex flex-col sm:flex-row items-center justify-between gap-space-md">
-                <div class="flex items-center gap-space-md w-full sm:w-auto">
-                    <div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-on-primary-fixed shrink-0 shadow-sm" id="progress-icon-box">
-                        <span class="material-symbols-outlined text-[26px]">rocket_launch</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2">
-                            <span class="font-headline-sm text-headline-sm text-on-surface" id="delivery-progress-title">Gần đạt ưu đãi rồi!</span>
-                            <span class="text-body-sm font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md" id="delivery-progress-status">200.000 ₫</span>
-                        </div>
-                        <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5" id="delivery-progress-desc">
-                            Thêm sản phẩm để đạt <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="w-full sm:w-64 flex flex-col gap-1.5 shrink-0">
-                    <div class="w-full bg-surface-container-highest rounded-full h-3 overflow-hidden p-0.5">
-                        <div class="bg-primary h-full rounded-full transition-all duration-700 ease-out" id="delivery-progress-bar" style="width: 70%;"></div>
-                    </div>
-                    <div class="flex justify-between text-[11px] font-label-caps text-on-surface-variant">
-                        <span id="progress-bar-current">Hiện tại</span>
-                        <span class="text-primary font-bold">Mục tiêu: 200.000 ₫</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Bảng giỏ hàng & Cột chi tiết -->
             <div class="grid grid-cols-1 gap-gutter items-start">
                 <div class="flex flex-col gap-space-lg w-full">
@@ -583,65 +552,24 @@
 </main>
 
 <!-- ==================== MODAL CHỌN MÃ KHUYẾN MÃI ==================== -->
-<div id="voucher-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 hidden">
+<dialog id="voucher-modal" aria-labelledby="voucher-modal-title" data-vouchers-url="<c:out value='${vouchersUrl}'/>" class="p-0 rounded-2xl w-[min(520px,calc(100%-24px))] backdrop:bg-black/50 backdrop:backdrop-blur-sm">
     <div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl border border-outline-variant/30 overflow-hidden transform transition-all">
         <!-- Modal Header -->
         <div class="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/50">
             <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-[24px]">confirmation_number</span>
-                <h3 class="font-headline-sm text-headline-sm text-on-surface">Chọn Voucher Khuyến Mãi</h3>
+                <h3 id="voucher-modal-title" class="font-headline-sm text-headline-sm text-on-surface">Chọn voucher</h3>
             </div>
-            <button type="button" onclick="closeVoucherModal()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors">
+            <button type="button" aria-label="Đóng danh sách voucher" onclick="closeVoucherModal()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors">
                 <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
         </div>
 
         <!-- Modal Body (Danh sách voucher) -->
         <div class="p-6 max-h-[60vh] overflow-y-auto flex flex-col gap-3">
-            <!-- Voucher 1: FRESH25 -->
-            <div class="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest hover:border-primary/50 transition-colors flex items-center justify-between gap-4">
-                <div class="flex flex-col gap-1">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded-md tracking-wider">FRESH25</span>
-                        <span class="font-semibold text-sm text-on-surface">Giảm 25.000 ₫</span>
-                    </div>
-                    <p class="text-xs text-on-surface-variant">Áp dụng cho đơn hàng từ 50.000 ₫</p>
-                    <span class="text-[11px] text-outline">HSD: 31/12/2026</span>
-                </div>
-                <button type="button" onclick="chooseVoucher('FRESH25')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-on-primary-fixed-variant transition-colors shadow-sm shrink-0">
-                    Chọn
-                </button>
-            </div>
-
-            <!-- Voucher 2: OFSPNEW -->
-            <div class="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest hover:border-primary/50 transition-colors flex items-center justify-between gap-4">
-                <div class="flex flex-col gap-1">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-sm bg-tertiary/10 text-tertiary px-2.5 py-0.5 rounded-md tracking-wider">OFSPNEW</span>
-                        <span class="font-semibold text-sm text-on-surface">Giảm 10% (Tối đa 50k)</span>
-                    </div>
-                    <p class="text-xs text-on-surface-variant">Dành cho đơn hàng từ 200.000 ₫</p>
-                    <span class="text-[11px] text-outline">HSD: 31/12/2026</span>
-                </div>
-                <button type="button" onclick="chooseVoucher('OFSPNEW')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-on-primary-fixed-variant transition-colors shadow-sm shrink-0">
-                    Chọn
-                </button>
-            </div>
-
-            <!-- Voucher 3: FREESHIP -->
-            <div class="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest hover:border-primary/50 transition-colors flex items-center justify-between gap-4">
-                <div class="flex flex-col gap-1">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded-md tracking-wider">FREESHIP</span>
-                        <span class="font-semibold text-sm text-on-surface">Miễn phí giao hàng</span>
-                    </div>
-                    <p class="text-xs text-on-surface-variant">Giảm 25.000 ₫ phí ship cho đơn từ 150.000 ₫</p>
-                    <span class="text-[11px] text-outline">HSD: 31/12/2026</span>
-                </div>
-                <button type="button" onclick="chooseVoucher('FREESHIP')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-on-primary-fixed-variant transition-colors shadow-sm shrink-0">
-                    Chọn
-                </button>
-            </div>
+            <p id="voucher-status" class="text-sm text-on-surface-variant" role="status" aria-live="polite"></p>
+            <div id="voucher-list" class="flex flex-col gap-3"></div>
+            <p class="text-xs text-outline">Điều kiện được xét trên các sản phẩm đang chọn. Phí ship và số tiền giảm là tạm tính.</p>
         </div>
 
         <!-- Modal Footer -->
@@ -651,46 +579,52 @@
             </button>
         </div>
     </div>
-</div>
+</dialog>
 
 <!-- ==================== FOOTER ==================== -->
-<footer class="w-full bg-surface-container-low mt-space-xl pt-space-xl pb-space-lg text-on-surface-variant border-t border-outline-variant/20">
+<footer class="w-full mt-space-xl border-t border-primary/10 bg-[#f2f7f2] text-on-surface-variant">
     <div class="max-w-[1360px] mx-auto px-margin-sm lg:px-margin">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-space-lg pb-space-lg border-b border-outline-variant/20">
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center gap-space-sm">
-                    <span class="font-headline-sm text-headline-sm text-primary font-bold">🍎 FreshFruit</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 py-10">
+            <div class="max-w-md">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-primary text-on-primary shrink-0">
+                        <span class="material-symbols-outlined text-[25px]" aria-hidden="true">eco</span>
+                    </span>
+                    <div>
+                        <p class="text-xl font-bold tracking-tight text-primary">FreshFruit</p>
+                        <p class="text-[11px] font-semibold tracking-widest uppercase text-primary/70">Tươi ngon mỗi ngày</p>
+                    </div>
                 </div>
-                <p class="font-body-sm text-body-sm text-on-surface-variant max-w-md">
-                    Trái cây tươi hái tận vườn, giao hàng tận nơi. Nông trại sạch mang lại sức khỏe và an tâm cho mọi gia đình.
-                </p>
+                <p class="text-sm leading-relaxed">Một chút tươi xanh cho bữa ăn, một chút ngọt lành cho ngày mới. Cảm ơn bạn đã chọn FreshFruit cho giỏ hàng của mình.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-space-lg font-body-sm">
-                <a class="hover:text-primary transition-colors" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
-                <a class="hover:text-primary transition-colors" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
-                <a class="hover:text-primary transition-colors" href="<c:out value='${productsUrl}'/>">Khuyến Mãi</a>
-                <a class="hover:text-primary transition-colors" href="<c:out value='${homeUrl}'/>#about">Về Chúng Tôi</a>
-                <a class="hover:text-primary transition-colors" href="<c:out value='${homeUrl}'/>#contact">Trợ Giúp &amp; Liên Hệ</a>
-            </div>
-            <div class="flex items-center gap-space-xs">
-                <span class="material-symbols-outlined text-[16px] text-primary">call</span>
-                <span class="font-body-sm font-semibold text-on-surface">1900 6868</span>
+            <div class="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start gap-5 lg:items-center md:justify-self-end">
+                <div>
+                    <p class="text-xs font-bold tracking-widest uppercase text-primary mb-2">Đồng hành cùng bạn</p>
+                    <h2 class="text-lg font-semibold text-on-surface">Cần hỗ trợ đơn hàng?</h2>
+                    <p class="text-sm leading-relaxed mt-1 max-w-xs">Liên hệ để được hỗ trợ về sản phẩm, giao nhận và đơn hàng của bạn.</p>
+                </div>
+                <a href="tel:19006868" aria-label="Gọi hỗ trợ đặt hàng: 1900 6868" class="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-primary/15 text-primary shadow-sm hover:bg-primary hover:text-on-primary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary shrink-0">
+                    <span class="material-symbols-outlined text-[22px]" aria-hidden="true">support_agent</span>
+                    <span class="flex flex-col">
+                        <span class="text-[11px] font-medium">Hotline hỗ trợ</span>
+                        <span class="text-lg font-bold tracking-wide">1900 6868</span>
+                    </span>
+                </a>
             </div>
         </div>
-        <div class="pt-space-md flex flex-col md:flex-row items-center justify-between gap-space-sm font-body-sm text-body-sm text-on-surface-variant">
-            <p>© 2026 FreshFruit Marketplace. Đã đăng ký bản quyền.</p>
-            <div class="flex items-center gap-space-lg">
-                <a class="hover:text-primary transition-colors" href="#">Chính sách bảo mật</a>
-                <a class="hover:text-primary transition-colors" href="#">Điều khoản sử dụng</a>
-            </div>
+        <div class="border-t border-primary/10 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <p>© 2026 FreshFruit Marketplace. Bảo lưu mọi quyền.</p>
+            <span class="inline-flex items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">favorite</span>
+                Cảm ơn bạn đã mua sắm cùng FreshFruit
+            </span>
         </div>
     </div>
 </footer>
 
 <!-- ==================== JAVASCRIPT ==================== -->
+<script src="<c:url value='/assets/js/cart-vouchers.js'/>"></script>
 <script>
-    let couponApplied = true;
-    const DISCOUNT_VAL = 25000;
     const FREE_SHIPPING_GOAL = 200000;
 
     function formatVND(val) {
@@ -746,31 +680,6 @@
         recalcTotals();
     }
 
-    function removeCoupon() {
-        couponApplied = false;
-        const pill = document.getElementById('applied-pill');
-        const row = document.getElementById('promo-row');
-        const input = document.getElementById('coupon-input');
-        if (pill) pill.style.display = 'none';
-        if (row) row.style.display = 'none';
-        if (input) input.value = '';
-        recalcTotals();
-    }
-
-    function applyCoupon() {
-        const input = document.getElementById('coupon-input');
-        const pill = document.getElementById('applied-pill');
-        const row = document.getElementById('promo-row');
-        if (input && input.value.trim().toUpperCase() === 'FRESH25') {
-            couponApplied = true;
-            if (pill) pill.style.display = 'inline-flex';
-            if (row) row.style.display = 'flex';
-            recalcTotals();
-        } else {
-            alert('Mã không hợp lệ! Hãy thử mã "FRESH25"');
-        }
-    }
-
     function recalcTotals() {
         const allRows = document.querySelectorAll('[id^="cart-item-"]');
         const purchasableRows = Array.from(allRows).filter(row => row.dataset.cartStatus === 'AVAILABLE');
@@ -784,7 +693,10 @@
             const qtyInput = row.querySelector('input[name="quantity"]');
             const subEl = row.querySelector('[id^="sub-"]');
             const unitPrice = parseFloat(subEl ? subEl.getAttribute('data-price') : 0) || 0;
-            const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+            const max = parseInt(qtyInput ? qtyInput.max : 1) || 1;
+            const qty = Math.max(1, Math.min(max, parseInt(qtyInput ? qtyInput.value : 1) || 1));
+            if (qtyInput) qtyInput.value = qty;
+            if (subEl) subEl.innerText = formatVND(unitPrice * qty);
 
             if (checkbox && checkbox.checked) {
                 checkedCount++;
@@ -818,13 +730,12 @@
         }
 
         // Tính giảm giá & thành tiền
-        const promoRow = document.getElementById('promo-row');
-        const discount = (couponApplied && selectedSubtotal >= 50000) ? DISCOUNT_VAL : 0;
-        if (promoRow) {
-            promoRow.style.display = (couponApplied && discount > 0) ? 'flex' : 'none';
-        }
-
-        const delivery = (selectedSubtotal >= FREE_SHIPPING_GOAL || selectedSubtotal === 0) ? 0 : 25000;
+        const baseDelivery = (selectedSubtotal >= FREE_SHIPPING_GOAL || selectedSubtotal === 0) ? 0 : 25000;
+        const savings = typeof window.cartVoucherSavings === 'function'
+            ? window.cartVoucherSavings(selectedSubtotal, baseDelivery)
+            : {product: 0, shipping: 0};
+        const discount = savings.product;
+        const delivery = baseDelivery - savings.shipping;
         const grandTotal = Math.max(0, selectedSubtotal - discount + delivery);
 
         const subEl = document.getElementById('summary-subtotal');
@@ -838,32 +749,9 @@
         const totEl = document.getElementById('summary-total');
         if (totEl) totEl.innerText = formatVND(grandTotal);
 
-        const navTotal = document.getElementById('nav-cart-total');
-        if (navTotal) navTotal.innerText = formatVND(selectedSubtotal);
-
         const navBadge = document.getElementById('nav-cart-badge');
-        if (navBadge) navBadge.innerText = totalItemsQty;
+        if (navBadge) navBadge.innerText = totalItemsQty > 99 ? '99+' : totalItemsQty;
 
-        // Progress bar thanh trạng thái
-        const pBar = document.getElementById('delivery-progress-bar');
-        const pStatus = document.getElementById('delivery-progress-status');
-        const pCurrent = document.getElementById('progress-bar-current');
-        const pTitle = document.getElementById('delivery-progress-title');
-        const pDesc = document.getElementById('delivery-progress-desc');
-
-        const pct = Math.min(100, (selectedSubtotal / FREE_SHIPPING_GOAL) * 100);
-        if (pBar) pBar.style.width = pct + '%';
-        if (pCurrent) pCurrent.innerText = 'Hiện tại: ' + formatVND(selectedSubtotal);
-        if (pStatus) pStatus.innerText = formatVND(selectedSubtotal) + ' / ' + formatVND(FREE_SHIPPING_GOAL);
-
-        if (selectedSubtotal >= FREE_SHIPPING_GOAL) {
-            if (pTitle) pTitle.innerText = '🎉 Chúc mừng bạn!';
-            if (pDesc) pDesc.innerHTML = 'Đơn hàng của bạn đã đạt điều kiện <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>';
-        } else {
-            const rem = FREE_SHIPPING_GOAL - selectedSubtotal;
-            if (pTitle) pTitle.innerText = 'Gần đạt ưu đãi rồi!';
-            if (pDesc) pDesc.innerHTML = 'Mua thêm <span class="font-bold text-tertiary">' + formatVND(rem) + '</span> để được <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>';
-        }
     }
 
     function openVariantDialog(cartItemId) {
