@@ -13,10 +13,13 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import java.util.List;
 import model.CustomerAddress;
+import model.Order;
 import model.User;
 import service.ICustomerAddressService;
+import service.IOrderService;
 import service.IUserService;
 import service.impl.CustomerAddressServiceImpl;
+import service.impl.OrderServiceImpl;
 import service.impl.UserServiceImpl;
 
 @WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
@@ -29,6 +32,7 @@ public class ProfileServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();
     private final ICustomerAddressService addressService = new CustomerAddressServiceImpl();
+    private final IOrderService orderService = new OrderServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -55,6 +59,9 @@ public class ProfileServlet extends HttpServlet {
         long targetUserId = (currentUser != null) ? currentUser.getId() : sessionUser.getId();
         List<CustomerAddress> addresses = addressService.getAddressesByUserId(targetUserId);
         request.setAttribute("addresses", addresses);
+
+        List<Order> orders = orderService.getOrdersByCustomerId(targetUserId);
+        request.setAttribute("orders", orders);
 
         if (session != null) {
             String successMsg = (String) session.getAttribute("successMessage");

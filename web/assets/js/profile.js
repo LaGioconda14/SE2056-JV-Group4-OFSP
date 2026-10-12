@@ -267,5 +267,168 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    updateOrderCounts();
 });
+
+function updateOrderCounts() {
+    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card, #ordersContainer .order-card');
+    if (!cards || cards.length === 0) return;
+
+    let pendingCount = 0;
+    let processingCount = 0;
+    let shippingCount = 0;
+    let deliveredCount = 0;
+    let returnedCount = 0;
+    let cancelledCount = 0;
+
+    cards.forEach(card => {
+        const s = (card.getAttribute('data-order-status') || '').toUpperCase();
+        if (s === 'PENDING') pendingCount++;
+        if (s === 'PROCESSING' || s === 'CONFIRMED') processingCount++;
+        if (s === 'SHIPPING') shippingCount++;
+        if (s === 'COMPLETED' || s === 'DELIVERED') deliveredCount++;
+        if (s === 'RETURNED' || s === 'REFUNDED' || s === 'DISPUTED') returnedCount++;
+        if (s === 'CANCELLED') cancelledCount++;
+    });
+
+    const setBadge = (id, count) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = count;
+    };
+
+    setBadge('count-all', cards.length);
+    setBadge('count-pending', pendingCount);
+    setBadge('count-processing', processingCount);
+    setBadge('count-shipping', shippingCount);
+    setBadge('count-delivered', deliveredCount);
+    setBadge('count-returned', returnedCount);
+    setBadge('count-cancelled', cancelledCount);
+}
+
+function filterOrders(filter, btn) {
+    document.querySelectorAll('.order-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card, #ordersContainer .order-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const s = (card.getAttribute('data-order-status') || '').toUpperCase();
+        let match = false;
+
+        if (filter === 'all') {
+            match = true;
+        } else if (filter === 'pending') {
+            match = (s === 'PENDING');
+        } else if (filter === 'processing') {
+            match = (s === 'PROCESSING' || s === 'CONFIRMED');
+        } else if (filter === 'shipping') {
+            match = (s === 'SHIPPING');
+        } else if (filter === 'delivered') {
+            match = (s === 'COMPLETED' || s === 'DELIVERED');
+        } else if (filter === 'returned') {
+            match = (s === 'RETURNED' || s === 'REFUNDED' || s === 'DISPUTED');
+        } else if (filter === 'cancelled') {
+            match = (s === 'CANCELLED');
+        }
+
+        if (match) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const emptyBox = document.getElementById('ordersEmptyFilter');
+    if (emptyBox) {
+        if (visibleCount === 0) {
+            emptyBox.classList.remove('d-none');
+        } else {
+            emptyBox.classList.add('d-none');
+        }
+    }
+}
+
+function searchOrders(keyword) {
+    const kw = (keyword || '').trim().toLowerCase();
+    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card, #ordersContainer .order-card');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const orderId = (card.getAttribute('data-order-id') || '').toLowerCase();
+        const shopName = (card.getAttribute('data-shop-name') || '').toLowerCase();
+        const cardText = card.innerText.toLowerCase();
+
+        if (!kw || orderId.includes(kw) || shopName.includes(kw) || cardText.includes(kw)) {
+            card.style.display = 'block';
+            visibleCount++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const emptyBox = document.getElementById('ordersEmptyFilter');
+    if (emptyBox) {
+        if (visibleCount === 0) {
+            emptyBox.classList.remove('d-none');
+        } else {
+            emptyBox.classList.add('d-none');
+        }
+    }
+}
+
+function openChatShop(shopName) {
+    alert('Đang mở khung chat trực tiếp với gian hàng: ' + (shopName || 'FreshFruit Shop') + '. Nhân viên tư vấn đang kết nối...');
+}
+
+function openReturnModal(orderId) {
+    const reason = prompt('Nhập lý do yêu cầu Trả hàng / Hoàn tiền cho đơn hàng #' + orderId + ':', 'Trái cây dập hỏng do vận chuyển');
+    if (reason && reason.trim() !== '') {
+        alert('Yêu cầu Trả hàng/Hoàn tiền cho đơn #' + orderId + ' đã được gửi thành công. Shop sẽ phản hồi trong 24 giờ.');
+    }
+}
+
+function confirmReceivedOrder(orderId) {
+    if (confirm('Bạn xác nhận đã nhận được đầy đủ hoa quả của đơn hàng #' + orderId + ' và không có vấn đề gì?')) {
+        alert('Cảm ơn bạn! Đơn hàng #' + orderId + ' đã được cập nhật sang trạng thái Hoàn thành. Hãy để lại đánh giá nhé!');
+        location.reload();
+    }
+}
+
+function trackDelivery(orderId) {
+    alert('Hành trình vận chuyển đơn hàng #' + orderId + ':\n- Phương thức: Chuỗi lạnh FreshFruit Cold-Chain (2-5°C)\n- Trạng thái: Đang giao bởi Shipper, dự kiến đến trong ngày hôm nay.');
+}
+
+function cancelOrder(orderId) {
+    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng #' + orderId + '?')) {
+        alert('Đã gửi yêu cầu hủy đơn hàng #' + orderId + ' đến người bán.');
+    }
+}
+
+function openReviewModal(orderCode) {
+    const codeEl = document.getElementById('reviewModalOrderCode');
+    if (codeEl) {
+        codeEl.textContent = '#' + orderCode;
+    }
+    const modalEl = document.getElementById('reviewModal');
+    if (modalEl && window.bootstrap && bootstrap.Modal) {
+        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+        m.show();
+    }
+}
+
+function submitReview() {
+    const comment = document.getElementById('reviewComment');
+    const modalEl = document.getElementById('reviewModal');
+    if (modalEl && window.bootstrap && bootstrap.Modal) {
+        const m = bootstrap.Modal.getInstance(modalEl);
+        if (m) m.hide();
+    }
+    if (comment) comment.value = '';
+    alert('Cảm ơn bạn! Đánh giá chất lượng trái cây của bạn đã được gửi thành công.');
+}
+
+
 
