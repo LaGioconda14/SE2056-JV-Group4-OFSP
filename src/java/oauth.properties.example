@@ -1,0 +1,5 @@
+# Google OAuth 2.0 Credentials Template
+# Copy this file to src/java/oauth.properties and replace with your actual credentials from Google Cloud Console
+google.client_id=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+google.client_secret=YOUR_GOOGLE_CLIENT_SECRET
+google.redirect_uri=http://localhost:8080/SE2056-JV-Group4-OFSP/login-google
