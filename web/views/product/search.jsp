@@ -7,51 +7,16 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Tìm kiếm: ${txtSearch} - FreshFruit</title>
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
         <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <!-- Google Fonts Inter -->
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        <script>
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            fresh: {
-                                50: '#f0fdf4',
-                                100: '#dcfce7',
-                                500: '#22c55e',
-                                600: '#16a34a',
-                                700: '#15803d',
-                                primary: '#10b981',
-                                dark: '#064e3b',
-                                accent: '#f97316'
-                            }
-                        },
-                        fontFamily: {
-                            sans: ['Inter', 'sans-serif'],
-                        }
-                    }
-                }
-            }
-        </script>
-        <style>
-            ::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-            }
-            ::-webkit-scrollbar-track {
-                background: #f1f5f9;
-            }
-            ::-webkit-scrollbar-thumb {
-                background: #cbd5e1;
-                border-radius: 4px;
-            }
-            ::-webkit-scrollbar-thumb:hover {
-                background: #94a3b8;
-            }
-        </style>
+        <!-- Custom Search CSS -->
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/search-products.css">
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Custom Search JS (Tailwind config) -->
+        <script src="${pageContext.request.contextPath}/assets/js/search-products.js"></script>
     </head>
     <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -165,7 +130,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 
                 <!-- CỘT TRÁI: BỘ LỌC TÌM KIẾM -->
-                <aside class="lg:col-span-1 bg-white p-6 rounded-3xl shadow-sm h-fit space-y-6 border border-gray-100">
+                <aside class="lg:col-span-1 filter-card space-y-6">
                     <h2 class="font-extrabold text-base text-gray-900 flex items-center gap-2.5 border-b border-gray-100 pb-4">
                         <i class="fa-solid fa-filter text-emerald-600"></i> BỘ LỌC TÌM KIẾM
                     </h2>
@@ -196,9 +161,9 @@
                         <div class="border-t border-gray-100 pt-5">
                             <h3 class="font-bold text-sm mb-3 text-gray-800">Khoảng Giá (VNĐ)</h3>
                             <div class="flex items-center gap-2 mb-3">
-                                <input type="number" name="minPrice" value="${minPrice}" placeholder="đ TỪ" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition">
+                                <input type="number" name="minPrice" value="${minPrice}" placeholder="đ TỪ" class="filter-price-input">
                                 <span class="text-gray-400 font-bold">-</span>
-                                <input type="number" name="maxPrice" value="${maxPrice}" placeholder="đ ĐẾN" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500 transition">
+                                <input type="number" name="maxPrice" value="${maxPrice}" placeholder="đ ĐẾN" class="filter-price-input">
                             </div>
                             <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-sm">ÁP DỤNG BỘ LỌC</button>
                         </div>
@@ -232,9 +197,9 @@
                         <c:choose>
                             <c:when test="${not empty listProduct}">
                                 <c:forEach var="p" items="${listProduct}">
-                                    <div class="bg-white rounded-3xl p-4 shadow-sm hover:shadow-xl border border-gray-100 flex flex-col justify-between transition-all duration-300 group">
+                                    <div class="product-card group">
                                         <div>
-                                            <a href="${pageContext.request.contextPath}/detail?id=${p.id}" class="block relative aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-4 cursor-pointer">
+                                            <a href="${pageContext.request.contextPath}/detail?id=${p.id}" class="product-card-img-wrap">
                                                 <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                                                 <c:if test="${p.discountPercent > 0}">
                                                     <span class="absolute top-3 left-3 bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-full shadow">-${p.discountPercent}%</span>
@@ -265,7 +230,7 @@
                                             </div>
                                             <form action="${pageContext.request.contextPath}/add-to-cart" method="GET">
                                                 <input type="hidden" name="productId" value="${p.id}" />
-                                                <button type="submit" class="bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white w-10 h-10 rounded-2xl flex items-center justify-center font-bold transition shadow-sm" title="Thêm vào giỏ hàng">
+                                                <button type="submit" class="btn-add-cart" title="Thêm vào giỏ hàng">
                                                     <i class="fa-solid fa-cart-plus"></i>
                                                 </button>
                                             </form>
