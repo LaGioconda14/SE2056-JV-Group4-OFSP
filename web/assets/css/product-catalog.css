@@ -1,0 +1,198 @@
+/* ========================================================
+   FRESHFRUIT CATALOG & SHOP CSS (CLEAN SEMANTIC STYLES)
+   ======================================================== */
+
+.catalog-header-topbar {
+    background: linear-gradient(to right, #00652c, #15803d);
+    color: #ffffff;
+    font-size: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+/* Category Filter Tags */
+.suggested-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    background-color: #f3f4f6;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+.suggested-tag:hover {
+    background-color: #e5e7eb;
+    color: #111827;
+}
+.suggested-tag.active {
+    background-color: #dcfce7;
+    color: #15803d;
+    border-color: #86efac;
+}
+
+/* Filter Sidebar Card */
+.catalog-filter-card {
+    background-color: #ffffff;
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    border: 1px solid #f3f4f6;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+.filter-section-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+/* Product Grid & Item Card */
+.catalog-product-card {
+    background-color: #ffffff;
+    border-radius: 1.25rem;
+    border: 1px solid #f3f4f6;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.catalog-product-card:hover {
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.04);
+    transform: translateY(-2px);
+    border-color: #e5e7eb;
+}
+
+/* Card Image Box */
+.catalog-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 0.875rem;
+    overflow: hidden;
+    background-color: #f9fafb;
+    margin-bottom: 0.875rem;
+}
+
+.catalog-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+.catalog-product-card:hover .catalog-img-wrap img {
+    transform: scale(1.05);
+}
+
+/* Badge Tags on Card */
+.card-badge-tag {
+    position: absolute;
+    top: 0.625rem;
+    left: 0.625rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.badge-tag-organic {
+    background-color: #15803d;
+    color: #ffffff;
+}
+
+.badge-tag-local {
+    background-color: #fef08a;
+    color: #854d0e;
+}
+
+.badge-tag-sale {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.badge-tag-sweet {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+.badge-tag-fresh {
+    background-color: #ecfdf5;
+    color: #047857;
+}
+
+/* Wishlist Heart Button */
+.btn-wishlist {
+    position: absolute;
+    top: 0.625rem;
+    right: 0.625rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+.btn-wishlist:hover {
+    background-color: #ffffff;
+    color: #ef4444;
+    transform: scale(1.1);
+}
+
+/* Add Button (+ Add) */
+.btn-card-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.875rem;
+    border-radius: 9999px;
+    background-color: #00652c;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.btn-card-add:hover {
+    background-color: #15803d;
+    transform: scale(1.03);
+}
+
+/* Pagination */
+.catalog-page-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4b5563;
+    transition: all 0.2s;
+}
+.catalog-page-btn:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+}
+.catalog-page-btn.active {
+    background-color: #00652c;
+    color: #ffffff;
+}
+

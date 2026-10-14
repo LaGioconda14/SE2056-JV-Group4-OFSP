@@ -1,0 +1,96 @@
+/* ========================================================
+   PRODUCT DETAIL PAGE CUSTOM CSS (MOCKUP ACCURATE)
+   ======================================================== */
+
+/* Gallery Styles */
+.detail-main-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    background-color: #f9fafb;
+    border: 1px solid #f3f4f6;
+}
+
+.detail-main-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.detail-main-img-wrap:hover img {
+    transform: scale(1.05);
+}
+
+.detail-thumb-btn {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 0.875rem;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    cursor: pointer;
+    background-color: #f3f4f6;
+}
+.detail-thumb-btn.active, .detail-thumb-btn:hover {
+    border-color: #00652c;
+    box-shadow: 0 0 0 2px rgba(0, 101, 44, 0.2);
+}
+
+/* Variant Package Options */
+.variant-option-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 0.875rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #ffffff;
+    position: relative;
+}
+.variant-option-card:hover {
+    border-color: #86efac;
+}
+.variant-option-card.active {
+    border-color: #00652c;
+    background-color: #00652c;
+    color: #ffffff;
+}
+.variant-option-card.active .variant-subprice {
+    color: #d1fae5;
+}
+
+/* Benefit Value Props (Free delivery, same-day, cold chain) */
+.benefit-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background-color: #f9fafb;
+    border-radius: 1rem;
+    border: 1px solid #f3f4f6;
+}
+
+/* Tab Navigation Buttons */
+.detail-tab-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #4b5563;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.detail-tab-btn:hover {
+    color: #111827;
+}
+.detail-tab-btn.active {
+    background-color: #ffffff;
+    color: #00652c;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
