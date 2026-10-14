@@ -44,47 +44,9 @@ public class LoginGoogleServlet extends HttpServlet {
             if ("ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/admin/dashboard");
             } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
             }
             return;
-        }
-
-        // Support Mock Demo Google Login for development & test grading
-        String demo = request.getParameter("demo");
-        if ("1".equals(demo) || "true".equalsIgnoreCase(demo)) {
-            try {
-                GoogleAccount mockGoogle = new GoogleAccount();
-                mockGoogle.setId("google_test_1001");
-                mockGoogle.setEmail("demo.google.user@freshfruit.com");
-                mockGoogle.setName("Nguyễn Văn Google (Demo)");
-                mockGoogle.setPicture("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop");
-                mockGoogle.setVerified_email(true);
-
-                User user = userService.processGoogleLogin(mockGoogle);
-                session.setAttribute("user", user);
-                session.setAttribute("avatarUrl", mockGoogle.getPicture());
-                session.setAttribute("successMessage", "Đăng nhập Google (Môi trường Thử nghiệm) thành công! Xin chào " + user.getFullName() + ".");
-
-                // Cảnh báo nếu chưa có số điện thoại
-                if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
-                    session.setAttribute("warningMessage", 
-                        "Tài khoản của bạn đăng ký qua Google hiện chưa có Số điện thoại! "
-                        + "Vui lòng cập nhật số điện thoại để thuận tiện nhận cuộc gọi giao hàng từ shipper.");
-                    session.setAttribute("phoneMissingWarning", true);
-                }
-
-                if ("ADMIN".equalsIgnoreCase(user.getRole())) {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/home.jsp");
-                }
-                return;
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, "Mock Google Login Error", ex);
-                session.setAttribute("errorMessage", "Lỗi tạo tài khoản demo: " + ex.getMessage());
-                response.sendRedirect(request.getContextPath() + "/login");
-                return;
-            }
         }
 
         String code = request.getParameter("code");
@@ -135,7 +97,7 @@ public class LoginGoogleServlet extends HttpServlet {
             if ("ADMIN".equalsIgnoreCase(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/admin/dashboard");
             } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
             }
 
         } catch (Exception ex) {
