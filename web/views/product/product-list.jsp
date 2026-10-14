@@ -22,22 +22,7 @@
 </head>
 <body class="bg-gray-50/50 font-['Plus_Jakarta_Sans',sans-serif] text-gray-800 antialiased">
 
-    <!-- TOP ANNOUNCEMENT BAR -->
-    <div class="catalog-header-topbar px-4">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-truck-fast text-emerald-200"></i>
-                <span class="font-medium">Miễn phí giao hàng trong ngày cho đơn từ 300.000₫ | Cam kết 100% Nông sản tươi sạch</span>
-            </div>
-            <div class="flex items-center gap-5 text-emerald-100">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-phone text-xs"></i> 1900 6868</span>
-                <span>|</span>
-                <span>VND (₫)</span>
-                <span>|</span>
-                <span>VI <i class="fa-solid fa-chevron-down text-[10px]"></i></span>
-            </div>
-        </div>
-    </div>
+
 
     <!-- MAIN NAVBAR -->
     <header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-xs">
@@ -155,13 +140,13 @@
             <i class="fa-solid fa-chevron-right text-[9px] text-gray-400"></i>
             <a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-700">Cửa hàng</a>
             <i class="fa-solid fa-chevron-right text-[9px] text-gray-400"></i>
-            <span class="text-gray-900 font-semibold">Danh Mục Trái Cây Tươi</span>
+            <span class="text-gray-900 font-semibold">${not empty selectedCategoryName ? selectedCategoryName : 'Danh Mục Trái Cây Tươi'}</span>
         </nav>
 
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-200/80">
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-black text-gray-900 tracking-tight">Trái Cây Tươi Sạch</h1>
+                    <h1 class="text-3xl font-black text-gray-900 tracking-tight">${not empty selectedCategoryName ? selectedCategoryName : 'Trái Cây Tươi Sạch'}</h1>
                     <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
                         Hiển thị ${(currentPage - 1) * pageSize + 1}-${currentPage * pageSize > totalProducts ? totalProducts : currentPage * pageSize} trên tổng ${totalProducts} sản phẩm
                     </span>
@@ -224,7 +209,7 @@
                                 <label class="flex items-center justify-between cursor-pointer hover:text-emerald-700 transition">
                                     <div class="flex items-center gap-2.5">
                                         <input type="checkbox" name="category" value="${cat.categoryId}" 
-                                               ${selectedCategoriesList != null and selectedCategoriesList.contains(String.valueOf(cat.categoryId)) ? 'checked' : ''} 
+                                               ${selectedCategoriesList != null and (selectedCategoriesList.contains(String.valueOf(cat.categoryId)) or selectedCategoriesList.contains(cat.slug)) ? 'checked' : ''} 
                                                class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300">
                                         <span class="font-medium">${cat.categoryName}</span>
                                     </div>

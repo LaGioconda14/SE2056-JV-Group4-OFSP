@@ -5,7 +5,6 @@
 
 package controller.home;
 
-import dao.ProductDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -15,6 +14,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import model.Product;
+import service.IProductService;
+import service.impl.ProductServiceImpl;
 
 /**
  *
@@ -22,6 +23,8 @@ import model.Product;
  */
 @WebServlet(name="HomeServlet", urlPatterns={"/home"})
 public class HomeServlet extends HttpServlet {
+
+    private final IProductService productService = new ProductServiceImpl();
    
     /** 
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -60,15 +63,20 @@ public class HomeServlet extends HttpServlet {
     throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         
-        // Gọi DAO lấy danh sách sản phẩm
-        ProductDAO dao = new ProductDAO();
-        List<Product> listProduct = dao.getTop8Products();
+        // Gọi Service lấy danh sách sản phẩm và danh mục theo kiến trúc 3 lớp
+        List<Product> listProduct = productService.getHomeProducts();
+        List<model.Category> categories = productService.getAllCategories();
+        List<model.Category> homeTabs = productService.getHomeFeaturedTabs();
+        List<model.Category> hierarchyCategories = productService.getHierarchyCategories();
         
-        // Set attribute để JSP nhận diện biến listProduct
+        // Set attribute để JSP nhận diện biến
         request.setAttribute("listProduct", listProduct);
+        request.setAttribute("categories", categories);
+        request.setAttribute("homeTabs", homeTabs);
+        request.setAttribute("hierarchyCategories", hierarchyCategories);
         
-        // Chuyển hướng tới trang home.jsp
-        request.getRequestDispatcher("home.jsp").forward(request, response);
+        // Chuyển hướng tới trang /views/home.jsp
+        request.getRequestDispatcher("/views/home.jsp").forward(request, response);
     } 
 
     /** 

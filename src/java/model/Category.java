@@ -1,5 +1,8 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Category {
     private int categoryId;
     private Integer parentId;
@@ -11,6 +14,7 @@ public class Category {
     private int displayOrder;
     private boolean isActive;
     private int productCount;
+    private List<Category> subCategories = new ArrayList<>();
 
     public Category() {}
 
@@ -50,5 +54,14 @@ public class Category {
 
     public int getProductCount() { return productCount; }
     public void setProductCount(int productCount) { this.productCount = productCount; }
+
+    public List<Category> getSubCategories() { return subCategories; }
+    public void setSubCategories(List<Category> subCategories) { this.subCategories = subCategories; }
+    public void addSubCategory(Category sub) {
+        if (this.subCategories == null) {
+            this.subCategories = new ArrayList<>();
+        }
+        this.subCategories.add(sub);
+    }
 }
 

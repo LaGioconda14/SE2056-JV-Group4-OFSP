@@ -1,6 +1,5 @@
 package controller.product;
 
-import dao.ProductDAO;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -11,11 +10,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.Category;
 import model.Product;
+import service.IProductService;
+import service.impl.ProductServiceImpl;
 
 @WebServlet(name = "ProductCatalogServlet", urlPatterns = {"/products", "/shop"})
 public class ProductCatalogServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
+    private final IProductService productService = new ProductServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -75,13 +76,13 @@ public class ProductCatalogServlet extends HttpServlet {
             }
         } catch (NumberFormatException ignored) {}
 
-        // 3. Truy vấn dữ liệu
-        int totalProducts = productDAO.countCatalogProducts(keyword, selectedCategories, minPrice, maxPrice, rating, availability, origin, tag);
+        // 3. Truy vấn dữ liệu qua Service
+        int totalProducts = productService.countCatalogProducts(keyword, selectedCategories, minPrice, maxPrice, rating, availability, origin, tag);
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
         if (totalPages < 1) totalPages = 1;
 
-        List<Product> listProducts = productDAO.getCatalogProducts(keyword, selectedCategories, minPrice, maxPrice, rating, availability, origin, tag, sortBy, page, pageSize);
-        List<Category> listCategories = productDAO.getAllCategories();
+        List<Product> listProducts = productService.getCatalogProducts(keyword, selectedCategories, minPrice, maxPrice, rating, availability, origin, tag, sortBy, page, pageSize);
+        List<Category> listCategories = productService.getAllCategories();
 
         // 4. Đẩy attributes ra request scope
         request.setAttribute("listProducts", listProducts);
@@ -101,6 +102,18 @@ public class ProductCatalogServlet extends HttpServlet {
         request.setAttribute("paramOrigin", origin);
         request.setAttribute("paramTag", tag);
         request.setAttribute("paramSortBy", sortBy);
+
+        String selectedCategoryName = null;
+        if (selectedCategories != null && selectedCategories.length == 1) {
+            String targetCat = selectedCategories[0];
+            for (Category c : listCategories) {
+                if (String.valueOf(c.getCategoryId()).equals(targetCat) || (c.getSlug() != null && c.getSlug().equalsIgnoreCase(targetCat))) {
+                    selectedCategoryName = c.getCategoryName();
+                    break;
+                }
+            }
+        }
+        request.setAttribute("selectedCategoryName", selectedCategoryName);
 
         // 5. Forward ra JSP giao diện
         request.getRequestDispatcher("/views/product/product-list.jsp").forward(request, response);
