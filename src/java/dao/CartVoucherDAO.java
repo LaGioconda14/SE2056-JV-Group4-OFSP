@@ -39,31 +39,45 @@ public class CartVoucherDAO extends DBContext {
         return items;
     }
 
-    public List<VoucherCoupon> findActiveCoupons() throws SQLException {
+    public List<VoucherCoupon> findActiveCoupons(long customerId) throws SQLException {
         String sql = "SELECT c.coupon_id, c.code, c.issuer_type, c.shop_id, s.shop_name, "
                 + "c.apply_to, c.discount_type, c.discount_value, c.min_order_value, "
-                + "c.max_discount_amount, c.end_date FROM coupons c "
+                + "c.max_discount_amount, c.end_date, "
+                + "uc.user_coupon_id, uc.per_user_limit, uc.used_count AS user_used_count "
+                + "FROM coupons c "
                 + "LEFT JOIN shops s ON s.shop_id = c.shop_id "
+                + "LEFT JOIN user_coupons uc ON uc.coupon_id = c.coupon_id AND uc.user_id = ? "
                 + "WHERE c.is_active = 1 AND c.start_date <= CURRENT_TIMESTAMP "
                 + "AND c.end_date > CURRENT_TIMESTAMP AND c.used_count < c.usage_limit "
                 + "AND (c.issuer_type = 'PLATFORM' OR (c.issuer_type = 'SHOP' AND s.status = 'ACTIVE')) "
                 + "ORDER BY c.end_date, c.coupon_id";
         List<VoucherCoupon> coupons = new ArrayList<>();
         try (Connection connection = requireConnection();
-                PreparedStatement statement = connection.prepareStatement(sql);
-                ResultSet result = statement.executeQuery()) {
-            while (result.next()) {
-                long shopId = result.getLong("shop_id");
-                Long nullableShopId = result.wasNull() ? null : shopId;
-                coupons.add(new VoucherCoupon(result.getLong("coupon_id"), result.getString("code"),
-                        result.getString("issuer_type"), nullableShopId, result.getString("shop_name"),
-                        result.getString("apply_to"), result.getString("discount_type"),
-                        result.getBigDecimal("discount_value"), result.getBigDecimal("min_order_value"),
-                        result.getBigDecimal("max_discount_amount"),
-                        result.getTimestamp("end_date").toLocalDateTime()));
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, customerId);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    long shopId = result.getLong("shop_id");
+                    Long nullableShopId = result.wasNull() ? null : shopId;
+                    result.getLong("user_coupon_id");
+                    boolean inWallet = !result.wasNull();
+                    int perUserLimit = inWallet ? result.getInt("per_user_limit") : 1;
+                    int userUsedCount = inWallet ? result.getInt("user_used_count") : 0;
+                    coupons.add(new VoucherCoupon(result.getLong("coupon_id"), result.getString("code"),
+                            result.getString("issuer_type"), nullableShopId, result.getString("shop_name"),
+                            result.getString("apply_to"), result.getString("discount_type"),
+                            result.getBigDecimal("discount_value"), result.getBigDecimal("min_order_value"),
+                            result.getBigDecimal("max_discount_amount"),
+                            result.getTimestamp("end_date").toLocalDateTime(),
+                            inWallet, perUserLimit, userUsedCount));
+                }
             }
         }
         return coupons;
+    }
+
+    public List<VoucherCoupon> findActiveCoupons() throws SQLException {
+        return findActiveCoupons(0);
     }
 
     private Connection requireConnection() throws SQLException {
