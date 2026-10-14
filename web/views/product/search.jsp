@@ -20,21 +20,7 @@
     </head>
     <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
-        <!-- Top Bar -->
-        <div class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white text-xs md:text-sm py-2 px-4 shadow-sm">
-            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-                <div class="flex items-center space-x-4">
-                    <span class="flex items-center gap-1.5 font-medium"><i class="fa-solid fa-truck-fast text-emerald-300"></i> Miễn phí giao hàng đơn từ 350.000đ | Giao nhanh trong 2 giờ</span>
-                </div>
-                <div class="flex items-center space-x-6">
-                    <a href="#" class="hover:text-emerald-200 transition"><i class="fa-solid fa-phone-volume mr-1"></i> Hotline: 1900 6868</a>
-                    <span class="text-emerald-400">|</span>
-                    <a href="#" class="hover:text-emerald-200 transition"><i class="fa-solid fa-headset mr-1"></i> Hỗ trợ trực tuyến</a>
-                    <span class="text-emerald-400">|</span>
-                    <a href="${pageContext.request.contextPath}/home#deals" class="hover:text-amber-300 transition font-bold flex items-center gap-1"><i class="fa-solid fa-bolt text-amber-300"></i> Flash Sale Giờ Vàng</a>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Header -->
         <header class="sticky top-0 z-40 bg-white shadow-md transition-all">
@@ -191,6 +177,45 @@
                     <div class="bg-white p-5 rounded-3xl shadow-sm text-sm text-gray-700 border border-gray-100 flex items-center justify-between">
                         <div>Kết quả tìm kiếm cho từ khóa: <span class="font-extrabold text-emerald-600">"${txtSearch}"</span></div>
                     </div>
+
+                    <!-- Shop Liên Quan Đến Tìm Kiếm (Shopee Style) -->
+                    <c:if test="${not empty matchingShops}">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fa-solid fa-store text-emerald-600"></i> Gian Hàng Nông Trại Phù Hợp
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <c:forEach var="s" items="${matchingShops}">
+                                    <div class="bg-white rounded-3xl p-5 border border-emerald-100 shadow-sm hover:shadow-md transition flex items-center justify-between gap-4">
+                                        <div class="flex items-center gap-3.5">
+                                            <img src="${not empty s.logoUrl ? s.logoUrl : 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=150&h=150&fit=crop'}" 
+                                                 alt="${s.shopName}" class="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-500 shadow-xs flex-shrink-0">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="font-extrabold text-sm text-gray-900">${s.shopName}</h4>
+                                                    <span class="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                                                        <i class="fa-solid fa-check text-[9px]"></i> Chuẩn VietGAP
+                                                    </span>
+                                                </div>
+                                                <p class="text-xs text-gray-500 line-clamp-1 mt-0.5">${s.description}</p>
+                                                <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                                                    <span class="text-amber-500 font-bold"><i class="fa-solid fa-star text-[10px]"></i> ${s.rating}</span>
+                                                    <span>&bull;</span>
+                                                    <span>${not empty s.province ? s.province : 'Mộc Châu, Sơn La'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <a href="${pageContext.request.contextPath}/store?id=${s.shopId}" 
+                                           class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition flex-shrink-0 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-store text-xs"></i> Xem Shop
+                                        </a>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </div>
+                    </c:if>
 
                     <!-- Lưới sản phẩm chuẩn trang chủ -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

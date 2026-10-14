@@ -5,7 +5,6 @@
 
 package controller.home;
 
-import dao.ProductDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -15,6 +14,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import model.Product;
+import service.IProductService;
+import service.IShopProductService;
+import service.impl.ProductServiceImpl;
+import service.impl.ShopProductServiceImpl;
 
 /**
  *
@@ -22,6 +25,9 @@ import model.Product;
  */
 @WebServlet(name="SearchServlet", urlPatterns={"/search"})
 public class SearchServlet extends HttpServlet {
+
+    private final IProductService productService = new ProductServiceImpl();
+    private final IShopProductService shopProductService = new ShopProductServiceImpl();
    
     /** 
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -71,11 +77,13 @@ public class SearchServlet extends HttpServlet {
         Double maxPrice = (maxPriceStr != null && !maxPriceStr.isEmpty()) ? Double.parseDouble(maxPriceStr) : null;
         Integer rating = (ratingStr != null && !ratingStr.isEmpty()) ? Integer.parseInt(ratingStr) : null;
         
-        ProductDAO dao = new ProductDAO();
-        List<Product> list = dao.searchByFilter(txtSearch, categoryId, minPrice, maxPrice, rating);
+        // Gọi Service lấy dữ liệu theo mô hình 3 lớp
+        List<Product> list = productService.searchByFilter(txtSearch, categoryId, minPrice, maxPrice, rating);
+        List<model.Shop> matchingShops = shopProductService.searchShops(txtSearch);
         
         // Đẩy dữ liệu ra request scope để giữ trạng thái trên view
         request.setAttribute("listProduct", list);
+        request.setAttribute("matchingShops", matchingShops);
         request.setAttribute("txtSearch", txtSearch);
         request.setAttribute("selectedCategory", categoryId);
         request.setAttribute("minPrice", minPriceStr);
