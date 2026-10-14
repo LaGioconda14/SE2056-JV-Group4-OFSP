@@ -43,5 +43,15 @@ public interface IProductService {
      * Lấy chi tiết sản phẩm theo ID.
      */
     Product getProductById(long productId);
+
+    /**
+     * Lấy danh sách sản phẩm liên quan gợi ý theo ID sản phẩm hiện tại.
+     */
+    List<Product> getRelatedProducts(long currentProductId, int limit);
+
+    /**
+     * Tìm kiếm và lọc sản phẩm theo các tiêu chí tìm kiếm nhanh.
+     */
+    List<Product> searchByFilter(String txtSearch, String categoryId, Double minPrice, Double maxPrice, Integer rating);
 }
 

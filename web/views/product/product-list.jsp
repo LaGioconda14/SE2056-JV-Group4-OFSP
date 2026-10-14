@@ -63,17 +63,19 @@
             <div class="flex items-center gap-3">
                 <a href="#" class="relative w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition" title="Yêu thích">
                     <i class="fa-regular fa-heart text-lg"></i>
-                    <span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">3</span>
+                    <c:if test="${not empty sessionScope.wishlistCount and sessionScope.wishlistCount > 0}">
+                        <span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">${sessionScope.wishlistCount}</span>
+                    </c:if>
                 </a>
                 
                 <a href="${pageContext.request.contextPath}/cart" class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 hover:bg-emerald-100 transition">
                     <div class="relative">
                         <i class="fa-solid fa-basket-shopping text-base"></i>
-                        <span class="absolute -top-1.5 -right-2 bg-emerald-700 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">4</span>
+                        <span class="absolute -top-1.5 -right-2 bg-emerald-700 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">${sessionScope.cartSize != null ? sessionScope.cartSize : 0}</span>
                     </div>
                     <div class="flex flex-col text-left text-xs leading-none">
                         <span class="text-[9px] text-emerald-600 font-bold uppercase">Giỏ hàng</span>
-                        <span class="font-extrabold text-emerald-950">250.000₫</span>
+                        <span class="font-extrabold text-emerald-950"><c:choose><c:when test="${not empty sessionScope.cartTotal and sessionScope.cartTotal > 0}"><fmt:formatNumber value="${sessionScope.cartTotal}" pattern="#,###" />₫</c:when><c:otherwise>0₫</c:otherwise></c:choose></span>
                     </div>
                 </a>
 
@@ -164,25 +166,6 @@
             </form>
         </div>
 
-        <!-- QUICK SUGGESTED TAGS -->
-        <div class="flex items-center gap-2 overflow-x-auto py-3">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0 mr-1">Gợi ý:</span>
-            <a href="${pageContext.request.contextPath}/products?tag=organic" class="suggested-tag ${paramTag eq 'organic' ? 'active' : ''}">
-                <i class="fa-solid fa-leaf text-emerald-600 text-[10px]"></i> Hữu Cơ
-            </a>
-            <a href="${pageContext.request.contextPath}/products?keyword=Cam" class="suggested-tag">Cam Sành</a>
-            <a href="${pageContext.request.contextPath}/products?keyword=Dâu" class="suggested-tag">Dâu Tây</a>
-            <a href="${pageContext.request.contextPath}/products?tag=sale" class="suggested-tag ${paramTag eq 'sale' ? 'active' : ''}">
-                <i class="fa-solid fa-tag text-amber-600 text-[10px]"></i> Đang Giảm Giá
-            </a>
-            <a href="${pageContext.request.contextPath}/products?tag=under5" class="suggested-tag ${paramTag eq 'under5' ? 'active' : ''}">Dưới 50.000₫</a>
-            <a href="${pageContext.request.contextPath}/products?origin=Đà Lạt" class="suggested-tag">Nông Sản Đà Lạt</a>
-            <c:if test="${not empty paramKeyword or not empty paramTag or not empty paramOrigin or not empty paramMinPrice}">
-                <a href="${pageContext.request.contextPath}/products" class="suggested-tag text-red-600 hover:bg-red-50">
-                    <i class="fa-solid fa-xmark text-[10px]"></i> Xóa Bộ Lọc
-                </a>
-            </c:if>
-        </div>
     </div>
 
     <!-- MAIN BODY: FILTER SIDEBAR & PRODUCTS GRID -->

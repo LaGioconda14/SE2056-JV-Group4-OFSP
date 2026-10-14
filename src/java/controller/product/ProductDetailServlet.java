@@ -1,6 +1,5 @@
 package controller.product;
 
-import dao.ProductDAO;
 import java.io.IOException;
 import java.util.List;
 import jakarta.servlet.ServletException;
@@ -9,11 +8,17 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.Product;
+import model.Shop;
+import service.IProductService;
+import service.IShopProductService;
+import service.impl.ProductServiceImpl;
+import service.impl.ShopProductServiceImpl;
 
 @WebServlet(name = "ProductDetailServlet", urlPatterns = {"/detail", "/product/detail"})
 public class ProductDetailServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
+    private final IProductService productService = new ProductServiceImpl();
+    private final IShopProductService shopProductService = new ShopProductServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -30,22 +35,32 @@ public class ProductDetailServlet extends HttpServlet {
             }
         } catch (NumberFormatException ignored) {}
 
-        // 1. Lấy thông tin sản phẩm chi tiết
-        Product product = productDAO.getProductById(productId);
+        // 1. Lấy thông tin sản phẩm chi tiết qua Service
+        Product product = productService.getProductById(productId);
 
         if (product == null) {
             // Nếu không tìm thấy, lấy sản phẩm ID 1 làm fallback để giao diện luôn hiển thị đầy đủ
-            product = productDAO.getProductById(1);
+            product = productService.getProductById(1);
         }
 
-        // 2. Lấy danh sách sản phẩm liên quan gợi ý (You May Also Savor - 4 sản phẩm)
-        List<Product> relatedProducts = productDAO.getRelatedProducts(productId, 4);
+        // 2. Lấy thông tin Shop sở hữu sản phẩm này qua Service
+        long shopId = (product != null && product.getShopId() > 0) ? product.getShopId() : 1L;
+        Shop shop = shopProductService.getShopById(shopId);
+        if (shop == null) {
+            shop = shopProductService.getShopById(1L);
+        }
+        int shopTotalProducts = shopProductService.getTotalProductsCountByShopId(shopId);
 
-        // 3. Đưa ra request scope
+        // 3. Lấy danh sách sản phẩm liên quan gợi ý (You May Also Savor - 4 sản phẩm) qua Service
+        List<Product> relatedProducts = productService.getRelatedProducts(productId, 4);
+
+        // 4. Đưa ra request scope
         request.setAttribute("product", product);
+        request.setAttribute("shop", shop);
+        request.setAttribute("shopTotalProducts", shopTotalProducts);
         request.setAttribute("relatedProducts", relatedProducts);
 
-        // 4. Forward sang trang JSP chi tiết
+        // 5. Forward sang trang JSP chi tiết
         request.getRequestDispatcher("/views/product/product-detail.jsp").forward(request, response);
     }
 
@@ -55,4 +70,3 @@ public class ProductDetailServlet extends HttpServlet {
         doGet(request, response);
     }
 }
-

@@ -22,22 +22,7 @@
 </head>
 <body class="bg-gray-50/50 font-['Plus_Jakarta_Sans',sans-serif] text-gray-800 antialiased">
 
-    <!-- TOP ANNOUNCEMENT BAR -->
-    <div class="bg-gradient-to-r from-emerald-800 to-emerald-700 text-white text-xs py-2 px-4">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-truck-fast text-emerald-200"></i>
-                <span class="font-medium">Miễn phí giao hàng trong ngày cho đơn từ 300.000₫ | Cam kết 100% Nông sản tươi sạch từ vườn</span>
-            </div>
-            <div class="flex items-center gap-5 text-emerald-100">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-phone text-xs"></i> 1900 6868</span>
-                <span>|</span>
-                <span>VND (₫)</span>
-                <span>|</span>
-                <span>VI <i class="fa-solid fa-chevron-down text-[10px]"></i></span>
-            </div>
-        </div>
-    </div>
+
 
     <!-- MAIN NAVBAR -->
     <header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-xs">
@@ -69,17 +54,19 @@
             <div class="flex items-center gap-3">
                 <a href="#" class="relative w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition" title="Danh sách yêu thích">
                     <i class="fa-regular fa-heart text-lg"></i>
-                    <span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">3</span>
+                    <c:if test="${not empty sessionScope.wishlistCount and sessionScope.wishlistCount > 0}">
+                        <span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">${sessionScope.wishlistCount}</span>
+                    </c:if>
                 </a>
                 
                 <a href="${pageContext.request.contextPath}/cart" class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 hover:bg-emerald-100 transition">
                     <div class="relative">
                         <i class="fa-solid fa-basket-shopping text-base"></i>
-                        <span class="absolute -top-1.5 -right-2 bg-emerald-700 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">4</span>
+                        <span class="absolute -top-1.5 -right-2 bg-emerald-700 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">${sessionScope.cartSize != null ? sessionScope.cartSize : 0}</span>
                     </div>
                     <div class="flex flex-col text-left text-xs leading-none">
                         <span class="text-[9px] text-emerald-600 font-bold uppercase">Giỏ hàng</span>
-                        <span class="font-extrabold text-emerald-950">250.000₫</span>
+                        <span class="font-extrabold text-emerald-950"><c:choose><c:when test="${not empty sessionScope.cartTotal and sessionScope.cartTotal > 0}"><fmt:formatNumber value="${sessionScope.cartTotal}" pattern="#,###" />₫</c:when><c:otherwise>0₫</c:otherwise></c:choose></span>
                     </div>
                 </a>
 
@@ -383,25 +370,82 @@
         </div>
     </main>
 
-    <!-- PRODUCT TABS SECTION (DESCRIPTION, NUTRITION, FARM STORY, REVIEWS) -->
-    <section class="max-w-7xl mx-auto px-4 pb-16">
-        <!-- Tabs Nav -->
-        <div class="bg-gray-200/60 p-1.5 rounded-full flex items-center overflow-x-auto gap-1 mb-8 max-w-4xl mx-auto">
-            <button type="button" class="detail-tab-btn active" data-target="tab-desc">Mô Tả Sản Phẩm</button>
-            <button type="button" class="detail-tab-btn" data-target="tab-nutrition">Giá Trị Dinh Dưỡng</button>
-            <button type="button" class="detail-tab-btn" data-target="tab-story">Nguồn Gốc & Nhà Vườn</button>
-            <button type="button" class="detail-tab-btn" data-target="tab-shipping">Giao Hàng & Đóng Gói</button>
-            <button type="button" class="detail-tab-btn" data-target="tab-reviews">Đánh Giá Khách Hàng (${product.reviewsCount})</button>
-        </div>
+    <!-- SHOP / FARM PROFILE BOX (CHUẨN SHOPEE) -->
+    <section class="max-w-7xl mx-auto px-4 pb-8">
+        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-gray-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <!-- Cột trái: Logo Shop, Tên Shop, Tích xác thực & Nút Xem Shop -->
+            <div class="flex items-center gap-4 flex-1">
+                <div class="relative flex-shrink-0">
+                    <img src="${not empty shop.logoUrl ? shop.logoUrl : 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=150&h=150&fit=crop'}" 
+                         alt="Shop Avatar" 
+                         class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-emerald-500 shadow-sm">
+                    <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-600 text-white rounded-full flex items-center justify-center text-[10px] shadow border border-white" title="Nông trại đạt chứng nhận VietGAP">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-base sm:text-lg font-black text-gray-900">${not empty shop.shopName ? shop.shopName : 'Nông Trại Hữu Cơ Mộc Châu'}</h3>
+                        <span class="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                            Chính Hãng
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400">Online 5 phút trước &bull; ${not empty shop.province ? shop.province : 'Mộc Châu, Sơn La'}</p>
+                    <div class="flex items-center gap-2.5 pt-1.5">
+                        <button type="button" onclick="alert('Đang kết nối khung trò chuyện trực tiếp với chủ nông trại!')" 
+                                class="px-3.5 py-1.5 rounded-xl border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold text-xs transition flex items-center gap-1.5">
+                            <i class="fa-regular fa-comment-dots"></i> Chat Ngay
+                        </button>
+                        <a href="${pageContext.request.contextPath}/store?id=${not empty shop.shopId ? shop.shopId : 1}" 
+                           class="px-4 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-store text-xs"></i> Xem Shop
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Tab 1: Product Description -->
-        <div id="tab-desc" class="detail-tab-pane bg-white rounded-3xl p-8 sm:p-10 border border-gray-100 shadow-sm">
+            <!-- Vách ngăn đứng -->
+            <div class="hidden md:block w-px h-16 bg-gray-100"></div>
+
+            <!-- Cột phải: Chỉ số thống kê của Shop (Shopee style) -->
+            <div class="grid grid-cols-3 gap-6 sm:gap-10 w-full md:w-auto text-left text-xs">
+                <div>
+                    <span class="text-gray-400 block text-[11px] mb-0.5">Đánh Giá</span>
+                    <span class="font-black text-emerald-800 text-sm sm:text-base">${shop.rating != null ? shop.rating : '4.9'} <i class="fa-solid fa-star text-amber-400 text-xs"></i></span>
+                </div>
+                <div>
+                    <span class="text-gray-400 block text-[11px] mb-0.5">Sản Phẩm</span>
+                    <span class="font-black text-emerald-800 text-sm sm:text-base">${shopTotalProducts > 0 ? shopTotalProducts : '10'}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400 block text-[11px] mb-0.5">Tỉ Lệ Phản Hồi</span>
+                    <span class="font-black text-emerald-800 text-sm sm:text-base">100%</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCT DESCRIPTION SECTION -->
+    <section class="max-w-7xl mx-auto px-4 pb-16">
+        <div class="bg-white rounded-3xl p-8 sm:p-10 border border-gray-100 shadow-sm">
+            <div class="border-b border-gray-100 pb-5 mb-6 flex items-center gap-2.5">
+                <span class="w-2 h-6 bg-emerald-600 rounded-full"></span>
+                <h3 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">Mô Tả Sản Phẩm</h3>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                 <div class="lg:col-span-7 space-y-4">
                     <span class="text-[11px] font-extrabold uppercase tracking-widest text-emerald-800">ĐỘ TƯƠI GIÒN THƯỢNG HẠNG TỪ NÔNG TRẠI</span>
-                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Vị Ngọt Tự Nhiên & Độ Giòn Tan Đặc Trưng</h2>
+                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">${not empty product.name ? product.name : 'Vị Ngọt Tự Nhiên & Độ Giòn Tan Đặc Trưng'}</h2>
                     <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">
-                        Được canh tác tại các vùng đất màu mỡ với khí hậu ôn đới lý tưởng, sản phẩm đạt chứng nhận nông sản an toàn. Cây được nuôi dưỡng dưới ánh nắng tự nhiên và nguồn nước suối mát lành, giúp tích tụ lượng đường tự nhiên cao, cắn vào cảm nhận ngay độ giòn xốp mọng nước khó quên.
+                        <c:choose>
+                            <c:when test="${not empty product.description}">
+                                ${product.description}
+                            </c:when>
+                            <c:otherwise>
+                                Được canh tác tại các vùng đất màu mỡ với khí hậu ôn đới lý tưởng, sản phẩm đạt chứng nhận nông sản an toàn. Cây được nuôi dưỡng dưới ánh nắng tự nhiên và nguồn nước suối mát lành, giúp tích tụ lượng đường tự nhiên cao, cắn vào cảm nhận ngay độ giòn xốp mọng nước khó quên.
+                            </c:otherwise>
+                        </c:choose>
                     </p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
@@ -429,51 +473,12 @@
                 </div>
 
                 <!-- Right Feature Image -->
-                <div class="lg:col-span-5 rounded-2xl overflow-hidden shadow-sm aspect-4/3">
-                    <img src="https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=800&fit=crop" alt="Trái Cây Tươi Ngon" class="w-full h-full object-cover">
+                <div class="lg:col-span-5 rounded-2xl overflow-hidden shadow-sm aspect-4/3 bg-gray-50">
+                    <img src="${not empty product.image ? product.image : 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800'}" 
+                         alt="${product.name}" 
+                         onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800'"
+                         class="w-full h-full object-cover">
                 </div>
-            </div>
-        </div>
-
-        <!-- Tab 2: Nutrition Facts (Hidden by default) -->
-        <div id="tab-nutrition" class="detail-tab-pane hidden bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-xs space-y-4">
-            <h3 class="text-lg font-bold text-gray-900">Giá Trị Dinh Dưỡng (Tính trên khẩu phần chuẩn / 182g)</h3>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-gray-50 p-4 rounded-xl text-center"><span class="block text-2xl font-black text-emerald-800">95</span> Lượng Calo</div>
-                <div class="bg-gray-50 p-4 rounded-xl text-center"><span class="block text-2xl font-black text-emerald-800">4.4g</span> Chất Xơ Tự Nhiên (17% DV)</div>
-                <div class="bg-gray-50 p-4 rounded-xl text-center"><span class="block text-2xl font-black text-emerald-800">14%</span> Nhu Cầu Vitamin C Mỗi Ngày</div>
-                <div class="bg-gray-50 p-4 rounded-xl text-center"><span class="block text-2xl font-black text-emerald-800">195mg</span> Khoáng Chất Kali</div>
-            </div>
-        </div>
-
-        <!-- Tab 3: Farm Story -->
-        <div id="tab-story" class="detail-tab-pane hidden bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-xs space-y-3">
-            <h3 class="text-lg font-bold text-gray-900">Câu Chuyện Nông Trại Hợp Tác Xã</h3>
-            <p class="text-gray-600 leading-relaxed">
-                Nông sản được chăm sóc bởi các bác nông dân lành nghề với cam kết canh tác hữu cơ: không biến đổi gen, không thuốc kích thích tăng trưởng hóa học, sử dụng hệ thống tưới nhỏ giọt tiết kiệm nước và bảo vệ hệ sinh thái đất đai bền vững.
-            </p>
-        </div>
-
-        <!-- Tab 4: Delivery -->
-        <div id="tab-shipping" class="detail-tab-pane hidden bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-xs space-y-3">
-            <h3 class="text-lg font-bold text-gray-900">Giao Hàng Thân Thiện Môi Trường & Chuỗi Lạnh Khép Kín</h3>
-            <p class="text-gray-600 leading-relaxed">
-                Toàn bộ hoa quả được đóng gói trong thùng giấy carton tổ ong chống sốc, chèn túi đệm khí tự phân hủy và túi đá khô sinh học, cam kết giữ độ tươi nguyên vẹn khi giao tận tay bạn.
-            </p>
-        </div>
-
-        <!-- Tab 5: Reviews -->
-        <div id="tab-reviews" class="detail-tab-pane hidden bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-xs space-y-4">
-            <h3 class="text-lg font-bold text-gray-900">Đánh Giá Từ Khách Hàng Đã Mua (${product.reviewsCount})</h3>
-            <div class="border-b border-gray-100 pb-3 space-y-1">
-                <div class="flex items-center gap-1 text-amber-400"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-                <p class="font-bold text-gray-800">"Trái cây rất tươi và giòn ngọt, mở thùng ra thơm phức. Cả gia đình mình đều khen!"</p>
-                <span class="text-gray-400 text-[11px]">&mdash; Chị Mai Lan (Hà Nội) &bull; Đã mua hàng xác thực</span>
-            </div>
-            <div class="border-b border-gray-100 pb-3 space-y-1">
-                <div class="flex items-center gap-1 text-amber-400"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
-                <p class="font-bold text-gray-800">"Giao hàng nhanh trong 2 tiếng, trái đóng gói cẩn thận không bị cấn dập chút nào."</p>
-                <span class="text-gray-400 text-[11px]">&mdash; Anh Minh Quân (TP. Hồ Chí Minh) &bull; Đã mua hàng xác thực</span>
             </div>
         </div>
     </section>

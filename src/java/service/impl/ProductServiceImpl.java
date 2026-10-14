@@ -55,5 +55,15 @@ public class ProductServiceImpl implements IProductService {
     public Product getProductById(long productId) {
         return productDAO.getProductById(productId);
     }
+
+    @Override
+    public List<Product> getRelatedProducts(long currentProductId, int limit) {
+        return productDAO.getRelatedProducts(currentProductId, limit);
+    }
+
+    @Override
+    public List<Product> searchByFilter(String txtSearch, String categoryId, Double minPrice, Double maxPrice, Integer rating) {
+        return productDAO.searchByFilter(txtSearch, categoryId, minPrice, maxPrice, rating);
+    }
 }
 

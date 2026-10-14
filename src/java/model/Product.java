@@ -25,6 +25,9 @@ public class Product {
     private String description;
     private String storageTemp;
     private String certification;
+    private long shopId;
+    private String categorySlug;
+    private String filterSlugs;
     
     // Thuộc tính phục vụ trang Product Detail
     private List<String> images;             // Thư viện ảnh chi tiết
@@ -112,4 +115,47 @@ public class Product {
 
     public List<ProductVariant> getVariants() { return variants; }
     public void setVariants(List<ProductVariant> variants) { this.variants = variants; }
+
+    public long getShopId() { return shopId; }
+    public void setShopId(long shopId) { this.shopId = shopId; }
+
+    public String getCategorySlug() { return categorySlug; }
+    public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }
+
+    public void setFilterSlugs(String filterSlugs) { this.filterSlugs = filterSlugs; }
+    public String getFilterSlugs() {
+        if (filterSlugs != null && !filterSlugs.trim().isEmpty()) {
+            return filterSlugs;
+        }
+        StringBuilder sb = new StringBuilder();
+        if (categorySlug != null && !categorySlug.trim().isEmpty()) {
+            sb.append(categorySlug).append(" ");
+        }
+        // Phân loại Trái Cây Nhập Khẩu
+        if (categoryId == 5 || (categorySlug != null && categorySlug.contains("nhap-khau"))
+                || (origin != null && (origin.contains("Mỹ") || origin.contains("Úc") || origin.contains("New Zealand") || origin.contains("Nhật Bản") || origin.contains("Hàn Quốc")))) {
+            sb.append("trai-cay-nhap-khau ");
+        }
+        // Phân loại Trái Cây Việt Nam
+        if (categoryId == 6 || (categorySlug != null && categorySlug.contains("viet-nam"))
+                || (origin != null && (origin.contains("Việt Nam") || origin.contains("Đà Lạt") || origin.contains("Tiền Giang") || origin.contains("Bến Tre") || origin.contains("Lào Cai") || origin.contains("Sapa") || origin.contains("Long An") || origin.contains("Đồng Tháp") || origin.contains("Đắk Lắk") || origin.contains("Sơn La")))) {
+            sb.append("trai-cay-viet-nam ");
+        }
+        // Phân loại Trái Cây Mùa Hè
+        if (categoryId == 9 || (categorySlug != null && categorySlug.contains("mua-he"))
+                || (name != null && (name.contains("Dưa") || name.contains("Xoài") || name.contains("Mận") || name.contains("Sầu Riêng") || name.contains("Thanh Long")))) {
+            sb.append("trai-cay-mua-he ");
+        }
+        // Phân loại Trái Cây Đóng Thùng
+        if (categoryId == 8 || (categorySlug != null && (categorySlug.contains("thung") || categorySlug.contains("dong-thung")))
+                || (unit != null && unit.toLowerCase().contains("thùng"))
+                || (name != null && name.toLowerCase().contains("thùng"))) {
+            sb.append("trai-cay-dong-thung ");
+        }
+        // Phân loại Trái Cây Có Sẵn (còn hàng tồn kho)
+        if (inStock || stockQuantity > 0) {
+            sb.append("trai-cay-co-san ");
+        }
+        return sb.toString().trim();
+    }
 }
