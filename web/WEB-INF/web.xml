@@ -90,6 +90,46 @@
         <url-pattern>/profile</url-pattern>
     </servlet-mapping>
 
+    <!-- Shop Management Servlets -->
+    <servlet>
+        <servlet-name>ShopDashboardServlet</servlet-name>
+        <servlet-class>controller.shop.ShopDashboardServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopDashboardServlet</servlet-name>
+        <url-pattern>/shop/dashboard</url-pattern>
+        <url-pattern>/shop</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ShopProductServlet</servlet-name>
+        <servlet-class>controller.shop.ShopProductServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopProductServlet</servlet-name>
+        <url-pattern>/shop/products</url-pattern>
+    </servlet-mapping>
+
+    <!-- Product Browsing Servlets -->
+    <servlet>
+        <servlet-name>ProductDetailServlet</servlet-name>
+        <servlet-class>controller.product.ProductDetailServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ProductDetailServlet</servlet-name>
+        <url-pattern>/detail</url-pattern>
+        <url-pattern>/product/detail</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ProductCatalogServlet</servlet-name>
+        <servlet-class>controller.product.ProductCatalogServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ProductCatalogServlet</servlet-name>
+        <url-pattern>/products</url-pattern>
+    </servlet-mapping>
+
     <!-- Session Configuration (30 minutes) -->
     <session-config>
         <session-timeout>30</session-timeout>

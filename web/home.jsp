@@ -141,7 +141,7 @@
                                                 
                                                 <%-- Nếu tài khoản là Chủ shop (SHOP_OWNER), hiện thêm nút truy cập Kênh Người Bán --%>
                                                 <c:if test="${currentUser.role eq 'SHOP_OWNER'}">
-                                                    <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition">
+                                                    <a href="${pageContext.request.contextPath}/shop/dashboard" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition">
                                                         <i class="fa-solid fa-store"></i> Kênh Quản Lý Shop
                                                     </a>
                                                 </c:if>

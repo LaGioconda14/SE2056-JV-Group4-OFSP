@@ -31,7 +31,7 @@ public class ShopProductServlet extends HttpServlet {
 
         // 1. Kiểm tra đăng nhập và phân quyền chủ shop
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
         // 2. Lấy shopId: Ưu tiên lấy trong session, nếu chưa có thì nhờ Service đi tìm
@@ -47,7 +47,7 @@ public class ShopProductServlet extends HttpServlet {
 
 // 3. Chốt chặn cuối: Nếu vẫn không có shopId thì đá về login
         if (shopId == null || shopId <= 0) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 

@@ -123,7 +123,7 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("shop", shop.getStatus());
             }
             session.setAttribute("email", user.getEmail());
-            response.sendRedirect(request.getContextPath() + "/shop/products");
+            response.sendRedirect(request.getContextPath() + "/shop/dashboard");
         } else if ("ADMIN".equalsIgnoreCase(role)) {
             // Nếu là Quản trị viên -> Điều hướng vào trang admin
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
