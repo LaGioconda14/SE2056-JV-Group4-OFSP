@@ -21,7 +21,7 @@ import util.DBContext;
 public class CartDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(CartDAO.class.getName());
-
+    // lấy cart 
     public Cart getCartByCustomerId(long customerId) {
         String sqlSelect = "SELECT cart_id FROM carts WITH (UPDLOCK, HOLDLOCK) WHERE customer_id = ?";
         String sqlInsert = "INSERT INTO carts (customer_id) VALUES (?)";
@@ -61,7 +61,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // lấy các sp trong cart
     public List<CartItem> getCartItems(long cartId) {
         String sql = "SELECT ci.cart_item_id, ci.quantity, "
                 + "pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
@@ -124,7 +124,8 @@ public class CartDAO extends DBContext {
                             && !updateQuantityByCart(conn, cartId, item.getCartItemID(), item.getQuantity())) {
                         throw new SQLException("Cart quantity reconciliation failed");
                     }
-                    if ("VARIANT_UNAVAILABLE".equals(item.getAvailabilityStatus())) {
+                    if ("AVAILABLE".equals(item.getAvailabilityStatus())
+                            || "VARIANT_UNAVAILABLE".equals(item.getAvailabilityStatus())) {
                         item.setAlternativeVariants(findAlternativeVariants(conn,
                                 item.getVariant().getProduct().getProductId(),
                                 item.getVariant().getVariantId()));
@@ -148,7 +149,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // tìm 
     private List<ProductVariant> findAlternativeVariants(Connection conn, long productId,
             long excludedVariantId) throws SQLException {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
@@ -183,7 +184,7 @@ public class CartDAO extends DBContext {
             return ps.executeUpdate() == 1;
         }
     }
-
+    // tìm các biến thể cùng sản phẩm đó, ktra ket noi
     public ProductVariant findAvailableVariant(long variantId) {
         try (Connection conn = requireConnection()) {
             return findAvailableVariant(conn, variantId);
@@ -191,7 +192,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // ham tim
     private ProductVariant findAvailableVariant(Connection conn, long variantId) throws SQLException {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -215,7 +216,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // ktra ket noi va tim cart item
     public CartItem findCartItemById(long cartId, long cartItemId) {
         try (Connection conn = requireConnection()) {
             return findCartItem(conn, cartId, cartItemId, true);
@@ -223,7 +224,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // tim cart item
     private CartItem findCartItem(Connection conn, long cartId, long id, boolean byItemId) throws SQLException {
         String sql = "SELECT cart_item_id, variant_id, quantity FROM cart_items WHERE cart_id = ? AND "
                 + (byItemId ? "cart_item_id = ?" : "variant_id = ?");
@@ -244,7 +245,7 @@ public class CartDAO extends DBContext {
             }
         }
     }
-
+    // them sp vao gio hang
     public boolean addCartItem(long customerId, long cartId, long variantId, int quantity) {
         validateQuantity(quantity);
         try (Connection conn = requireConnection()) {
@@ -284,7 +285,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // kiểm tra đối tượng khi sửa số lượng
     public boolean updateCartItemQuantity(long customerId, long cartId, long cartItemId, int quantity) {
         validateQuantity(quantity);
         try (Connection conn = requireConnection()) {
@@ -313,7 +314,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // đổi biến thể 
     public boolean changeCartItemVariant(long customerId, long cartId, long cartItemId,
             long newVariantId) {
         try (Connection conn = requireConnection()) {
@@ -337,6 +338,11 @@ public class CartDAO extends DBContext {
                         || currentVariant.getProduct().getProductId()
                         != newVariant.getProduct().getProductId()) {
                     throw new IllegalArgumentException("Biến thể thay thế không hợp lệ!");
+                }
+
+                if (current.getVariant().getVariantId() == newVariantId) {
+                    conn.commit();
+                    return true;
                 }
 
                 CartItem existingTarget = findCartItem(conn, cartId, newVariantId, false);
@@ -379,7 +385,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // tìm biến thể theo ID kh quan tâm đến trạng thái biến thể
     private ProductVariant findVariantIncludingUnavailable(Connection conn, long variantId)
             throws SQLException {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
@@ -395,7 +401,7 @@ public class CartDAO extends DBContext {
             }
         }
     }
-
+    // xóa 1 item
     private boolean deleteItemByCart(Connection conn, long cartId, long cartItemId)
             throws SQLException {
         String sql = "DELETE FROM cart_items WHERE cart_id = ? AND cart_item_id = ?";
@@ -405,7 +411,7 @@ public class CartDAO extends DBContext {
             return ps.executeUpdate() == 1;
         }
     }
-
+    // cập nhật số lượng của một dòng trong giỏ hàng
     private boolean updateQuantity(Connection conn, long customerId, long cartId, long cartItemId, int quantity)
             throws SQLException {
         String sql = "UPDATE ci SET quantity = ?, updated_at = GETDATE() FROM cart_items ci "
@@ -419,7 +425,7 @@ public class CartDAO extends DBContext {
             return ps.executeUpdate() == 1;
         }
     }
-
+    // xóa 1 sp ra khỏi giỏ
     public boolean deleteCartItem(long customerId, long cartId, long cartItemId) {
         String sql = "DELETE ci FROM cart_items ci INNER JOIN carts c ON ci.cart_id = c.cart_id "
                 + "WHERE ci.cart_item_id = ? AND ci.cart_id = ? AND c.customer_id = ?";
@@ -447,7 +453,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // xóa toàn bộ sản phẩm 
     public boolean clearCart(long cartId) {
         String sql = "DELETE FROM cart_items WHERE cart_id = ?";
         try (Connection conn = requireConnection();
@@ -458,7 +464,7 @@ public class CartDAO extends DBContext {
             throw databaseFailure(ex);
         }
     }
-
+    // kiểm tra có đúng người dùng không - khóa giỏ trong transaction 
     private boolean lockCart(Connection conn, long customerId, long cartId) throws SQLException {
         String sql = "SELECT cart_id FROM carts WITH (UPDLOCK, HOLDLOCK) WHERE cart_id = ? AND customer_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -469,13 +475,13 @@ public class CartDAO extends DBContext {
             }
         }
     }
-
+    // số lượng > 0
     private void validateQuantity(int quantity) {
         if (quantity <= 0) {
             throw new IllegalArgumentException("Số lượng phải lớn hơn 0!");
         }
     }
-
+    // kiểm tra biến thể còn khả dụng không
     private void validateStock(ProductVariant variant, long quantity) {
         if (variant == null) {
             throw new IllegalArgumentException("Sản phẩm hiện không khả dụng!");
@@ -484,7 +490,7 @@ public class CartDAO extends DBContext {
             throw new IllegalArgumentException("Số lượng vượt quá tồn kho!");
         }
     }
-
+    // kết nối db
     private Connection requireConnection() throws SQLException {
         Connection conn = getConnection();
         if (conn == null) {
@@ -492,7 +498,7 @@ public class CartDAO extends DBContext {
         }
         return conn;
     }
-
+    // rollback khi lỗi
     private void rollback(Connection conn, Exception cause) {
         try {
             conn.rollback();
@@ -501,12 +507,12 @@ public class CartDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Cannot roll back cart operation", ex);
         }
     }
-
+    // báo lỗi
     private IllegalStateException databaseFailure(SQLException cause) {
         LOGGER.log(Level.SEVERE, "Cart database operation failed", cause);
         return new IllegalStateException("Không thể xử lý giỏ hàng. Vui lòng thử lại sau!", cause);
     }
-
+    // ánh xạ 
     private ProductVariant mapVariant(ResultSet rs) throws SQLException {
         Product product = new Product();
         product.setProductId(rs.getLong("product_id"));

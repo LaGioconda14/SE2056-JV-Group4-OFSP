@@ -373,9 +373,26 @@
                                         </div>
                                         <div class="flex flex-col min-w-0 pl-1">
                                             <span class="font-headline-sm text-headline-sm text-on-surface truncate"><c:out value="${item.variant.product.name}"/></span>
-                                            <span class="text-body-sm font-body-sm text-on-surface-variant">
-                                                <c:out value="${item.variant.variantName}"/> <c:if test="${not empty item.variant.unit}">- <c:out value="${item.variant.unit}"/></c:if>
-                                            </span>
+                                            <c:choose>
+                                                <c:when test="${not empty item.alternativeVariants}">
+                                                    <button type="button"
+                                                            class="group/variant flex items-center gap-1 text-left text-body-sm font-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                                                            onclick="openVariantDialog('${item.cartItemID}')"
+                                                            aria-haspopup="dialog"
+                                                            aria-controls="variant-dialog-${item.cartItemID}">
+                                                        <span>
+                                                            Phân loại hàng:
+                                                            <strong class="font-semibold"><c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}"> - <c:out value="${item.variant.unit}"/></c:if></strong>
+                                                        </span>
+                                                        <span class="material-symbols-outlined text-[17px] transition-transform group-hover/variant:translate-y-0.5">expand_more</span>
+                                                    </button>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-body-sm font-body-sm text-on-surface-variant">
+                                                        <c:out value="${item.variant.variantName}"/> <c:if test="${not empty item.variant.unit}">- <c:out value="${item.variant.unit}"/></c:if>
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
                                             <c:choose>
                                                 <c:when test="${available}"><div class="flex items-center gap-1.5 mt-1 text-primary text-[12px] font-medium"><span class="material-symbols-outlined text-[14px]">check_circle</span><span>Còn hàng · Kho: <c:out value="${item.variant.stockQuantity}"/></span></div></c:when>
                                                 <c:when test="${variantUnavailable}"><div class="flex items-center gap-1.5 mt-1 text-amber-700 text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">swap_horiz</span><span>Phân loại này đã hết hàng</span></div></c:when>
@@ -451,18 +468,43 @@
                                     </div>
                                 </div>
                             </div>
-                            <c:if test="${variantUnavailable and not empty item.alternativeVariants}">
-                                <dialog id="variant-dialog-${item.cartItemID}" class="rounded-2xl border border-outline-variant/40 shadow-2xl p-0 w-[min(520px,calc(100%-24px))] backdrop:bg-black/40">
+                            <c:if test="${not empty item.alternativeVariants}">
+                                <dialog id="variant-dialog-${item.cartItemID}" aria-labelledby="variant-dialog-title-${item.cartItemID}" class="rounded-2xl border border-outline-variant/40 shadow-2xl p-0 w-[min(520px,calc(100%-24px))] backdrop:bg-black/40 backdrop:backdrop-blur-sm">
                                     <form method="post" action="<c:out value='${changeVariantUrl}'/>" class="p-5">
                                         <input type="hidden" name="cartItemId" value="${item.cartItemID}">
                                         <c:if test="${not empty sessionScope.cartCsrfToken}"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"></c:if>
-                                        <h3 class="font-bold text-lg mb-1">Chọn phân loại thay thế</h3><p class="text-sm text-on-surface-variant mb-4">Số lượng sẽ được giữ lại trong giới hạn tồn kho của phân loại mới.</p>
+                                        <div class="flex items-start justify-between gap-4 mb-1">
+                                            <div>
+                                                <h3 id="variant-dialog-title-${item.cartItemID}" class="font-bold text-lg">Chọn phân loại hàng</h3>
+                                                <p class="text-sm text-on-surface-variant mt-1"><c:out value="${item.variant.product.name}"/></p>
+                                            </div>
+                                            <button type="button" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" aria-label="Đóng" onclick="closeVariantDialog('${item.cartItemID}')">
+                                                <span class="material-symbols-outlined text-[20px]">close</span>
+                                            </button>
+                                        </div>
+                                        <p class="text-sm text-on-surface-variant mb-4">Số lượng sẽ được giữ lại trong giới hạn tồn kho của phân loại mới.</p>
                                         <div class="flex flex-col gap-2">
+                                            <c:if test="${available}">
+                                                <label class="p-3 border-2 border-primary bg-primary/5 rounded-xl flex items-center gap-3 cursor-pointer">
+                                                    <input type="radio" name="variantId" value="${item.variant.variantId}" checked required class="accent-primary">
+                                                    <span class="flex-1 min-w-0">
+                                                        <strong class="block text-on-surface"><c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}"> - <c:out value="${item.variant.unit}"/></c:if></strong>
+                                                        <small class="text-on-surface-variant"><fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> · Còn <c:out value="${item.variant.stockQuantity}"/></small>
+                                                    </span>
+                                                    <span class="text-xs font-bold text-primary">Đang chọn</span>
+                                                </label>
+                                            </c:if>
                                             <c:forEach var="alternative" items="${item.alternativeVariants}" varStatus="alternativeStatus">
-                                                <label class="p-3 border border-outline-variant/40 rounded-xl flex items-center gap-3 cursor-pointer hover:border-primary"><input type="radio" name="variantId" value="${alternative.variantId}" <c:if test="${alternativeStatus.first}">checked</c:if> required><span class="flex-1"><strong class="block"><c:out value="${alternative.variantName}"/></strong><small class="text-on-surface-variant"><fmt:formatNumber value="${alternative.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> · Còn <c:out value="${alternative.stockQuantity}"/></small></span></label>
+                                                <label class="p-3 border border-outline-variant/40 rounded-xl flex items-center gap-3 cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                                                    <input type="radio" name="variantId" value="${alternative.variantId}" <c:if test="${variantUnavailable and alternativeStatus.first}">checked</c:if> required class="accent-primary">
+                                                    <span class="flex-1 min-w-0">
+                                                        <strong class="block text-on-surface"><c:out value="${alternative.variantName}"/><c:if test="${not empty alternative.unit}"> - <c:out value="${alternative.unit}"/></c:if></strong>
+                                                        <small class="text-on-surface-variant"><fmt:formatNumber value="${alternative.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> · Còn <c:out value="${alternative.stockQuantity}"/></small>
+                                                    </span>
+                                                </label>
                                             </c:forEach>
                                         </div>
-                                        <div class="flex justify-end gap-2 mt-5"><button type="button" class="px-4 py-2 rounded-xl border border-outline-variant/40" onclick="closeVariantDialog('${item.cartItemID}')">Hủy</button><button type="submit" class="px-4 py-2 rounded-xl bg-primary text-white font-bold">Xác nhận đổi</button></div>
+                                        <div class="flex justify-end gap-2 mt-5"><button type="button" class="px-4 py-2 rounded-xl border border-outline-variant/40 hover:bg-surface-container transition-colors" onclick="closeVariantDialog('${item.cartItemID}')">Trở lại</button><button type="submit" class="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-on-primary-fixed-variant transition-colors">Xác nhận</button></div>
                                     </form>
                                 </dialog>
                             </c:if>
