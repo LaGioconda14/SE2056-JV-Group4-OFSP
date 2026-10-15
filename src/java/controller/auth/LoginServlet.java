@@ -18,7 +18,7 @@ import service.impl.UserServiceImpl;
 /**
  * Controller handling User Login and Remember Me Cookies.
  */
-@WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
+@WebServlet(name = "LoginServlet", urlPatterns = {"/login", "/LoginServlet", "/login.jsp"})
 public class LoginServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();

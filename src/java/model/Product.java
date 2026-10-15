@@ -6,12 +6,15 @@ import java.util.List;
 
 public class Product {
     private long id;
+    private long shopId;
+    private int categoryId;
     private String name;
     private String categoryName;
-    private int categoryId;
     private String image;
+    private String thumbnailUrl;
     private BigDecimal price;
     private BigDecimal oldPrice;
+    private BigDecimal minPrice;
     private int discountPercent;
     private double rating;
     private int reviewsCount;
@@ -21,11 +24,11 @@ public class Product {
     private String tag;             // Tag badge: LOCAL, ORGANIC, CRUNCHY, -17% SALE, SUPER SWEET
     private String unit;            // lb, kg, bunch, bag, box, clamshell
     private boolean inStock;        // Tồn kho còn hàng
+    private boolean active;
     private int stockQuantity;
     private String description;
     private String storageTemp;
     private String certification;
-    private long shopId;
     private String categorySlug;
     private String filterSlugs;
     
@@ -36,6 +39,7 @@ public class Product {
     public Product() {
         this.unit = "lb";
         this.inStock = true;
+        this.active = true;
         this.images = new ArrayList<>();
         this.variants = new ArrayList<>();
     }
@@ -45,6 +49,7 @@ public class Product {
         this.name = name;
         this.categoryName = categoryName;
         this.image = image;
+        this.thumbnailUrl = image;
         this.price = price;
         this.oldPrice = oldPrice;
         this.discountPercent = discountPercent;
@@ -52,12 +57,16 @@ public class Product {
         this.reviewsCount = reviewsCount;
         this.unit = "lb";
         this.inStock = true;
+        this.active = true;
         this.images = new ArrayList<>();
         this.variants = new ArrayList<>();
     }
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
+
+    public long getProductId() { return id; }
+    public void setProductId(long productId) { this.id = productId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -68,14 +77,30 @@ public class Product {
     public int getCategoryId() { return categoryId; }
     public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public String getImage() { return image != null ? image : thumbnailUrl; }
+    public void setImage(String image) {
+        this.image = image;
+        if (this.thumbnailUrl == null) {
+            this.thumbnailUrl = image;
+        }
+    }
+
+    public String getThumbnailUrl() { return thumbnailUrl != null ? thumbnailUrl : image; }
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+        if (this.image == null) {
+            this.image = thumbnailUrl;
+        }
+    }
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
 
     public BigDecimal getOldPrice() { return oldPrice; }
     public void setOldPrice(BigDecimal oldPrice) { this.oldPrice = oldPrice; }
+
+    public BigDecimal getMinPrice() { return minPrice; }
+    public void setMinPrice(BigDecimal minPrice) { this.minPrice = minPrice; }
 
     public int getDiscountPercent() { return discountPercent; }
     public void setDiscountPercent(int discountPercent) { this.discountPercent = discountPercent; }
@@ -97,6 +122,9 @@ public class Product {
 
     public boolean isInStock() { return inStock; }
     public void setInStock(boolean inStock) { this.inStock = inStock; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
     public int getStockQuantity() { return stockQuantity; }
     public void setStockQuantity(int stockQuantity) { this.stockQuantity = stockQuantity; }
