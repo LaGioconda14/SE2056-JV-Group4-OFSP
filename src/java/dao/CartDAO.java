@@ -124,8 +124,7 @@ public class CartDAO extends DBContext {
                             && !updateQuantityByCart(conn, cartId, item.getCartItemID(), item.getQuantity())) {
                         throw new SQLException("Cart quantity reconciliation failed");
                     }
-                    if ("AVAILABLE".equals(item.getAvailabilityStatus())
-                            || "VARIANT_UNAVAILABLE".equals(item.getAvailabilityStatus())) {
+                    if (!"NOT_FOUND".equals(item.getAvailabilityStatus())) {
                         item.setAlternativeVariants(findAlternativeVariants(conn,
                                 item.getVariant().getProduct().getProductId(),
                                 item.getVariant().getVariantId()));
@@ -160,8 +159,8 @@ public class CartDAO extends DBContext {
                 + "INNER JOIN products p ON p.product_id = pv.product_id "
                 + "INNER JOIN shops s ON s.shop_id = p.shop_id "
                 + "WHERE pv.product_id = ? AND pv.variant_id <> ? "
-                + "AND pv.is_active = 1 AND pv.stock_quantity > 0 "
-                + "AND p.is_active = 1 AND s.status = 'ACTIVE' ORDER BY pv.price";
+                + "AND p.is_active = 1 AND s.status = 'ACTIVE' "
+                + "ORDER BY CASE WHEN pv.is_active = 1 AND pv.stock_quantity > 0 THEN 0 ELSE 1 END, pv.price";
         List<ProductVariant> variants = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, productId);
