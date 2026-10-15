@@ -199,43 +199,39 @@ public class AdminDashboardDAO extends DBContext {
         }
     }
 
-    private void loadPendingShops(Connection conn, AdminDashboardStats stats) {
-        String sql = "SELECT TOP 5 request_id, shop_name, business_type, produce_specialty, "
-                   + "       certification_name, province, created_at "
-                   + "FROM shop_requests WHERE status = 'PENDING' ORDER BY created_at DESC";
+   private void loadPendingShops(Connection conn, AdminDashboardStats stats) {
+    // Chỉ chọn các cột thực tế có trong cơ sở dữ liệu của bạn
+    String sql = "SELECT TOP 5 request_id, shop_name, business_type, province, created_at "
+               + "FROM shop_requests WHERE status = 'PENDING' ORDER BY created_at DESC";
 
-        List<Map<String, Object>> list = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+    List<Map<String, Object>> list = new ArrayList<>();
+    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
-        try (Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            while (rs.next()) {
-                Map<String, Object> map = new HashMap<>();
-                long id = rs.getLong("request_id");
-                String name = rs.getString("shop_name");
-                String type = rs.getString("business_type");
-                String specialty = rs.getString("produce_specialty");
-                String cert = rs.getString("certification_name");
-                String province = rs.getString("province");
-                Timestamp createdAt = rs.getTimestamp("created_at");
+    try (Statement st = conn.createStatement();
+         ResultSet rs = st.executeQuery(sql)) {
+        while (rs.next()) {
+            Map<String, Object> map = new HashMap<>();
+            long id = rs.getLong("request_id");
+            String name = rs.getString("shop_name");
+            String type = rs.getString("business_type");
+            String province = rs.getString("province");
+            Timestamp createdAt = rs.getTimestamp("created_at");
 
-                map.put("requestId", id);
-                map.put("shopName", name);
-                map.put("businessType", type != null ? type : "Nhà vườn");
-                map.put("produceSpecialty", specialty != null ? specialty : "Trái cây đặc sản");
-                map.put("certificationName", cert != null ? cert : "Đang cập nhật");
-                map.put("province", province != null ? province : "Toàn quốc");
-                map.put("createdAtFormatted", createdAt != null ? sdf.format(createdAt) : "Hôm nay");
-                map.put("avatarAbbr", getAbbr(name));
-                list.add(map);
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Failed to load pending shop requests: " + ex.getMessage());
+            map.put("requestId", id);
+            map.put("shopName", name);
+            map.put("businessType", type != null ? type : "Nhà vườn");
+            map.put("province", province != null ? province : "Toàn quốc");
+            map.put("createdAtFormatted", createdAt != null ? sdf.format(createdAt) : "Hôm nay");
+            map.put("avatarAbbr", getAbbr(name));
+            
+            list.add(map);
         }
-
-        stats.setPendingShops(list);
+    } catch (SQLException ex) {
+        LOGGER.log(Level.WARNING, "Failed to load pending shop requests: " + ex.getMessage());
     }
 
+    stats.setPendingShops(list);
+}
     private void loadActiveDisputes(Connection conn, AdminDashboardStats stats) {
         String sql = "SELECT TOP 5 d.dispute_id, d.dispute_code, d.reason_category, d.complaint_text, "
                    + "       d.claim_amount, d.status, u.full_name AS customer_name, s.shop_name, d.created_at "

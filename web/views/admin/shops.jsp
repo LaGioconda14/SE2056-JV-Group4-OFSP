@@ -149,7 +149,6 @@
 
             <!-- 4. Filter Toolbar -->
             <form method="GET" action="${pageContext.request.contextPath}/admin/shops" class="users-filter-card" id="shopFilterForm">
-                <!-- Giữ trạng thái đang chọn từ hàng tab phía trên -->
                 <input type="hidden" name="status" value="${selectedStatus}">
 
                 <div class="users-search-pill">
@@ -158,8 +157,6 @@
                 </div>
 
                 <div class="users-dropdown-filters">
-
-                    <!-- Dropdown: Loại hình -->
                     <select name="type" id="typeFilterSelect" class="filter-select-btn" onchange="this.form.submit()">
                         <option value="ALL" ${selectedType == 'ALL' ? 'selected' : ''}>Loại hình: Tất cả</option>
                         <option value="Nhà vườn trực tiếp" ${selectedType == 'Nhà vườn trực tiếp' ? 'selected' : ''}>Nhà vườn trực tiếp</option>
@@ -169,7 +166,6 @@
                         <option value="Doanh nghiệp nhập khẩu" ${selectedType == 'Doanh nghiệp nhập khẩu' ? 'selected' : ''}>Doanh nghiệp nhập khẩu</option>
                     </select>
 
-                    <!-- Dropdown: Chứng nhận -->
                     <select name="cert" id="certFilterSelect" class="filter-select-btn" onchange="this.form.submit()">
                         <option value="ALL" ${selectedCert == 'ALL' ? 'selected' : ''}>Chứng nhận: Tất cả</option>
                         <option value="VietGAP" ${selectedCert == 'VietGAP' ? 'selected' : ''}>VietGAP</option>
@@ -182,7 +178,6 @@
                         <i class="bi bi-funnel"></i> Lọc
                     </button>
 
-                    <!-- Nút Đặt lại / Reset -->
                     <c:if test="${(not empty selectedStatus && selectedStatus != 'ALL') || (not empty selectedType && selectedType != 'ALL') || (not empty selectedCert && selectedCert != 'ALL') || not empty searchKeyword}">
                         <a href="${pageContext.request.contextPath}/admin/shops" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px;">
                             <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
@@ -220,10 +215,9 @@
                         <tr>
                             <th>THÔNG TIN GIAN HÀNG & CHỦ SỞ HỮU</th>
                             <th>MÔ HÌNH KINH DOANH</th>
-                            <th>CHỨNG TỪ & TIÊU CHUẨN</th>
-                            <th>DOANH SỐ / ĐƠN HÀNG</th>
-                            <th>CHIẾT KHẤU</th>
+                            <th>THÔNG TIN THANH TOÁN</th>
                             <th>TRẠNG THÁI</th>
+                            <th>THAO TÁC DUYỆT KYC</th>
                         </tr>
                     </thead>
                     <tbody id="shopsTableBody">
@@ -231,13 +225,20 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="user-summary-icon-box bg-green-subtle" style="width: 36px; height: 36px; font-size: 0.95rem; flex-shrink: 0;">
-                                            <i class="bi bi-shop text-success"></i>
-                                        </div>
+                                        <c:choose>
+                                            <c:when test="${not empty s.shopLogoUrl}">
+                                                <img src="${s.shopLogoUrl}" class="rounded-circle" width="36" height="36" style="object-fit: cover;">
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div class="user-summary-icon-box bg-green-subtle" style="width: 36px; height: 36px; font-size: 0.95rem; flex-shrink: 0;">
+                                                    <i class="bi bi-shop text-success"></i>
+                                                </div>
+                                            </c:otherwise>
+                                        </c:choose>
                                         <div>
                                             <strong class="text-dark fs-6" style="font-size: 0.85rem !important;">${s.shopName}</strong>
-                                            <div class="text-muted" style="font-size: 0.7rem;">Chủ: ${s.ownerName} • ${s.ownerEmail}</div>
-                                            <div class="text-muted" style="font-size: 0.68rem;"><i class="bi bi-geo-alt"></i> ${s.province}</div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">CCCD: ${s.idCardNumber} • MST: ${not empty s.taxCode ? s.taxCode : 'Không có'}</div>
+                                            <div class="text-muted" style="font-size: 0.68rem;"><i class="bi bi-geo-alt"></i> ${s.streetAddress}, ${s.ward}, ${s.district}, ${s.province}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -247,40 +248,58 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge bg-light text-dark border">
-                                        <i class="bi bi-shield-check text-success"></i> ${s.certificationName}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div>
-                                        <strong class="text-success">${s.totalSalesFormatted}</strong>
-                                        <div class="text-muted" style="font-size: 0.68rem;">${s.totalOrdersCount} đơn hoàn tất</div>
+                                    <div style="font-size: 0.75rem;">
+                                        <div><strong>Ngân hàng:</strong> ${s.bankName}</div>
+                                        <div><strong>STK:</strong> ${s.bankAccountNumber}</div>
+                                        <div><strong>Chủ TK:</strong> ${s.bankAccountHolder}</div>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-bold text-dark">${s.commissionRate}</span>
-                                </td>
-                                <td>
                                     <c:choose>
-                                        <c:when test="${s.status == 'ACTIVE'}">
-                                            <span class="status-pill-green">Hoạt động</span>
+                                        <c:when test="${s.status == 'ACTIVE' || s.status == 'APPROVED'}">
+                                            <span class="status-pill-green">Đã duyệt</span>
                                         </c:when>
-                                        <c:when test="${s.status == 'PENDING_KYC'}">
+                                        <c:when test="${s.status == 'PENDING' || s.status == 'PENDING_KYC'}">
                                             <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.68rem; font-weight: 700;">Chờ duyệt KYC</span>
                                         </c:when>
-                                        <c:when test="${s.status == 'SUSPENDED'}">
-                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.68rem; font-weight: 700;">Tạm khóa</span>
+                                        <c:when test="${s.status == 'REJECTED'}">
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.68rem; font-weight: 700;">Đã từ chối</span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="status-pill-warning">${s.status}</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <!-- Nút xem chi tiết -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.72rem;" 
+                                                onclick="viewDetail('${s.shopName}', '${s.idCardNumber}', '${s.taxCode}', '${pageContext.request.contextPath}/${s.idCardFrontUrl}', '${pageContext.request.contextPath}/${s.idCardBackUrl}', '${s.shopDescription}', '${s.pickupAddress}', '${s.returnAddress}')">
+                                            <i class="bi bi-eye"></i> Chi tiết
+                                        </button>
+                                        
+                                        <c:if test="${s.status == 'PENDING' || s.status == 'PENDING_KYC'}">
+                                            <!-- Nút Duyệt -->
+                                            <form action="${pageContext.request.contextPath}/admin/shops" method="GET" style="display:inline;" onsubmit="return confirm('Bạn chắc chắn muốn duyệt gian hàng ${s.shopName}?');">
+                                                <input type="hidden" name="action" value="approve">
+                                                <input type="hidden" name="id" value="${s.requestId}">
+                                                <button type="submit" class="btn btn-sm btn-success py-0 px-2" style="font-size: 0.72rem;">
+                                                    <i class="bi bi-check-lg"></i> Duyệt
+                                                </button>
+                                            </form>
+                                            <!-- Nút Từ chối -->
+                                            <button type="button" class="btn btn-sm btn-danger py-0 px-2" style="font-size: 0.72rem;" 
+                                                    onclick="openRejectModal('${s.requestId}', '${s.shopName}')">
+                                                <i class="bi bi-x-lg"></i> Từ chối
+                                            </button>
+                                        </c:if>
+                                    </div>
+                                </td>
                             </tr>
                         </c:forEach>
                         <c:if test="${empty shopsList}">
                             <tr>
-                                <td colspan="6" class="text-center text-muted py-4">Chưa có gian hàng nào trong danh sách.</td>
+                                <td colspan="5" class="text-center text-muted py-4">Chưa có gian hàng nào trong danh sách.</td>
                             </tr>
                         </c:if>
                     </tbody>
@@ -426,7 +445,93 @@
     </div>
 </div>
 
+<!-- MODAL XEM CHI TIẾT HỒ SƠ KYC -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-success"><i class="bi bi-file-earmark-text"></i> Chi Tiết Hồ Sơ KYC: <span id="modalShopName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <p><strong>Số CCCD:</strong> <span id="modalIdCard"></span></p>
+                        <p><strong>Mã số thuế:</strong> <span id="modalTaxCode"></span></p>
+                        <p><strong>Địa chỉ lấy hàng:</strong> <span id="modalPickup"></span></p>
+                        <p><strong>Địa chỉ trả hàng:</strong> <span id="modalReturn"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Mô tả cửa hàng:</strong> <br><span id="modalDesc" class="text-muted"></span></p>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <label class="form-label fw-bold">Ảnh CCCD Mặt Trước</label>
+                        <div><img id="modalFrontImg" src="" class="img-fluid border rounded" style="max-height: 200px; object-fit: contain;"></div>
+                    </div>
+                    <div class="col-md-6 text-center">
+                        <label class="form-label fw-bold">Ảnh CCCD Mặt Sau</label>
+                        <div><img id="modalBackImg" src="" class="img-fluid border rounded" style="max-height: 200px; object-fit: contain;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TỪ CHỐI ĐƠN (CÓ NHẬP LÝ DO) -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="${pageContext.request.contextPath}/admin/shops" method="GET">
+            <input type="hidden" name="action" value="reject">
+            <input type="hidden" name="id" id="rejectRequestId">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Từ Chối Đơn Đăng Ký: <span id="rejectShopName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Vui lòng nhập lý do từ chối (Gửi thông báo về cho người bán): <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="reason" rows="4" placeholder="Ví dụ: Ảnh CCCD bị mờ, không rõ số hoặc thông tin ngân hàng không hợp lệ..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Xác Nhận Từ Chối</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/js/admin.js?v=12"></script>
+
+<script>
+    function viewDetail(name, idCard, tax, frontUrl, backUrl, desc, pickup, ret) {
+        document.getElementById('modalShopName').innerText = name;
+        document.getElementById('modalIdCard').innerText = idCard;
+        document.getElementById('modalTaxCode').innerText = tax && tax !== 'null' ? tax : 'Không có';
+        document.getElementById('modalPickup').innerText = pickup && pickup !== 'null' ? pickup : 'Không có';
+        document.getElementById('modalReturn').innerText = ret && ret !== 'null' ? ret : 'Không có';
+        document.getElementById('modalDesc').innerText = desc && desc !== 'null' ? desc : 'Không có mô tả';
+        document.getElementById('modalFrontImg').src = frontUrl;
+        document.getElementById('modalBackImg').src = backUrl;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('detailModal'));
+        myModal.show();
+    }
+
+    function openRejectModal(id, name) {
+        document.getElementById('rejectRequestId').value = id;
+        document.getElementById('rejectShopName').innerText = name;
+        
+        var myModal = new bootstrap.Modal(document.getElementById('rejectModal'));
+        myModal.show();
+    }
+</script>
 </body>
 </html>

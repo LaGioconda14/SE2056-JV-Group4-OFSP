@@ -1,5 +1,6 @@
 package dao;
 
+import model.ShopRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -58,81 +59,95 @@ public class AdminManagementDAO extends DBContext {
         return stats;
     }
 
-    public List<Map<String, Object>> getShopsList() {
-        return getShopsList(null, null, null, null);
-    }
+public List<Map<String, Object>> getShopsList(String statusFilter, String typeFilter, String certFilter, String searchKeyword) {
+    List<Map<String, Object>> list = new ArrayList<>();
+    StringBuilder sql = new StringBuilder();
+    
+    // Truy vấn từ bảng shop_requests kết hợp với bảng users
+    sql.append("SELECT sr.request_id as shop_id, sr.shop_name, sr.business_type, sr.province, ")
+       .append("       sr.status, sr.id_card_number, sr.tax_code, sr.street_address, sr.ward, sr.district, ")
+       .append("       sr.bank_name, sr.bank_account_number, sr.bank_account_holder, ")
+       .append("       sr.shop_logo_url, sr.id_card_front_url, sr.id_card_back_url, sr.shop_description, sr.pickup_address, sr.return_address, ")
+       .append("       u.full_name as owner_name, u.email as owner_email ")
+       .append("FROM shop_requests sr ")
+       .append("JOIN users u ON sr.user_id = u.user_id ");
 
-    public List<Map<String, Object>> getShopsList(String statusFilter, String typeFilter, String certFilter, String searchKeyword) {
-        List<Map<String, Object>> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT s.shop_id, s.shop_name, s.business_type, s.province, s.certification_name, ")
-           .append("       s.commission_rate, s.total_sales_amount, s.total_orders_count, s.status, ")
-           .append("       u.full_name as owner_name, u.email as owner_email ")
-           .append("FROM shops s ")
-           .append("JOIN users u ON s.owner_id = u.user_id ");
+    List<String> conditions = new ArrayList<>();
+    List<Object> params = new ArrayList<>();
 
-        List<String> conditions = new ArrayList<>();
-        List<Object> params = new ArrayList<>();
-
-        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
-            conditions.add("s.status = ?");
+    if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
+        if ("PENDING_KYC".equalsIgnoreCase(statusFilter.trim()) || "PENDING".equalsIgnoreCase(statusFilter.trim())) {
+            conditions.add("(sr.status = 'PENDING' OR sr.status = 'PENDING_KYC')");
+        } else {
+            conditions.add("sr.status = ?");
             params.add(statusFilter.trim());
         }
-
-        if (typeFilter != null && !typeFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(typeFilter.trim())) {
-            conditions.add("s.business_type = ?");
-            params.add(typeFilter.trim());
-        }
-
-        if (certFilter != null && !certFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(certFilter.trim())) {
-            conditions.add("LOWER(s.certification_name) LIKE ?");
-            params.add("%" + certFilter.trim().toLowerCase() + "%");
-        }
-
-        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-            String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
-            conditions.add("(LOWER(s.shop_name) LIKE ? OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(s.province) LIKE ? OR CAST(s.shop_id AS VARCHAR(20)) LIKE ?)");
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-        }
-
-        if (!conditions.isEmpty()) {
-            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
-        }
-        sql.append("ORDER BY s.shop_id ASC");
-
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-
-            for (int i = 0; i < params.size(); i++) {
-                ps.setObject(i + 1, params.get(i));
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, Object> item = new HashMap<>();
-                    item.put("shopId", rs.getLong("shop_id"));
-                    item.put("shopName", rs.getString("shop_name"));
-                    item.put("businessType", rs.getString("business_type"));
-                    item.put("province", rs.getString("province"));
-                    item.put("certificationName", rs.getString("certification_name"));
-                    item.put("commissionRate", String.format("%.1f%%", rs.getDouble("commission_rate")));
-                    item.put("totalSalesFormatted", CURRENCY_FORMAT.format(rs.getDouble("total_sales_amount")));
-                    item.put("totalOrdersCount", rs.getInt("total_orders_count"));
-                    item.put("status", rs.getString("status"));
-                    item.put("ownerName", rs.getString("owner_name"));
-                    item.put("ownerEmail", rs.getString("owner_email"));
-                    list.add(item);
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Error in getShopsList: " + ex.getMessage());
-        }
-        return list;
     }
+
+    if (typeFilter != null && !typeFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(typeFilter.trim())) {
+        conditions.add("sr.business_type = ?");
+        params.add(typeFilter.trim());
+    }
+
+    // Nếu có tìm kiếm từ khóa
+    if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
+        String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
+        conditions.add("(LOWER(sr.shop_name) LIKE ? OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(sr.province) LIKE ?)");
+        params.add(kw);
+        params.add(kw);
+        params.add(kw);
+        params.add(kw);
+    }
+
+    if (!conditions.isEmpty()) {
+        sql.append(" WHERE ").append(String.join(" AND ", conditions));
+    }
+    sql.append(" ORDER BY sr.request_id DESC"); // Đã thêm khoảng trắng bảo vệ trước ORDER BY
+
+    try (Connection conn = getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+        for (int i = 0; i < params.size(); i++) {
+            ps.setObject(i + 1, params.get(i));
+        }
+
+        try (ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> item = new HashMap<>();
+                long reqId = rs.getLong("shop_id");
+                
+                item.put("shopId", reqId);
+                item.put("requestId", reqId); // Đảm bảo gán đúng requestId dạng Long
+                item.put("shopName", rs.getString("shop_name"));
+                item.put("businessType", rs.getString("business_type"));
+                item.put("province", rs.getString("province"));
+                item.put("status", rs.getString("status"));
+                item.put("idCardNumber", rs.getString("id_card_number"));
+                item.put("taxCode", rs.getString("tax_code"));
+                item.put("streetAddress", rs.getString("street_address"));
+                item.put("ward", rs.getString("ward"));
+                item.put("district", rs.getString("district"));
+                item.put("bankName", rs.getString("bank_name"));
+                item.put("bankAccountNumber", rs.getString("bank_account_number"));
+                item.put("bankAccountHolder", rs.getString("bank_account_holder"));
+                item.put("shopLogoUrl", rs.getString("shop_logo_url"));
+                item.put("idCardFrontUrl", rs.getString("id_card_front_url"));
+                item.put("idCardBackUrl", rs.getString("id_card_back_url"));
+                item.put("shopDescription", rs.getString("shop_description"));
+                item.put("pickupAddress", rs.getString("pickup_address"));
+                item.put("returnAddress", rs.getString("return_address"));
+                item.put("ownerName", rs.getString("owner_name"));
+                item.put("ownerEmail", rs.getString("owner_email"));
+                
+                list.add(item);
+            }
+        }
+    } catch (SQLException ex) {
+        System.err.println("Lỗi SQL tại getShopsList: " + ex.getMessage());
+        ex.printStackTrace();
+    }
+    return list;
+}
 
     // -------------------------------------------------------------------------
     // 2. USERS & ROLES
@@ -885,4 +900,98 @@ public class AdminManagementDAO extends DBContext {
         }
         return list;
     }
+    
+    public List<ShopRequest> getShopRequestsByStatus(String status) {
+        List<ShopRequest> list = new ArrayList<>();
+        String sql = "SELECT * FROM [dbo].[shop_requests]";
+        if (status != null && !status.equals("ALL")) {
+            sql += " WHERE status = ?";
+        }
+        sql += " ORDER BY created_at DESC";
+
+        try (Connection conn = this.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (status != null && !status.equals("ALL")) {
+                ps.setString(1, status);
+            }
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ShopRequest r = new ShopRequest();
+                    r.setRequestId(rs.getInt("request_id"));
+                    r.setUserId(rs.getInt("user_id"));
+                    r.setShopName(rs.getString("shop_name"));
+                    r.setBusinessType(rs.getString("business_type"));
+                    r.setProvince(rs.getString("province"));
+                    r.setDistrict(rs.getString("district"));
+                    r.setWard(rs.getString("ward"));
+                    r.setStreetAddress(rs.getString("street_address"));
+                    r.setPickupAddress(rs.getString("pickup_address"));
+                    r.setReturnAddress(rs.getString("return_address"));
+                    r.setIdCardNumber(rs.getString("id_card_number"));
+                    r.setTaxCode(rs.getString("tax_code"));
+                    r.setIdCardFrontUrl(rs.getString("id_card_front_url"));
+                    r.setIdCardBackUrl(rs.getString("id_card_back_url"));
+                    r.setShopDescription(rs.getString("shop_description"));
+                    r.setShopLogoUrl(rs.getString("shop_logo_url"));
+                    r.setShopBannerUrl(rs.getString("shop_banner_url"));
+                    r.setBankName(rs.getString("bank_name"));
+                    r.setBankAccountNumber(rs.getString("bank_account_number"));
+                    r.setBankAccountHolder(rs.getString("bank_account_holder"));
+                    r.setStatus(rs.getString("status"));
+                    r.setReason(rs.getString("reason"));
+                    r.setCreatedAt(rs.getTimestamp("created_at"));
+                    list.add(r);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+ public boolean updateRequestStatus(int requestId, String status, String reason, int adminId) {
+    String sqlUpdateReq = "UPDATE [dbo].[shop_requests] "
+            + "SET status = ?, reason = ?, reviewed_by = ?, reviewed_at = GETDATE() "
+            + "WHERE request_id = ?";
+
+    String sqlUpdateUserRole = "UPDATE [dbo].[users] "
+            + "SET role_id = (SELECT role_id FROM [dbo].[roles] WHERE role_name = 'SELLER') "
+            + "WHERE user_id = (SELECT user_id FROM [dbo].[shop_requests] WHERE request_id = ?)";
+
+    try (Connection conn = this.getConnection()) {
+        conn.setAutoCommit(false);
+
+        // 1. Cập nhật trạng thái vào bảng shop_requests
+        try (PreparedStatement psReq = conn.prepareStatement(sqlUpdateReq)) {
+            psReq.setString(1, status);
+            psReq.setString(2, reason);
+            if (adminId > 0) {
+                psReq.setInt(3, adminId);
+            } else {
+                psReq.setNull(3, java.sql.Types.INTEGER);
+            }
+            psReq.setInt(4, requestId);
+
+            int affected = psReq.executeUpdate();
+            if (affected == 0) {
+                conn.rollback();
+                return false;
+            }
+        }
+
+        // 2. Nếu trạng thái là APPROVED -> Nâng quyền User lên SELLER
+        if ("APPROVED".equalsIgnoreCase(status)) {
+            try (PreparedStatement psUser = conn.prepareStatement(sqlUpdateUserRole)) {
+                psUser.setInt(1, requestId);
+                psUser.executeUpdate();
+            }
+        }
+
+        conn.commit();
+        return true;
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
 }
