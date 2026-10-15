@@ -26,7 +26,7 @@ public class ShopProductServiceImpl implements IShopProductService {
         this.shopDAO = new ShopDAO();
         this.reviewDAO = new ReviewDAO();
     }
-
+    //list sản phẩm
     @Override
     public List<ProductVariant> getVariantsByShopId(long shopId) throws Exception {
         if (shopId <= 0) {

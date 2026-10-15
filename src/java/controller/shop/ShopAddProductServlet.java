@@ -26,28 +26,6 @@ public class ShopAddProductServlet extends HttpServlet {
         
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
-
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-
-        // 1. Kiểm tra đăng nhập và phân quyền chủ shop
-        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        // 2. Lấy shopId
-        Long shopId = (Long) session.getAttribute("shopId");
-        if (shopId == null) {
-            shopId = shopProductService.getShopIDByOwnerID(user.getId());
-            if (shopId != null && shopId > 0) {
-                session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
-            }
-        }
-
         try {
             // 3. Tải danh sách danh mục để đổ vào Dropdown
             List<Category> categories = shopProductService.getAllCategories();

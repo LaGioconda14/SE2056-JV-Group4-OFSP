@@ -13,6 +13,7 @@ public interface IShopProductService {
     /**
      * Lấy danh sách sản phẩm & biến thể theo shopId đơn giản.
      */
+    //list sản phẩm
     List<ProductVariant> getVariantsByShopId(long shopId) throws Exception;
 
     /**

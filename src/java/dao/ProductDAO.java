@@ -4,7 +4,7 @@ import java.lang.System.Logger;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
@@ -743,8 +743,70 @@ public class ProductDAO extends DBContext {
         }
         return list;
     }
+    //list sản phẩm
     public List<ProductVariant> getVariantsByShopId(long shopId) {
-        return getFilteredVariantsByShop(shopId, null, null, null, null, null, 1, 100);
+        List<ProductVariant> list = new ArrayList<>();
+        String sql = "SELECT "
+                   + "    pv.variant_id, "
+                   + "    pv.product_id, "
+                   + "    pv.sku, "
+                   + "    pv.variant_name, "
+                   + "    pv.price, "
+                   + "    pv.original_price, "
+                   + "    pv.stock_quantity, "
+                   + "    pv.unit, "
+                   + "    COALESCE(pi.image_url, (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC)) AS image_url, "
+                   + "    pv.is_active, "
+                   + "    p.name AS product_name, "
+                   + "    p.origin, "
+                   + "    c.category_name, "
+                   + "    p.certification, "
+                   + "    (SELECT COUNT(*) FROM product_variants WHERE product_id = p.product_id) AS total_variants_count "
+                   + "FROM product_variants pv "
+                   + "JOIN products p ON pv.product_id = p.product_id "
+                   + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                   + "LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
+                   + "WHERE p.shop_id = ? "
+                   + "ORDER BY pv.variant_id DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setLong(1, shopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ProductVariant v = new ProductVariant();
+                    v.setVariantId(rs.getInt("variant_id"));
+                    v.setProductId(rs.getLong("product_id"));
+                    v.setSku(rs.getString("sku"));
+                    v.setVariantName(rs.getString("variant_name"));
+                    v.setPrice(rs.getDouble("price"));
+                    v.setOriginalPrice(rs.getDouble("original_price"));
+                    v.setStockQuantity(rs.getInt("stock_quantity"));
+                    v.setUnit(rs.getString("unit"));
+
+                    String img = rs.getString("image_url");
+                    if (img == null || img.trim().isEmpty()) {
+                        img = "https://images.unsplash.com/photo-14 64965911861-746a04b4bca6?w=100&h=100&fit=crop";
+                    }
+                    v.setImage(img);
+
+                    v.setIsActive(rs.getBoolean("is_active"));
+                    v.setProductName(rs.getString("product_name"));
+                    v.setOrigin(rs.getString("origin"));
+                    v.setCategoryName(rs.getString("category_name"));
+                    v.setCertification(rs.getString("certification"));
+                    v.setTotalVariantsCount(rs.getInt("total_variants_count"));
+
+                    list.add(v);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 
     public List<ProductVariant> getFilteredVariantsByShop(long shopId, String keyword, String categoryId, 
@@ -1497,5 +1559,156 @@ public class ProductDAO extends DBContext {
             e.printStackTrace();
         }
         return list;
+    }
+    
+    // 1: thêm sản phẩm, trả về product_id vừa tạo
+    private long insertProduct(Connection conn, long shopId, String name, int categoryId,
+            String origin, String storageTemp, String certification,
+            String description, boolean isActive) throws SQLException {
+
+        String sql = "INSERT INTO products (shop_id, category_id, name, slug, origin, storage_temp, "
+                + "certification, description, is_active, created_at, updated_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setLong(1, shopId);
+            if (categoryId > 0) {
+                ps.setInt(2, categoryId);
+            } else {
+                ps.setNull(2, java.sql.Types.INTEGER);   // không chọn danh mục -> NULL
+            }
+            ps.setString(3, name);
+            ps.setString(4, generateProductSlug(name));   // slug tự sinh từ tên
+            ps.setString(5, valueOrDefault(origin, "Đà Lạt, Lâm Đồng"));
+            ps.setString(6, valueOrDefault(storageTemp, "Kho lạnh 2°C - 8°C"));
+            ps.setString(7, valueOrDefault(certification, "VietGAP"));
+            ps.setString(8, description != null ? description : "");
+            ps.setBoolean(9, isActive);
+            ps.executeUpdate();
+
+            return getGeneratedId(ps);
+        }
+    }
+    
+    // ----------2: thêm biến thể, trả về variant_id vừa tạo ----------
+    private long insertVariant(Connection conn, long productId, String sku, String variantName,
+                               String unit, BigDecimal price, BigDecimal originalPrice,
+                               int stockQuantity, int lowStockThreshold, boolean isActive) throws SQLException {
+ 
+        String sql = "INSERT INTO product_variants (product_id, sku, variant_name, unit, price, "
+                   + "original_price, stock_quantity, low_stock_threshold, is_active, created_at, updated_at) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+ 
+        BigDecimal finalPrice = (price != null) ? price : BigDecimal.ZERO;
+ 
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setLong(1, productId);
+            ps.setString(2, makeUniqueSku(sku));
+            ps.setString(3, valueOrDefault(variantName, "Tiêu chuẩn"));
+            ps.setString(4, valueOrDefault(unit, "Hộp (500g - 1kg)"));
+            ps.setBigDecimal(5, finalPrice);
+            ps.setBigDecimal(6, originalPrice != null ? originalPrice : finalPrice);
+            ps.setInt(7, stockQuantity);
+            ps.setInt(8, lowStockThreshold > 0 ? lowStockThreshold : 10);
+            ps.setBoolean(9, isActive);
+            ps.executeUpdate();
+ 
+            return getGeneratedId(ps);
+        }
+    }
+    
+    // ---------- Bước 3: thêm ảnh (1 ảnh bìa + các ảnh chi tiết) ----------
+    private void insertImages(Connection conn, long productId, String coverImageUrl,
+                              List<String> detailImageUrls) throws SQLException {
+ 
+        String defaultCover = "https://images.unsplash.com/photo-1543528176-61b239494933?w=800&auto=format&fit=crop&q=80";
+ 
+        // Ảnh bìa: thứ tự 1, là thumbnail. Không có ảnh thì dùng ảnh mặc định.
+        insertOneImage(conn, productId, valueOrDefault(coverImageUrl, defaultCover), true, 1);
+ 
+        // Ảnh chi tiết: thứ tự từ 2 trở đi, không phải thumbnail
+        if (detailImageUrls != null) {
+            int order = 2;
+            for (String url : detailImageUrls) {
+                if (url != null && !url.trim().isEmpty()) {
+                    insertOneImage(conn, productId, url.trim(), false, order);
+                    order++;
+                }
+            }
+        }
+    }
+ 
+    private void insertOneImage(Connection conn, long productId, String url,
+                                boolean isThumbnail, int displayOrder) throws SQLException {
+        String sql = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) "
+                   + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setString(2, url);
+            ps.setBoolean(3, isThumbnail);
+            ps.setInt(4, displayOrder);
+            ps.executeUpdate();
+        }
+    }
+    
+    // ---------- Bước 4: thêm lô hàng đầu tiên (tồn kho ban đầu) ----------
+    private void insertFirstBatch(Connection conn, long productId, long variantId, String origin,
+                                  int stockQuantity, BigDecimal originalPrice) throws SQLException {
+ 
+        String sql = "INSERT INTO product_batches (batch_code, variant_id, farm_source, harvest_date, expiry_date, "
+                   + "initial_quantity, current_quantity, import_cost, freshness_score, harvest_time_label, "
+                   + "freshness_note, batch_type, pending_packing_text, status, created_at, updated_at) "
+                   + "VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATEADD(day, 7, CURRENT_TIMESTAMP), ?, ?, ?, 98, "
+                   + "N'05:30 Sáng nay', N'Độ tươi 98% (Vừa hái sáng nay)', N'Hái sáng', "
+                   + "N'0 Đơn chờ đóng gói', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+ 
+        // Mã lô dạng: LH-yyMMdd-<chữ cái>, ví dụ LH-261015-C
+        String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyMMdd"));
+        String batchCode = "LH-" + today + "-" + (char) ('A' + (productId % 26));
+ 
+        // Giá nhập tạm tính = 65% giá gốc
+        BigDecimal importCost = (originalPrice != null)
+                ? originalPrice.multiply(new BigDecimal("0.65"))
+                : BigDecimal.ZERO;
+ 
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, batchCode);
+            ps.setLong(2, variantId);
+            ps.setString(3, valueOrDefault(origin, "Vườn Đà Lạt"));
+            ps.setInt(4, stockQuantity);   // số lượng ban đầu
+            ps.setInt(5, stockQuantity);   // số lượng hiện tại (lúc đầu bằng nhau)
+            ps.setBigDecimal(6, importCost);
+            ps.executeUpdate();
+        }
+    }
+    // ---------- Các hàm phụ dùng chung ----------
+ 
+    // Lấy id do DB tự sinh sau khi INSERT. Không lấy được thì ném lỗi để transaction rollback.
+    private long getGeneratedId(PreparedStatement ps) throws SQLException {
+        try (ResultSet rs = ps.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+        }
+        throw new SQLException("Không lấy được id vừa tạo");
+    }
+ 
+    // Chuỗi null hoặc rỗng thì dùng giá trị mặc định, ngược lại cắt khoảng trắng hai đầu
+    private String valueOrDefault(String value, String defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        return value.trim();
+    }
+ 
+    // Nếu người dùng không nhập SKU hoặc SKU đã tồn tại thì tự sinh SKU mới
+    private String makeUniqueSku(String sku) {
+        String result = valueOrDefault(sku, "SKU-" + (System.currentTimeMillis() % 1000000));
+        int retry = 1;
+        while (isSkuExists(result)) {
+            result = "SKU-" + (System.currentTimeMillis() % 1000000) + "-" + retry;//SKU-123456-1,2,3,4,5
+            retry++;
+        }
+        return result;
     }
 }

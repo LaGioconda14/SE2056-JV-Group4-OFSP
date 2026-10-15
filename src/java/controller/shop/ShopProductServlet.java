@@ -86,9 +86,7 @@ public class ShopProductServlet extends HttpServlet {
             } catch (NumberFormatException ignored) {}
 
             // 4. Lấy dữ liệu sản phẩm theo bộ lọc và phân trang
-            List<ProductVariant> listVariants = shopProductService.getFilteredVariants(
-                shopId, keyword, categoryId, certification, stockLevel, statusTab, page, pageSize
-            );
+            List<ProductVariant> listVariants = shopProductService.getVariantsByShopId(shopId);
             int totalVariantsCount = shopProductService.countFilteredVariants(
                 shopId, keyword, categoryId, certification, stockLevel, statusTab
             );

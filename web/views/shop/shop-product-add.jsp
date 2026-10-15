@@ -45,12 +45,12 @@
                 <!-- Shop Profile Switcher Card -->
                 <div class="mt-3.5 bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold">
-                            <i class="fa-solid fa-tractor"></i>
-                        </div>
+                        <div class="w-9 h-9 rounded-full bg-[#166534] flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                        <img src="${sessionScope.shopLogo}" alt="Shop Logo" class="w-full h-full object-cover">
+                    </div>
                         <div class="leading-tight">
                             <div class="flex items-center gap-1">
-                                <span class="font-bold text-xs text-slate-800">Vườn Sạch Đà Lạt</span>
+                                <span class="font-bold text-xs text-slate-800">${sessionScope.shopName}</span>
                                 <i class="fa-solid fa-circle-check text-[10px] text-emerald-600"></i>
                             </div>
                             <span class="text-[10px] text-slate-500">Gian hàng chuẩn VietGAP</span>
@@ -204,12 +204,19 @@
 
             <!-- User profile -->
             <div class="flex items-center gap-2.5 pl-2 border-l border-slate-200">
-                <div class="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shadow-sm">
-                    PV
+                <div class="w-9 h-9 rounded-full bg-[#166534] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.user.avatarUrl}">
+                            <img src="${sessionScope.user.avatarUrl}" alt="Avatar" class="w-full h-full rounded-full object-cover">
+                        </c:when>
+                        <c:otherwise>
+                            <i class="fa-regular fa-user text-xs"></i>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
                 <div class="text-left hidden md:block">
-                    <div class="text-xs font-bold text-slate-800 leading-tight">Chủ Vườn Đà Lạt</div>
-                    <div class="text-[11px] text-slate-400 font-medium leading-tight">dalatfarm@freshfruit.vn</div>
+                    <div class="text-xs font-bold text-slate-800 leading-tight">${sessionScope.userfullname}</div>
+                    <div class="text-[11px] text-slate-400 font-medium leading-tight">${sessionScope.user.email}</div>
                 </div>
             </div>
         </div>
@@ -243,9 +250,6 @@
                             <i class="fa-solid fa-shield-check text-indigo-600"></i>
                             Mẫu chuẩn hóa VietGAP / OCOP
                         </span>
-                        <button type="button" onclick="submitForm('draft')" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-bold transition shadow-sm">
-                            Lưu nháp
-                        </button>
                         <button type="button" onclick="submitForm('publish')" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition shadow-sm flex items-center gap-2">
                             <i class="fa-solid fa-paper-plane text-xs"></i>
                             <span>Phát hành ngay lên sàn</span>

@@ -124,6 +124,7 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("shop", shop.getStatus());
                 session.setAttribute("shopObj", shop);
             }
+            session.setAttribute("userfullname",user.getFullName());
             session.setAttribute("email", user.getEmail());
             response.sendRedirect(request.getContextPath() + "/home");
         } else if ("ADMIN".equalsIgnoreCase(role)) {

@@ -28,20 +28,36 @@
     <aside class="shop-sidebar">
         <div>
             <!-- Shop Brand Header -->
-            <div class="shop-sidebar-brand">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-[#166534] flex items-center justify-center text-white text-lg shrink-0 shadow-sm">
-                        <i class="fa-solid fa-leaf text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <span class="font-extrabold text-sm text-gray-900 leading-tight block">
-                            ${not empty sessionScope.shopName ? sessionScope.shopName : 'Đà Lạt Organic'}
-                        </span>
-                        <span class="text-[10px] font-bold text-[#15803d] tracking-wider uppercase block">Kênh Người Bán</span>
-                    </div>
-                </div>
-                <span class="px-2 py-0.5 rounded-md bg-[#f1f5f9] text-[#64748b] text-[10px] font-black uppercase tracking-wider">SHOP</span>
-            </div>
+            <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm max-w-sm">
+    <!-- Cục bên trái: Avatar tròn + Tên shop và Phụ đề -->
+    <div class="flex items-center space-x-3">
+        <!-- Avatar tròn của Shop -->
+        <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-200 shadow-sm">
+            <c:choose>
+                <c:when test="${not empty shopLogo}">
+                    <img src="${shopLogo}" alt="Shop Avatar" class="w-full h-full object-cover">
+                </c:when>
+                <c:otherwise>
+                    <!-- Ảnh mặc định nếu chưa có logo -->
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" alt="Default Avatar" class="w-full h-full object-cover">
+                </c:otherwise>
+            </c:choose>
+        </div>
+
+        <!-- Tên shop & Kênh người bán -->
+        <div>
+            <h4 class="text-sm font-bold text-gray-900 leading-tight">HTX Trái Cây Miền Tây</h4>
+            <p class="text-xs font-medium text-emerald-600 mt-0.5">KÊNH NGƯỜI BÁN</p>
+        </div>
+    </div>
+
+    <!-- Cục bên phải: Badge chữ SHOP -->
+    <div>
+        <span class="px-2.5 py-1 text-[11px] font-bold text-slate-600 bg-slate-100 rounded-md tracking-wider">
+            SHOP
+        </span>
+    </div>
+</div>
 
             <!-- Sidebar Navigation Groups -->
             <nav class="space-y-1 mt-3">
@@ -178,7 +194,7 @@
                     <span class="text-xs font-bold text-gray-900 block leading-tight">
                         ${not empty sessionScope.user.fullName ? sessionScope.user.fullName : 'Phạm Văn Nông'}
                     </span>
-                    <span class="text-[11px] text-gray-500 block leading-tight">Chủ Vườn Đà Lạt</span>
+                        <span class="text-[11px] text-gray-500 block leading-tight">${sessionScope.email}</span>
                 </div>
                 <div class="w-9 h-9 rounded-full bg-[#166534] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
                     <c:choose>
@@ -263,7 +279,7 @@
                 <a href="${pageContext.request.contextPath}/shop/products?statusTab=all" 
                    class="status-tab-btn ${empty statusTab || statusTab == 'all' ? 'active' : ''}">
                     <span>Tất cả</span>
-                    <span class="status-tab-badge">${not empty tabAllCount && tabAllCount > 0 ? tabAllCount : 42}</span>
+                    <span class="status-tab-badge">${not empty tabAllCount && tabAllCount > 0 ? tabAllCount : 42}</span><%-- tabAllCount = totalSKU --%>
                 </a>
                 <a href="${pageContext.request.contextPath}/shop/products?statusTab=active" 
                    class="status-tab-btn ${statusTab == 'active' ? 'active' : ''}">
