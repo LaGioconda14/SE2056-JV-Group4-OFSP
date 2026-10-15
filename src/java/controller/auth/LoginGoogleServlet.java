@@ -38,21 +38,27 @@ public class LoginGoogleServlet extends HttpServlet {
             return;
         }
 
+        // If already logged in, redirect to home page or admin
+        if (session.getAttribute("user") != null) {
+            User loggedUser = (User) session.getAttribute("user");
+            if ("ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home");
+            }
+            return;
+        }
+
         String code = request.getParameter("code");
 
         // Step 1: If no authorization code, redirect user to Google consent page
         if (code == null || code.trim().isEmpty()) {
-            // If already logged in, redirect to home page
-            if (session.getAttribute("user") != null) {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-                return;
-            }
-
             // Check if Client ID and Secret are configured
             if (!GoogleOAuthUtil.isConfigured()) {
                 session.setAttribute("errorMessage", 
-                        "Tính năng đăng nhập Google chưa được cấu hình Client ID & Secret! "
-                        + "Vui lòng cập nhật GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET trong file GoogleOAuthUtil.java.");
+                        "Tính năng đăng nhập Google chưa được cấu hình Client ID & Secret từ Google Cloud! "
+                        + "<br><a href=\"" + request.getContextPath() + "/login-google?demo=1\" class=\"alert-link fw-bold text-decoration-underline mt-1 d-inline-block\">"
+                        + "<i class=\"bi bi-play-circle-fill me-1\"></i>Bấm vào đây để Đăng nhập thử nghiệm (Demo Google Login)</a>");
                 response.sendRedirect(request.getContextPath() + "/login");
                 return;
             }
@@ -74,6 +80,8 @@ public class LoginGoogleServlet extends HttpServlet {
             session.setAttribute("user", user);
             if (googleUser.getPicture() != null && !googleUser.getPicture().trim().isEmpty()) {
                 session.setAttribute("avatarUrl", googleUser.getPicture());
+            } else if (user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty()) {
+                session.setAttribute("avatarUrl", user.getAvatarUrl());
             }
 
             session.setAttribute("successMessage", "Đăng nhập Google thành công! Xin chào " + user.getFullName() + ".");
@@ -81,8 +89,20 @@ public class LoginGoogleServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/admin");
             } else {
                 response.sendRedirect(request.getContextPath() + "/home.jsp");
+
+            // Kiểm tra và cảnh báo nếu người dùng chưa cập nhật số điện thoại
+            if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
+                session.setAttribute("warningMessage", 
+                    "Tài khoản của bạn đăng ký qua Google hiện chưa có Số điện thoại! "
+                    + "Vui lòng cập nhật số điện thoại để thuận tiện nhận cuộc gọi giao hàng từ shipper.");
+                session.setAttribute("phoneMissingWarning", true);
             }
 
+            if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home");
+            }
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Google Authentication Error", ex);
             session.setAttribute("errorMessage", "Lỗi trong quá trình xác thực Google: " + ex.getMessage());

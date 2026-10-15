@@ -154,6 +154,81 @@
     <servlet-mapping>
         <servlet-name>AdminDisputeServlet</servlet-name>
         <url-pattern>/admin/disputes</url-pattern>
+
+        <!-- Shop Management Servlets -->
+    <servlet>
+        <servlet-name>ShopProductServlet</servlet-name>
+        <servlet-class>controller.shop.ShopProductServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopProductServlet</servlet-name>
+        <url-pattern>/shop/products</url-pattern>
+        <url-pattern>/shop</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ShopAddProductServlet</servlet-name>
+        <servlet-class>controller.shop.ShopAddProductServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopAddProductServlet</servlet-name>
+        <url-pattern>/shop/product/add</url-pattern>
+        <url-pattern>/shop/products/add</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ShopInventoryServlet</servlet-name>
+        <servlet-class>controller.shop.ShopInventoryServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopInventoryServlet</servlet-name>
+        <url-pattern>/shop/inventory</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ShopEditProductServlet</servlet-name>
+        <servlet-class>controller.shop.ShopEditProductServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopEditProductServlet</servlet-name>
+        <url-pattern>/shop/product/edit</url-pattern>
+        <url-pattern>/shop/products/edit</url-pattern>
+        <url-pattern>/shop/product/toggle</url-pattern>
+        <url-pattern>/shop/product/delete</url-pattern>
+    </servlet-mapping>
+
+    <!-- Shop Storefront / Trang Chủ Shop Servlets -->
+    <servlet>
+        <servlet-name>ShopStorefrontServlet</servlet-name>
+        <servlet-class>controller.shop.ShopStorefrontServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopStorefrontServlet</servlet-name>
+        <url-pattern>/store</url-pattern>
+        <url-pattern>/shop/storefront</url-pattern>
+        <url-pattern>/shop/view</url-pattern>
+        <url-pattern>/shop/home</url-pattern>
+        <url-pattern>/shop-detail</url-pattern>
+    </servlet-mapping>
+
+    <!-- Product Browsing Servlets -->
+    <servlet>
+        <servlet-name>ProductDetailServlet</servlet-name>
+        <servlet-class>controller.product.ProductDetailServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ProductDetailServlet</servlet-name>
+        <url-pattern>/detail</url-pattern>
+        <url-pattern>/product/detail</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ProductCatalogServlet</servlet-name>
+        <servlet-class>controller.product.ProductCatalogServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ProductCatalogServlet</servlet-name>
+        <url-pattern>/products</url-pattern>
     </servlet-mapping>
 
     <!-- Session Configuration (30 minutes) -->

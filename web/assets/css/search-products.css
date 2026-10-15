@@ -1,0 +1,93 @@
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ========================================================
+   REUSABLE SEMANTIC CLASSES FOR PRODUCT SEARCH & CARDS
+   ======================================================== */
+
+/* Product Card */
+.product-card {
+    background-color: #ffffff;
+    border-radius: 1.5rem;
+    padding: 1rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s ease-in-out;
+}
+.product-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Product Card Image Wrapper */
+.product-card-img-wrap {
+    display: block;
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 1rem;
+    overflow: hidden;
+    background-color: #f3f4f6;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+/* Add To Cart Button on Card */
+.btn-add-cart {
+    background-color: #ecfdf5;
+    color: #047857;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.btn-add-cart:hover {
+    background-color: #16a34a;
+    color: #ffffff;
+}
+
+/* Filter Card / Sidebar */
+.filter-card {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    height: fit-content;
+    border: 1px solid #f3f4f6;
+}
+
+/* Filter Price Input */
+.filter-price-input {
+    width: 100%;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    outline: none;
+    transition: all 0.2s;
+}
+.filter-price-input:focus {
+    border-color: #10b981;
+}
