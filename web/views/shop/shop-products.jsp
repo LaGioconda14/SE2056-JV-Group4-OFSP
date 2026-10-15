@@ -41,7 +41,7 @@
                         </c:choose>
                     </div>
                     <div>
-                        <h4 class="text-xs font-extrabold text-slate-900 leading-tight">HTX Trái Cây Miền Tây</h4>
+                        <h4 class="text-xs font-extrabold text-slate-900 leading-tight">${sessionScope.shopName}</h4>
                         <p class="text-[10px] font-bold text-emerald-700 tracking-wider mt-0.5">SELLER CENTER</p>
                     </div>
                 </div>
