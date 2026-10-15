@@ -109,22 +109,6 @@ public class LoginServlet extends HttpServlet {
 
         // Redirect to home / landing page
         response.sendRedirect(request.getContextPath() + "/home.jsp");
-        String role = user.getRole();
-        //Lấy thông tin của shop owner và và thông tin shop để hiện thị lên jsp
-        if ("SHOP_OWNER".equalsIgnoreCase(role)) {
-            // Nếu là Chủ shop -> Lưu thông tin shop vào Session rồi điều hướng về trang home
-            Shop shop = shopProductService.getShopByOwnerId(user.getId());
-            if (shop != null) {
-                session.setAttribute("shopLogo", shop.getLogoUrl());
-                session.setAttribute("shopId", shop.getShopId());   
-                session.setAttribute("shopName", shop.getShopName());
-                session.setAttribute("shop", shop.getStatus());
-                session.setAttribute("shopObj", shop);
-            }
-            session.setAttribute("userfullname",user.getFullName());
-            session.setAttribute("email", user.getEmail());
-            response.sendRedirect(request.getContextPath() + "/home");
-        }
     }
 }
 

@@ -1,7 +1,6 @@
 package model;
 
 import java.text.DecimalFormat;
-//Product Variant
 public class ProductVariant {
     private int variantId;
     private long productId;
