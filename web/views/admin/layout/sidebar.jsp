@@ -11,65 +11,59 @@
         </div>
         <div class="brand-text">
             <h4>FreshFruit</h4>
-            <span class="brand-badge" data-i18n="brand_badge">PLATFORM ADMIN</span>
+            <span class="brand-badge" data-i18n="brand_badge">QUẢN TRỊ VIÊN</span>
         </div>
     </div>
 
     <div class="sidebar-content">
         <!-- 1. CORE -->
-        <div class="nav-section-title" data-i18n="nav_sec_core">CORE</div>
+        <div class="nav-section-title" data-i18n="nav_sec_core">DANH MỤC CHÍNH</div>
         <ul class="sidebar-nav">
-            <li>
-                <a href="${pageContext.request.contextPath}/admin/dashboard" class="sidebar-nav-link ${param.activePage == 'dashboard' ? 'active' : ''}">
-                    <i class="bi bi-grid-fill"></i>
-                    <span data-i18n="nav_dashboard">Overview Dashboard</span>
-                </a>
-            </li>
             <li>
                 <a href="${pageContext.request.contextPath}/admin/users" class="sidebar-nav-link ${param.activePage == 'users' ? 'active' : ''}">
                     <i class="bi bi-people"></i>
-                    <span data-i18n="nav_users">Users & Permissions</span>
+                    <span data-i18n="nav_users">Người Dùng & Phân Quyền</span>
                 </a>
             </li>
             <li>
                 <a href="${pageContext.request.contextPath}/admin/shops" class="sidebar-nav-link ${param.activePage == 'shops' ? 'active' : ''}">
                     <i class="bi bi-shop"></i>
-                    <span data-i18n="nav_shops_apps">Shops & Applications</span>
+                    <span data-i18n="nav_shops_apps">Gian Hàng & Hồ Sơ Duyệt</span>
                 </a>
             </li>
             <li>
                 <a href="${pageContext.request.contextPath}/admin/categories" class="sidebar-nav-link ${param.activePage == 'categories' ? 'active' : ''}">
                     <i class="bi bi-diagram-3"></i>
-                    <span data-i18n="nav_categories">Global Categories</span>
+                    <span data-i18n="nav_categories">Danh Mục Ngành Hàng</span>
                 </a>
             </li>
         </ul>
 
         <!-- 2. GOVERNANCE -->
-        <div class="nav-section-title" data-i18n="nav_sec_gov">GOVERNANCE</div>
+        <div class="nav-section-title" data-i18n="nav_sec_gov">VẬN HÀNH & GIÁM SÁT</div>
         <ul class="sidebar-nav">
             <li>
                 <a href="${pageContext.request.contextPath}/admin/orders" class="sidebar-nav-link ${param.activePage == 'orders' ? 'active' : ''}">
                     <i class="bi bi-box-seam"></i>
-                    <span data-i18n="nav_orders">Orders & Deliveries</span>
+                    <span data-i18n="nav_orders">Đơn Hàng & Giao Vận</span>
                 </a>
             </li>
             <li>
                 <a href="${pageContext.request.contextPath}/admin/product-moderation" class="sidebar-nav-link ${param.activePage == 'moderation' ? 'active' : ''}">
                     <i class="bi bi-shield-check"></i>
-                    <span data-i18n="nav_moderation">Product Moderation</span>
+                    <span data-i18n="nav_moderation">Kiểm Duyệt Sản Phẩm</span>
                 </a>
             </li>
             <li>
                 <a href="${pageContext.request.contextPath}/admin/disputes" class="sidebar-nav-link ${param.activePage == 'disputes' ? 'active' : ''}">
                     <i class="bi bi-scale"></i>
-                    <span data-i18n="nav_disputes">Disputes & Refunds</span>
+                    <span data-i18n="nav_disputes">Khiếu Nại & Hoàn Tiền</span>
                 </a>
             </li>
             <li>
                 <a href="${pageContext.request.contextPath}/admin/vouchers" class="sidebar-nav-link ${param.activePage == 'vouchers' ? 'active' : ''}">
                     <i class="bi bi-ticket-perforated"></i>
-                    <span data-i18n="nav_vouchers">Platform Vouchers</span>
+                    <span data-i18n="nav_vouchers">Mã Giảm Giá Sàn</span>
                 </a>
             </li>
         </ul>
@@ -87,9 +81,9 @@
             </c:choose>
             <div class="sidebar-user-info">
                 <div class="sidebar-user-name">${sessionScope.user != null ? sessionScope.user.fullName : 'Quản Trị Viên'}</div>
-                <div class="sidebar-user-role" data-i18n="user_role">Platform Admin</div>
+                <div class="sidebar-user-role" data-i18n="user_role">Quản Trị Viên Sàn</div>
             </div>
-            <a href="${pageContext.request.contextPath}/logout" class="sidebar-logout-btn" title="Đăng Xuất">
+            <a href="${pageContext.request.contextPath}/logout" class="sidebar-logout-btn" title="Đăng xuất">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </div>
