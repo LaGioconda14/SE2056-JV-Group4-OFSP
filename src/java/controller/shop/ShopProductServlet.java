@@ -66,6 +66,23 @@ public class ShopProductServlet extends HttpServlet {
             List<ProductVariant> listVariants = productService.getVariantsByShopId(shopId);
             request.setAttribute("listVariants", listVariants);
             request.setAttribute("totalVariantsCount", listVariants.size());
+            int totalProducts = productService.countProductsByShopId(shopId);
+            int totalSkus = productService.countVariantsByShopId(shopId);
+            request.setAttribute("listVariants", listVariants);
+            request.setAttribute("totalProducts", totalProducts);
+            request.setAttribute("totalSkus", totalSkus);
+            //========Đếm sản phẩm theo tab=============//
+            int tabAllCount = productService.countVariantsByStatusTab(shopId, "all");
+            int tabActiveCount = productService.countVariantsByStatusTab(shopId, "active");
+            int tabVietgapCount = productService.countVariantsByStatusTab(shopId, "vietgap");
+            int tabHiddenCount = productService.countVariantsByStatusTab(shopId, "hidden");
+            int tabWarningCount = productService.countVariantsByStatusTab(shopId, "warning");
+
+            request.setAttribute("tabAllCount", tabAllCount);
+            request.setAttribute("tabActiveCount", tabActiveCount);
+            request.setAttribute("tabVietgapCount", tabVietgapCount);
+            request.setAttribute("tabHiddenCount", tabHiddenCount);
+            request.setAttribute("tabWarningCount", tabWarningCount);
         }
 
         // 5. Forward sang trang JSP

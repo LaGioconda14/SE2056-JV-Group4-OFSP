@@ -13,4 +13,19 @@ public class ProductServiceImpl implements IProductService {
     public List<ProductVariant> getVariantsByShopId(long shopId) {
         return productDAO.getVariantsByShopId(shopId);
     }
+
+    @Override
+    public int countProductsByShopId(long shopId) {
+        return productDAO.countProductsByShopId(shopId);
+    }
+
+    @Override
+    public int countVariantsByShopId(long shopId) {
+        return productDAO.countVariantsByShopId(shopId);
+    }
+
+    @Override
+    public int countVariantsByStatusTab(long shopId, String statusTab) {
+        return productDAO.countVariantsByStatusTab(shopId, statusTab);
+    }
 }
