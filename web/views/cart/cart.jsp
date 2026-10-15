@@ -353,7 +353,11 @@
                             <c:set var="available" value="${item.availabilityStatus eq 'AVAILABLE'}"/>
                             <c:set var="variantUnavailable" value="${item.availabilityStatus eq 'VARIANT_UNAVAILABLE'}"/>
                             <div class="p-space-md sm:px-space-lg sm:py-space-lg bg-surface-container-lowest transition-colors hover:bg-surface-container-low/30 border-b border-outline-variant/20 last:border-b-0"
+<<<<<<< HEAD
                                  data-item-id="${item.cartItemID}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" id="cart-item-${item.cartItemID}">
+=======
+                                 data-item-id="${item.cartItemID}" data-shop-id="${item.variant.product.shopId}" id="cart-item-${item.cartItemID}">
+>>>>>>> feature/order
                                 <div class="grid grid-cols-1 sm:grid-cols-12 gap-space-md items-center">
                                     <!-- Cột Sản phẩm & Ảnh -->
                                     <div class="sm:col-span-6 flex items-center gap-space-sm min-w-0">
@@ -427,8 +431,13 @@
                                                     <span class="material-symbols-outlined text-[16px]">remove</span>
                                                 </button>
                                                 <input class="w-10 text-center bg-transparent font-bold text-on-surface text-body-md outline-none"
+<<<<<<< HEAD
                                                        id="qty-${item.cartItemID}" name="quantity" type="number" min="1" max="${item.variant.stockQuantity}"
                                                        value="${item.quantity}" onchange="recalcTotals()">
+=======
+                                                       id="qty-${item.cartItemID}" name="quantity" type="number" min="1" max="999"
+                                                       value="${item.quantity}" data-saved-quantity="${item.quantity}" onchange="recalcTotals()">
+>>>>>>> feature/order
                                                 <button aria-label="Tăng số lượng" type="button"
                                                         class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-surface-container hover:text-primary transition-all active:scale-95 shadow-sm"
                                                         onclick="incrementQty('qty-${item.cartItemID}', ${item.variant.price}, 'sub-${item.cartItemID}')">
@@ -577,13 +586,22 @@
                                             <fmt:formatNumber value="${cart.totalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
                                         </span>
                                     </div>
-                                    <a href="<c:out value='${checkoutUrl}'/>" class="py-3 px-space-lg rounded-xl bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm hover:bg-on-primary-fixed-variant transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg no-underline cursor-pointer" id="btn-checkout">
+                                    <a href="<c:out value='${checkoutUrl}'/>" onclick="submitCheckout(event)" class="py-3 px-space-lg rounded-xl bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm hover:bg-on-primary-fixed-variant transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg no-underline cursor-pointer" id="btn-checkout">
                                         <span id="btn-checkout-label">Mua hàng (<c:out value="${cart.items.size()}"/>)</span>
                                         <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
                                     </a>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Form ngầm gửi các cartItemId được chọn sang /checkout -->
+                        <form id="checkout-form" method="post" action="${pageContext.request.contextPath}/checkout" class="hidden">
+                            <c:if test="${not empty sessionScope.cartCsrfToken}">
+                                <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
+                            </c:if>
+                            <input type="hidden" name="couponCode" id="checkout-form-coupon" value="">
+                            <div id="checkout-form-items"></div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -609,9 +627,56 @@
 
         <!-- Modal Body (Danh sách voucher) -->
         <div class="p-6 max-h-[60vh] overflow-y-auto flex flex-col gap-3">
+<<<<<<< HEAD
             <p id="voucher-status" class="text-sm text-on-surface-variant" role="status" aria-live="polite"></p>
             <div id="voucher-list" class="flex flex-col gap-3"></div>
             <p class="text-xs text-outline">Điều kiện được xét trên các sản phẩm đang chọn. Phí ship và số tiền giảm là tạm tính.</p>
+=======
+            <!-- Voucher 1: FRESH25 -->
+            <div class="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest hover:border-primary/50 transition-colors flex items-center justify-between gap-4">
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded-md tracking-wider">FRESH25</span>
+                        <span class="font-semibold text-sm text-on-surface">Giảm 25.000 ₫</span>
+                    </div>
+                    <p class="text-xs text-on-surface-variant">Áp dụng cho đơn hàng từ 50.000 ₫</p>
+                    <span class="text-[11px] text-outline">HSD: 31/12/2026</span>
+                </div>
+                <button type="button" onclick="chooseVoucher('FRESH25')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-on-primary-fixed-variant transition-colors shadow-sm shrink-0">
+                    Chọn
+                </button>
+            </div>
+
+            <!-- Voucher 2: OFSPNEW -->
+            <div class="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest hover:border-primary/50 transition-colors flex items-center justify-between gap-4">
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm bg-tertiary/10 text-tertiary px-2.5 py-0.5 rounded-md tracking-wider">OFSPNEW</span>
+                        <span class="font-semibold text-sm text-on-surface">Giảm 10% (Tối đa 50k)</span>
+                    </div>
+                    <p class="text-xs text-on-surface-variant">Dành cho đơn hàng từ 200.000 ₫</p>
+                    <span class="text-[11px] text-outline">HSD: 31/12/2026</span>
+                </div>
+                <button type="button" onclick="chooseVoucher('OFSPNEW')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-on-primary-fixed-variant transition-colors shadow-sm shrink-0">
+                    Chọn
+                </button>
+            </div>
+
+            <!-- Voucher 3: FREESHIP -->
+            <div class="p-4 rounded-xl border border-outline-variant/30 bg-surface-container-lowest hover:border-primary/50 transition-colors flex items-center justify-between gap-4">
+                <div class="flex flex-col gap-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded-md tracking-wider">FREESHIP</span>
+                        <span class="font-semibold text-sm text-on-surface">Giảm 25.000 ₫</span>
+                    </div>
+                    <p class="text-xs text-on-surface-variant">Giảm cố định 25.000 ₫ cho đơn từ 150.000 ₫</p>
+                    <span class="text-[11px] text-outline">HSD: 31/12/2026</span>
+                </div>
+                <button type="button" onclick="chooseVoucher('FREESHIP')" class="px-3.5 py-1.5 rounded-lg bg-primary text-on-primary font-semibold text-xs hover:bg-on-primary-fixed-variant transition-colors shadow-sm shrink-0">
+                    Chọn
+                </button>
+            </div>
+>>>>>>> feature/order
         </div>
 
         <!-- Modal Footer -->
@@ -667,6 +732,7 @@
 <!-- ==================== JAVASCRIPT ==================== -->
 <script src="<c:url value='/assets/js/cart-vouchers.js'/>"></script>
 <script>
+    let couponApplied = false;
     const FREE_SHIPPING_GOAL = 200000;
 
     function formatVND(val) {
@@ -722,6 +788,56 @@
         recalcTotals();
     }
 
+<<<<<<< HEAD
+=======
+    function removeCoupon() {
+        couponApplied = false;
+        const pill = document.getElementById('applied-pill');
+        const row = document.getElementById('promo-row');
+        const input = document.getElementById('coupon-input');
+        if (pill) pill.style.display = 'none';
+        if (row) row.style.display = 'none';
+        if (input) input.value = '';
+        recalcTotals();
+    }
+
+    function openVoucherModal() {
+        const modal = document.getElementById('voucher-modal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeVoucherModal() {
+        const modal = document.getElementById('voucher-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function chooseVoucher(code) {
+        const input = document.getElementById('coupon-input');
+        if (input) input.value = code;
+        closeVoucherModal();
+    }
+
+    function applyCoupon() {
+        const input = document.getElementById('coupon-input');
+        const pill = document.getElementById('applied-pill');
+        const row = document.getElementById('promo-row');
+        if (input && input.value.trim() !== '') {
+            couponApplied = true;
+            const code = input.value.trim().toUpperCase();
+            input.value = code;
+            const codeOutput = document.getElementById('applied-code-text');
+            const discountOutput = document.getElementById('applied-discount-text');
+            if (codeOutput) codeOutput.innerText = code;
+            if (discountOutput) discountOutput.innerText = '(Kiểm tra ở bước thanh toán)';
+            if (pill) pill.style.display = 'inline-flex';
+            if (row) row.style.display = 'none';
+            recalcTotals();
+        } else {
+            alert('Vui lòng chọn hoặc nhập mã giảm giá!');
+        }
+    }
+
+>>>>>>> feature/order
     function recalcTotals() {
         const allRows = document.querySelectorAll('[id^="cart-item-"]');
         const purchasableRows = Array.from(allRows).filter(row => row.dataset.cartStatus === 'AVAILABLE');
@@ -771,13 +887,16 @@
             }
         }
 
-        // Tính giảm giá & thành tiền
         const baseDelivery = (selectedSubtotal >= FREE_SHIPPING_GOAL || selectedSubtotal === 0) ? 0 : 25000;
         const savings = typeof window.cartVoucherSavings === 'function'
             ? window.cartVoucherSavings(selectedSubtotal, baseDelivery)
             : {product: 0, shipping: 0};
         const discount = savings.product;
-        const delivery = baseDelivery - savings.shipping;
+        const delivery = Math.max(0, baseDelivery - savings.shipping);
+        const promoRow = document.getElementById('promo-row');
+        if (promoRow) {
+            promoRow.style.display = (couponApplied && discount > 0) ? 'flex' : 'none';
+        }
         const grandTotal = Math.max(0, selectedSubtotal - discount + delivery);
 
         const subEl = document.getElementById('summary-subtotal');
@@ -804,6 +923,42 @@
     function closeVariantDialog(cartItemId) {
         const dialog = document.getElementById('variant-dialog-' + cartItemId);
         if (dialog) dialog.close();
+    }
+
+    function submitCheckout(e) {
+        if (e) e.preventDefault();
+        const checkedBoxes = Array.from(document.querySelectorAll('.item-checkbox:checked'));
+        if (checkedBoxes.length === 0) {
+            alert('Vui lòng chọn ít nhất một sản phẩm để mua hàng!');
+            return;
+        }
+        const changedQuantities = checkedBoxes.filter(cb => {
+            const row = cb.closest('[id^="cart-item-"]');
+            const qty = row ? row.querySelector('input[name="quantity"]') : null;
+            return qty && qty.value !== qty.getAttribute('data-saved-quantity');
+        });
+        if (changedQuantities.length > 0) {
+            alert('Bạn đã thay đổi số lượng. Vui lòng bấm biểu tượng lưu tại từng sản phẩm trước khi mua hàng!');
+            return;
+        }
+        const container = document.getElementById('checkout-form-items');
+        if (!container) return;
+        container.innerHTML = '';
+        checkedBoxes.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'cartItemIds';
+            input.value = cb.getAttribute('data-target');
+            container.appendChild(input);
+        });
+
+        const couponInput = document.getElementById('coupon-input');
+        const formCoupon = document.getElementById('checkout-form-coupon');
+        if (couponApplied && couponInput && formCoupon) {
+            formCoupon.value = couponInput.value.trim();
+        }
+
+        document.getElementById('checkout-form').submit();
     }
 
     document.addEventListener('DOMContentLoaded', () => {

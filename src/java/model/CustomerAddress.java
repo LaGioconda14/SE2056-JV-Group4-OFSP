@@ -14,7 +14,7 @@ public class CustomerAddress implements Serializable {
     private String ward;
     private String district;
     private String city;
-    private boolean isDefault;
+    private boolean defaultAddress;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
@@ -32,7 +32,7 @@ public class CustomerAddress implements Serializable {
         this.ward = ward;
         this.district = district;
         this.city = city;
-        this.isDefault = isDefault;
+        this.defaultAddress = isDefault;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -102,19 +102,27 @@ public class CustomerAddress implements Serializable {
     }
 
     public boolean isDefault() {
-        return isDefault;
+        return defaultAddress;
     }
 
     public boolean getIsDefault() {
-        return isDefault;
+        return defaultAddress;
     }
 
     public void setDefault(boolean isDefault) {
-        this.isDefault = isDefault;
+        this.defaultAddress = isDefault;
     }
 
     public void setIsDefault(boolean isDefault) {
-        this.isDefault = isDefault;
+        this.defaultAddress = isDefault;
+    }
+
+    public boolean isDefaultAddress() {
+        return defaultAddress;
+    }
+
+    public void setDefaultAddress(boolean defaultAddress) {
+        this.defaultAddress = defaultAddress;
     }
 
     public Timestamp getCreatedAt() {

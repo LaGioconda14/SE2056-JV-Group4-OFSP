@@ -1,30 +1,49 @@
 package model;
 
+import java.math.BigDecimal;
+
 public class OrderItem {
 
     private long orderItemId;
     private long subOrderId;
-    private String productName;
-    private String variantName;
+    private Long variantId;
+    private String productNameSnapshot;
+    private String variantNameSnapshot;
+    private String skuSnapshot;
     private String unit;
-    private double unitPrice;
+    private BigDecimal unitPrice = BigDecimal.ZERO;
     private int quantity;
-    private double totalPrice;
+    private BigDecimal totalPrice = BigDecimal.ZERO;
     private String imageUrl;
 
     public OrderItem() {
+    }
+
+    public OrderItem(long orderItemId, long subOrderId, Long variantId, String productNameSnapshot,
+            String variantNameSnapshot, String skuSnapshot, String unit, BigDecimal unitPrice,
+            int quantity, BigDecimal totalPrice) {
+        this.orderItemId = orderItemId;
+        this.subOrderId = subOrderId;
+        this.variantId = variantId;
+        this.productNameSnapshot = productNameSnapshot;
+        this.variantNameSnapshot = variantNameSnapshot;
+        this.skuSnapshot = skuSnapshot;
+        this.unit = unit;
+        this.unitPrice = unitPrice;
+        this.quantity = quantity;
+        this.totalPrice = totalPrice;
     }
 
     public OrderItem(long orderItemId, long subOrderId, String productName, String variantName,
                      String unit, double unitPrice, int quantity, double totalPrice, String imageUrl) {
         this.orderItemId = orderItemId;
         this.subOrderId = subOrderId;
-        this.productName = productName;
-        this.variantName = variantName;
+        this.productNameSnapshot = productName;
+        this.variantNameSnapshot = variantName;
         this.unit = unit;
-        this.unitPrice = unitPrice;
+        this.unitPrice = BigDecimal.valueOf(unitPrice);
         this.quantity = quantity;
-        this.totalPrice = totalPrice;
+        this.totalPrice = BigDecimal.valueOf(totalPrice);
         this.imageUrl = imageUrl;
     }
 
@@ -44,20 +63,52 @@ public class OrderItem {
         this.subOrderId = subOrderId;
     }
 
+    public Long getVariantId() {
+        return variantId;
+    }
+
+    public void setVariantId(Long variantId) {
+        this.variantId = variantId;
+    }
+
+    public String getProductNameSnapshot() {
+        return productNameSnapshot;
+    }
+
+    public void setProductNameSnapshot(String productNameSnapshot) {
+        this.productNameSnapshot = productNameSnapshot;
+    }
+
     public String getProductName() {
-        return productName;
+        return productNameSnapshot;
     }
 
     public void setProductName(String productName) {
-        this.productName = productName;
+        this.productNameSnapshot = productName;
+    }
+
+    public String getVariantNameSnapshot() {
+        return variantNameSnapshot;
+    }
+
+    public void setVariantNameSnapshot(String variantNameSnapshot) {
+        this.variantNameSnapshot = variantNameSnapshot;
     }
 
     public String getVariantName() {
-        return variantName;
+        return variantNameSnapshot;
     }
 
     public void setVariantName(String variantName) {
-        this.variantName = variantName;
+        this.variantNameSnapshot = variantName;
+    }
+
+    public String getSkuSnapshot() {
+        return skuSnapshot;
+    }
+
+    public void setSkuSnapshot(String skuSnapshot) {
+        this.skuSnapshot = skuSnapshot;
     }
 
     public String getUnit() {
@@ -68,12 +119,16 @@ public class OrderItem {
         this.unit = unit;
     }
 
-    public double getUnitPrice() {
+    public BigDecimal getUnitPrice() {
         return unitPrice;
     }
 
-    public void setUnitPrice(double unitPrice) {
+    public void setUnitPrice(BigDecimal unitPrice) {
         this.unitPrice = unitPrice;
+    }
+
+    public void setUnitPrice(double unitPrice) {
+        this.unitPrice = BigDecimal.valueOf(unitPrice);
     }
 
     public int getQuantity() {
@@ -84,12 +139,16 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
-    public double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
 
-    public void setTotalPrice(double totalPrice) {
+    public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public void setTotalPrice(double totalPrice) {
+        this.totalPrice = BigDecimal.valueOf(totalPrice);
     }
 
     public String getImageUrl() {
@@ -104,11 +163,12 @@ public class OrderItem {
     }
 
     public String getFormattedUnitPrice() {
-        return String.format("%,d", (long) unitPrice).replace(',', '.') + "₫";
+        long p = unitPrice != null ? unitPrice.longValue() : 0L;
+        return String.format("%,d", p).replace(',', '.') + "₫";
     }
 
     public String getFormattedTotalPrice() {
-        return String.format("%,d", (long) totalPrice).replace(',', '.') + "₫";
+        long p = totalPrice != null ? totalPrice.longValue() : 0L;
+        return String.format("%,d", p).replace(',', '.') + "₫";
     }
 }
-

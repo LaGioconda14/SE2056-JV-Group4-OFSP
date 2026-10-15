@@ -7,6 +7,8 @@ import java.util.List;
 public class Product {
     private long id;
     private long shopId;
+    private String shopName;
+    private String shopStatus;
     private int categoryId;
     private String name;
     private String categoryName;
@@ -76,6 +78,12 @@ public class Product {
 
     public int getCategoryId() { return categoryId; }
     public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
+
+    public String getShopName() { return shopName; }
+    public void setShopName(String shopName) { this.shopName = shopName; }
+
+    public String getShopStatus() { return shopStatus; }
+    public void setShopStatus(String shopStatus) { this.shopStatus = shopStatus; }
 
     public String getImage() { return image != null ? image : thumbnailUrl; }
     public void setImage(String image) {
