@@ -324,33 +324,6 @@
             </div>
         </c:when>
         <c:otherwise>
-            <!-- Banner Tiến Độ Ưu Đãi Giao Hàng -->
-            <div class="mb-space-lg p-space-md rounded-2xl bg-surface-container-low shadow-sm flex flex-col sm:flex-row items-center justify-between gap-space-md">
-                <div class="flex items-center gap-space-md w-full sm:w-auto">
-                    <div class="w-12 h-12 rounded-xl bg-primary-fixed flex items-center justify-center text-on-primary-fixed shrink-0 shadow-sm" id="progress-icon-box">
-                        <span class="material-symbols-outlined text-[26px]">rocket_launch</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2">
-                            <span class="font-headline-sm text-headline-sm text-on-surface" id="delivery-progress-title">Gần đạt ưu đãi rồi!</span>
-                            <span class="text-body-sm font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md" id="delivery-progress-status">200.000 ₫</span>
-                        </div>
-                        <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5" id="delivery-progress-desc">
-                            Thêm sản phẩm để đạt <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>
-                        </p>
-                    </div>
-                </div>
-                <div class="w-full sm:w-64 flex flex-col gap-1.5 shrink-0">
-                    <div class="w-full bg-surface-container-highest rounded-full h-3 overflow-hidden p-0.5">
-                        <div class="bg-primary h-full rounded-full transition-all duration-700 ease-out" id="delivery-progress-bar" style="width: 70%;"></div>
-                    </div>
-                    <div class="flex justify-between text-[11px] font-label-caps text-on-surface-variant">
-                        <span id="progress-bar-current">Hiện tại</span>
-                        <span class="text-primary font-bold">Mục tiêu: 200.000 ₫</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Bảng giỏ hàng & Cột chi tiết -->
             <div class="grid grid-cols-1 gap-gutter items-start">
                 <div class="flex flex-col gap-space-lg w-full">
@@ -521,7 +494,7 @@
                                     </div>
                                     <div class="hidden sm:flex items-center gap-1 text-on-surface-variant">
                                         <span>Vận chuyển:</span>
-                                        <span class="font-semibold text-on-surface" id="summary-delivery">Miễn phí</span>
+                                        <span class="font-semibold text-on-surface" id="summary-delivery">0 ₫</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between sm:justify-end gap-space-lg w-full md:w-auto">
@@ -664,8 +637,6 @@
 <!-- ==================== JAVASCRIPT ==================== -->
 <script>
     let couponApplied = false;
-    const FREE_SHIPPING_GOAL = 200000;
-
     function formatVND(val) {
         return Math.round(val).toLocaleString('vi-VN') + ' ₫';
     }
@@ -815,21 +786,7 @@
             promoRow.style.display = (couponApplied && discount > 0) ? 'flex' : 'none';
         }
 
-        const selectedRows = Array.from(document.querySelectorAll('[id^="cart-item-"]'))
-                .filter(row => row.querySelector('.item-checkbox:checked'));
-        const shopGroups = new Map();
-        selectedRows.forEach(row => {
-            const shopId = row.getAttribute('data-shop-id') || 'unknown';
-            const qtyInput = row.querySelector('input[name="quantity"]');
-            const priceEl = row.querySelector('[data-price]');
-            const qty = parseInt(qtyInput ? qtyInput.value : '1') || 1;
-            const price = parseFloat(priceEl ? priceEl.getAttribute('data-price') : '0') || 0;
-            shopGroups.set(shopId, (shopGroups.get(shopId) || 0) + price * qty);
-        });
-        let delivery = 0;
-        shopGroups.forEach(shopSubtotal => {
-            if (shopSubtotal < FREE_SHIPPING_GOAL) delivery += 25000;
-        });
+        const delivery = 0;
         const grandTotal = Math.max(0, selectedSubtotal - discount + delivery);
 
         const subEl = document.getElementById('summary-subtotal');
@@ -837,7 +794,7 @@
 
         const delEl = document.getElementById('summary-delivery');
         if (delEl) {
-            delEl.innerText = (selectedSubtotal >= FREE_SHIPPING_GOAL && selectedSubtotal > 0) ? 'Miễn phí' : formatVND(delivery);
+            delEl.innerText = formatVND(delivery);
         }
 
         const totEl = document.getElementById('summary-total');
@@ -849,26 +806,6 @@
         const navBadge = document.getElementById('nav-cart-badge');
         if (navBadge) navBadge.innerText = totalItemsQty;
 
-        // Progress bar thanh trạng thái
-        const pBar = document.getElementById('delivery-progress-bar');
-        const pStatus = document.getElementById('delivery-progress-status');
-        const pCurrent = document.getElementById('progress-bar-current');
-        const pTitle = document.getElementById('delivery-progress-title');
-        const pDesc = document.getElementById('delivery-progress-desc');
-
-        const pct = Math.min(100, (selectedSubtotal / FREE_SHIPPING_GOAL) * 100);
-        if (pBar) pBar.style.width = pct + '%';
-        if (pCurrent) pCurrent.innerText = 'Hiện tại: ' + formatVND(selectedSubtotal);
-        if (pStatus) pStatus.innerText = formatVND(selectedSubtotal) + ' / ' + formatVND(FREE_SHIPPING_GOAL);
-
-        if (selectedSubtotal >= FREE_SHIPPING_GOAL) {
-            if (pTitle) pTitle.innerText = '🎉 Chúc mừng bạn!';
-            if (pDesc) pDesc.innerHTML = 'Đơn hàng của bạn đã đạt điều kiện <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>';
-        } else {
-            const rem = FREE_SHIPPING_GOAL - selectedSubtotal;
-            if (pTitle) pTitle.innerText = 'Gần đạt ưu đãi rồi!';
-            if (pDesc) pDesc.innerHTML = 'Mua thêm <span class="font-bold text-tertiary">' + formatVND(rem) + '</span> để được <span class="font-bold text-primary">Miễn phí giao hàng trong ngày!</span>';
-        }
     }
 
     function submitCheckout(e) {

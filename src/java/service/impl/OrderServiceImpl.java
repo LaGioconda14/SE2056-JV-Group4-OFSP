@@ -25,8 +25,6 @@ public class OrderServiceImpl implements IOrderService {
 
     private final OrderDAO orderDAO;
     private final CouponDAO couponDAO;
-    private static final BigDecimal DEFAULT_SHIPPING_FEE_PER_SHOP = new BigDecimal("25000");
-    private static final BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("200000");
 
     public OrderServiceImpl() {
         this.orderDAO = new OrderDAO();
@@ -138,9 +136,8 @@ public class OrderServiceImpl implements IOrderService {
             sub.setItems(orderItems);
             sub.setShopSubtotal(shopSubtotal);
 
-            // Phí ship từng shop: Miễn phí nếu đơn hàng của shop >= 200.000đ
-            BigDecimal shopShip = (shopSubtotal.compareTo(FREE_SHIPPING_THRESHOLD) >= 0)
-                    ? BigDecimal.ZERO : DEFAULT_SHIPPING_FEE_PER_SHOP;
+            // Tạm thời chưa tính phí giao hàng; giữ trường dữ liệu để bổ sung công thức sau.
+            BigDecimal shopShip = BigDecimal.ZERO;
             sub.setShopShippingFee(shopShip);
             sub.setShopDiscount(BigDecimal.ZERO);
             sub.setShopTotal(shopSubtotal.add(shopShip));

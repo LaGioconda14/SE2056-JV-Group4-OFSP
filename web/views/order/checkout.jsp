@@ -6,6 +6,7 @@
 <c:url var="productsUrl" value="/products"/>
 <c:url var="cartUrl" value="/cart"/>
 <c:url var="placeOrderUrl" value="/order/place"/>
+<c:url var="paymentUrl" value="/payment"/>
 <c:url var="checkoutCssUrl" value="/assets/css/checkout.css"/>
 <!DOCTYPE html>
 <html lang="vi">
@@ -71,7 +72,9 @@
                 </section>
             </c:when>
             <c:otherwise>
-                <form method="post" action="<c:out value='${placeOrderUrl}'/>" class="checkout-grid" id="checkout-form">
+                <form method="post" action="<c:out value='${placeOrderUrl}'/>" class="checkout-grid" id="checkout-form"
+                      data-order-action="<c:out value='${placeOrderUrl}'/>"
+                      data-payment-action="<c:out value='${paymentUrl}'/>">
                     <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.cartCsrfToken}'/>">
                     <c:forEach var="cartItemId" items="${cartItemIds}"><input type="hidden" name="cartItemIds" value="<c:out value='${cartItemId}'/>"></c:forEach>
                     <input type="hidden" name="couponCode" value="<c:out value='${couponCode}'/>">
@@ -137,7 +140,16 @@
                             <div class="payment-list">
                                 <label class="payment-option"><input type="radio" name="paymentMethod" value="COD" checked required><span class="payment-radio"></span><span class="payment-icon material-symbols-outlined">payments</span><span><strong>Thanh toán khi nhận hàng (COD)</strong><small>Thanh toán bằng tiền mặt cho nhân viên giao hàng.</small></span><span class="status-tag">Khả dụng</span></label>
                                 <div class="payment-option disabled" aria-disabled="true"><span class="payment-radio"></span><span class="payment-icon material-symbols-outlined">account_balance_wallet</span><span><strong>Ví điện tử</strong><small>Phương thức này chưa được hỗ trợ.</small></span><span class="status-tag muted">Sắp có</span></div>
-                                <div class="payment-option disabled" aria-disabled="true"><span class="payment-radio"></span><span class="payment-icon material-symbols-outlined">credit_card</span><span><strong>Thẻ ngân hàng</strong><small>Phương thức này chưa được hỗ trợ.</small></span><span class="status-tag muted">Sắp có</span></div>
+                                <label class="payment-option"><input type="radio" name="paymentMethod" value="CARD" required><span class="payment-radio"></span><span class="payment-icon material-symbols-outlined">credit_card</span><span><strong>Thẻ ngân hàng</strong><small>Nhập thông tin thẻ và tiếp tục sang cổng thanh toán.</small></span><span class="status-tag">Khả dụng</span></label>
+                            </div>
+                            <div class="card-payment-form is-hidden" data-card-payment-form>
+                                <div class="card-form-heading"><span class="material-symbols-outlined">lock</span><span><strong>Thông tin thẻ</strong></span></div>
+                                <div class="form-grid">
+                                    <label class="field full"><span>Tên chủ thẻ</span><input type="text" name="cardHolder" autocomplete="cc-name" maxlength="100" placeholder="NGUYEN VAN A" data-card-field></label>
+                                    <label class="field full"><span>Số thẻ</span><input type="text" name="cardNumber" autocomplete="cc-number" inputmode="numeric" maxlength="23" placeholder="1234 5678 9012 3456" data-card-number data-card-field></label>
+                                    <label class="field"><span>Ngày hết hạn</span><input type="text" name="cardExpiry" autocomplete="cc-exp" inputmode="numeric" maxlength="5" placeholder="MM/YY" data-card-expiry data-card-field></label>
+                                    <label class="field"><span>CVV/CVC</span><input type="password" name="cardCvv" autocomplete="cc-csc" inputmode="numeric" maxlength="4" placeholder="•••" data-card-cvv data-card-field></label>
+                                </div>
                             </div>
                         </section>
                     </div>
@@ -162,7 +174,7 @@
                                 <c:if test="${draftOrder.platformDiscount gt 0}"><div class="discount"><span>Giảm giá<c:if test="${not empty couponCode}"> (<c:out value="${couponCode}"/>)</c:if></span><strong>-<fmt:formatNumber value="${draftOrder.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div></c:if>
                                 <div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${draftOrder.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                             </div>
-                            <button class="submit-order" type="submit"><span>Đặt hàng</span><span class="material-symbols-outlined">arrow_forward</span></button>
+                            <button class="submit-order" type="submit"><span data-submit-label>Đặt hàng</span><span class="material-symbols-outlined">arrow_forward</span></button>
                             <p class="secure-note"><span class="material-symbols-outlined">verified_user</span> Thông tin của bạn được bảo mật an toàn.</p>
                         </section>
                     </aside>
@@ -178,6 +190,17 @@ document.addEventListener('DOMContentLoaded',function(){
 const addressInputs=document.querySelectorAll('input[name="addressSelection"]'),newAddressForm=document.querySelector('[data-new-address-form]'),newAddressFields=document.querySelectorAll('[data-new-address-field]');
 function syncAddressForm(){const selected=document.querySelector('input[name="addressSelection"]:checked'),isNew=selected&&selected.value==='new';if(newAddressForm)newAddressForm.classList.toggle('is-hidden',!isNew);newAddressFields.forEach(function(field){field.required=Boolean(isNew);});}
 addressInputs.forEach(function(input){input.addEventListener('change',syncAddressForm);});syncAddressForm();
+const checkoutForm=document.getElementById('checkout-form'),paymentInputs=document.querySelectorAll('input[name="paymentMethod"]'),cardForm=document.querySelector('[data-card-payment-form]'),cardFields=document.querySelectorAll('[data-card-field]'),cardNumber=document.querySelector('[data-card-number]'),cardExpiry=document.querySelector('[data-card-expiry]'),cardCvv=document.querySelector('[data-card-cvv]'),submitLabel=document.querySelector('[data-submit-label]');
+function selectedPayment(){const selected=document.querySelector('input[name="paymentMethod"]:checked');return selected?selected.value:'COD';}
+function syncPaymentForm(){const isCard=selectedPayment()==='CARD';if(cardForm)cardForm.classList.toggle('is-hidden',!isCard);cardFields.forEach(function(field){field.required=isCard;field.disabled=!isCard;if(!isCard)field.setCustomValidity('');});if(checkoutForm)checkoutForm.action=isCard?checkoutForm.dataset.paymentAction:checkoutForm.dataset.orderAction;if(submitLabel)submitLabel.textContent=isCard?'Thanh toán':'Đặt hàng';}
+function digits(value){return value.replace(/\D/g,'');}
+function validLuhn(value){const number=digits(value);if(number.length<13||number.length>19)return false;let sum=0,doubleDigit=false;for(let index=number.length-1;index>=0;index--){let digit=Number(number.charAt(index));if(doubleDigit){digit*=2;if(digit>9)digit-=9;}sum+=digit;doubleDigit=!doubleDigit;}return sum%10===0;}
+function validateExpiry(){if(!cardExpiry)return true;const match=cardExpiry.value.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);let valid=Boolean(match);if(match){const expiry=new Date(2000+Number(match[2]),Number(match[1]),0,23,59,59);valid=expiry>=new Date();}cardExpiry.setCustomValidity(valid?'':'Ngày hết hạn không hợp lệ. Dùng định dạng MM/YY.');return valid;}
+if(cardNumber){cardNumber.addEventListener('input',function(){const number=digits(this.value).slice(0,19);this.value=number.replace(/(.{4})/g,'$1 ').trim();this.setCustomValidity('');});cardNumber.addEventListener('blur',function(){this.setCustomValidity(validLuhn(this.value)?'':'Số thẻ không hợp lệ.');});}
+if(cardExpiry){cardExpiry.addEventListener('input',function(){const value=digits(this.value).slice(0,4);this.value=value.length>2?value.slice(0,2)+'/'+value.slice(2):value;this.setCustomValidity('');});cardExpiry.addEventListener('blur',validateExpiry);}
+if(cardCvv)cardCvv.addEventListener('input',function(){this.value=digits(this.value).slice(0,4);this.setCustomValidity(this.value.length>=3?'':'CVV/CVC phải có 3 hoặc 4 chữ số.');});
+paymentInputs.forEach(function(input){input.addEventListener('change',syncPaymentForm);});syncPaymentForm();
+if(checkoutForm)checkoutForm.addEventListener('submit',function(event){if(selectedPayment()!=='CARD')return;const numberValid=cardNumber&&validLuhn(cardNumber.value),expiryValid=validateExpiry(),cvvValid=cardCvv&&/^\d{3,4}$/.test(cardCvv.value);if(cardNumber)cardNumber.setCustomValidity(numberValid?'':'Số thẻ không hợp lệ.');if(cardCvv)cardCvv.setCustomValidity(cvvValid?'':'CVV/CVC phải có 3 hoặc 4 chữ số.');if(!numberValid||!expiryValid||!cvvValid){event.preventDefault();checkoutForm.reportValidity();}});
 const voucherToggle=document.querySelector('[data-voucher-toggle]'),voucherOptions=document.querySelector('[data-voucher-options]');if(voucherToggle&&voucherOptions)voucherToggle.addEventListener('click',function(){voucherOptions.classList.toggle('is-hidden');});
 document.querySelectorAll('[data-apply-voucher]').forEach(function(button){button.addEventListener('click',function(){const option=button.closest('.voucher-option'),radio=option?option.querySelector('input[name="couponPicker"]'):null;if(!radio)return;radio.checked=true;const url=new URL(window.location.href);url.searchParams.set('couponCode',radio.value);window.location.href=url.toString();});});
 const noVoucher=document.querySelector('.voucher-option input[value=""]');if(noVoucher)noVoucher.addEventListener('change',function(){if(this.checked){const url=new URL(window.location.href);url.searchParams.set('couponCode','');window.location.href=url.toString();}});

@@ -44,6 +44,11 @@
         .form-group {
             margin-bottom: 16px;
         }
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
         label {
             display: block;
             font-weight: bold;
@@ -71,6 +76,12 @@
         button:hover {
             background-color: #1b5e20;
         }
+        .btn-buy-now {
+            background-color: #ef6c00;
+        }
+        .btn-buy-now:hover {
+            background-color: #e65100;
+        }
         .btn-select {
             background-color: #1976d2;
             padding: 5px 10px;
@@ -79,6 +90,20 @@
         }
         .btn-select:hover {
             background-color: #1565c0;
+        }
+        .product-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .product-actions form {
+            margin: 0;
+        }
+        .product-actions button {
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: normal;
         }
         .alert {
             padding: 12px;
@@ -149,9 +174,19 @@
                             <td><fmt:formatNumber value="${v.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/></td>
                             <td>${v.stockQuantity}</td>
                             <td>
-                                <button type="button" class="btn-select" onclick="selectVariant('${v.variantId}')">
-                                    Ch&#7885;n m&#227; n&#224;y
-                                </button>
+                                <div class="product-actions">
+                                    <button type="button" class="btn-select" onclick="selectVariant('${v.variantId}')">
+                                        Ch&#7885;n m&#227; n&#224;y
+                                    </button>
+                                    <c:if test="${v.stockQuantity gt 0}">
+                                        <form method="post" action="${pageContext.request.contextPath}/cart/add">
+                                            <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
+                                            <input type="hidden" name="variantId" value="${v.variantId}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" name="action" value="buyNow" class="btn-buy-now">Mua ngay</button>
+                                        </form>
+                                    </c:if>
+                                </div>
                             </td>
                         </tr>
                     </c:forEach>
@@ -163,7 +198,7 @@
                         <td>H&#7897;p 500g (Lo&#7841;i 1) (h&#7897;p)</td>
                         <td>120.000 &#8363;</td>
                         <td>100</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(1)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><div class="product-actions"><button type="button" class="btn-select" onclick="selectVariant(1)">Ch&#7885;n m&#227; n&#224;y</button><form method="post" action="${pageContext.request.contextPath}/cart/add"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"><input type="hidden" name="variantId" value="1"><input type="hidden" name="quantity" value="1"><button type="submit" name="action" value="buyNow" class="btn-buy-now">Mua ngay</button></form></div></td>
                     </tr>
                     <tr>
                         <td><strong>2</strong></td>
@@ -171,7 +206,7 @@
                         <td>H&#7897;p 1kg (Lo&#7841;i 1) (h&#7897;p)</td>
                         <td>230.000 &#8363;</td>
                         <td>50</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(2)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><div class="product-actions"><button type="button" class="btn-select" onclick="selectVariant(2)">Ch&#7885;n m&#227; n&#224;y</button><form method="post" action="${pageContext.request.contextPath}/cart/add"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"><input type="hidden" name="variantId" value="2"><input type="hidden" name="quantity" value="1"><button type="submit" name="action" value="buyNow" class="btn-buy-now">Mua ngay</button></form></div></td>
                     </tr>
                     <tr>
                         <td><strong>3</strong></td>
@@ -179,7 +214,7 @@
                         <td>T&#250;i 1kg (3-4 qu&#7843;/kg) (kg)</td>
                         <td>65.000 &#8363;</td>
                         <td>200</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(3)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><div class="product-actions"><button type="button" class="btn-select" onclick="selectVariant(3)">Ch&#7885;n m&#227; n&#224;y</button><form method="post" action="${pageContext.request.contextPath}/cart/add"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"><input type="hidden" name="variantId" value="3"><input type="hidden" name="quantity" value="1"><button type="submit" name="action" value="buyNow" class="btn-buy-now">Mua ngay</button></form></div></td>
                     </tr>
                     <tr>
                         <td><strong>4</strong></td>
@@ -187,7 +222,7 @@
                         <td>T&#250;i 1kg (kho&#7843;ng 3-4 qu&#7843;) (kg)</td>
                         <td>189.000 &#8363;</td>
                         <td>150</td>
-                        <td><button type="button" class="btn-select" onclick="selectVariant(4)">Ch&#7885;n m&#227; n&#224;y</button></td>
+                        <td><div class="product-actions"><button type="button" class="btn-select" onclick="selectVariant(4)">Ch&#7885;n m&#227; n&#224;y</button><form method="post" action="${pageContext.request.contextPath}/cart/add"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"><input type="hidden" name="variantId" value="4"><input type="hidden" name="quantity" value="1"><button type="submit" name="action" value="buyNow" class="btn-buy-now">Mua ngay</button></form></div></td>
                     </tr>
                 </c:otherwise>
             </c:choose>
@@ -209,7 +244,7 @@
             <input type="number" id="quantity" name="quantity" value="1" min="1" max="1000" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group form-actions">
             <button type="submit">🛒 Th&#234;m v&#224;o gi&#7887; h&#224;ng</button>
         </div>
     </form>

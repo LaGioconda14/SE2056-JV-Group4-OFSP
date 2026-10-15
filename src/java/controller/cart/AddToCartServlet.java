@@ -16,6 +16,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Cart;
+import model.CartItem;
 import model.Product;
 import model.ProductVariant;
 import model.User;
@@ -90,6 +92,19 @@ public class AddToCartServlet extends HttpServlet {
             int quantity = Integer.parseInt(request.getParameter("quantity"));
 
             cartService.addItem((long) user.getId(), variantId, quantity);
+            if ("buyNow".equals(request.getParameter("action"))) {
+                Cart cart = cartService.getCart((long) user.getId());
+                CartItem checkoutItem = cart.getItems().stream()
+                        .filter(item -> item.getVariant() != null
+                        && item.getVariant().getVariantId() == variantId)
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException(
+                        "Không thể chuẩn bị sản phẩm để thanh toán!"));
+                session.removeAttribute("checkoutCouponCode");
+                response.sendRedirect(request.getContextPath() + "/checkout?cartItemIds="
+                        + checkoutItem.getCartItemID());
+                return;
+            }
             session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
         } catch (NumberFormatException e) {
             session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
