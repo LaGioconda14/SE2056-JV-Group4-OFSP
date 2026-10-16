@@ -15,6 +15,18 @@ public class OrderItem {
     private int quantity;
     private BigDecimal totalPrice;
 
+    // Joined Product & Variant fields for Fulfillment & QC
+    private String imageUrl;
+    private int stockQuantity = 10;
+    private BigDecimal weightKg;
+    private String origin;
+    private String certification;
+    private String storageTemp;
+    private String qcBrix;
+    private String qcStatus;
+    private String qcNote;
+    private String qcPackagingNote;
+
     public OrderItem() {
     }
 
@@ -111,5 +123,85 @@ public class OrderItem {
 
     public void setTotalPrice(BigDecimal totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public int getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    public BigDecimal getWeightKg() {
+        return weightKg;
+    }
+
+    public void setWeightKg(BigDecimal weightKg) {
+        this.weightKg = weightKg;
+    }
+
+    public String getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(String origin) {
+        this.origin = origin;
+    }
+
+    public String getCertification() {
+        return certification;
+    }
+
+    public void setCertification(String certification) {
+        this.certification = certification;
+    }
+
+    public String getStorageTemp() {
+        return storageTemp;
+    }
+
+    public void setStorageTemp(String storageTemp) {
+        this.storageTemp = storageTemp;
+    }
+
+    public String getQcBrix() {
+        return qcBrix;
+    }
+
+    public void setQcBrix(String qcBrix) {
+        this.qcBrix = qcBrix;
+    }
+
+    public String getQcStatus() {
+        return qcStatus;
+    }
+
+    public void setQcStatus(String qcStatus) {
+        this.qcStatus = qcStatus;
+    }
+
+    public String getQcNote() {
+        return qcNote;
+    }
+
+    public void setQcNote(String qcNote) {
+        this.qcNote = qcNote;
+    }
+
+    public String getQcPackagingNote() {
+        return qcPackagingNote;
+    }
+
+    public void setQcPackagingNote(String qcPackagingNote) {
+        this.qcPackagingNote = qcPackagingNote;
     }
 }
