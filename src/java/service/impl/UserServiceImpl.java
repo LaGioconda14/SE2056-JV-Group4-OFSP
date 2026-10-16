@@ -27,16 +27,16 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public User login(String email, String rawPassword) throws Exception {
-        if (email == null || email.trim().isEmpty() || rawPassword == null || rawPassword.trim().isEmpty()) {
-            throw new Exception("Vui lòng nhập đầy đủ Email và Mật khẩu!");
+    public User login(String emailOrPhone, String rawPassword) throws Exception {
+        if (emailOrPhone == null || emailOrPhone.trim().isEmpty() || rawPassword == null || rawPassword.trim().isEmpty()) {
+            throw new Exception("Vui lòng nhập đầy đủ Email / Số điện thoại và Mật khẩu!");
         }
 
-        email = email.trim();
-        User user = userDAO.findByEmail(email);
+        String identifier = emailOrPhone.trim();
+        User user = userDAO.findByEmailOrPhone(identifier);
 
         if (user == null || !PasswordUtil.verifyPassword(rawPassword, user.getPassword())) {
-            throw new Exception("Email hoặc mật khẩu không chính xác!");
+            throw new Exception("Email / Số điện thoại hoặc mật khẩu không chính xác!");
         }
 
         if (!user.isActive()) {
@@ -209,6 +209,19 @@ public class UserServiceImpl implements IUserService {
             throw new Exception("Họ và tên phải từ 2 đến 100 ký tự!");
         }
 
+        if (phone != null && !phone.trim().isEmpty()) {
+            phone = phone.trim();
+            String phonePattern = "^(0|\\+84)[0-9]{9,10}$";
+            if (!phone.matches(phonePattern)) {
+                throw new Exception("Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại Việt Nam hợp lệ (10 chữ số, bắt đầu bằng 0).");
+            }
+            if (userDAO.isPhoneExists(phone, userId)) {
+                throw new Exception("Số điện thoại '" + phone + "' đã được sử dụng bởi một tài khoản khác. Vui lòng chọn số khác!");
+            }
+        } else {
+            phone = null;
+        }
+
         boolean updated = userDAO.updateProfile(userId, fullName, phone, gender, birthDate);
         if (!updated) {
             throw new Exception("Có lỗi xảy ra khi cập nhật hồ sơ cá nhân. Vui lòng thử lại!");
@@ -248,6 +261,9 @@ public class UserServiceImpl implements IUserService {
             newUser.setPhone(null);
             newUser.setRole("CUSTOMER");
             newUser.setStatus(1); // ACTIVE
+            if (googleAccount.getPicture() != null && !googleAccount.getPicture().trim().isEmpty()) {
+                newUser.setAvatarUrl(googleAccount.getPicture().trim());
+            }
 
             boolean registered = userDAO.register(newUser);
             if (!registered) {
@@ -257,6 +273,17 @@ public class UserServiceImpl implements IUserService {
             user = userDAO.findByEmail(googleEmail);
             if (user == null) {
                 throw new Exception("Không thể tải thông tin tài khoản vừa tạo từ Google!");
+            }
+        } else {
+            // Nếu người dùng cũ chưa có avatar và Google có avatar -> cập nhật avatar
+            if ((user.getAvatarUrl() == null || user.getAvatarUrl().trim().isEmpty())
+                    && googleAccount.getPicture() != null && !googleAccount.getPicture().trim().isEmpty()) {
+                try {
+                    userDAO.updateAvatar(user.getId(), googleAccount.getPicture().trim());
+                    user.setAvatarUrl(googleAccount.getPicture().trim());
+                } catch (Exception ex) {
+                    // Không để lỗi avatar chặn tiến trình đăng nhập
+                }
             }
         }
 

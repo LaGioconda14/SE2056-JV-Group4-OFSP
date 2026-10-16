@@ -122,7 +122,7 @@ public class LoginServlet extends HttpServlet {
         if ("SHOP_OWNER".equalsIgnoreCase(role)) {
             // Lấy thông tin Shop của chủ shop theo ID user
             try {
-                Shop shop = shopDAO.getShopByOwnerId(user.getId()); // Hoặc user.getId() tùy model User của ông
+                Shop shop = shopDAO.getShopByOwnerId(user.getId());
                 if (shop != null) {
                     session.setAttribute("shopId", shop.getShopId());
                     session.setAttribute("shopName", shop.getShopName());
