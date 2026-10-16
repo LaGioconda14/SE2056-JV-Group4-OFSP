@@ -1,4 +1,4 @@
-package dao;
+    package dao;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import model.ProductVariant;
+import service.IProductService;
+import service.impl.ProductServiceImpl;
 import util.DBContext;
 
 public class ProductDAO extends DBContext {
@@ -305,7 +307,77 @@ public class ProductDAO extends DBContext {
         return 0;
     }
     
+    // Lấy danh sách các chứng nhận (certification) phân biệt từ bảng products
+    public List<String> getAllCertifications() {
+        List<String> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT certification FROM products WHERE certification IS NULL OR certification != '' ORDER BY certification ASC";
+        try (Connection conn = getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql); 
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String cert = rs.getString("certification");
+                if (cert != null && !cert.trim().isEmpty()) {
+                    list.add(cert.trim());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
     
+    // Lấy danh sách nhiệt độ bảo quản gợi ý     từ DB
+    public List<String> getAllStorageTemps() {
+        List<String> list = new ArrayList<>();
+        String sql = "SELECT DISTINCT storage_temp FROM products WHERE storage_temp IS NULL OR storage_temp != '' ORDER BY storage_temp ASC";
+        try (Connection conn = getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql); 
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String temp = rs.getString("storage_temp");
+                if (temp != null && !temp.trim().isEmpty()) {
+                    list.add(temp.trim());
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    
+    //lấy unit đưa lên form để người dùng chọn chính xác
+    public List<String> getAllUnits() {
+        List<String> list = new ArrayList<>();
+
+        // 1. Thêm các đơn vị tiêu chuẩn lên đầu
+        list.add("hộp");
+        list.add("kg");
+        list.add("túi");
+        list.add("thùng");
+        list.add("gram");
+        list.add("giỏ");
+        list.add("nải");
+        list.add("quả");
+
+        // 2. Lấy thêm từ Database, nếu chưa có trong list thì mới thêm vào
+        String sql = "SELECT DISTINCT unit FROM product_variants WHERE unit IS NOT NULL AND unit != '' ORDER BY unit ASC";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                String u = rs.getString("unit");
+                if (u != null && !u.trim().isEmpty()) {
+                    String unitLower = u.trim().toLowerCase();
+                    // Nếu list chưa chứa đơn vị này thì mới add vào để tránh bị trùng
+                    if (!list.contains(unitLower)) {
+                        list.add(unitLower);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 
     // 7. Thêm mới đầy đủ sản phẩm, biến thể, hình ảnh và lô hàng
     public long insertFullProduct(long shopId, String name, int categoryId, String origin,
