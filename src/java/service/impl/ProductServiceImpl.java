@@ -108,4 +108,12 @@ public class ProductServiceImpl implements IProductService {
                 isActive, coverImageUrl, detailImages, batchCode
         );
     }
+    
+    @Override
+    public boolean softDeleteVariant(long variantId, long shopId) {
+        if (variantId <= 0 || shopId <= 0) {
+            throw new IllegalArgumentException("Mã sản phẩm hoặc cửa hàng không hợp lệ!");
+        }
+        return productDAO.softDeleteVariant(variantId, shopId);
+    }
 }

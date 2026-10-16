@@ -140,9 +140,24 @@ public class ProductDAO extends DBContext {
         return false;
     }
 
-    // 6. Xóa biến thể theo ID
+    // Xóa biến thể theo id và shopid
     public boolean deleteVariantById(long variantId, long shopId) {
         String sql = "DELETE pv FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
+                + "WHERE pv.variant_id = ? AND p.shop_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, variantId);
+            ps.setLong(2, shopId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Xóa mềm biến thể (Chuyển trạng thái is_active về 0 thay vì xóa vĩnh viễn)
+    public boolean softDeleteVariant(long variantId, long shopId) {
+        String sql = "UPDATE pv SET pv.is_active = 0 "
+                + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
                 + "WHERE pv.variant_id = ? AND p.shop_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, variantId);

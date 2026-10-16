@@ -406,22 +406,39 @@
 
                                                     <!-- QUY CÁCH ĐÓNG GÓI -->
                                                     <td class="py-4 px-4">
-                                                        <div class="flex flex-col items-start gap-1">
+                                                        <div class="flex flex-col items-start gap-1.5">
                                                             <span class="font-bold text-slate-800">
                                                                 ${v.variantName}
                                                             </span>
-                                                            <c:choose>
-                                                                <c:when test="${v.totalVariantsCount > 1}">
-                                                                    <span class="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-black border border-indigo-100">
-                                                                        ${v.totalVariantsCount} Biến thể (+${v.unit})
-                                                                    </span>
-                                                                </c:when>
-                                                                <c:otherwise>
-                                                                    <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold">
-                                                                        1 Biến thể duy nhất
-                                                                    </span>
-                                                                </c:otherwise>
-                                                            </c:choose>
+
+                                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                                <c:choose>
+                                                                    <c:when test="${v.totalVariantsCount > 1}">
+                                                                        <span class="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-black border border-indigo-100">
+                                                                            ${v.totalVariantsCount} Biến thể (+${v.unit})
+                                                                        </span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-bold">
+                                                                            1 Biến thể duy nhất
+                                                                        </span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+
+                                                                <!-- HUY HIỆU HIỂN THỊ TRẠNG THÁI IS_ACTIVE -->
+                                                                <c:choose>
+                                                                    <c:when test="${v.isActive}">
+                                                                        <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black flex items-center gap-1">
+                                                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Đang bán
+                                                                        </span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 text-[10px] font-black flex items-center gap-1">
+                                                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Ngưng bán / Tạm ẩn
+                                                                        </span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </div>
                                                         </div>
                                                     </td>
 
