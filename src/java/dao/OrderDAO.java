@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Order;
 import model.OrderItem;
+import model.ShippingAddress;
 import util.DBContext;
 
 public class OrderDAO extends DBContext {
@@ -62,6 +63,7 @@ public class OrderDAO extends DBContext {
                     );
 
                     loadOrderItemsAndShop(order);
+                    loadShippingAddress(order);
                     list.add(order);
                 }
             }
@@ -121,6 +123,32 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error in loadOrderItemsAndShop for orderId: " + order.getOrderId(), ex);
+        }
+    }
+
+    private void loadShippingAddress(Order order) {
+        String sql = "SELECT recipient_name, recipient_phone, street_address, ward, district, city "
+                   + "FROM order_shipping_addresses WHERE order_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) return;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, order.getOrderId());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    ShippingAddress addr = new ShippingAddress(
+                        order.getOrderId(),
+                        rs.getString("recipient_name"),
+                        rs.getString("recipient_phone"),
+                        rs.getString("street_address"),
+                        rs.getString("ward"),
+                        rs.getString("district"),
+                        rs.getString("city")
+                    );
+                    order.setShippingAddress(addr);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error loading shipping address for orderId: " + order.getOrderId(), ex);
         }
     }
 }

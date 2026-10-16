@@ -398,7 +398,223 @@ function confirmReceivedOrder(orderId) {
 }
 
 function trackDelivery(orderId) {
-    alert('Hành trình vận chuyển đơn hàng #' + orderId + ':\n- Phương thức: Chuỗi lạnh FreshFruit Cold-Chain (2-5°C)\n- Trạng thái: Đang giao bởi Shipper, dự kiến đến trong ngày hôm nay.');
+    showOrderTracking(orderId);
+}
+
+function formatVND(amount) {
+    if (amount === undefined || amount === null || isNaN(amount)) return '0₫';
+    return new Intl.NumberFormat('vi-VN').format(Number(amount)) + '₫';
+}
+
+function showOrderTracking(orderId) {
+    if (!orderId) return;
+
+    const card = document.querySelector('.shopee-order-card[data-order-id="' + orderId + '"]');
+    if (!card) {
+        console.warn('Order card not found for ID: ' + orderId);
+        return;
+    }
+
+    const status = (card.getAttribute('data-order-status') || 'PENDING').toUpperCase();
+    const shopName = card.getAttribute('data-shop-name') || 'FreshFruit Official Store';
+    const recipientName = card.getAttribute('data-recipient-name') || 'Người nhận';
+    const recipientPhone = card.getAttribute('data-recipient-phone') || '0903 *** ***';
+    const recipientAddress = card.getAttribute('data-recipient-address') || 'Địa chỉ giao hàng';
+    const goodsAmount = card.getAttribute('data-goods-amount') || 0;
+    const shippingFee = card.getAttribute('data-shipping-fee') || 25000;
+    const discount = card.getAttribute('data-discount') || 0;
+    const finalAmount = card.getAttribute('data-final-amount') || goodsAmount;
+    const paymentMethod = card.getAttribute('data-payment-method') || 'COD';
+
+    // 1. Header Order Code
+    const orderCodeEl = document.getElementById('trackOrderCode');
+    if (orderCodeEl) orderCodeEl.textContent = '#' + orderId;
+
+    // 2. Recipient info
+    const recNameEl = document.getElementById('trackRecipientName');
+    if (recNameEl) recNameEl.textContent = recipientName;
+
+    const recPhoneEl = document.getElementById('trackRecipientPhone');
+    if (recPhoneEl) recPhoneEl.textContent = recipientPhone;
+
+    const recAddrEl = document.getElementById('trackRecipientAddress');
+    if (recAddrEl) recAddrEl.textContent = recipientAddress;
+
+    const destNameEl = document.getElementById('trackMapDestName');
+    if (destNameEl) {
+        const parts = recipientAddress.split(',');
+        destNameEl.textContent = parts[0] ? parts[0].trim() : 'Điểm giao hàng';
+    }
+
+    const mapShopNameEl = document.getElementById('trackMapShopName');
+    if (mapShopNameEl) mapShopNameEl.textContent = shopName;
+
+    // 3. Payment amounts
+    const goodsSubtotalEl = document.getElementById('trackGoodsSubtotal');
+    if (goodsSubtotalEl) goodsSubtotalEl.textContent = formatVND(goodsAmount);
+
+    const shipFeeEl = document.getElementById('trackShippingFee');
+    if (shipFeeEl) shipFeeEl.textContent = formatVND(shippingFee);
+
+    const discountEl = document.getElementById('trackVoucherDiscount');
+    if (discountEl) discountEl.textContent = '-' + formatVND(discount);
+
+    const finalTotalEl = document.getElementById('trackFinalTotal');
+    if (finalTotalEl) finalTotalEl.textContent = formatVND(finalAmount);
+
+    const payMethodBadge = document.getElementById('trackPaymentMethodBadge');
+    if (payMethodBadge) {
+        if (paymentMethod === 'VNPAY') {
+            payMethodBadge.textContent = 'VNPAY QR';
+            payMethodBadge.className = 'badge bg-primary-subtle text-primary border fw-semibold';
+        } else if (paymentMethod === 'WALLET') {
+            payMethodBadge.textContent = 'Ví FreshFruit Pay';
+            payMethodBadge.className = 'badge bg-success-subtle text-success border fw-semibold';
+        } else {
+            payMethodBadge.textContent = 'Thu hộ tiền mặt (COD)';
+            payMethodBadge.className = 'badge bg-light text-dark border fw-semibold';
+        }
+    }
+
+    // 4. Populate Items
+    const itemsContainer = document.getElementById('trackItemsContainer');
+    const itemCountEl = document.getElementById('trackItemCount');
+    if (itemsContainer) {
+        itemsContainer.innerHTML = '';
+        const itemRows = card.querySelectorAll('.shopee-item-row');
+        if (itemCountEl) itemCountEl.textContent = itemRows.length;
+
+        itemRows.forEach(row => {
+            const img = row.querySelector('.shopee-item-thumb');
+            const imgSrc = img ? img.getAttribute('src') : 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';
+            const title = row.querySelector('.shopee-item-title') ? row.querySelector('.shopee-item-title').textContent.trim() : 'Sản phẩm';
+            const variant = row.querySelector('.shopee-item-variant') ? row.querySelector('.shopee-item-variant').textContent.trim() : '';
+            const qty = row.querySelector('.shopee-item-qty') ? row.querySelector('.shopee-item-qty').textContent.trim() : 'x1';
+            const price = row.querySelector('.shopee-price-current') ? row.querySelector('.shopee-price-current').textContent.trim() : '0₫';
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'tracking-item-card';
+            itemDiv.innerHTML = `
+                <img src="${imgSrc}" alt="${title}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
+                <div class="tracking-item-info">
+                    <div class="tracking-item-name">${title}</div>
+                    <div class="tracking-item-variant">${variant} &bull; <strong class="text-dark">${qty}</strong></div>
+                </div>
+                <div class="tracking-item-price">${price}</div>
+            `;
+            itemsContainer.appendChild(itemDiv);
+        });
+    }
+
+    // 5. Adapt Stepper and GPS Map depending on Status
+    const estTimeEl = document.getElementById('trackEstimatedTime');
+    const gpsCard = document.getElementById('trackGpsCard');
+    const driverCard = document.getElementById('trackDriverCard');
+
+    const step1 = document.getElementById('trackStep1');
+    const step2 = document.getElementById('trackStep2');
+    const step3 = document.getElementById('trackStep3');
+    const step4 = document.getElementById('trackStep4');
+    const step5 = document.getElementById('trackStep5');
+    const step6 = document.getElementById('trackStep6');
+
+    const line1 = document.getElementById('trackLine1');
+    const line2 = document.getElementById('trackLine2');
+    const line3 = document.getElementById('trackLine3');
+    const line4 = document.getElementById('trackLine4');
+    const line5 = document.getElementById('trackLine5');
+
+    // Reset all steps
+    [step1, step2, step3, step4, step5, step6].forEach(s => {
+        if (s) {
+            s.className = 'stepper-step';
+            const c = s.querySelector('.stepper-circle');
+            if (c) c.classList.remove('pulse');
+        }
+    });
+    [line1, line2, line3, line4, line5].forEach(l => {
+        if (l) l.className = 'stepper-line';
+    });
+
+    if (status === 'CANCELLED') {
+        if (estTimeEl) {
+            estTimeEl.textContent = 'Đơn hàng đã được hủy';
+            estTimeEl.className = 'small fw-semibold text-danger bg-danger-subtle px-3 py-1 rounded-pill border border-danger-subtle';
+        }
+        if (step1) step1.classList.add('completed');
+        if (line1) line1.classList.add('completed');
+        if (step2) {
+            step2.className = 'stepper-step cancelled';
+            const c = step2.querySelector('.stepper-circle');
+            if (c) c.innerHTML = '<i class="bi bi-x-lg"></i>';
+            const t = step2.querySelector('.stepper-title');
+            if (t) t.textContent = 'Đã hủy đơn';
+        }
+        if (gpsCard) gpsCard.style.display = 'none';
+        if (driverCard) driverCard.style.display = 'none';
+    } else if (status === 'COMPLETED' || status === 'DELIVERED') {
+        if (estTimeEl) {
+            estTimeEl.textContent = 'Giao hàng thành công';
+            estTimeEl.className = 'small fw-semibold text-success bg-success-subtle px-3 py-1 rounded-pill border border-success-subtle';
+        }
+        [step1, step2, step3, step4, step5, step6].forEach(s => s && s.classList.add('completed'));
+        [line1, line2, line3, line4, line5].forEach(l => l && l.classList.add('completed'));
+        const step6Title = document.getElementById('trackTitle6');
+        if (step6Title) step6Title.textContent = 'Đã nhận quả tươi';
+        const step6Time = document.getElementById('trackTime6');
+        if (step6Time) step6Time.textContent = 'Hoàn tất';
+        if (gpsCard) gpsCard.style.display = 'none';
+        if (driverCard) driverCard.style.display = 'block';
+    } else if (status === 'SHIPPING') {
+        if (estTimeEl) {
+            estTimeEl.textContent = 'Dự kiến giao: 11:30 hôm nay';
+            estTimeEl.className = 'small fw-semibold text-success bg-success-subtle px-3 py-1 rounded-pill border border-success-subtle';
+        }
+        [step1, step2, step3, step4].forEach(s => s && s.classList.add('completed'));
+        [line1, line2, line3, line4].forEach(l => l && l.classList.add('completed'));
+        if (step5) {
+            step5.className = 'stepper-step active';
+            const c = step5.querySelector('.stepper-circle');
+            if (c) c.classList.add('pulse');
+        }
+        if (line5) line5.className = 'stepper-line active';
+        if (gpsCard) gpsCard.style.display = 'block';
+        if (driverCard) driverCard.style.display = 'block';
+    } else if (status === 'PROCESSING' || status === 'CONFIRMED') {
+        if (estTimeEl) {
+            estTimeEl.textContent = 'Nhà vườn đang đóng gói';
+            estTimeEl.className = 'small fw-semibold text-primary bg-primary-subtle px-3 py-1 rounded-pill border border-primary-subtle';
+        }
+        [step1, step2].forEach(s => s && s.classList.add('completed'));
+        if (line1) line1.classList.add('completed');
+        if (line2) line2.classList.add('completed');
+        if (step3) {
+            step3.className = 'stepper-step active';
+            const c = step3.querySelector('.stepper-circle');
+            if (c) c.classList.add('pulse');
+        }
+        if (gpsCard) gpsCard.style.display = 'none';
+        if (driverCard) driverCard.style.display = 'none';
+    } else {
+        if (estTimeEl) {
+            estTimeEl.textContent = 'Chờ shop xác nhận';
+            estTimeEl.className = 'small fw-semibold text-warning bg-warning-subtle px-3 py-1 rounded-pill border border-warning-subtle';
+        }
+        if (step1) {
+            step1.className = 'stepper-step active';
+            const c = step1.querySelector('.stepper-circle');
+            if (c) c.classList.add('pulse');
+        }
+        if (gpsCard) gpsCard.style.display = 'none';
+        if (driverCard) driverCard.style.display = 'none';
+    }
+
+    // 6. Launch Bootstrap Modal
+    const modalEl = document.getElementById('orderTrackingModal');
+    if (modalEl && window.bootstrap && bootstrap.Modal) {
+        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+        m.show();
+    }
 }
 
 function cancelOrder(orderId) {
@@ -429,6 +645,7 @@ function submitReview() {
     if (comment) comment.value = '';
     alert('Cảm ơn bạn! Đánh giá chất lượng trái cây của bạn đã được gửi thành công.');
 }
+
 
 
 
