@@ -116,4 +116,42 @@ public class ProductServiceImpl implements IProductService {
         }
         return productDAO.softDeleteVariant(variantId, shopId);
     }
+    
+    @Override
+    public ProductVariant getVariantById(long variantId) {
+        return productDAO.getVariantById(variantId);
+    }
+    
+    @Override
+    public boolean updateFullProduct(long variantId, String name, int categoryId, String origin, 
+                                     String storageTemp, String certification, String description, 
+                                     String sku, String variantName, String unit, BigDecimal price, 
+                                     BigDecimal originalPrice, int stockQuantity, boolean isActive, 
+                                     String coverImageUrl) {
+        
+        // 1. Validate dữ liệu đầu vào cơ bản
+        if (variantId <= 0) {
+            return false;
+        }
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+        if (price == null || price.compareTo(BigDecimal.ZERO) < 0) {
+            return false; // Không cho phép giá bán âm
+        }
+        if (stockQuantity < 0) {
+            return false; // Không cho phép tồn kho âm
+        }
+        if (unit == null || unit.trim().isEmpty()) {
+            unit = "kg"; // Gán mặc định nếu người dùng lỡ để trống
+        }
+
+        // 2. Gọi DAO thực thi sau khi đã qua cửa kiểm duyệt
+        return productDAO.updateFullProduct(variantId, name.trim(), categoryId, origin, 
+                                            storageTemp, certification, description, 
+                                            sku, variantName, unit.trim(), price, 
+                                            originalPrice != null ? originalPrice : price, 
+                                            stockQuantity, isActive, coverImageUrl);
+    }
+
 }

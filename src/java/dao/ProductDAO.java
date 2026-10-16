@@ -50,8 +50,8 @@ public class ProductDAO extends DBContext {
                     v.setProductId(rs.getLong("product_id"));
                     v.setSku(rs.getString("sku"));
                     v.setVariantName(rs.getString("variant_name"));
-                    v.setPrice(rs.getDouble("price"));
-                    v.setOriginalPrice(rs.getDouble("original_price"));
+                    v.setPrice(rs.getBigDecimal("price"));
+                    v.setOriginalPrice(rs.getBigDecimal("original_price"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
                     v.setUnit(rs.getString("unit"));
 
@@ -261,8 +261,8 @@ public class ProductDAO extends DBContext {
                     v.setProductId(rs.getLong("product_id"));
                     v.setSku(rs.getString("sku"));
                     v.setVariantName(rs.getString("variant_name"));
-                    v.setPrice(rs.getDouble("price"));
-                    v.setOriginalPrice(rs.getDouble("original_price"));
+                    v.setPrice(rs.getBigDecimal("price"));
+                    v.setOriginalPrice(rs.getBigDecimal("original_price"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
                     v.setUnit(rs.getString("unit"));
 
@@ -553,5 +553,154 @@ public class ProductDAO extends DBContext {
             slug = slug.substring(0, slug.length() - 1);
         }
         return slug + "-" + (System.currentTimeMillis() % 100000);
+    }
+    
+    // =========================================================================
+    // 1. LẤY THÔNG TIN CHI TIẾT SẢN PHẨM & BIẾN THỂ ĐỂ ĐỔ RA FORM SỬA
+    // =========================================================================
+    public ProductVariant getVariantById(long variantId) {
+        ProductVariant pv = null;
+        String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, " +
+                     "pv.price, pv.original_price, pv.stock_quantity, pv.is_active, " +
+                     "p.name AS product_name, p.category_id, p.origin, p.storage_temp, " +
+                     "p.certification, p.description, " +
+                     "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url " +
+                     "FROM product_variants pv " +
+                     "JOIN products p ON pv.product_id = p.product_id " +
+                     "LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 " +
+                     "WHERE pv.variant_id = ?";
+        
+        try (Connection conn = getConnection(); 
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            
+            ps.setLong(1, variantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    pv = new ProductVariant();
+                    // Thông tin biến thể (Variant)
+                    pv.setVariantId(rs.getLong("variant_id"));
+                    pv.setProductId(rs.getLong("product_id"));
+                    pv.setSku(rs.getString("sku"));
+                    pv.setVariantName(rs.getString("variant_name"));
+                    pv.setUnit(rs.getString("unit"));
+                    pv.setPrice(rs.getBigDecimal("price"));
+                    pv.setOriginalPrice(rs.getBigDecimal("original_price"));
+                    pv.setStockQuantity(rs.getInt("stock_quantity"));
+                    pv.setIsActive(rs.getBoolean("is_active"));
+                    
+                    // Thông tin chung sản phẩm (Product)
+                    pv.setProductName(rs.getString("product_name"));
+                    pv.setCategoryId(rs.getInt("category_id"));
+                    pv.setOrigin(rs.getString("origin"));
+                    pv.setStorageTemp(rs.getString("storage_temp"));
+                    pv.setCertification(rs.getString("certification"));
+                    pv.setDescription(rs.getString("description"));
+                    pv.setImage(rs.getString("image_url")); // Map đúng vào trường ảnh qua LEFT JOIN
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return pv;
+    }
+    
+    // =========================================================================
+    // 8. CẬP NHẬT ĐẦY ĐỦ THÔNG TIN SẢN PHẨM, BIẾN THỂ VÀ ẢNH BÌA
+    // =========================================================================
+    public boolean updateFullProduct(long variantId, String name, int categoryId, String origin, 
+                                     String storageTemp, String certification, String description, 
+                                     String sku, String variantName, String unit, BigDecimal price, 
+                                     BigDecimal originalPrice, int stockQuantity, boolean isActive, 
+                                     String coverImageUrl) {
+        
+        String sqlGetProductId = "SELECT product_id FROM product_variants WHERE variant_id = ?";
+        String sqlUpdateProduct = "UPDATE products SET name = ?, category_id = ?, origin = ?, storage_temp = ?, certification = ?, description = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
+        String sqlUpdateVariant = "UPDATE product_variants SET sku = ?, variant_name = ?, unit = ?, price = ?, original_price = ?, stock_quantity = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE variant_id = ?";
+        String sqlCheckImage = "SELECT image_id FROM product_images WHERE product_id = ? AND is_thumbnail = 1";
+        String sqlUpdateImage = "UPDATE product_images SET image_url = ? WHERE product_id = ? AND is_thumbnail = 1";
+        String sqlInsertImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) VALUES (?, ?, 1, 1, CURRENT_TIMESTAMP)";
+
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            long productId = -1;
+
+            // 1. Lấy product_id tương ứng với variantId đang sửa
+            try (PreparedStatement ps = conn.prepareStatement(sqlGetProductId)) {
+                ps.setLong(1, variantId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        productId = rs.getLong("product_id");
+                    }
+                }
+            }
+
+            if (productId == -1) {
+                conn.rollback();
+                return false;
+            }
+
+            // 2. Cập nhật thông tin chung ở bảng products
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateProduct)) {
+                ps.setString(1, name);
+                if (categoryId > 0) {
+                    ps.setInt(2, categoryId);
+                } else {
+                    ps.setNull(2, java.sql.Types.INTEGER);
+                }
+                ps.setString(3, origin != null ? origin.trim() : "");
+                ps.setString(4, storageTemp != null ? storageTemp.trim() : "");
+                ps.setString(5, certification != null ? certification.trim() : "");
+                ps.setString(6, description != null ? description : "");
+                ps.setBoolean(7, isActive);
+                ps.setLong(8, productId);
+                ps.executeUpdate();
+            }
+
+            // 3. Cập nhật thông tin biến thể ở bảng product_variants
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateVariant)) {
+                ps.setString(1, sku != null && !sku.trim().isEmpty() ? sku.trim() : ("SKU-" + variantId));
+                ps.setString(2, variantName != null && !variantName.trim().isEmpty() ? variantName.trim() : "Tiêu chuẩn");
+                ps.setString(3, unit != null && !unit.trim().isEmpty() ? unit.trim() : "kg");
+                ps.setBigDecimal(4, price != null ? price : BigDecimal.ZERO);
+                ps.setBigDecimal(5, originalPrice != null ? originalPrice : price);
+                ps.setInt(6, stockQuantity);
+                ps.setBoolean(7, isActive);
+                ps.setLong(8, variantId);
+                ps.executeUpdate();
+            }
+
+            // 4. Cập nhật hoặc thêm mới ảnh bìa (thumbnail) trong product_images
+            if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+                boolean hasThumbnail = false;
+                try (PreparedStatement ps = conn.prepareStatement(sqlCheckImage)) {
+                    ps.setLong(1, productId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            hasThumbnail = true;
+                        }
+                    }
+                }
+
+                if (hasThumbnail) {
+                    try (PreparedStatement ps = conn.prepareStatement(sqlUpdateImage)) {
+                        ps.setString(1, coverImageUrl.trim());
+                        ps.setLong(2, productId);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    try (PreparedStatement ps = conn.prepareStatement(sqlInsertImage)) {
+                        ps.setLong(1, productId);
+                        ps.setString(2, coverImageUrl.trim());
+                        ps.executeUpdate();
+                    }
+                }
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
