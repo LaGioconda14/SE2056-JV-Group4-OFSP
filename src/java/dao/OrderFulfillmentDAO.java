@@ -26,7 +26,7 @@ public class OrderFulfillmentDAO extends DBContext {
     public SubOrder getSubOrderDetails(String subOrderCode) {
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
-                + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
+                + "       so.status, so.cancel_reason, so.cancelled_at, so.created_at, so.updated_at, "
                 + "       s.shop_name, "
                 + "       o.order_code, o.payment_status, o.payment_method, o.created_at AS order_created_at, "
                 + "       u.full_name AS customer_name, u.phone AS customer_phone, "
@@ -63,6 +63,7 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setShopTotal(rs.getBigDecimal("shop_total"));
                     so.setStatus(rs.getString("status"));
                     so.setCancelReason(rs.getString("cancel_reason"));
+                    so.setCancelledAt(rs.getTimestamp("cancelled_at"));
                     so.setPaymentMethod(rs.getString("payment_method"));
                     so.setPaymentStatus(rs.getString("payment_status"));
                     so.setCreatedAt(rs.getTimestamp("created_at"));
@@ -165,7 +166,29 @@ public class OrderFulfillmentDAO extends DBContext {
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, newStatus);
             ps.setString(2, subOrderCode);
-            return ps.executeUpdate() > 0;
+            int updated = ps.executeUpdate();
+            if (updated > 0) {
+                // Synchronize parent order status
+                if ("SHIPPING".equalsIgnoreCase(newStatus)) {
+                    String syncShipping = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = CURRENT_TIMESTAMP "
+                            + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_code = ?";
+                    try (PreparedStatement psSync = conn.prepareStatement(syncShipping)) {
+                        psSync.setString(1, subOrderCode);
+                        psSync.executeUpdate();
+                    }
+                } else if ("DELIVERED".equalsIgnoreCase(newStatus)) {
+                    String syncDelivered = "UPDATE o SET o.order_status = 'COMPLETED', o.updated_at = CURRENT_TIMESTAMP "
+                            + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
+                            + "WHERE so.sub_order_code = ? "
+                            + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> 'DELIVERED')";
+                    try (PreparedStatement psSync = conn.prepareStatement(syncDelivered)) {
+                        psSync.setString(1, subOrderCode);
+                        psSync.executeUpdate();
+                    }
+                }
+                return true;
+            }
+            return false;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error updating sub_orders status to " + newStatus, ex);
             return false;
@@ -314,5 +337,67 @@ public class OrderFulfillmentDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error getting first suborder code for shop " + shopId, ex);
         }
         return null;
+    }
+
+    /**
+     * Cancel SubOrder with a reason (Out of stock or Fruit not qualified)
+     * Matches the Activity Diagram: Fresh fruit available & qualified? No -> Cancel Sub-order (status='CANCELLED')
+     */
+    public boolean cancelSubOrder(String subOrderCode, String cancelReason, Long cancelledBy) {
+        String sql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, cancelled_by = ?, "
+                + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE sub_order_code = ?";
+        Connection conn = getConnection();
+        if (conn == null) return false;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setNString(1, cancelReason);
+            if (cancelledBy != null) {
+                ps.setLong(2, cancelledBy);
+            } else {
+                ps.setNull(2, java.sql.Types.BIGINT);
+            }
+            ps.setString(3, subOrderCode);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                // Synchronize parent order status if all sub_orders are CANCELLED
+                String syncSql = "UPDATE o SET o.order_status = 'CANCELLED', o.updated_at = CURRENT_TIMESTAMP "
+                        + "FROM orders o "
+                        + "JOIN sub_orders so ON o.order_id = so.order_id "
+                        + "WHERE so.sub_order_code = ? "
+                        + "  AND NOT EXISTS ( "
+                        + "      SELECT 1 FROM sub_orders other "
+                        + "      WHERE other.order_id = o.order_id "
+                        + "        AND other.status <> 'CANCELLED' "
+                        + "  )";
+                try (PreparedStatement psSync = conn.prepareStatement(syncSql)) {
+                    psSync.setString(1, subOrderCode);
+                    psSync.executeUpdate();
+                }
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error cancelling sub order: " + subOrderCode, e);
+            return false;
+        }
+    }
+
+    /**
+     * Check if a sub-order is owned by a specific shop
+     */
+    public boolean isSubOrderOwnedByShop(long subOrderId, long shopId) {
+        String sql = "SELECT 1 FROM sub_orders WHERE sub_order_id = ? AND shop_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) return false;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, subOrderId);
+            ps.setLong(2, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error checking suborder shop ownership", e);
+            return false;
+        }
     }
 }

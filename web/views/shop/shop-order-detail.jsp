@@ -251,19 +251,23 @@
                     </div>
 
                     <!-- Simulation Switcher Buttons (Top-Right) -->
-                    <div class="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-slate-200 shadow-2xs self-start lg:self-center">
-                        <span class="text-[11px] font-bold text-slate-400 px-2">Trạng thái mô phỏng:</span>
+                    <div class="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 shadow-2xs self-start lg:self-center overflow-x-auto">
+                        <span class="text-[11px] font-bold text-slate-400 px-2 whitespace-nowrap">Mô phỏng:</span>
                         <a href="?code=${subOrder.subOrderCode}&status=NEW" 
-                           class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${subOrder.status eq 'NEW' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}">
+                           class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${subOrder.status eq 'NEW' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'}">
                             1. Đơn Mới
                         </a>
                         <a href="?code=${subOrder.subOrderCode}&status=PACKING" 
-                           class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${subOrder.status eq 'PACKING' or empty subOrder.status ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}">
-                            2. Đang đóng gói
+                           class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${subOrder.status eq 'PACKING' or empty subOrder.status ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'}">
+                            2. Đóng gói
                         </a>
                         <a href="?code=${subOrder.subOrderCode}&status=SHIPPING" 
-                           class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${subOrder.status eq 'SHIPPING' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}">
-                            3. Sẵn sàng giao
+                           class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${subOrder.status eq 'SHIPPING' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'}">
+                            3. Sẵn sàng
+                        </a>
+                        <a href="?code=${subOrder.subOrderCode}&status=CANCELLED" 
+                           class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${subOrder.status eq 'CANCELLED' ? 'bg-rose-600 text-white shadow-xs' : 'text-rose-600 hover:bg-rose-50'}">
+                            4. Đã Hủy
                         </a>
                     </div>
                 </div>
@@ -282,28 +286,43 @@
                             <div class="text-[11px] text-slate-400 mt-0.5"><fmt:formatDate value="${subOrder.createdAt}" pattern="HH:mm dd/MM" /></div>
                         </div>
 
-                        <!-- Step 2: Shop Xác nhận -->
+                        <!-- Step 2: Shop Xác nhận / Hủy đơn -->
                         <div class="flex flex-col items-center text-center w-36 z-10">
-                            <div class="w-9 h-9 rounded-full ${subOrder.status ne 'NEW' ? 'bg-emerald-600 text-white ring-4 ring-emerald-50' : 'bg-amber-500 text-white ring-4 ring-amber-50 animate-pulse'} flex items-center justify-center font-bold text-sm shadow-sm">
-                                <c:choose>
-                                    <c:when test="${subOrder.status ne 'NEW'}"><i class="fa-solid fa-check"></i></c:when>
-                                    <c:otherwise><i class="fa-solid fa-clock"></i></c:otherwise>
-                                </c:choose>
-                            </div>
-                            <div class="mt-2.5 font-extrabold text-xs text-slate-900">Shop Xác Nhận</div>
-                            <div class="text-[11px] text-slate-400 mt-0.5">Tiếp nhận nông sản</div>
+                            <c:choose>
+                                <c:when test="${subOrder.status eq 'CANCELLED'}">
+                                    <div class="w-9 h-9 rounded-full bg-rose-600 text-white ring-4 ring-rose-100 flex items-center justify-center font-bold text-sm shadow-sm">
+                                        <i class="fa-solid fa-ban"></i>
+                                    </div>
+                                    <div class="mt-2.5 font-extrabold text-xs text-rose-600">Đã Hủy Đơn</div>
+                                    <div class="text-[11px] text-rose-500 font-semibold mt-0.5">Hết hàng / Quả hỏng</div>
+                                </c:when>
+                                <c:when test="${subOrder.status eq 'NEW'}">
+                                    <div class="w-9 h-9 rounded-full bg-amber-500 text-white ring-4 ring-amber-100 flex items-center justify-center font-bold text-sm shadow-sm animate-pulse">
+                                        <i class="fa-solid fa-clock"></i>
+                                    </div>
+                                    <div class="mt-2.5 font-extrabold text-xs text-amber-700">Chờ Shop Duyệt</div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">Kiểm định tồn kho</div>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="w-9 h-9 rounded-full bg-emerald-600 text-white ring-4 ring-emerald-50 flex items-center justify-center font-bold text-sm shadow-sm">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="mt-2.5 font-extrabold text-xs text-slate-900">Shop Xác Nhận</div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">Tiếp nhận nông sản</div>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
 
-                        <!-- Step 3: Đang đóng gói (Active default) -->
+                        <!-- Step 3: Đang đóng gói -->
                         <div class="flex flex-col items-center text-center w-36 z-10">
-                            <div class="w-9 h-9 rounded-full ${subOrder.status eq 'PACKING' ? 'bg-emerald-700 text-white ring-4 ring-emerald-100 shadow-md scale-110' : (subOrder.status eq 'SHIPPING' or subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED' ? 'bg-emerald-600 text-white ring-4 ring-emerald-50' : 'bg-slate-200 text-slate-500')} flex items-center justify-center font-bold text-sm">
+                            <div class="w-9 h-9 rounded-full ${subOrder.status eq 'PACKING' ? 'bg-emerald-700 text-white ring-4 ring-emerald-100 shadow-md scale-110' : (subOrder.status eq 'SHIPPING' or subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED' ? 'bg-emerald-600 text-white ring-4 ring-emerald-50' : 'bg-slate-200 text-slate-400')} flex items-center justify-center font-bold text-sm">
                                 <c:choose>
                                     <c:when test="${subOrder.status eq 'SHIPPING' or subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED'}"><i class="fa-solid fa-check"></i></c:when>
                                     <c:otherwise><i class="fa-solid fa-box-open"></i></c:otherwise>
                                 </c:choose>
                             </div>
                             <div class="mt-2.5 font-extrabold text-xs ${subOrder.status eq 'PACKING' ? 'text-emerald-700' : 'text-slate-900'}">Đang Đóng Gói</div>
-                            <div class="text-[11px] text-emerald-700 font-semibold mt-0.5">Kiểm định QC độ tươi</div>
+                            <div class="text-[11px] ${subOrder.status eq 'PACKING' ? 'text-emerald-700 font-semibold' : 'text-slate-400'} mt-0.5">QC độ tươi &amp; đá gel</div>
                         </div>
 
                         <!-- Step 4: Chờ bàn giao tài xế -->
@@ -314,7 +333,7 @@
                                     <c:otherwise><i class="fa-solid fa-truck-fast"></i></c:otherwise>
                                 </c:choose>
                             </div>
-                            <div class="mt-2.5 font-extrabold text-xs ${subOrder.status eq 'SHIPPING' ? 'text-emerald-700' : 'text-slate-400'}">Chờ Bàn Giao Tài Xế</div>
+                            <div class="mt-2.5 font-extrabold text-xs ${subOrder.status eq 'SHIPPING' ? 'text-emerald-700' : 'text-slate-400'}">Chờ Bàn Giao Xe Lạnh</div>
                             <div class="text-[11px] text-slate-400 mt-0.5">Xe lạnh tiếp nhận</div>
                         </div>
 
@@ -329,8 +348,8 @@
 
                         <!-- Background Connection Line -->
                         <div class="absolute top-4 left-16 right-16 h-1 bg-slate-200 -z-0">
-                            <div class="h-full bg-emerald-600 transition-all duration-500" 
-                                 style="width: ${subOrder.status eq 'NEW' ? '25%' : (subOrder.status eq 'PACKING' ? '50%' : (subOrder.status eq 'SHIPPING' ? '75%' : '100%'))}"></div>
+                            <div class="h-full ${subOrder.status eq 'CANCELLED' ? 'bg-rose-500' : 'bg-emerald-600'} transition-all duration-500" 
+                                 style="width: ${subOrder.status eq 'CANCELLED' ? '25%' : (subOrder.status eq 'NEW' ? '25%' : (subOrder.status eq 'PACKING' ? '50%' : (subOrder.status eq 'SHIPPING' ? '75%' : '100%')))}"></div>
                         </div>
                     </div>
                 </div>
@@ -343,104 +362,220 @@
                     <!-- ================= LEFT COLUMN (8 COLS) ================= -->
                     <div class="lg:col-span-8 space-y-5">
 
-                        <!-- CARD 1: TIẾN TRÌNH XỬ LÝ ĐƠN HÀNG CON (TẠM ẨN) -->
-                        <%--
-                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-                            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">
-                                        <i class="fa-solid fa-arrows-rotate"></i>
-                                    </div>
-                                    <h2 class="text-base font-extrabold text-slate-900">Tiến Trình Xử Lý Đơn Hàng Con</h2>
-                                </div>
-                                <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    Trạng thái: 
-                                    <c:choose>
-                                        <c:when test="${subOrder.status eq 'NEW'}">Chờ xác nhận</c:when>
-                                        <c:when test="${subOrder.status eq 'PACKING'}">Đang đóng gói & Kiểm định QC</c:when>
-                                        <c:when test="${subOrder.status eq 'SHIPPING'}">Đã bàn giao xe lạnh</c:when>
-                                        <c:when test="${subOrder.status eq 'DELIVERED'}">Giao thành công</c:when>
-                                        <c:otherwise>${subOrder.status}</c:otherwise>
-                                    </c:choose>
-                                </span>
-                            </div>
+                        <!-- ========================================================
+                             FULFILLMENT ACTION CARD (ALIGNED WITH ACTIVITY DIAGRAM)
+                             ======================================================== -->
+                        <c:choose>
+                            <%-- CASE 1: ĐƠN ĐÃ BỊ HỦY (CANCELLED) --%>
+                            <c:when test="${subOrder.status eq 'CANCELLED'}">
+                                <div class="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs bg-rose-50/20">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl font-bold shrink-0 shadow-2xs border border-rose-200">
+                                            <i class="fa-solid fa-ban"></i>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-rose-100">
+                                                <div class="flex items-center gap-2">
+                                                    <h2 class="text-base font-extrabold text-rose-950">Đơn Hàng Con Đã Bị Hủy</h2>
+                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-300 uppercase">
+                                                        CANCELLED
+                                                    </span>
+                                                </div>
+                                                <c:if test="${not empty subOrder.cancelledAt}">
+                                                    <span class="text-xs text-rose-600 font-medium">
+                                                        <i class="fa-regular fa-clock mr-1"></i>
+                                                        <fmt:formatDate value="${subOrder.cancelledAt}" pattern="HH:mm dd/MM/yyyy" />
+                                                    </span>
+                                                </c:if>
+                                            </div>
 
-                            <!-- Banner Quy Chuẩn Đóng Gói -->
-                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-xs">
-                                        <i class="fa-solid fa-clipboard-check"></i>
-                                    </div>
-                                    <div>
-                                        <div class="text-xs font-bold text-slate-900">Quy chuẩn kiểm soát đóng gói nông sản lạnh</div>
-                                        <div class="text-[11px] text-slate-500">Tick chọn các tiêu chuẩn đóng hàng đạt chuẩn xuất xưởng</div>
-                                    </div>
-                                </div>
-                                <span id="qcProgressBadge" class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60">
-                                    Bắt buộc hoàn thành <span id="qcCount">3</span>/4
-                                </span>
-                            </div>
+                                            <div class="mt-3 p-3.5 rounded-xl bg-white border border-rose-200/90 text-xs space-y-1.5 shadow-2xs">
+                                                <div class="font-extrabold text-rose-800 flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Lý do hủy đơn từ Gian hàng:
+                                                </div>
+                                                <div class="text-slate-800 leading-relaxed font-semibold pl-4 border-l-2 border-rose-300">
+                                                    ${not empty subOrder.cancelReason ? subOrder.cancelReason : 'Nông sản không đủ số lượng tồn kho hoặc không đạt chuẩn chất lượng tươi VietGAP.'}
+                                                </div>
+                                            </div>
 
-                            <!-- 4 Checklist Items -->
-                            <div class="mt-4 space-y-3">
-                                <!-- Item 1 -->
-                                <label class="flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                    <input type="checkbox" checked class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                    <div class="flex-1 text-xs">
-                                        <div class="font-bold text-slate-900">Đã kiểm tra chất lượng & loại bỏ quả dập/hỏng</div>
-                                        <div class="text-slate-500 text-[11px] mt-0.5">Soi kỹ bề mặt vỏ, kiểm tra độ đàn hồi, loại bỏ toàn bộ cuống héo hoặc dập vỏ để bảo quản lạnh an toàn.</div>
-                                    </div>
-                                </label>
-
-                                <!-- Item 2 -->
-                                <label class="flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                    <input type="checkbox" checked class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                    <div class="flex-1 text-xs">
-                                        <div class="font-bold text-slate-900">Đã cân đủ trọng lượng tịnh & kiểm tra số lượng</div>
-                                        <div class="text-slate-500 text-[11px] mt-0.5">
-                                            Chi tiết đóng gói: 
-                                            <c:forEach items="${subOrder.items}" var="it" varStatus="st">
-                                                <span class="font-medium text-slate-800">${it.productNameSnapshot} (x${it.quantity} ${it.unit})</span>${!st.last ? ', ' : ''}
-                                            </c:forEach>
+                                            <div class="mt-3 flex items-start gap-2.5 text-xs text-emerald-900 bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                                                <i class="fa-solid fa-circle-check text-emerald-600 text-sm mt-0.5"></i>
+                                                <div class="leading-relaxed">
+                                                    <b>Tiến trình hệ thống tự động:</b> Hệ thống FreshFruit đã gửi thông báo hủy đến khách hàng và kích hoạt quy trình hoàn tiền tự động theo chính sách sàn.
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </label>
-
-                                <!-- Item 3 -->
-                                <label class="flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                    <input type="checkbox" checked class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                    <div class="flex-1 text-xs">
-                                        <div class="font-bold text-slate-900">Đã đóng gói thùng xốp chuyên dụng & chèn túi đá gel bảo ôn mát</div>
-                                        <div class="text-slate-500 text-[11px] mt-0.5">Đặt túi đá gel cách nhiệt có vách ngăn xốp chống đọng ẩm trực tiếp lên quả tươi.</div>
-                                    </div>
-                                </label>
-
-                                <!-- Item 4 -->
-                                <label class="flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                    <input type="checkbox" class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                    <div class="flex-1 text-xs">
-                                        <div class="font-bold text-slate-900">Đã dán tem niêm phong và mã vận đơn #${subOrder.subOrderCode}</div>
-                                        <div class="text-slate-500 text-[11px] mt-0.5">Mã barcode ${subOrder.trackingNumber} in rõ nét trên nắp thùng và mặt bên.</div>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <!-- VietGAP Guarantee & Action Button -->
-                            <div class="mt-4 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                                <div class="flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
-                                    <i class="fa-solid fa-shield-check text-emerald-600"></i> Được bảo chứng quy trình bảo quản tươi bởi VietGAP & OCOP
                                 </div>
-                            </div>
+                            </c:when>
 
-                            <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="mt-3">
-                                <input type="hidden" name="action" value="ready_to_ship">
-                                <input type="hidden" name="code" value="${subOrder.subOrderCode}">
-                                <button type="submit" id="btnFinishPacking" class="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-sm transition shadow-sm flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-box-check"></i> Hoàn tất đóng gói & Báo sẵn sàng giao
-                                </button>
-                            </form>
-                        </div>
-                        --%>
+                            <%-- CASE 2: ĐƠN MỚI CHỜ DUYỆT (NEW) --%>
+                            <c:when test="${subOrder.status eq 'NEW'}">
+                                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+                                    <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold border border-amber-200">
+                                                <i class="fa-solid fa-clipboard-question"></i>
+                                            </div>
+                                            <div>
+                                                <h2 class="text-base font-extrabold text-slate-900">Kiểm Tra Nông Sản &amp; Tiếp Nhận Đơn Hàng</h2>
+                                                <p class="text-[11px] text-slate-400">Kiểm tra thực tế kho bảo quản trước khi xác nhận</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                            Đơn mới chờ xác nhận
+                                        </span>
+                                    </div>
+
+                                    <!-- Decision Prompt matching Activity Diagram -->
+                                    <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold shrink-0">
+                                                <i class="fa-solid fa-leaf"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-xs font-black text-slate-900">
+                                                    Nông sản tươi có sẵn &amp; đạt chuẩn chất lượng? (Fresh fruit available &amp; qualified?)
+                                                </div>
+                                                <div class="text-[11px] text-slate-500 mt-0.5">
+                                                    Kiểm tra số lượng tồn kho lạnh và chất lượng quả tươi đạt chuẩn trước khi tiếp nhận đóng gói.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Decision Actions (Yes vs No) -->
+                                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <!-- Option YES: Confirm Sub-order -->
+                                        <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="m-0">
+                                            <input type="hidden" name="action" value="confirm">
+                                            <input type="hidden" name="code" value="${subOrder.subOrderCode}">
+                                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
+                                                <i class="fa-solid fa-check"></i>
+                                                <span>Đạt Chuẩn - Tiếp Nhận &amp; Đóng Gói</span>
+                                            </button>
+                                        </form>
+
+                                        <!-- Option NO: Cancel Sub-order -->
+                                        <button type="button" class="btn-open-cancel-modal w-full py-3 px-4 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-300 hover:border-rose-400 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                                            <i class="fa-solid fa-ban"></i>
+                                            <span>Hết Hàng / Quả Hỏng - Hủy Đơn</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </c:when>
+
+                            <%-- CASE 3: ĐANG ĐÓNG GÓI (PACKING) --%>
+                            <c:when test="${subOrder.status eq 'PACKING' or empty subOrder.status}">
+                                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+                                    <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">
+                                                <i class="fa-solid fa-box-open"></i>
+                                            </div>
+                                            <div>
+                                                <h2 class="text-base font-extrabold text-slate-900">Quy Chuẩn Kiểm Soát Đóng Gói Lạnh</h2>
+                                                <p class="text-[11px] text-slate-400">Kiểm tra và tick chọn 4 tiêu chuẩn bảo quản xuất xưởng</p>
+                                            </div>
+                                        </div>
+                                        <span id="qcProgressBadge" class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60">
+                                            Bắt buộc hoàn thành <span id="qcCount">3</span>/4
+                                        </span>
+                                    </div>
+
+                                    <!-- 4 Checklist Items -->
+                                    <div class="mt-4 space-y-3">
+                                        <!-- Item 1 -->
+                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none is-checked">
+                                            <input type="checkbox" checked class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                            <div class="flex-1 text-xs">
+                                                <div class="font-bold text-slate-900">Đã kiểm tra chất lượng &amp; loại bỏ quả dập/hỏng</div>
+                                                <div class="text-slate-500 text-[11px] mt-0.5">Soi kỹ bề mặt vỏ, kiểm tra độ đàn hồi, loại bỏ toàn bộ quả thâm úng để bảo quản lạnh an toàn.</div>
+                                            </div>
+                                        </label>
+
+                                        <!-- Item 2 -->
+                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none is-checked">
+                                            <input type="checkbox" checked class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                            <div class="flex-1 text-xs">
+                                                <div class="font-bold text-slate-900">Đã cân đủ trọng lượng tịnh &amp; kiểm tra số lượng</div>
+                                                <div class="text-slate-500 text-[11px] mt-0.5">
+                                                    Chi tiết đóng gói: 
+                                                    <c:forEach items="${subOrder.items}" var="it" varStatus="st">
+                                                        <span class="font-medium text-slate-800">${it.productNameSnapshot} (x${it.quantity} ${it.unit})</span>${!st.last ? ', ' : ''}
+                                                    </c:forEach>
+                                                </div>
+                                            </div>
+                                        </label>
+
+                                        <!-- Item 3 -->
+                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none is-checked">
+                                            <input type="checkbox" checked class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                            <div class="flex-1 text-xs">
+                                                <div class="font-bold text-slate-900">Đã đóng gói thùng xốp chuyên dụng &amp; chèn túi đá gel bảo ôn mát</div>
+                                                <div class="text-slate-500 text-[11px] mt-0.5">Đặt túi đá gel cách nhiệt có vách ngăn xốp chống đọng ẩm trực tiếp lên quả tươi.</div>
+                                            </div>
+                                        </label>
+
+                                        <!-- Item 4 -->
+                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
+                                            <input type="checkbox" class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                            <div class="flex-1 text-xs">
+                                                <div class="font-bold text-slate-900">Đã dán tem niêm phong và mã vận đơn #${subOrder.subOrderCode}</div>
+                                                <div class="text-slate-500 text-[11px] mt-0.5">Mã barcode ${subOrder.trackingNumber} in rõ nét trên nắp thùng và mặt bên.</div>
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    <!-- Finish Packaging Action -->
+                                    <div class="mt-4 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs border-t border-slate-100">
+                                        <button type="button" class="btn-open-cancel-modal text-rose-600 hover:text-rose-700 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Phát hiện hàng lỗi hỏng không đủ cung cấp? Hủy đơn
+                                        </button>
+                                        <div class="flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
+                                            <i class="fa-solid fa-shield-check text-emerald-600"></i> Bảo chứng chất lượng VietGAP &amp; OCOP
+                                        </div>
+                                    </div>
+
+                                    <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="mt-3">
+                                        <input type="hidden" name="action" value="ready_to_ship">
+                                        <input type="hidden" name="code" value="${subOrder.subOrderCode}">
+                                        <button type="submit" id="btnFinishPacking" class="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-sm transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                                            <i class="fa-solid fa-box-check"></i> Hoàn tất đóng gói &amp; Báo sẵn sàng giao
+                                        </button>
+                                    </form>
+                                </div>
+                            </c:when>
+
+                            <%-- CASE 4: SẴN SÀNG GIAO / CHỜ XE LẠNH (SHIPPING & BEYOND) --%>
+                            <c:otherwise>
+                                <div class="bg-white rounded-2xl border border-emerald-200 p-6 shadow-xs bg-emerald-50/20">
+                                    <div class="flex items-center justify-between pb-3 border-b border-emerald-100">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shadow-xs">
+                                                <i class="fa-solid fa-truck-fast"></i>
+                                            </div>
+                                            <div>
+                                                <h2 class="text-base font-extrabold text-slate-900">Sẵn Sàng Giao - Chờ Bàn Giao Xe Lạnh</h2>
+                                                <p class="text-[11px] text-slate-500">Kiện hàng đã hoàn tất đóng gói, bảo quản nhiệt độ mát 2-5°C chờ tài xế</p>
+                                            </div>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            CHỜ BÀN GIAO
+                                        </span>
+                                    </div>
+                                    <div class="mt-4 p-4 rounded-xl bg-white border border-emerald-200 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div>
+                                            <div class="font-bold text-slate-900">Vận chuyển lạnh FreshFruit Express (FFX)</div>
+                                            <div class="text-slate-500 text-[11px] mt-0.5">Mã vận đơn: <b class="font-mono text-emerald-800 text-xs">${not empty subOrder.trackingNumber ? subOrder.trackingNumber : 'FFX-98241-VN'}</b></div>
+                                        </div>
+                                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-extrabold text-xs">
+                                            <i class="fa-solid fa-snowflake animate-spin"></i> Thùng bảo ôn 2-5°C
+                                        </div>
+                                    </div>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
 
                         <!-- CARD 2: THÔNG TIN SẢN PHẨM NÔNG SẢN (DYNAMIC DỰA TRÊN ĐƠN HÀNG) -->
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
@@ -575,6 +710,7 @@
                         </div>
 
 
+
                     </div>
 
                     <!-- ================= RIGHT COLUMN (4 COLS) ================= -->
@@ -644,53 +780,7 @@
                             </div>
                         </div>
 
-                        <!-- CARD 2: VẬN CHUYỂN & GIAO HÀNG -->
-                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-truck text-emerald-600 text-sm"></i>
-                                    <h3 class="text-sm font-extrabold text-slate-900">Vận Chuyển & Giao Hàng</h3>
-                                </div>
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            </div>
 
-                            <div class="mt-3 space-y-2 text-xs">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-400 text-[11px]">Đơn vị vận chuyển:</span>
-                                    <span class="font-bold text-emerald-700 flex items-center gap-1">
-                                        <i class="fa-solid fa-snowflake text-[10px]"></i> ${not empty subOrder.carrierName ? subOrder.carrierName : 'FreshFruit Cold-Chain'}
-                                    </span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-400 text-[11px]">Loại hình giao:</span>
-                                    <span class="font-semibold text-slate-700">Tài xế xe lạnh chuyên dụng</span>
-                                </div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-slate-400 text-[11px]">Mã vận đơn FFX:</span>
-                                    <span class="font-extrabold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
-                                        ${not empty subOrder.trackingNumber ? subOrder.trackingNumber : 'Chờ phân bổ'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Urgent Pickup Countdown Alert -->
-                            <div class="mt-3 p-2.5 rounded-xl bg-red-50 border border-red-200/80 flex items-center gap-2 text-xs text-red-700 font-bold">
-                                <i class="fa-solid fa-circle-exclamation text-red-500"></i>
-                                <span>Lấy hàng trong ngày: Khung giờ giao ${not empty subOrder.deliverySlot ? subOrder.deliverySlot : 'Tiêu chuẩn'}</span>
-                            </div>
-
-                            <!-- Map Mockup Graphic -->
-                            <div class="mt-3 relative h-32 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
-                                <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=500&h=250&fit=crop" 
-                                     alt="Map Route" class="w-full h-full object-cover filter contrast-125 opacity-75">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                                <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                                    <span class="px-2.5 py-1 rounded-lg bg-white/95 text-slate-900 text-[10px] font-extrabold shadow-sm flex items-center gap-1">
-                                        <i class="fa-solid fa-route text-emerald-600"></i> Bán kính giao hàng: Nội thành
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
 
 
                     </div>
@@ -698,6 +788,94 @@
                 </div>
 
             </main>
+        </div>
+
+        <!-- ========================================================
+             5. CANCEL SUB-ORDER MODAL DIALOG (OPTION 1 WORKFLOW)
+             ======================================================== -->
+        <div id="cancelModalBackdrop" class="modal-backdrop hidden"></div>
+        <div id="cancelOrderModal" class="modal-dialog hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-sm font-bold border border-rose-200">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900">Hủy Đơn Hàng Con #${subOrder.subOrderCode}</h3>
+                        <p class="text-[10px] text-slate-400">Nông sản không đủ tồn kho hoặc không đạt chuẩn tươi</p>
+                    </div>
+                </div>
+                <button type="button" id="btnCloseCancelModal" class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="p-5 space-y-4">
+                <input type="hidden" name="action" value="cancel_sub_order">
+                <input type="hidden" name="code" value="${subOrder.subOrderCode}">
+
+                <!-- Cancellation Reason Category -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-2">
+                        1. Phân loại lý do hủy đơn <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="space-y-2">
+                        <label class="cancel-reason-option flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-rose-400 cursor-pointer transition is-selected">
+                            <input type="radio" name="cancelReasonCategory" value="Hết hàng nông sản tồn kho" class="mt-0.5 text-rose-600" checked>
+                            <div class="text-xs">
+                                <div class="font-bold text-slate-800">Hết hàng nông sản tồn trong kho</div>
+                                <div class="text-[11px] text-slate-400">Số lượng thực tế trong kho không đủ đáp ứng số lượng khách đặt.</div>
+                            </div>
+                        </label>
+                        <label class="cancel-reason-option flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-rose-400 cursor-pointer transition">
+                            <input type="radio" name="cancelReasonCategory" value="Nông sản không đạt chuẩn chất lượng (dập nát, thâm úng)" class="mt-0.5 text-rose-600">
+                            <div class="text-xs">
+                                <div class="font-bold text-slate-800">Nông sản không đạt tiêu chuẩn chất lượng</div>
+                                <div class="text-[11px] text-slate-400">Soi kiểm tra QC thấy hoa quả bị thâm úng, biến chất, sâu bệnh hoặc dập nát.</div>
+                            </div>
+                        </label>
+                        <label class="cancel-reason-option flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-rose-400 cursor-pointer transition">
+                            <input type="radio" name="cancelReasonCategory" value="Thời tiết bất thường / Không thu hoạch kịp" class="mt-0.5 text-rose-600">
+                            <div class="text-xs">
+                                <div class="font-bold text-slate-800">Thời tiết bất thường / Không thu hoạch kịp</div>
+                                <div class="text-[11px] text-slate-400">Vườn không kịp thu hoạch quả tươi đạt chuẩn trong khung giờ hẹn.</div>
+                            </div>
+                        </label>
+                        <label class="cancel-reason-option flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-rose-400 cursor-pointer transition">
+                            <input type="radio" name="cancelReasonCategory" value="Lý do khác" class="mt-0.5 text-rose-600">
+                            <div class="text-xs">
+                                <div class="font-bold text-slate-800">Lý do phát sinh khác</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Detailed Note -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">
+                        2. Ghi chú chi tiết cho khách hàng &amp; sàn <span class="text-rose-500">*</span>
+                    </label>
+                    <textarea name="cancelReasonNote" rows="3" required placeholder="Ghi chú chi tiết gửi khách hàng (VD: Lô dâu tây sáng nay về bị dập bề mặt do mưa, nhà vườn xin phép hủy đơn và hỗ trợ hoàn tiền)..." class="w-full p-2.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:border-rose-500"></textarea>
+                </div>
+
+                <!-- Notice Alert -->
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+                    <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 text-sm"></i>
+                    <div class="leading-relaxed">
+                        <b>Quy trình tự động:</b> Sau khi xác nhận hủy, hệ thống FreshFruit sẽ <b>gửi thông báo ngay</b> đến khách hàng và <b>kích hoạt quy trình hoàn tiền</b>.
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button type="button" id="btnDismissCancelModal" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer">
+                        Đóng
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition shadow-2xs cursor-pointer">
+                        Xác Nhận Hủy Đơn
+                    </button>
+                </div>
+            </form>
         </div>
     </body>
 </html>

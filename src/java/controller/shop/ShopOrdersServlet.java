@@ -1,6 +1,5 @@
 package controller.shop;
 
-import dao.OrderFulfillmentDAO;
 import java.io.IOException;
 import java.util.List;
 import jakarta.servlet.ServletException;
@@ -10,11 +9,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.SubOrder;
+import service.IOrderFulfillmentService;
+import service.impl.OrderFulfillmentServiceImpl;
 
 @WebServlet(name = "ShopOrdersServlet", urlPatterns = {"/shop/orders"})
 public class ShopOrdersServlet extends HttpServlet {
 
-    private final OrderFulfillmentDAO fulfillmentDAO = new OrderFulfillmentDAO();
+    private final IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -40,16 +41,14 @@ public class ShopOrdersServlet extends HttpServlet {
             }
         }
 
-        // Query real database records
-        List<SubOrder> list = fulfillmentDAO.getSubOrdersByShop(shopId, statusTab, keyword);
+        List<SubOrder> list = fulfillmentService.getSubOrdersByShop(shopId, statusTab, keyword);
 
-        // Counts for tab badges
-        int countAll = fulfillmentDAO.countSubOrdersByShop(shopId, "ALL");
-        int countNew = fulfillmentDAO.countSubOrdersByShop(shopId, "NEW");
-        int countPacking = fulfillmentDAO.countSubOrdersByShop(shopId, "PACKING");
-        int countShipping = fulfillmentDAO.countSubOrdersByShop(shopId, "SHIPPING");
-        int countDelivered = fulfillmentDAO.countSubOrdersByShop(shopId, "DELIVERED");
-        int countCancelled = fulfillmentDAO.countSubOrdersByShop(shopId, "CANCELLED");
+        int countAll = fulfillmentService.countSubOrdersByShop(shopId, "ALL");
+        int countNew = fulfillmentService.countSubOrdersByShop(shopId, "NEW");
+        int countPacking = fulfillmentService.countSubOrdersByShop(shopId, "PACKING");
+        int countShipping = fulfillmentService.countSubOrdersByShop(shopId, "SHIPPING");
+        int countDelivered = fulfillmentService.countSubOrdersByShop(shopId, "DELIVERED");
+        int countCancelled = fulfillmentService.countSubOrdersByShop(shopId, "CANCELLED");
 
         request.setAttribute("orderList", list);
         request.setAttribute("currentTab", statusTab.toUpperCase());
