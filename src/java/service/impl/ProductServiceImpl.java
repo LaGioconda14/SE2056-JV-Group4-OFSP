@@ -169,5 +169,10 @@ public class ProductServiceImpl implements IProductService {
     public List<Category> getHierarchyCategories() {
         return productDAO.getHierarchyCategories();
     }
+    
 
+    @Override
+    public List<Product> getProductsByCategorySlug(String categorySlug) {
+        return productDAO.getProductsByCategorySlug(categorySlug);
+    }
 }

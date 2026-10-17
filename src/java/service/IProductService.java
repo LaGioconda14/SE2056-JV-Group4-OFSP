@@ -51,5 +51,7 @@ public interface IProductService {
      * Lấy danh sách danh mục theo cấu trúc phân cấp đa tầng (cha - con).
      */
     List<Category> getHierarchyCategories();
-
+    
+    // Thêm các phương thức cho tính năng Browse by Category
+    List<Product> getProductsByCategorySlug(String categorySlug);
 }

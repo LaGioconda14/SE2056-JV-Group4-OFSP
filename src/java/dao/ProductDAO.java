@@ -894,4 +894,69 @@ public class ProductDAO extends DBContext {
         }
         return list;
     }
+    
+    // 9. Lấy danh sách sản phẩm theo category slug (Dùng cho trang danh mục sản phẩm)
+    public List<Product> getProductsByCategorySlug(String categorySlug) {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
+                + "p.origin, p.certification, pi.image_url, "
+                + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
+                + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
+                + "(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock "
+                + "FROM products p "
+                + "JOIN categories c ON p.category_id = c.category_id "
+                + "OUTER APPLY ("
+                + "    SELECT TOP 1 image_url FROM product_images "
+                + "    WHERE product_id = p.product_id "
+                + "    ORDER BY is_thumbnail DESC, display_order ASC"
+                + ") pi "
+                + "WHERE p.is_active = 1 AND c.slug = ? "
+                + "ORDER BY p.product_id DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, categorySlug);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long id = rs.getLong("product_id");
+                    String name = rs.getString("name");
+                    int catId = rs.getInt("category_id");
+                    String categoryName = rs.getString("category_name");
+                    String categorySlugVal = rs.getString("category_slug");
+
+                    if (categoryName == null) {
+                        categoryName = "Trái Cây Tươi";
+                    }
+
+                    String image = rs.getString("image_url");
+                    if (image == null || image.isEmpty()) {
+                        image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                    }
+
+                    BigDecimal price = rs.getBigDecimal("price");
+                    if (price == null) {
+                        price = new BigDecimal("100000");
+                    }
+
+                    BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
+                    int discountPercent = 20;
+
+                    Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 32);
+                    p.setCategoryId(catId);
+                    p.setCategorySlug(categorySlugVal);
+                    p.setOrigin(rs.getString("origin"));
+                    p.setCertification(rs.getString("certification"));
+                    p.setUnit(rs.getString("unit"));
+                    int totalStock = rs.getInt("total_stock");
+                    p.setStockQuantity(totalStock);
+                    p.setInStock(totalStock > 0);
+                    
+                    list.add(p);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
