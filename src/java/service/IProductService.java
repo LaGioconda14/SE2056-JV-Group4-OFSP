@@ -3,6 +3,7 @@ package service;
 import java.math.BigDecimal;
 import java.util.List;
 import model.Category;
+import model.Product;
 import model.ProductVariant;
 
 public interface IProductService {
@@ -37,4 +38,18 @@ public interface IProductService {
                                      BigDecimal originalPrice, int stockQuantity, boolean isActive, 
                                      String coverImageUrl);
     
+    /**
+     * Lấy danh sách sản phẩm nổi bật hiển thị trên trang chủ.
+     */
+    List<Product> getHomeProducts();
+    /**
+     * Lấy danh sách các tab danh mục hiển thị trên trang chủ.
+     */
+    List<Category> getHomeFeaturedTabs();
+
+    /**
+     * Lấy danh sách danh mục theo cấu trúc phân cấp đa tầng (cha - con).
+     */
+    List<Category> getHierarchyCategories();
+
 }

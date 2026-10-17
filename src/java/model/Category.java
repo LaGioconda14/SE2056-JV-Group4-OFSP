@@ -1,6 +1,8 @@
 package model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Model representing the categories table in database.
@@ -17,6 +19,7 @@ public class Category implements Serializable {
     private String iconClass;
     private int displayOrder;
     private boolean isActive;
+    private List<Category> subCategories = new ArrayList<>();
 
     // Default Constructor
     public Category() {
@@ -108,9 +111,12 @@ public class Category implements Serializable {
     public void setIsActive(boolean isActive) {
         this.isActive = isActive;
     }
-
-    @Override
-    public String toString() {
-        return "Category{" + "categoryId=" + categoryId + ", categoryName=" + categoryName + ", parentId=" + parentId + ", displayOrder=" + displayOrder + ", isActive=" + isActive + '}';
+    public List<Category> getSubCategories() { return subCategories; }
+    public void setSubCategories(List<Category> subCategories) { this.subCategories = subCategories; }
+    public void addSubCategory(Category sub) {
+        if (this.subCategories == null) {
+            this.subCategories = new ArrayList<>();
+        }
+        this.subCategories.add(sub);
     }
 }

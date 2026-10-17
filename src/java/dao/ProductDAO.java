@@ -8,7 +8,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import model.Product;
 import model.ProductVariant;
+import model.Category;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 import util.DBContext;
@@ -702,5 +704,194 @@ public class ProductDAO extends DBContext {
             e.printStackTrace();
         }
         return false;
+    }
+    
+    public List<Product> getAllProducts() {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT p.product_id, p.name, c.category_name, "
+                + "(SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id AND is_thumbnail = 1) AS image_url, "
+                + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price "
+                + "FROM products p "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                + "WHERE p.is_active = 1";
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement(query);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                long id = rs.getLong("product_id");
+                String name = rs.getString("name");
+                String categoryName = rs.getString("category_name");
+                if (categoryName == null) {
+                    categoryName = "Trái Cây Tươi";
+                }
+
+                String image = rs.getString("image_url");
+                if (image == null || image.isEmpty()) {
+                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf";
+                }
+
+                BigDecimal price = rs.getBigDecimal("price");
+                if (price == null) {
+                    price = new BigDecimal("100000");
+                }
+
+                BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
+                int discountPercent = 20;
+
+                list.add(new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 18));
+            }
+            rs.close();
+            ps.close();
+            conn.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Category> getHomeFeaturedTabs() {
+        List<Category> list = new ArrayList<>();
+        String query = "SELECT category_id, category_name, slug "
+                + "FROM categories "
+                + "WHERE slug IN ('trai-cay-nhap-khau', 'trai-cay-viet-nam', 'trai-cay-cat-san', 'trai-cay-thung', 'trai-cay-dong-thung', 'trai-cay-mua-he', 'trai-cay-co-san') "
+                + "ORDER BY CASE slug "
+                + "    WHEN 'trai-cay-nhap-khau' THEN 1 "
+                + "    WHEN 'trai-cay-viet-nam' THEN 2 "
+                + "    WHEN 'trai-cay-cat-san' THEN 3 "
+                + "    WHEN 'trai-cay-thung' THEN 4 "
+                + "    WHEN 'trai-cay-dong-thung' THEN 4 "
+                + "    WHEN 'trai-cay-mua-he' THEN 5 "
+                + "    WHEN 'trai-cay-co-san' THEN 6 "
+                + "END";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Category c = new Category();
+                c.setCategoryId(rs.getInt("category_id"));
+                c.setCategoryName(rs.getString("category_name"));
+                c.setSlug(rs.getString("slug"));
+                list.add(c);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Category> getHierarchyCategories() {
+        List<Category> list = new ArrayList<>();
+        String queryParents = "SELECT category_id, category_name, slug, image_url, display_order "
+                + "FROM categories "
+                + "WHERE category_id IN (5, 6, 7, 8, 9) "
+                + "ORDER BY display_order ASC";
+        
+        String querySubs = "SELECT category_id, parent_id, category_name, slug, display_order "
+                + "FROM categories "
+                + "WHERE parent_id IN (5, 6) AND is_active = 1 "
+                + "ORDER BY display_order ASC";
+        
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement ps = conn.prepareStatement(queryParents);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Category c = new Category();
+                    c.setCategoryId(rs.getInt("category_id"));
+                    c.setCategoryName(rs.getString("category_name"));
+                    c.setSlug(rs.getString("slug"));
+                    c.setImageUrl(rs.getString("image_url"));
+                    c.setDisplayOrder(rs.getInt("display_order"));
+                    list.add(c);
+                }
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement(querySubs);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int parentId = rs.getInt("parent_id");
+                    Category sub = new Category();
+                    sub.setCategoryId(rs.getInt("category_id"));
+                    sub.setParentId(parentId);
+                    sub.setCategoryName(rs.getString("category_name"));
+                    sub.setSlug(rs.getString("slug"));
+                    sub.setDisplayOrder(rs.getInt("display_order"));
+
+                    for (Category parent : list) {
+                        if (parent.getCategoryId() == parentId) {
+                            parent.addSubCategory(sub);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Product> getHomeProducts() {
+        List<Product> list = new ArrayList<>();
+        String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
+                + "p.origin, p.certification, pi.image_url, "
+                + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
+                + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
+                + "(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock "
+                + "FROM products p "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                + "OUTER APPLY ("
+                + "    SELECT TOP 1 image_url FROM product_images "
+                + "    WHERE product_id = p.product_id "
+                + "    ORDER BY is_thumbnail DESC, display_order ASC"
+                + ") pi "
+                + "WHERE p.is_active = 1 "
+                + "ORDER BY p.is_featured DESC, p.product_id DESC";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(query);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                long id = rs.getLong("product_id");
+                String name = rs.getString("name");
+                int catId = rs.getInt("category_id");
+                String categoryName = rs.getString("category_name");
+                String categorySlug = rs.getString("category_slug");
+
+                if (categoryName == null) {
+                    categoryName = "Trái Cây Tươi";
+                }
+
+                String image = rs.getString("image_url");
+                if (image == null || image.isEmpty()) {
+                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                }
+
+                BigDecimal price = rs.getBigDecimal("price");
+                if (price == null) {
+                    price = new BigDecimal("100000");
+                }
+
+                BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
+                int discountPercent = 20;
+
+                Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 32);
+                p.setCategoryId(catId);
+                p.setCategorySlug(categorySlug);
+                p.setOrigin(rs.getString("origin"));
+                p.setCertification(rs.getString("certification"));
+                p.setUnit(rs.getString("unit"));
+                int totalStock = rs.getInt("total_stock");
+                p.setStockQuantity(totalStock);
+                p.setInStock(totalStock > 0);
+                list.add(p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

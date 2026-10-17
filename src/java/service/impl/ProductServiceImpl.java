@@ -5,6 +5,7 @@ import dao.ProductDAO;
 import java.math.BigDecimal;
 import java.util.List;
 import model.Category;
+import model.Product;
 import model.ProductVariant;
 import service.IProductService;
 
@@ -152,6 +153,21 @@ public class ProductServiceImpl implements IProductService {
                                             sku, variantName, unit.trim(), price, 
                                             originalPrice != null ? originalPrice : price, 
                                             stockQuantity, isActive, coverImageUrl);
+    }
+
+    @Override
+    public List<Product> getHomeProducts() {
+        return productDAO.getHomeProducts();
+    }
+
+    @Override
+    public List<Category> getHomeFeaturedTabs() {
+        return productDAO.getHomeFeaturedTabs();
+    }
+
+    @Override
+    public List<Category> getHierarchyCategories() {
+        return productDAO.getHierarchyCategories();
     }
 
 }
