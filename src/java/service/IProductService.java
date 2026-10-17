@@ -54,4 +54,9 @@ public interface IProductService {
     
     // Thêm các phương thức cho tính năng Browse by Category
     List<Product> getProductsByCategorySlug(String categorySlug);
+    
+    // Các phương thức cho View Product Details
+    Product getProductById(int productId);
+    List<ProductVariant> getVariantsByProductId(long productId);
+    List<String> getImagesByProductId(long productId);
 }

@@ -175,4 +175,19 @@ public class ProductServiceImpl implements IProductService {
     public List<Product> getProductsByCategorySlug(String categorySlug) {
         return productDAO.getProductsByCategorySlug(categorySlug);
     }
+    
+    @Override
+    public Product getProductById(int productId) {
+        return productDAO.getProductById(productId);
+    }
+
+    @Override
+    public List<ProductVariant> getVariantsByProductId(long productId) {
+        return productDAO.getVariantsByProductId(productId);
+    }
+
+    @Override
+    public List<String> getImagesByProductId(long productId) {
+        return productDAO.getImagesByProductId(productId);
+    }
 }
