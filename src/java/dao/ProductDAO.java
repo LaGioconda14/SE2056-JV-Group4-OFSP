@@ -1087,4 +1087,106 @@ public class ProductDAO extends DBContext {
         }
         return list;
     }
+
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
+        List<Product> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
+                .append("p.origin, p.certification, pi.image_url, ")
+                .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
+                .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
+                .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock ")
+                .append("FROM products p ")
+                .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
+                .append("OUTER APPLY ( ")
+                .append("    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC ")
+                .append(") pi ")
+                .append("WHERE p.is_active = 1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        // 1. Lọc theo từ khóa tìm kiếm (tên sản phẩm hoặc xuất xứ)
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw);
+            params.add(kw);
+        }
+
+        // 2. Lọc theo danh mục
+        if (categoryId != null && !categoryId.trim().isEmpty() && !categoryId.equals("0")) {
+            try {
+                int catId = Integer.parseInt(categoryId.trim());
+                sql.append(" AND p.category_id = ? ");
+                params.add(catId);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        // 3. Lọc theo khoảng giá (dựa vào giá nhỏ nhất của biến thể sản phẩm)
+        if (minPriceStr != null && !minPriceStr.trim().isEmpty()) {
+            try {
+                BigDecimal minPrice = new BigDecimal(minPriceStr.trim());
+                sql.append(" AND (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) >= ? ");
+                params.add(minPrice);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (maxPriceStr != null && !maxPriceStr.trim().isEmpty()) {
+            try {
+                BigDecimal maxPrice = new BigDecimal(maxPriceStr.trim());
+                sql.append(" AND (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) <= ? ");
+                params.add(maxPrice);
+            } catch (Exception ignored) {
+            }
+        }
+
+        sql.append(" ORDER BY p.product_id DESC");
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product p = new Product();
+                    p.setId(rs.getLong("product_id"));
+                    p.setName(rs.getString("name"));
+                    p.setCategoryId(rs.getInt("category_id"));
+                    p.setCategoryName(rs.getString("category_name") != null ? rs.getString("category_name") : "Trái Cây Tươi");
+
+                    String img = rs.getString("image_url");
+                    if (img == null || img.trim().isEmpty()) {
+                        img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                    }
+                    p.setImage(img);
+
+                    BigDecimal price = rs.getBigDecimal("price");
+                    if (price == null) {
+                        price = new BigDecimal("100000");
+                    }
+                    p.setPrice(price);
+                    p.setOldPrice(price.multiply(new BigDecimal("1.25")));
+                    p.setDiscountPercent(20);
+                    p.setRating(4.9);
+                    p.setReviewsCount(15);
+
+                    p.setOrigin(rs.getString("origin"));
+                    p.setCertification(rs.getString("certification"));
+                    p.setUnit(rs.getString("unit"));
+
+                    int totalStock = rs.getInt("total_stock");
+                    p.setStockQuantity(totalStock);
+                    p.setInStock(totalStock > 0);
+
+                    list.add(p);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }

@@ -190,4 +190,9 @@ public class ProductServiceImpl implements IProductService {
     public List<String> getImagesByProductId(long productId) {
         return productDAO.getImagesByProductId(productId);
     }
+
+    @Override
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
+        return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr);
+    }
 }

@@ -59,4 +59,6 @@ public interface IProductService {
     Product getProductById(int productId);
     List<ProductVariant> getVariantsByProductId(long productId);
     List<String> getImagesByProductId(long productId);
+    
+    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr);
 }
