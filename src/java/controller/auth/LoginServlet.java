@@ -34,6 +34,12 @@ public class LoginServlet extends HttpServlet {
             if (loggedUser != null && "SHOP_OWNER".equalsIgnoreCase(loggedUser.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/shop/products");
                 return;
+            } else if (loggedUser != null && "ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                return;
+            } else if (loggedUser != null && "DRIVER".equalsIgnoreCase(loggedUser.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+                return;
             }
             response.sendRedirect(request.getContextPath() + "/home.jsp");
             return;
@@ -138,6 +144,9 @@ public class LoginServlet extends HttpServlet {
             return;
         } else if ("ADMIN".equalsIgnoreCase(role)) {
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            return;
+        } else if ("DRIVER".equalsIgnoreCase(role)) {
+            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
             return;
         }
 

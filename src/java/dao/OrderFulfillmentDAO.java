@@ -169,12 +169,24 @@ public class OrderFulfillmentDAO extends DBContext {
             int updated = ps.executeUpdate();
             if (updated > 0) {
                 // Synchronize parent order status
-                if ("SHIPPING".equalsIgnoreCase(newStatus)) {
+                if ("SHIPPING".equalsIgnoreCase(newStatus) || "READY".equalsIgnoreCase(newStatus)) {
                     String syncShipping = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_code = ?";
                     try (PreparedStatement psSync = conn.prepareStatement(syncShipping)) {
                         psSync.setString(1, subOrderCode);
                         psSync.executeUpdate();
+                    }
+
+                    // Auto-assign delivery task to optimal online cold-chain driver
+                    String getSubIdSql = "SELECT sub_order_id FROM sub_orders WHERE sub_order_code = ?";
+                    try (PreparedStatement psSubId = conn.prepareStatement(getSubIdSql)) {
+                        psSubId.setString(1, subOrderCode);
+                        try (ResultSet rsSubId = psSubId.executeQuery()) {
+                            if (rsSubId.next()) {
+                                long subOrderId = rsSubId.getLong("sub_order_id");
+                                new DriverDAO().autoAssignDelivery(subOrderId);
+                            }
+                        }
                     }
                 } else if ("DELIVERED".equalsIgnoreCase(newStatus)) {
                     String syncDelivered = "UPDATE o SET o.order_status = 'COMPLETED', o.updated_at = CURRENT_TIMESTAMP "

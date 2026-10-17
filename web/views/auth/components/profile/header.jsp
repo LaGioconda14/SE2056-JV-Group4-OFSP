@@ -70,6 +70,30 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
                     <li><h6 class="dropdown-header small text-muted">Tài khoản hội viên</h6></li>
+                    <c:if test="${sessionScope.user.role == 'DRIVER' or sessionScope.user.role == 'driver'}">
+                        <li>
+                            <a class="dropdown-item small text-warning-emphasis fw-bold bg-warning-subtle py-2" href="${pageContext.request.contextPath}/shipper/deliveries">
+                                <i class="bi bi-truck me-2 text-warning"></i>Cổng Giao Vận (Tài Xế)
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    </c:if>
+                    <c:if test="${sessionScope.user.role == 'ADMIN' or sessionScope.user.role == 'STAFF'}">
+                        <li>
+                            <a class="dropdown-item small text-warning-emphasis fw-bold bg-warning-subtle py-2" href="${pageContext.request.contextPath}/shipper/deliveries">
+                                <i class="bi bi-truck me-2 text-warning"></i>Cổng Giao Vận (Demo Driver 9)
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    </c:if>
+                    <c:if test="${sessionScope.user.role == 'SHOP_OWNER' or sessionScope.user.role == 'shop_owner'}">
+                        <li>
+                            <a class="dropdown-item small text-success fw-bold bg-success-subtle py-2" href="${pageContext.request.contextPath}/shop/orders">
+                                <i class="bi bi-shop me-2 text-success"></i>Quản Lý Gian Hàng
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    </c:if>
                     <li><a class="dropdown-item active small" href="${pageContext.request.contextPath}/profile"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
                     <li><a class="dropdown-item small" href="${pageContext.request.contextPath}/change-password"><i class="bi bi-key me-2"></i>Đổi mật khẩu</a></li>
                     <li><hr class="dropdown-divider"></li>
