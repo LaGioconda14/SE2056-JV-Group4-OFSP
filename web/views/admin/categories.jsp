@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreshFruit - Quản Lý Danh Mục Ngành Hàng</title>
+    <title>Gốc Vườn - Quản Lý Danh Mục Ngành Hàng</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -243,7 +243,7 @@
                         <i class="bi bi-lightbulb-fill text-success"></i>
                     </div>
                     <div>
-                        <strong class="text-dark fs-6">Tối ưu hóa Thuật toán Gợi ý & Tìm kiếm (FreshFruit Engine)</strong>
+                        <strong class="text-dark fs-6">Tối ưu hóa Thuật toán Gợi ý & Tìm kiếm (Gốc Vườn Engine)</strong>
                         <p class="text-muted mb-0" style="font-size: 0.74rem; max-width: 720px; line-height: 1.45;">
                             Phân loại danh mục chuẩn giúp thuật toán tìm kiếm và đề xuất sản phẩm tới khách hàng <strong>chính xác hơn 40%</strong>. Đảm bảo gán đúng vụ thu hoạch để kích hoạt chiến dịch flash sale tự động.
                         </p>

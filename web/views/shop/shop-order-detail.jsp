@@ -8,7 +8,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Chi Tiết Đơn Hàng Con #${subOrder.subOrderCode} | FreshFruit Seller Center</title>
+        <title>Chi Tiết Đơn Hàng Con #${subOrder.subOrderCode} | Gốc Vườn Seller Center</title>
 
         <!-- Google Fonts Inter -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -200,7 +200,7 @@
                                 ${not empty sessionScope.userfullname ? sessionScope.userfullname : 'Chủ vườn Mộc Châu'}
                             </div>
                             <div class="text-[10px] text-slate-400">
-                                ${not empty sessionScope.email ? sessionScope.email : 'seller@freshfruit.vn'}
+                                ${not empty sessionScope.email ? sessionScope.email : 'seller@gocvuon.vn'}
                             </div>
                         </div>
                     </div>
@@ -401,7 +401,7 @@
                                             <div class="mt-3 flex items-start gap-2.5 text-xs text-emerald-900 bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
                                                 <i class="fa-solid fa-circle-check text-emerald-600 text-sm mt-0.5"></i>
                                                 <div class="leading-relaxed">
-                                                    <b>Tiến trình hệ thống tự động:</b> Hệ thống FreshFruit đã gửi thông báo hủy đến khách hàng và kích hoạt quy trình hoàn tiền tự động theo chính sách sàn.
+                                                    <b>Tiến trình hệ thống tự động:</b> Hệ thống Gốc Vườn đã gửi thông báo hủy đến khách hàng và kích hoạt quy trình hoàn tiền tự động theo chính sách sàn.
                                                 </div>
                                             </div>
                                         </div>
@@ -566,8 +566,8 @@
                                     </div>
                                     <div class="mt-4 p-4 rounded-xl bg-white border border-emerald-200 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div>
-                                            <div class="font-bold text-slate-900">Vận chuyển lạnh FreshFruit Express (FFX)</div>
-                                            <div class="text-slate-500 text-[11px] mt-0.5">Mã vận đơn: <b class="font-mono text-emerald-800 text-xs">${not empty subOrder.trackingNumber ? subOrder.trackingNumber : 'FFX-98241-VN'}</b></div>
+                                            <div class="font-bold text-slate-900">Vận chuyển lạnh Gốc Vườn Express (GVX)</div>
+                                            <div class="text-slate-500 text-[11px] mt-0.5">Mã vận đơn: <b class="font-mono text-emerald-800 text-xs">${not empty subOrder.trackingNumber ? subOrder.trackingNumber : 'GVX-98241-VN'}</b></div>
                                         </div>
                                         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-extrabold text-xs">
                                             <i class="fa-solid fa-snowflake animate-spin"></i> Thùng bảo ôn 2-5°C
@@ -773,7 +773,7 @@
                                             "Giao hàng buổi chiều từ 14h - 17h, gọi trước khi tới nhà."
                                         </c:when>
                                         <c:otherwise>
-                                            "Giao hàng tươi theo tuyến vận chuyển nội bộ sàn FreshFruit Cold-Chain."
+                                            "Giao hàng tươi theo tuyến vận chuyển nội bộ sàn Gốc Vườn Cold-Chain."
                                         </c:otherwise>
                                     </c:choose>
                                 </p>
@@ -862,7 +862,7 @@
                 <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-2">
                     <i class="fa-solid fa-circle-info text-amber-600 mt-0.5 text-sm"></i>
                     <div class="leading-relaxed">
-                        <b>Quy trình tự động:</b> Sau khi xác nhận hủy, hệ thống FreshFruit sẽ <b>gửi thông báo ngay</b> đến khách hàng và <b>kích hoạt quy trình hoàn tiền</b>.
+                        <b>Quy trình tự động:</b> Sau khi xác nhận hủy, hệ thống Gốc Vườn sẽ <b>gửi thông báo ngay</b> đến khách hàng và <b>kích hoạt quy trình hoàn tiền</b>.
                     </div>
                 </div>
 

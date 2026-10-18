@@ -110,7 +110,7 @@
         const eligibleCount = filtered.filter(voucher => voucher.eligible === true).length;
         const scopeDesc = currentFilter.scope === 'SHOP'
             ? ('cửa hàng ' + (currentFilter.shopName || 'được chọn'))
-            : 'sàn FreshFruit';
+            : 'sàn Gốc Vườn';
 
         if (filtered.length === 0) {
             status('Hiện chưa có voucher khả dụng cho ' + scopeDesc + '.');
@@ -182,7 +182,7 @@
         if (title) {
             title.textContent = scope === 'SHOP'
                 ? ('Voucher của ' + (currentFilter.shopName || 'Cửa hàng'))
-                : 'Voucher Sàn FreshFruit';
+                : 'Voucher Sàn Gốc Vườn';
         }
         if (cachedVouchers) {
             renderVouchers(cachedVouchers);
@@ -199,7 +199,7 @@
         if (title) {
             title.textContent = scope === 'SHOP'
                 ? ('Voucher của ' + (shopName || 'Cửa hàng'))
-                : 'Voucher Sàn FreshFruit';
+                : 'Voucher Sàn Gốc Vườn';
         }
         updateTabStyles();
 

@@ -380,7 +380,7 @@ function searchOrders(keyword) {
 }
 
 function openChatShop(shopName) {
-    alert('Đang mở khung chat trực tiếp với gian hàng: ' + (shopName || 'FreshFruit Shop') + '. Nhân viên tư vấn đang kết nối...');
+    alert('Đang mở khung chat trực tiếp với gian hàng: ' + (shopName || 'Gốc Vườn Shop') + '. Nhân viên tư vấn đang kết nối...');
 }
 
 function openReturnModal(orderId) {
@@ -416,7 +416,7 @@ function showOrderTracking(orderId) {
     }
 
     const status = (card.getAttribute('data-order-status') || 'PENDING').toUpperCase();
-    const shopName = card.getAttribute('data-shop-name') || 'FreshFruit Official Store';
+    const shopName = card.getAttribute('data-shop-name') || 'Gốc Vườn Official Store';
     const recipientName = card.getAttribute('data-recipient-name') || 'Người nhận';
     const recipientPhone = card.getAttribute('data-recipient-phone') || '0903 *** ***';
     const recipientAddress = card.getAttribute('data-recipient-address') || 'Địa chỉ giao hàng';
@@ -468,7 +468,7 @@ function showOrderTracking(orderId) {
             payMethodBadge.textContent = 'VNPAY QR';
             payMethodBadge.className = 'badge bg-primary-subtle text-primary border fw-semibold';
         } else if (paymentMethod === 'WALLET') {
-            payMethodBadge.textContent = 'Ví FreshFruit Pay';
+            payMethodBadge.textContent = 'Ví Gốc Vườn Pay';
             payMethodBadge.className = 'badge bg-success-subtle text-success border fw-semibold';
         } else {
             payMethodBadge.textContent = 'Thu hộ tiền mặt (COD)';
@@ -658,7 +658,7 @@ function openReturnModal(orderCode, shopName, totalAmount, dbOrderId) {
     const subOrderInput = document.getElementById('returnSubOrderId');
 
     if (codeEl) codeEl.textContent = '#' + (orderCode || 'N/A');
-    if (shopEl) shopEl.textContent = shopName || 'FreshFruit Shop';
+    if (shopEl) shopEl.textContent = shopName || 'Gốc Vườn Shop';
     if (amountEl) amountEl.textContent = (totalAmount ? totalAmount + '₫' : '0₫');
     if (claimInput) claimInput.value = totalAmount || '0';
     if (subOrderInput) subOrderInput.value = dbOrderId || orderCode || '';

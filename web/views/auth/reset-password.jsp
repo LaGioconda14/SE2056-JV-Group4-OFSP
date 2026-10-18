@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đặt lại mật khẩu - FreshFruit Platform</title>
+    <title>Đặt lại mật khẩu - Gốc Vườn</title>
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,8 +26,8 @@
             <div class="brand-logo-wrap">
                 <div class="brand-logo-icon">🍎</div>
                 <div>
-                    <div class="brand-name">FreshFruit</div>
-                    <div class="brand-sub">DIRECT FROM ORCHARD</div>
+                    <div class="brand-name">Gốc Vườn</div>
+                    <div class="brand-sub">NÔNG SẢN TẬN VƯỜN</div>
                 </div>
             </div>
             

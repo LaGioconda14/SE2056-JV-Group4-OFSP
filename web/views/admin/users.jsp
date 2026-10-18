@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreshFruit - Quản Lý Người Dùng & Phân Quyền</title>
+    <title>Gốc Vườn - Quản Lý Người Dùng & Phân Quyền</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -171,7 +171,7 @@
                                             <c:when test="${not empty u.shopName}">
                                                 <span class="text-success fw-semibold"><i class="bi bi-shop"></i> ${u.shopName}</span>
                                             </c:when>
-                                            <c:otherwise>Hệ thống FreshFruit</c:otherwise>
+                                            <c:otherwise>Hệ thống Gốc Vườn</c:otherwise>
                                         </c:choose>
                                     </div>
                                 </td>
@@ -268,7 +268,7 @@
                             <span id="modalUserRoleBadge"></span>
                             <span id="modalUserStatusBadge"></span>
                         </div>
-                        <div class="text-muted small mt-1" id="modalUserSubMeta">ID: #1 • email@freshfruit.com</div>
+                        <div class="text-muted small mt-1" id="modalUserSubMeta">ID: #1 • email@gocvuon.com</div>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -541,7 +541,7 @@
                         </label>
                         <textarea name="decisionReason" id="toggleStatusReasonInput" class="form-control" rows="3" required minlength="5" placeholder="Nhập lý do cụ thể..." style="font-size: 0.82rem; border-radius: 8px;"></textarea>
                         <div class="form-text text-muted" style="font-size: 0.72rem;">
-                            <i class="bi bi-info-circle-fill text-primary"></i> Lý do này là bắt buộc theo quy chế kiểm toán nội bộ FreshFruit để lưu vết lịch sử mọi thao tác khóa/mở khóa tài khoản.
+                            <i class="bi bi-info-circle-fill text-primary"></i> Lý do này là bắt buộc theo quy chế kiểm toán nội bộ Gốc Vườn để lưu vết lịch sử mọi thao tác khóa/mở khóa tài khoản.
                         </div>
                     </div>
                 </div>
@@ -576,8 +576,8 @@
                         <input type="text" name="fullName" class="form-control" placeholder="Ví dụ: Nguyễn Văn An" required style="font-size: 0.82rem; border-radius: 8px;">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Email Cơ Quan (@freshfruit.com) <span class="text-danger">*</span></label>
-                        <input type="email" name="email" class="form-control" placeholder="an.nguyen@freshfruit.com" required style="font-size: 0.82rem; border-radius: 8px;">
+                        <label class="form-label small fw-bold text-muted">Email Cơ Quan (@gocvuon.com) <span class="text-danger">*</span></label>
+                        <input type="email" name="email" class="form-control" placeholder="an.nguyen@gocvuon.com" required style="font-size: 0.82rem; border-radius: 8px;">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Vai Trò & Nhóm Quyền Hạn (RBAC) <span class="text-danger">*</span></label>

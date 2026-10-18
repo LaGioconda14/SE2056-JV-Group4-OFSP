@@ -1,5 +1,5 @@
 /**
- * FreshFruit Seller Center - Shop Orders Management Scripts
+ * Gốc Vườn Seller Center - Shop Orders Management Scripts
  */
 
 // Tailwind theme extension

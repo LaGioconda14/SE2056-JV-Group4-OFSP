@@ -10,7 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thanh toán đơn hàng - FreshFruit</title>
+    <title>Thanh toán đơn hàng - Gốc Vườn</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts & Material Symbols -->
@@ -227,11 +227,11 @@
                     </c:when>
                 </c:choose>
 
-                <!-- ==================== 4. FRESHFRUIT VOUCHER CARD (GIỐNG SHOPEE) ==================== -->
+                <!-- ==================== 4. VOUCHER GỐC VƯỜN CARD (GIỐNG SHOPEE) ==================== -->
                 <div class="bg-white rounded-xl shadow-xs border border-gray-200/70 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center gap-2.5">
                         <span class="material-symbols-outlined text-[22px] text-amber-600">confirmation_number</span>
-                        <strong class="text-sm text-gray-900 font-bold">FreshFruit Voucher</strong>
+                        <strong class="text-sm text-gray-900 font-bold">Voucher Gốc Vườn</strong>
                     </div>
                     <div class="flex items-center gap-3">
                         <c:choose>
@@ -326,7 +326,7 @@
                     <!-- Nút Đặt Hàng & Điều khoản (Giống Shopee) -->
                     <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <p class="text-xs text-gray-500 text-center sm:text-left">
-                            Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo <a href="#" class="text-blue-600 hover:underline">Điều khoản FreshFruit</a>
+                            Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo <a href="#" class="text-blue-600 hover:underline">Điều khoản Gốc Vườn</a>
                         </p>
                         <button type="submit" id="submit-order-btn" class="w-full sm:w-56 py-3.5 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold rounded-xl text-base shadow-md transition duration-200 active:scale-95 cursor-pointer">
                             Đặt hàng
@@ -426,7 +426,7 @@
                 <dialog id="checkout-voucher-modal" class="p-0 rounded-2xl w-[min(520px,calc(100%-24px))] shadow-2xl backdrop:bg-black/50 border border-gray-200">
                     <div class="bg-white rounded-2xl overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                            <h3 class="font-bold text-base text-gray-900">Chọn FreshFruit Voucher</h3>
+                            <h3 class="font-bold text-base text-gray-900">Chọn Voucher Gốc Vườn</h3>
                             <button type="button" onclick="closeCheckoutVoucherModal()" class="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700">
                                 <span class="material-symbols-outlined text-[20px]">close</span>
                             </button>

@@ -10,7 +10,7 @@
             </svg>
         </div>
         <div class="brand-text">
-            <h4>FreshFruit</h4>
+            <h4>Gốc Vườn</h4>
             <span class="brand-badge" data-i18n="brand_badge">QUẢN TRỊ VIÊN</span>
         </div>
     </div>

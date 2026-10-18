@@ -1,5 +1,5 @@
 /* ==========================================================================
-   FRESHFRUIT EXPRESS - SHIPPER / DRIVER PORTAL JS (CORE MVP)
+   GỐC VƯỜN EXPRESS - SHIPPER / DRIVER PORTAL JS (CORE MVP)
    ========================================================================== */
 
 function openCompleteModal(deliveryId, trackingNum, amountText, isCod) {

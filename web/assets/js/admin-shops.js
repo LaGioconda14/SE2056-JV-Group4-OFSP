@@ -1,5 +1,5 @@
 /**
- * FreshFruit Admin - Shops & Seller Onboarding Management JavaScript
+ * Gốc Vườn Admin - Shops & Seller Onboarding Management JavaScript
  * Module: /admin/shops
  */
 

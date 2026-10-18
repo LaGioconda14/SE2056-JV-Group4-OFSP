@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreshFruit - Thẩm Định & Quản Lý Gian Hàng</title>
+    <title>Gốc Vườn - Thẩm Định & Quản Lý Gian Hàng</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -550,7 +550,7 @@
                             <input type="number" step="0.1" min="1" max="50" name="commissionRate" class="form-control" value="8.0" style="font-size: 0.82rem; border-radius: 8px 0 0 8px;">
                             <span class="input-group-text small" style="border-radius: 0 8px 8px 0;">%</span>
                         </div>
-                        <div class="form-text small text-muted">Mặc định hoa hồng sàn FreshFruit là 8.0%.</div>
+                        <div class="form-text small text-muted">Mặc định hoa hồng sàn Gốc Vườn là 8.0%.</div>
                     </div>
 
                     <div class="mb-2">

@@ -1,5 +1,5 @@
 /**
- * FreshFruit Admin - Category Management JavaScript
+ * Gốc Vườn Admin - Category Management JavaScript
  * Module: /admin/categories
  */
 

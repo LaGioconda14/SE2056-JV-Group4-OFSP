@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreshFruit - Platform Admin Dashboard</title>
+    <title>Gốc Vườn - Platform Admin Dashboard</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -33,7 +33,7 @@
                             <span class="badge-live-engine"><i class="bi bi-circle-fill text-success" style="font-size: 0.55rem;"></i> LIVE E-COMMERCE ENGINE</span>
                         </div>
                         <h1 class="telemetry-banner-title">Tổng Quan Hoạt Động Sàn Nông Sản</h1>
-                        <p class="telemetry-banner-desc mb-0">Giám sát dòng tiền GMV, chất lượng nhà vườn và phê duyệt kiểm định sản phẩm toàn hệ thống FreshFruit.</p>
+                        <p class="telemetry-banner-desc mb-0">Giám sát dòng tiền GMV, chất lượng nhà vườn và phê duyệt kiểm định sản phẩm toàn hệ thống Gốc Vườn.</p>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <div class="banner-pill-stat">
@@ -340,7 +340,7 @@
                         <div class="custom-table-header">
                             <div>
                                 <h3 class="custom-table-title">Mặt Hàng Nông Sản Bán Chạy</h3>
-                                <span class="custom-table-sub">Sản lượng tiêu thụ cao nhất trên sàn FreshFruit</span>
+                                <span class="custom-table-sub">Sản lượng tiêu thụ cao nhất trên sàn Gốc Vườn</span>
                             </div>
                             <span class="table-pill-badge">Theo khối lượng (Kg)</span>
                         </div>

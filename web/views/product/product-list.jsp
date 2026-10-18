@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Danh Mục Trái Cây Tươi - FreshFruit Marketplace</title>
+    <title>Danh Mục Trái Cây Tươi - Gốc Vườn Marketplace</title>
     <!-- Google Fonts Inter & Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
@@ -368,7 +368,7 @@
         </div>
     </main>
 
-    <!-- FOOTER SECTION (FRESHFRUIT MARKETPLACE) -->
+    <!-- FOOTER SECTION (GỐC VƯỜN MARKETPLACE) -->
     <footer class="bg-white border-t border-gray-200/80 pt-14 pb-8 text-gray-600 text-xs">
         <div class="max-w-7xl mx-auto px-4">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-gray-100">
@@ -383,7 +383,7 @@
                                 <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
                             </svg>
                         </div>
-                        <span class="text-xl font-black text-gray-900">Fresh<span class="text-emerald-700">Fruit</span></span>
+                        <span class="text-xl font-black text-gray-900">Gốc<span class="text-emerald-700">Vườn</span></span>
                     </div>
                     <p class="text-gray-500 max-w-sm leading-relaxed">
                         Nền tảng cung cấp trái cây và nông sản tươi sạch chuẩn VietGAP, kết nối trực tiếp từ nông trại tới bàn ăn của gia đình bạn.
@@ -426,7 +426,7 @@
                     <h4 class="font-extrabold text-gray-900 text-sm mb-3">Liên Hệ & Thanh Toán</h4>
                     <ul class="space-y-2 text-gray-500 mb-4">
                         <li class="flex items-center gap-2"><i class="fa-solid fa-phone text-emerald-700"></i> 1900 6868</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-envelope text-emerald-700"></i> support@freshfruit.vn</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-envelope text-emerald-700"></i> support@gocvuon.vn</li>
                         <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-emerald-700"></i> Lâm Đồng & TP. Hồ Chí Minh</li>
                     </ul>
                     <div class="text-[10px] font-extrabold uppercase text-gray-400 mb-2">Phương thức thanh toán</div>
@@ -440,7 +440,7 @@
             </div>
 
             <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-gray-400 text-[11px]">
-                <p>&copy; 2026 FreshFruit Marketplace. Đã đăng ký toàn bộ bản quyền.</p>
+                <p>&copy; 2026 Gốc Vườn Marketplace. Đã đăng ký toàn bộ bản quyền.</p>
                 <div class="flex items-center gap-5">
                     <a href="#" class="hover:underline">Chính Sách Bảo Mật</a>
                     <a href="#" class="hover:underline">Điều Khoản Dịch Vụ</a>

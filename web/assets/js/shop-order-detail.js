@@ -1,5 +1,5 @@
 /**
- * FreshFruit Seller Center - Shop Order Detail Interaction Scripts
+ * Gốc Vườn Seller Center - Shop Order Detail Interaction Scripts
  * Option 1: Clean Fulfillment Lifecycle & Cancellation Modal
  */
 

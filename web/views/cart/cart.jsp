@@ -15,7 +15,7 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Giỏ hàng - FreshFruit</title>
+    <title>Giỏ hàng - Gốc Vườn</title>
     <!-- Google Fonts & Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
@@ -160,8 +160,8 @@
                 </defs>
             </svg>
             <div class="flex flex-col">
-                <span class="font-headline-md text-headline-md text-primary tracking-tight leading-none">FreshFruit</span>
-                <span class="text-[9px] font-bold tracking-widest text-primary/80 uppercase mt-0.5">DIRECT FROM ORCHARD</span>
+                <span class="font-headline-md text-headline-md text-primary tracking-tight leading-none">Gốc Vườn</span>
+                <span class="text-[9px] font-bold tracking-widest text-primary/80 uppercase mt-0.5">NÔNG SẢN TẬN VƯỜN</span>
             </div>
         </a>
 
@@ -358,7 +358,7 @@
                     <span class="material-symbols-outlined text-[42px]">shopping_basket</span>
                 </div>
                 <h2 class="text-headline-sm font-headline-sm text-on-surface mb-2">Giỏ hàng của bạn đang trống</h2>
-                <p class="text-on-surface-variant text-body-md mb-6 max-w-md mx-auto">Hãy khám phá các loại trái cây tươi ngon từ nông trại sạch của FreshFruit và thêm vào giỏ hàng ngay nhé!</p>
+                <p class="text-on-surface-variant text-body-md mb-6 max-w-md mx-auto">Hãy khám phá các loại trái cây tươi ngon từ nông trại sạch của Gốc Vườn và thêm vào giỏ hàng ngay nhé!</p>
                 <a href="<c:out value='${productsUrl}'/>" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary font-semibold hover:bg-on-primary-fixed-variant transition-colors shadow-md">
                     <span class="material-symbols-outlined">storefront</span> Mua sắm ngay
                 </a>
@@ -382,7 +382,7 @@
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input checked type="checkbox" class="shop-checkbox w-4 h-4 accent-primary" data-shop-id="${shopEntry.key}" onchange="toggleShop('${shopEntry.key}', this.checked)">
                                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><span class="material-symbols-outlined text-[19px]">storefront</span></span>
-                                <strong class="text-sm sm:text-base text-on-surface"><c:out value="${not empty shop.shopName ? shop.shopName : 'FreshFruit Store'}"/></strong>
+                                <strong class="text-sm sm:text-base text-on-surface"><c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng Gốc Vườn'}"/></strong>
                                 <span class="material-symbols-outlined text-[18px] text-tertiary">chat</span>
                             </label>
                             <a href="<c:out value='${productsUrl}'/>" class="text-xs font-semibold text-primary hover:underline">Xem Shop</a>
@@ -441,7 +441,7 @@
 
                 <div class="sticky bottom-0 z-30 overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-lowest/95 shadow-[0_-10px_35px_rgba(15,23,42,0.14)] backdrop-blur-xl">
                     <div class="flex flex-wrap items-center justify-end gap-3 border-b border-outline-variant/20 px-5 py-3">
-                        <span class="material-symbols-outlined text-[19px] text-tertiary">confirmation_number</span><strong class="text-sm">FreshFruit Voucher (Sàn)</strong>
+                        <span class="material-symbols-outlined text-[19px] text-tertiary">confirmation_number</span><strong class="text-sm">Voucher Gốc Vườn (Sàn)</strong>
                         <button type="button" onclick="openVoucherModal('PLATFORM')" class="text-xs font-semibold text-primary hover:underline">Chọn hoặc nhập mã</button>
                         <div class="flex min-w-[210px] items-center rounded-lg border border-outline-variant/40 px-3 py-2"><input id="coupon-input" type="text" placeholder="Nhập mã giảm giá" class="w-full bg-transparent text-xs outline-none"><button type="button" onclick="applyCoupon()" class="font-bold text-primary">Áp dụng</button></div>
                         <div id="applied-pill" style="display:none" class="items-center gap-2 rounded-lg bg-tertiary-fixed px-3 py-2 text-xs"><strong id="applied-code-text"></strong><span id="applied-discount-text"></span><button type="button" onclick="removeCoupon()"><span class="material-symbols-outlined text-[14px]">close</span></button></div>
@@ -512,11 +512,11 @@
                         <span class="material-symbols-outlined text-[25px]" aria-hidden="true">eco</span>
                     </span>
                     <div>
-                        <p class="text-xl font-bold tracking-tight text-primary">FreshFruit</p>
+                        <p class="text-xl font-bold tracking-tight text-primary">Gốc Vườn</p>
                         <p class="text-[11px] font-semibold tracking-widest uppercase text-primary/70">Tươi ngon mỗi ngày</p>
                     </div>
                 </div>
-                <p class="text-sm leading-relaxed">Một chút tươi xanh cho bữa ăn, một chút ngọt lành cho ngày mới. Cảm ơn bạn đã chọn FreshFruit cho giỏ hàng của mình.</p>
+                <p class="text-sm leading-relaxed">Một chút tươi xanh cho bữa ăn, một chút ngọt lành cho ngày mới. Cảm ơn bạn đã chọn Gốc Vườn cho giỏ hàng của mình.</p>
             </div>
             <div class="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start gap-5 lg:items-center md:justify-self-end">
                 <div>
@@ -534,10 +534,10 @@
             </div>
         </div>
         <div class="border-t border-primary/10 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-            <p>© 2026 FreshFruit Marketplace. Bảo lưu mọi quyền.</p>
+            <p>© 2026 Gốc Vườn Marketplace. Bảo lưu mọi quyền.</p>
             <span class="inline-flex items-center gap-1.5 text-primary">
                 <span class="material-symbols-outlined text-[16px]" aria-hidden="true">favorite</span>
-                Cảm ơn bạn đã mua sắm cùng FreshFruit
+                Cảm ơn bạn đã mua sắm cùng Gốc Vườn
             </span>
         </div>
     </div>

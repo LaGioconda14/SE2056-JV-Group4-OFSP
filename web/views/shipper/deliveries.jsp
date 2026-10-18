@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cổng Giao Vận Chuỗi Lạnh - FreshFruit Express Shipper</title>
+    <title>Cổng Giao Vận Chuỗi Lạnh - Gốc Vườn Express Shipper</title>
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -23,7 +23,7 @@
         <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="${pageContext.request.contextPath}/shipper/deliveries">
             <span class="fs-4">🚚</span>
             <div>
-                <div class="lh-1">FreshFruit Express</div>
+                <div class="lh-1">Gốc Vườn Express</div>
                 <small class="fs-xs text-light fw-normal opacity-75">Hệ thống điều phối tài xế chuỗi lạnh</small>
             </div>
         </a>
@@ -74,7 +74,7 @@
                     <div class="d-flex align-items-center gap-2">
                         <h4 class="fw-bold mb-0 text-dark">${not empty driverProfile.fullName ? driverProfile.fullName : sessionScope.user.fullName}</h4>
                         <span class="badge bg-success-subtle text-success small fw-semibold">
-                            <i class="bi bi-patch-check-fill me-1"></i> Tài xế FreshFruit Express
+                            <i class="bi bi-patch-check-fill me-1"></i> Tài xế Gốc Vườn Express
                         </span>
                     </div>
                     <div class="text-muted small mt-1">

@@ -148,7 +148,7 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Đang kết nối xuất hóa đơn VAT điện tử...')">
                         <i class="bi bi-file-earmark-text me-1"></i> Hóa đơn VAT
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Tổng đài hỗ trợ sự cố FreshFruit: 1900 6868 (Nhánh 1). Đang kết nối chuyên viên CSKH...')">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Tổng đài hỗ trợ sự cố Gốc Vườn: 1900 6868 (Nhánh 1). Đang kết nối chuyên viên CSKH...')">
                         <i class="bi bi-headset me-1"></i> Hỗ trợ sự cố
                     </button>
                     <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -311,7 +311,7 @@
                                             <h6 class="fw-bold text-dark mb-0" id="trackDriverName">Trần Văn Nam</h6>
                                             <span class="badge bg-success-subtle text-success small">Tài xế chuyên dụng</span>
                                         </div>
-                                        <div class="text-muted small">Đội ngũ giao vận nội bộ FreshFruit Express</div>
+                                        <div class="text-muted small">Đội ngũ giao vận nội bộ Gốc Vườn Express</div>
                                         <div class="text-muted small mt-1">
                                             Biển số: <strong class="text-dark">59-P1 084.21</strong> • <span class="text-warning">★ 4.9</span> (340 cuốc giao xuất sắc)
                                         </div>
@@ -342,7 +342,7 @@
                         </div>
                     </div>
 
-                    <!-- CỘT PHẢI (Địa chỉ nhận hàng + Chi tiết thanh toán + Cam kết FreshFruit) -->
+                    <!-- CỘT PHẢI (Địa chỉ nhận hàng + Chi tiết thanh toán + Cam kết Gốc Vườn) -->
                     <div class="col-lg-5">
                         <!-- Card Địa chỉ nhận hàng -->
                         <div class="tracking-card mb-4">
@@ -393,10 +393,10 @@
                             </div>
                         </div>
 
-                        <!-- Card Cam kết FreshFruit -->
+                        <!-- Card Cam kết Gốc Vườn -->
                         <div class="tracking-card">
                             <div class="fw-bold text-dark mb-2 d-flex align-items-center">
-                                <i class="bi bi-patch-check-fill text-success me-2"></i> Cam kết FreshFruit
+                                <i class="bi bi-patch-check-fill text-success me-2"></i> Cam kết Gốc Vườn
                             </div>
                             <p class="small text-muted mb-3">
                                 <strong>Bảo đảm quả tươi 100%</strong> — Quý khách hàng hoàn toàn có quyền đồng kiểm tra ngoại quan (độ tươi, cuống lá, độ chín) cùng tài xế trước khi nhận hàng và thanh toán.
@@ -449,7 +449,7 @@
                         </div>
                         <div class="d-flex justify-content-between mb-1">
                             <span class="text-muted small">Gian hàng:</span>
-                            <span class="text-dark fw-semibold" id="returnShopName">FreshFruit Shop</span>
+                            <span class="text-dark fw-semibold" id="returnShopName">Gốc Vườn Shop</span>
                         </div>
                         <div class="d-flex justify-content-between">
                             <span class="text-muted small">Giá trị đơn:</span>
@@ -512,14 +512,14 @@
                         <div class="col-sm-6">
                             <label class="form-label fw-bold small text-dark">Hình thức hoàn tiền:</label>
                             <select class="form-select" name="refundMethod">
-                                <option value="WALLET">Ví FreshFruit Pay (Hoàn tức thì)</option>
+                                <option value="WALLET">Ví Gốc Vườn Pay (Hoàn tức thì)</option>
                                 <option value="BANK">Tài khoản ngân hàng</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="alert alert-success py-2 px-3 small rounded-3 mb-0">
-                        <i class="bi bi-shield-check me-1"></i> Cam kết FreshFruit: Shop & Sàn sẽ phản hồi thẩm định trong vòng <strong>24 giờ</strong>.
+                        <i class="bi bi-shield-check me-1"></i> Cam kết Gốc Vườn: Shop & Sàn sẽ phản hồi thẩm định trong vòng <strong>24 giờ</strong>.
                     </div>
                 </div>
                 <div class="modal-footer bg-light">

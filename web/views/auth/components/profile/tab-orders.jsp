@@ -126,7 +126,7 @@
                                             <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop" class="shopee-item-thumb" alt="Trái cây tươi">
                                             <div class="shopee-item-details">
                                                     <div class="shopee-item-title">${order.note}</div>
-                                                    <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn FreshFruit</div>
+                                                    <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn Gốc Vườn</div>
                                                     <div class="shopee-item-qty">x1</div>
                                             </div>
                                             <div class="shopee-item-price">

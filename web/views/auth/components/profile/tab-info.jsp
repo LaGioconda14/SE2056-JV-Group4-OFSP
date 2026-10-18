@@ -156,7 +156,7 @@
 
         <div class="sticky-action-bar">
             <div class="text-muted small">
-                <i class="bi bi-info-circle text-success me-1"></i> Tất cả các tùy chỉnh sẽ có hiệu lực ngay tức thì trên hệ thống FreshFruit.
+                <i class="bi bi-info-circle text-success me-1"></i> Tất cả các tùy chỉnh sẽ có hiệu lực ngay tức thì trên hệ thống Gốc Vườn.
             </div>
             <div class="d-flex gap-2">
                 <button type="reset" class="btn-pill-sec">Hủy bỏ</button>

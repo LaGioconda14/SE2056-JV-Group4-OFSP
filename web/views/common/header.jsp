@@ -41,8 +41,8 @@
                 </defs>
             </svg>
             <div class="flex flex-col">
-                <span class="text-2xl font-extrabold text-[#00652c] tracking-tight leading-none">FreshFruit</span>
-                <span class="text-[9px] font-bold tracking-widest text-[#00652c]/80 uppercase mt-0.5">DIRECT FROM ORCHARD</span>
+                <span class="text-2xl font-extrabold text-[#00652c] tracking-tight leading-none">Gốc Vườn</span>
+                <span class="text-[9px] font-bold tracking-widest text-[#00652c]/80 uppercase mt-0.5">NÔNG SẢN TẬN VƯỜN</span>
             </div>
         </a>
 
@@ -222,7 +222,7 @@
         if (e) e.stopPropagation();
         const badge = document.getElementById('header-noti-badge');
         if (badge) badge.classList.add('hidden');
-        localStorage.setItem('freshfruit_noti_read', 'true');
+        localStorage.setItem('gocvuon_noti_read', 'true');
     }
 
     function addHeaderNotification(title, message) {

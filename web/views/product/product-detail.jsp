@@ -7,7 +7,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${not empty product ? product.name : 'Chi Tiết Sản Phẩm'} - FreshFruit</title>
+        <title>${not empty product ? product.name : 'Chi Tiết Sản Phẩm'} - Gốc Vườn</title>
         <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
         <!-- FontAwesome Icons -->
@@ -269,7 +269,7 @@
                     </div>
                 </div>
                 <div class="pt-8 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-4">
-                    <p>&copy; 2026 FreshFruit Marketplace Inc. Bảo lưu mọi quyền.</p>
+                    <p>&copy; 2026 Gốc Vườn Marketplace Inc. Bảo lưu mọi quyền.</p>
                 </div>
             </div>
         </footer>

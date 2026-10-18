@@ -7,8 +7,8 @@
         <a href="${pageContext.request.contextPath}/home.jsp" class="brand-link">
             <span class="fs-2">🍎</span>
             <div>
-                <div class="brand-title">FreshFruit</div>
-                <div class="brand-sub">DIRECT FROM ORCHARD</div>
+                <div class="brand-title">Gốc Vườn</div>
+                <div class="brand-sub">NÔNG SẢN TẬN VƯỜN</div>
             </div>
         </a>
 
