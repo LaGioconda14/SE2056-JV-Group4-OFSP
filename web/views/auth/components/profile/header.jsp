@@ -1,20 +1,6 @@
 <%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<!-- Top Announcement Bar -->
-<div class="top-announcement">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div>
-            <i class="bi bi-truck me-1"></i> Giao hàng miễn phí trong ngày cho đơn từ 200.000₫ | <strong>Cam kết 100% Nông Trại Sạch</strong>
-        </div>
-        <div class="announcement-hotline">
-            <span><i class="bi bi-telephone-fill me-1"></i> Hotline: 1900 6868</span>
-            <span>VND (₫)</span>
-            <span>Tiếng Việt</span>
-        </div>
-    </div>
-</div>
-
 <!-- Main Navbar -->
 <nav class="navbar-main">
     <div class="container navbar-main-inner">
@@ -46,9 +32,7 @@
             <a href="${pageContext.request.contextPath}/cart" class="nav-cart-btn">
                 <div class="nav-cart-icon-wrap">
                     <i class="bi bi-cart3 nav-cart-icon"></i>
-                    <c:if test="${not empty sessionScope.cartCount and sessionScope.cartCount > 0}">
-                        <span class="nav-cart-badge">${sessionScope.cartCount}</span>
-                    </c:if>
+                    <span class="nav-cart-badge">${sessionScope.cartSize != null ? sessionScope.cartSize : 0}</span>
                 </div>
                 <span class="nav-cart-text">Giỏ hàng</span>
             </a>

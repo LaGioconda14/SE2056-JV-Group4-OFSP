@@ -2,7 +2,9 @@ package controller.order;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -94,10 +96,19 @@ public class CheckoutServlet extends HttpServlet {
             Order draftOrder = orderService.buildDraftOrder((long) user.getId(), selectedItems, couponCode);
             CustomerAddress defaultAddress = orderService.getDefaultCustomerAddress((long) user.getId());
             List<CustomerAddress> customerAddresses = orderService.getCustomerAddresses((long) user.getId());
+
+            Map<Long, List<CartItem>> itemsByShop = new LinkedHashMap<>();
+            for (CartItem item : selectedItems) {
+                long shopId = (item.getVariant() != null && item.getVariant().getProduct() != null)
+                        ? item.getVariant().getProduct().getShopId() : 1L;
+                itemsByShop.computeIfAbsent(shopId, key -> new ArrayList<>()).add(item);
+            }
+
             request.setAttribute("availableCoupons",
                     orderService.getAvailableCoupons(draftOrder.getTotalGoodsAmount()));
 
             request.setAttribute("selectedItems", selectedItems);
+            request.setAttribute("itemsByShop", itemsByShop);
             request.setAttribute("draftOrder", draftOrder);
             request.setAttribute("defaultAddress", defaultAddress);
             request.setAttribute("customerAddresses", customerAddresses);

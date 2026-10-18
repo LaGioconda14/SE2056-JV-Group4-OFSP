@@ -3,6 +3,8 @@ package controller.auth;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,8 +13,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
+import model.CustomerAddress;
 import model.User;
+import service.ICustomerAddressService;
 import service.IUserService;
+import service.impl.CustomerAddressServiceImpl;
 import service.impl.UserServiceImpl;
 
 /**
@@ -27,6 +32,7 @@ import service.impl.UserServiceImpl;
 public class ProfileServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();
+    private final ICustomerAddressService addressService = new CustomerAddressServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -50,6 +56,15 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("user", currentUser);
         } else {
             request.setAttribute("user", sessionUser);
+        }
+
+        // Tải danh sách địa chỉ nhận hàng của người dùng
+        long targetUserId = (currentUser != null) ? currentUser.getId() : sessionUser.getId();
+        try {
+            List<CustomerAddress> addresses = addressService.getAddressesByUserId(targetUserId);
+            request.setAttribute("addresses", addresses);
+        } catch (Exception ex) {
+            request.setAttribute("addresses", Collections.emptyList());
         }
 
         // Chuyển flash message từ session sang request (nếu có)
@@ -172,6 +187,57 @@ public class ProfileServlet extends HttpServlet {
                 session.setAttribute("errorMessage", e.getMessage());
             }
             response.sendRedirect(request.getContextPath() + "/profile#security");
+            return;
+
+        } else if ("addAddress".equals(action)) {
+            String recipientName = request.getParameter("recipientName");
+            String recipientPhone = request.getParameter("recipientPhone");
+            String city = request.getParameter("city");
+            String district = request.getParameter("district");
+            String ward = request.getParameter("ward");
+            String streetAddress = request.getParameter("streetAddress");
+            boolean isDefault = "true".equalsIgnoreCase(request.getParameter("isDefault"));
+
+            CustomerAddress newAddress = new CustomerAddress();
+            newAddress.setUserId((long) sessionUser.getId());
+            newAddress.setRecipientName(recipientName);
+            newAddress.setRecipientPhone(recipientPhone);
+            newAddress.setCity(city);
+            newAddress.setDistrict(district);
+            newAddress.setWard(ward);
+            newAddress.setStreetAddress(streetAddress);
+            newAddress.setDefault(isDefault);
+
+            try {
+                addressService.addAddress(newAddress);
+                session.setAttribute("successMessage", "Thêm địa chỉ nhận hàng mới thành công!");
+            } catch (Exception e) {
+                session.setAttribute("errorMessage", e.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/profile#address");
+            return;
+
+        } else if ("setDefaultAddress".equals(action)) {
+            try {
+                long addressId = Long.parseLong(request.getParameter("addressId"));
+                addressService.setDefaultAddress(addressId, (long) sessionUser.getId());
+                session.setAttribute("successMessage", "Đã đặt làm địa chỉ nhận hàng mặc định!");
+            } catch (Exception e) {
+                session.setAttribute("errorMessage", e.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/profile#address");
+            return;
+
+        } else if ("deleteAddress".equals(action)) {
+            try {
+                long addressId = Long.parseLong(request.getParameter("addressId"));
+                addressService.deleteAddress(addressId, (long) sessionUser.getId());
+                session.setAttribute("successMessage", "Đã xóa địa chỉ nhận hàng!");
+            } catch (Exception e) {
+                session.setAttribute("errorMessage", e.getMessage());
+            }
+            response.sendRedirect(request.getContextPath() + "/profile#address");
+            return;
 
         } else {
             // Mặc định: Cập nhật thông tin cá nhân (Họ tên, SĐT, Giới tính, Ngày sinh)

@@ -93,21 +93,79 @@
                                 <a class="edit-cart-button" href="<c:out value='${cartUrl}'/>"><span class="material-symbols-outlined">edit_note</span>Chỉnh sửa giỏ hàng</a>
                             </div>
                             <div class="checkout-product-list">
-                                <c:forEach var="item" items="${selectedItems}">
-                                    <article class="checkout-product-row">
-                                        <div class="checkout-product-image">
-                                            <c:choose><c:when test="${not empty item.variant.product.image}"><img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" loading="lazy"></c:when><c:otherwise><span class="material-symbols-outlined">image</span></c:otherwise></c:choose>
-                                            <span class="checkout-quantity-badge">SL: <c:out value="${item.quantity}"/></span>
-                                        </div>
-                                        <div class="checkout-product-info">
-                                            <div class="product-meta"><span class="fresh-label">Nông sản sạch</span><c:if test="${not empty item.variant.product.origin}"><span><span class="material-symbols-outlined">pin_drop</span><c:out value="${item.variant.product.origin}"/></span></c:if></div>
-                                            <h3><c:out value="${item.variant.product.name}"/></h3>
-                                            <p>Quy cách: <strong><c:out value="${item.variant.variantName}"/></strong><c:if test="${not empty item.variant.unit}"> · <c:out value="${item.variant.unit}"/></c:if> · Số lượng: <strong><c:out value="${item.quantity}"/></strong></p>
-                                            <small>Đơn giá: <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> / <c:out value="${item.variant.unit}"/></small>
-                                        </div>
-                                        <div class="checkout-line-total"><strong><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong><span>Tổng <c:out value="${item.quantity}"/> <c:out value="${item.variant.unit}"/></span></div>
-                                    </article>
-                                </c:forEach>
+                                <c:choose>
+                                    <c:when test="${not empty itemsByShop}">
+                                        <c:forEach var="shopEntry" items="${itemsByShop}">
+                                            <c:set var="shopItems" value="${shopEntry.value}"/>
+                                            <c:set var="shop" value="${shopItems[0].variant.product}"/>
+                                            <c:set var="shopSubtotal" value="${0}"/>
+                                            <div class="checkout-shop-group">
+                                                <div class="checkout-shop-header">
+                                                    <div class="checkout-shop-info">
+                                                        <span class="checkout-shop-icon material-symbols-outlined">storefront</span>
+                                                        <strong class="checkout-shop-name"><c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng nông sản'}"/></strong>
+                                                        <span class="checkout-shop-badge">Chính hãng</span>
+                                                    </div>
+                                                    <span class="checkout-shop-count"><c:out value="${shopItems.size()}"/> món</span>
+                                                </div>
+                                                <div class="checkout-shop-items">
+                                                    <c:forEach var="item" items="${shopItems}">
+                                                        <c:set var="shopSubtotal" value="${shopSubtotal + item.subtotal}"/>
+                                                        <article class="checkout-product-row">
+                                                            <div class="checkout-product-image">
+                                                                <c:choose>
+                                                                    <c:when test="${not empty item.variant.product.image}">
+                                                                        <img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200';">
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="material-symbols-outlined">image</span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                                <span class="checkout-quantity-badge">SL: <c:out value="${item.quantity}"/></span>
+                                                            </div>
+                                                            <div class="checkout-product-info">
+                                                                <div class="product-meta">
+                                                                    <span class="fresh-label">Nông sản sạch</span>
+                                                                    <c:if test="${not empty item.variant.product.origin}">
+                                                                        <span><span class="material-symbols-outlined">pin_drop</span><c:out value="${item.variant.product.origin}"/></span>
+                                                                    </c:if>
+                                                                </div>
+                                                                <h3><c:out value="${item.variant.product.name}"/></h3>
+                                                                <p>Quy cách: <strong><c:out value="${item.variant.variantName}"/></strong><c:if test="${not empty item.variant.unit}"> · <c:out value="${item.variant.unit}"/></c:if> · Số lượng: <strong><c:out value="${item.quantity}"/></strong></p>
+                                                                <small>Đơn giá: <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> / <c:out value="${item.variant.unit}"/></small>
+                                                            </div>
+                                                            <div class="checkout-line-total">
+                                                                <strong><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
+                                                                <span>Tổng <c:out value="${item.quantity}"/> <c:out value="${item.variant.unit}"/></span>
+                                                            </div>
+                                                        </article>
+                                                    </c:forEach>
+                                                </div>
+                                                <div class="checkout-shop-footer">
+                                                    <span>Tạm tính gian hàng:</span>
+                                                    <strong><fmt:formatNumber value="${shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
+                                                </div>
+                                            </div>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:forEach var="item" items="${selectedItems}">
+                                            <article class="checkout-product-row">
+                                                <div class="checkout-product-image">
+                                                    <c:choose><c:when test="${not empty item.variant.product.image}"><img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200';"></c:when><c:otherwise><span class="material-symbols-outlined">image</span></c:otherwise></c:choose>
+                                                    <span class="checkout-quantity-badge">SL: <c:out value="${item.quantity}"/></span>
+                                                </div>
+                                                <div class="checkout-product-info">
+                                                    <div class="product-meta"><span class="fresh-label">Nông sản sạch</span><c:if test="${not empty item.variant.product.origin}"><span><span class="material-symbols-outlined">pin_drop</span><c:out value="${item.variant.product.origin}"/></span></c:if></div>
+                                                    <h3><c:out value="${item.variant.product.name}"/></h3>
+                                                    <p>Quy cách: <strong><c:out value="${item.variant.variantName}"/></strong><c:if test="${not empty item.variant.unit}"> · <c:out value="${item.variant.unit}"/></c:if> · Số lượng: <strong><c:out value="${item.quantity}"/></strong></p>
+                                                    <small>Đơn giá: <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> / <c:out value="${item.variant.unit}"/></small>
+                                                </div>
+                                                <div class="checkout-line-total"><strong><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong><span>Tổng <c:out value="${item.quantity}"/> <c:out value="${item.variant.unit}"/></span></div>
+                                            </article>
+                                        </c:forEach>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                             <div class="products-panel-footer"><span><span class="material-symbols-outlined">verified</span>Tất cả sản phẩm được kiểm tra tồn kho và trạng thái cửa hàng trước khi đặt.</span><strong>Tổng tiền hàng: <fmt:formatNumber value="${draftOrder.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                         </section>
@@ -157,7 +215,7 @@
                     <aside class="order-summary">
                         <section class="panel summary-panel">
                             <div class="summary-title"><div><p class="section-kicker">Đơn hàng của bạn</p><h2><c:out value="${selectedItems.size()}"/> sản phẩm</h2></div><span class="material-symbols-outlined">shopping_bag</span></div>
-                            <div class="summary-product-note"><span class="material-symbols-outlined">inventory_2</span><span><strong><c:out value="${selectedItems.size()}"/> dòng sản phẩm</strong><small>Chi tiết sản phẩm được hiển thị ở cột bên trái.</small></span></div>
+                            <div class="summary-product-note"><span class="material-symbols-outlined">inventory_2</span><span><strong><c:out value="${selectedItems.size()}"/> dòng sản phẩm</strong><small><c:choose><c:when test="${not empty itemsByShop and itemsByShop.size() gt 1}">Từ <c:out value="${itemsByShop.size()}"/> cửa hàng nông sản</c:when><c:otherwise>Chi tiết sản phẩm được hiển thị ở cột bên trái.</c:otherwise></c:choose></small></span></div>
                             <div class="checkout-voucher">
                                 <div class="checkout-voucher-heading"><span><span class="material-symbols-outlined">sell</span>Voucher</span><button type="button" data-voucher-toggle><c:choose><c:when test="${not empty couponCode}"><c:out value="${couponCode}"/></c:when><c:otherwise>Chọn mã</c:otherwise></c:choose><span class="material-symbols-outlined">chevron_right</span></button></div>
                                 <div class="voucher-options is-hidden" data-voucher-options>
