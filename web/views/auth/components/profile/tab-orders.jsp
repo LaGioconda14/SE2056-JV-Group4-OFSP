@@ -171,8 +171,8 @@
                                             <a href="${pageContext.request.contextPath}/home.jsp" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
-                                            <button type="button" class="btn-shopee-outline" onclick="openReturnModal('${order.id}')">
-                                                Yêu Cầu Trả Hàng/Hoàn Tiền
+                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="openReturnModal('${order.id}', '${order.shopName}', '${order.totalAmount}', '${order.orderId}')">
+                                                <i class="bi bi-arrow-return-left me-1"></i> Yêu Cầu Trả Hàng/Hoàn Tiền
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
@@ -204,8 +204,8 @@
                                             </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED'}">
-                                            <button type="button" class="btn-shopee-outline" onclick="alert('Đang xem chi tiết trả hàng đơn #${order.id}')">
-                                                Chi Tiết Trả Hàng
+                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="viewReturnDetail('${order.orderId}')">
+                                                <i class="bi bi-clock-history me-1"></i> Chi Tiết Trả Hàng
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán

@@ -426,4 +426,167 @@
     </div>
 </div>
 
+<!-- ========================================================================
+     MODAL 1: YÊU CẦU TRẢ HÀNG / HOÀN TIỀN (CUSTOMER RETURN & REFUND)
+     ======================================================================== -->
+<div class="modal fade" id="returnOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-arrow-return-left"></i> Yêu Cầu Trả Hàng / Hoàn Tiền
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="${pageContext.request.contextPath}/customer/return">
+                <input type="hidden" name="subOrderId" id="returnSubOrderId">
+                <input type="hidden" name="shopId" id="returnShopId" value="1">
+                <div class="modal-body p-4">
+                    <div class="p-3 rounded-3 bg-light border mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">Đơn hàng:</span>
+                            <strong class="text-dark" id="returnOrderCode">#</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">Gian hàng:</span>
+                            <span class="text-dark fw-semibold" id="returnShopName">FreshFruit Shop</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Giá trị đơn:</span>
+                            <span class="text-success fw-bold fs-6" id="returnTotalAmount">0₫</span>
+                        </div>
+                    </div>
+
+                    <!-- Reason Category -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">
+                            <i class="bi bi-exclamation-circle text-danger me-1"></i> Lý do trả hàng / hoàn tiền:
+                        </label>
+                        <select class="form-select" name="reasonCategory" id="returnReasonSelect" required>
+                            <option value="Quả dập nát / úng hỏng do vận chuyển">Quả dập nát / úng hỏng do vận chuyển</option>
+                            <option value="Đứt gãy chuỗi bảo quản lạnh (quả héo, thâm, biến chất)">Đứt gãy chuỗi bảo quản lạnh (quả héo, thâm, biến chất)</option>
+                            <option value="Giao sai loại quả hoặc thiếu số lượng">Giao sai loại quả hoặc thiếu số lượng</option>
+                            <option value="Chất lượng quả không đúng cam kết tại vườn">Chất lượng quả không đúng cam kết tại vườn</option>
+                        </select>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">Mô tả cụ thể sự cố quả tươi:</label>
+                        <textarea class="form-control" name="complaintText" id="returnComplaintText" rows="3"
+                                  placeholder="Mô tả cụ thể tình trạng quả bạn nhận được (vị trí dập, độ chín, số lượng bị lỗi...)" required></textarea>
+                    </div>
+
+                    <!-- Evidence Photo -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-dark">
+                            <i class="bi bi-camera text-success me-1"></i> Link ảnh bằng chứng thực tế:
+                        </label>
+                        <input type="text" class="form-control mb-2" name="evidenceImageUrl" id="returnEvidenceInput"
+                               value="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&fit=crop"
+                               placeholder="Nhập đường dẫn ảnh hoặc chọn mẫu bên dưới">
+                        <div class="text-muted fs-xs mb-2">Ảnh mẫu chụp thực tế quả dập để thẩm định nhanh:</div>
+                        <div class="d-flex gap-2">
+                            <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=120&h=80&fit=crop"
+                                 class="rounded border cursor-pointer" style="width: 60px; height: 45px; object-fit: cover;"
+                                 alt="Ảnh lỗi 1" onclick="selectReturnPhotoPreset('https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&fit=crop')">
+                            <img src="https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=120&h=80&fit=crop"
+                                 class="rounded border cursor-pointer" style="width: 60px; height: 45px; object-fit: cover;"
+                                 alt="Ảnh lỗi 2" onclick="selectReturnPhotoPreset('https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=500&fit=crop')">
+                            <img src="https://images.unsplash.com/photo-1528825871115-3581a5387919?w=120&h=80&fit=crop"
+                                 class="rounded border cursor-pointer" style="width: 60px; height: 45px; object-fit: cover;"
+                                 alt="Ảnh lỗi 3" onclick="selectReturnPhotoPreset('https://images.unsplash.com/photo-1528825871115-3581a5387919?w=500&fit=crop')">
+                        </div>
+                        <div class="mt-2 text-center">
+                            <img id="returnPreviewImg" src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&fit=crop"
+                                 class="rounded border shadow-xs" style="max-height: 100px; object-fit: cover;">
+                        </div>
+                    </div>
+
+                    <!-- Claim Amount & Refund Destination -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold small text-dark">Số tiền yêu cầu hoàn:</label>
+                            <input type="text" class="form-control fw-bold text-success" name="claimAmount" id="returnClaimAmountInput" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold small text-dark">Hình thức hoàn tiền:</label>
+                            <select class="form-select" name="refundMethod">
+                                <option value="WALLET">Ví FreshFruit Pay (Hoàn tức thì)</option>
+                                <option value="BANK">Tài khoản ngân hàng</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success py-2 px-3 small rounded-3 mb-0">
+                        <i class="bi bi-shield-check me-1"></i> Cam kết FreshFruit: Shop & Sàn sẽ phản hồi thẩm định trong vòng <strong>24 giờ</strong>.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger fw-bold rounded-pill px-4">
+                        <i class="bi bi-send-fill me-1"></i> Gửi Yêu Cầu Hoàn Tiền
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================
+     MODAL 2: XEM CHI TIẾT KHIẾU NẠI TRẢ HÀNG (RETURN & DISPUTE DETAILS)
+     ======================================================================== -->
+<div class="modal fade" id="returnDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill"></i> Tiến Độ Xử Lý Trả Hàng & Hoàn Tiền
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div>
+                        <span class="text-muted small d-block">Mã khiếu nại:</span>
+                        <strong class="text-dark fs-6" id="dispCodeText">DIS-892</strong>
+                    </div>
+                    <span class="badge bg-success fs-6" id="dispStatusBadge">Đã Hoàn Tiền</span>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Nhóm lý do:</span>
+                    <strong class="text-dark" id="dispReasonText">Quả dập nát / úng hỏng do vận chuyển</strong>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Mô tả sự cố của bạn:</span>
+                    <p class="text-secondary small bg-light p-2 rounded-3 border mb-0" id="dispComplaintText">
+                        Dâu tây bị dập nát cuống do chèn ép trong thùng đá.
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <span class="text-muted small d-block">Ảnh bằng chứng đã gửi:</span>
+                    <img id="dispEvidenceImg" src="" class="rounded border mt-1 shadow-xs" style="max-height: 140px; object-fit: cover;">
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center p-3 bg-success-subtle rounded-3 border border-success-subtle mb-3">
+                    <span class="text-dark fw-semibold">Số tiền hoàn:</span>
+                    <span class="text-success fw-bolder fs-5" id="dispClaimAmount">0₫</span>
+                </div>
+
+                <div class="alert alert-info py-2 px-3 small rounded-3 mb-0" id="dispResolutionBox">
+                    <i class="bi bi-chat-quote-fill me-1"></i> <strong id="dispResolutionTitle">Phản hồi từ sàn:</strong>
+                    <span id="dispResolutionNote">Hệ thống đã chấp thuận khiếu nại và hoàn tiền về ví của bạn.</span>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 

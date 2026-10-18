@@ -646,6 +646,124 @@ function submitReview() {
     alert('Cảm ơn bạn! Đánh giá chất lượng trái cây của bạn đã được gửi thành công.');
 }
 
+// =========================================================================
+// CUSTOMER RETURN & REFUND WORKFLOW (BF Implementation)
+// =========================================================================
+
+function openReturnModal(orderCode, shopName, totalAmount, dbOrderId) {
+    const codeEl = document.getElementById('returnOrderCode');
+    const shopEl = document.getElementById('returnShopName');
+    const amountEl = document.getElementById('returnTotalAmount');
+    const claimInput = document.getElementById('returnClaimAmountInput');
+    const subOrderInput = document.getElementById('returnSubOrderId');
+
+    if (codeEl) codeEl.textContent = '#' + (orderCode || 'N/A');
+    if (shopEl) shopEl.textContent = shopName || 'FreshFruit Shop';
+    if (amountEl) amountEl.textContent = (totalAmount ? totalAmount + '₫' : '0₫');
+    if (claimInput) claimInput.value = totalAmount || '0';
+    if (subOrderInput) subOrderInput.value = dbOrderId || orderCode || '';
+
+    const modalEl = document.getElementById('returnOrderModal');
+    if (modalEl && window.bootstrap && bootstrap.Modal) {
+        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+        m.show();
+    }
+}
+
+function selectReturnPhotoPreset(url) {
+    const input = document.getElementById('returnEvidenceInput');
+    const preview = document.getElementById('returnPreviewImg');
+    if (input) input.value = url;
+    if (preview) {
+        preview.src = url;
+        preview.style.display = 'block';
+    }
+}
+
+function viewReturnDetail(subOrderIdOrCode) {
+    if (!subOrderIdOrCode) return;
+
+    const returnForm = document.querySelector('#returnOrderModal form');
+    const basePath = returnForm ? returnForm.getAttribute('action') : 'customer/return';
+    const url = basePath + '?subOrderId=' + encodeURIComponent(subOrderIdOrCode);
+
+    fetch(url)
+        .then(res => {
+            if (!res.ok) throw new Error('Không thể tải thông tin khiếu nại');
+            return res.json();
+        })
+        .then(data => {
+            if (data && data.disputeId) {
+                const codeEl = document.getElementById('dispCodeText');
+                const badgeEl = document.getElementById('dispStatusBadge');
+                const reasonEl = document.getElementById('dispReasonText');
+                const compEl = document.getElementById('dispComplaintText');
+                const imgEl = document.getElementById('dispEvidenceImg');
+                const claimEl = document.getElementById('dispClaimAmount');
+                const resTitle = document.getElementById('dispResolutionTitle');
+                const resNote = document.getElementById('dispResolutionNote');
+
+                if (codeEl) codeEl.textContent = data.disputeCode || ('DIS-' + data.disputeId);
+
+                if (badgeEl) {
+                    const status = (data.status || 'OPEN').toUpperCase();
+                    if (status === 'REFUNDED_BUYER' || status === 'RESOLVED') {
+                        badgeEl.className = 'badge bg-success fs-6';
+                        badgeEl.textContent = 'Đã Hoàn Tiền';
+                    } else if (status === 'REJECTED') {
+                        badgeEl.className = 'badge bg-danger fs-6';
+                        badgeEl.textContent = 'Từ Chối Hoàn Tiền';
+                    } else if (status === 'MEDIATING') {
+                        badgeEl.className = 'badge bg-warning text-dark fs-6';
+                        badgeEl.textContent = 'Đang Thẩm Định Quả';
+                    } else {
+                        badgeEl.className = 'badge bg-primary fs-6';
+                        badgeEl.textContent = 'Chờ Shop Phản Hồi';
+                    }
+                }
+
+                if (reasonEl) reasonEl.textContent = data.reasonCategory || 'Khiếu nại tươi ngon';
+                if (compEl) compEl.textContent = data.complaintText || 'Không có mô tả chi tiết';
+
+                if (imgEl) {
+                    if (data.evidenceImageUrl && data.evidenceImageUrl.trim() !== '') {
+                        imgEl.src = data.evidenceImageUrl;
+                        imgEl.style.display = 'inline-block';
+                    } else {
+                        imgEl.style.display = 'none';
+                    }
+                }
+
+                if (claimEl) {
+                    const formatted = Number(data.claimAmount || 0).toLocaleString('vi-VN');
+                    claimEl.textContent = formatted + '₫';
+                }
+
+                if (resTitle && resNote) {
+                    if (data.resolutionNote && data.resolutionNote.trim() !== '') {
+                        resTitle.textContent = 'Phản hồi từ ' + (data.resolverName || 'Hệ thống Sàn') + ':';
+                        resNote.textContent = data.resolutionNote;
+                    } else {
+                        resTitle.textContent = 'Tiến độ:';
+                        resNote.textContent = 'Yêu cầu của bạn đang được Bộ phận Vận hành Sàn & Nhà Vườn cùng xem xét ảnh bằng chứng. Kết quả thẩm định sẽ được cập nhật trong 24h.';
+                    }
+                }
+
+                const modalEl = document.getElementById('returnDetailModal');
+                if (modalEl && window.bootstrap && bootstrap.Modal) {
+                    const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    m.show();
+                }
+            } else {
+                alert('Chưa có thông tin khiếu nại trả hàng cho đơn này hoặc đơn hàng đang xử lý.');
+            }
+        })
+        .catch(err => {
+            console.error('Lỗi tra cứu khiếu nại:', err);
+            alert('Không thể kết nối đến máy chủ để lấy thông tin khiếu nại.');
+        });
+}
+
 
 
 
