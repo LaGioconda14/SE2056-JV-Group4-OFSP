@@ -114,18 +114,18 @@
 
             <!-- Main Form -->
             <form action="${pageContext.request.contextPath}/login" method="POST" id="loginForm">
-                <!-- Email Address -->
+                <!-- Email or Phone Number -->
                 <div class="field-group">
-                    <label class="field-label" for="email">Email Address</label>
+                    <label class="field-label" for="email">Email hoặc Số điện thoại</label>
                     <div class="input-box-wrapper">
-                        <i class="bi bi-envelope leading-icon"></i>
-                        <input type="email" 
+                        <i class="bi bi-person leading-icon"></i>
+                        <input type="text" 
                                id="email" 
                                name="email" 
-                               placeholder="nguyenvana@example.com" 
+                               placeholder="nguyenvana@example.com hoặc 0912345678" 
                                value="${not empty rememberEmail ? rememberEmail : (not empty email ? email : '')}" 
                                required 
-                               autocomplete="email"
+                               autocomplete="username"
                                oninput="checkEmailValidity(this)">
                         <span class="trailing-action" id="emailStatusIcon"></span>
                     </div>

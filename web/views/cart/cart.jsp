@@ -1,7 +1,904 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+﻿<%@page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<fmt:setLocale value="vi_VN"/>
+<c:url var="homeUrl" value="/home.jsp"/>
+<c:url var="productsUrl" value="/products"/>
+<c:url var="cartUrl" value="/cart"/>
+<c:url var="updateUrl" value="/cart/update"/>
+<c:url var="removeUrl" value="/cart/remove"/>
+<c:url var="changeVariantUrl" value="/cart/change-variant"/>
+<c:url var="checkoutUrl" value="/views/order/checkout.jsp"/>
+<c:url var="vouchersUrl" value="/cart/vouchers"/>
 <!DOCTYPE html>
-<html>
-<head><title>Online Fruit Shop</title></head>
-<body><h3>Trang dang ph�t tri?n</h3></body>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Giá» hÃ ng - FreshFruit</title>
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'on-tertiary-container': '#fff1eb',
+                        'secondary-fixed': '#d9e6dd',
+                        'inverse-on-surface': '#eef0ff',
+                        'on-secondary-container': '#5b6760',
+                        'primary-container': '#15803d',
+                        'on-tertiary-fixed-variant': '#783200',
+                        'inverse-primary': '#79db8d',
+                        'on-tertiary-fixed': '#341100',
+                        'on-surface': '#131b2e',
+                        'background': '#faf8ff',
+                        'surface-container-high': '#e2e7ff',
+                        'on-error-container': '#93000a',
+                        'on-secondary-fixed': '#131e19',
+                        'surface-container-highest': '#dae2fd',
+                        'secondary': '#55615a',
+                        'surface-bright': '#faf8ff',
+                        'error': '#ba1a1a',
+                        'on-secondary': '#ffffff',
+                        'on-primary-fixed-variant': '#005323',
+                        'on-primary': '#ffffff',
+                        'surface-container-low': '#f2f3ff',
+                        'on-primary-fixed': '#00210a',
+                        'error-container': '#ffdad6',
+                        'surface-tint': '#006d30',
+                        'tertiary-container': '#b85000',
+                        'primary-fixed-dim': '#79db8d',
+                        'on-secondary-fixed-variant': '#3e4943',
+                        'on-surface-variant': '#3f493f',
+                        'surface-dim': '#d2d9f4',
+                        'tertiary': '#913e00',
+                        'primary-fixed': '#95f8a7',
+                        'outline-variant': '#becabc',
+                        'secondary-fixed-dim': '#bdcac1',
+                        'secondary-container': '#d9e6dd',
+                        'surface': '#faf8ff',
+                        'surface-container-lowest': '#ffffff',
+                        'surface-container': '#eaedff',
+                        'on-tertiary': '#ffffff',
+                        'on-primary-container': '#d3ffd5',
+                        'tertiary-fixed': '#ffdbca',
+                        'outline': '#6f7a6e',
+                        'tertiary-fixed-dim': '#ffb690',
+                        'on-error': '#ffffff',
+                        'surface-variant': '#dae2fd',
+                        'primary': '#00652c',
+                        'on-background': '#131b2e',
+                        'inverse-surface': '#283044'
+                    },
+                    borderRadius: {
+                        'DEFAULT': '0.25rem',
+                        'lg': '0.5rem',
+                        'xl': '0.75rem',
+                        'full': '9999px'
+                    },
+                    spacing: {
+                        'margin-sm': '1rem',
+                        'space-xs': '0.25rem',
+                        'space-lg': '1.5rem',
+                        'space-xl': '2.5rem',
+                        'space-sm': '0.5rem',
+                        'margin': '2rem',
+                        'space-md': '1rem',
+                        'gutter': '1.5rem',
+                        'margin-lg': '4rem',
+                        'gutter-sm': '1rem'
+                    },
+                    fontFamily: {
+                        'label-caps': ['Plus Jakarta Sans', 'sans-serif'],
+                        'body-lg': ['Plus Jakarta Sans', 'sans-serif'],
+                        'headline-md': ['Plus Jakarta Sans', 'sans-serif'],
+                        'display-hero': ['Plus Jakarta Sans', 'sans-serif'],
+                        'body-md': ['Plus Jakarta Sans', 'sans-serif'],
+                        'headline-lg': ['Plus Jakarta Sans', 'sans-serif'],
+                        'headline-lg-mobile': ['Plus Jakarta Sans', 'sans-serif'],
+                        'body-sm': ['Plus Jakarta Sans', 'sans-serif'],
+                        'display-hero-mobile': ['Plus Jakarta Sans', 'sans-serif'],
+                        'price-hero': ['Plus Jakarta Sans', 'sans-serif'],
+                        'headline-sm': ['Plus Jakarta Sans', 'sans-serif'],
+                        'price-md': ['Plus Jakarta Sans', 'sans-serif']
+                    },
+                    fontSize: {
+                        'label-caps': ['11px', { lineHeight: '14px', letterSpacing: '0.06em', fontWeight: '700' }],
+                        'body-lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.005em', fontWeight: '400' }],
+                        'headline-md': ['22px', { lineHeight: '28px', letterSpacing: '-0.015em', fontWeight: '700' }],
+                        'display-hero': ['48px', { lineHeight: '56px', letterSpacing: '-0.025em', fontWeight: '800' }],
+                        'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0em', fontWeight: '400' }],
+                        'headline-lg': ['32px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '700' }],
+                        'headline-lg-mobile': ['26px', { lineHeight: '32px', letterSpacing: '-0.015em', fontWeight: '700' }],
+                        'body-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.01em', fontWeight: '500' }],
+                        'display-hero-mobile': ['34px', { lineHeight: '40px', letterSpacing: '-0.02em', fontWeight: '800' }],
+                        'price-hero': ['28px', { lineHeight: '32px', letterSpacing: '-0.02em', fontWeight: '800' }],
+                        'headline-sm': ['18px', { lineHeight: '24px', letterSpacing: '-0.01em', fontWeight: '600' }],
+                        'price-md': ['18px', { lineHeight: '22px', letterSpacing: '-0.01em', fontWeight: '700' }]
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        @layer base {
+            html, body { margin: 0; padding: 0; }
+            body { overscroll-behavior: none; }
+            main > :first-child { margin-top: 0 !important; }
+            main > :last-child { margin-bottom: 0 !important; }
+        }
+        ::-webkit-scrollbar { display: none; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased">
+
+<!-- ==================== HEADER ==================== -->
+<header class="fixed top-0 left-0 right-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_4px_20px_rgba(20,83,45,0.06)]">
+    <!-- Main Header Bar -->
+    <div class="max-w-[1360px] mx-auto px-margin-sm lg:px-margin h-20 flex items-center justify-between gap-space-lg">
+        <!-- Brand Logo -->
+        <a href="<c:out value='${homeUrl}'/>" class="flex items-center gap-3 shrink-0 no-underline">
+            <!-- Apple Icon -->
+            <svg class="h-9 w-9" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 4C19 4 24 4 23 9C20 9 18 7 19 4Z" fill="#16a34a"/>
+                <path d="M18 6.5C17.5 8.5 16 10.5 15 11.5" stroke="#4b5563" stroke-width="2" stroke-linecap="round"/>
+                <path d="M18 12.5C16 9.5 11 9.5 8 12.5C4 16.5 5 23.5 9 28.5C12 32.5 15 32.5 18 30.5C21 32.5 24 32.5 27 28.5C31 23.5 32 16.5 28 12.5C25 9.5 20 9.5 18 12.5Z" fill="url(#appleGrad)"/>
+                <defs>
+                    <linearGradient id="appleGrad" x1="8" y1="11" x2="28" y2="33" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#fb7185"/>
+                        <stop offset="0.6" stop-color="#ef4444"/>
+                        <stop offset="1" stop-color="#dc2626"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+            <div class="flex flex-col">
+                <span class="font-headline-md text-headline-md text-primary tracking-tight leading-none">FreshFruit</span>
+                <span class="text-[9px] font-bold tracking-widest text-primary/80 uppercase mt-0.5">DIRECT FROM ORCHARD</span>
+            </div>
+        </a>
+
+        <!-- Search Bar -->
+        <form method="get" action="<c:out value='${productsUrl}'/>" class="flex-1 max-w-2xl hidden md:flex items-center bg-surface-container-low rounded-full px-4 py-1.5 border border-outline-variant/30 focus-within:border-primary transition-colors">
+            <div class="flex items-center gap-1 pr-3 text-on-surface-variant font-body-sm text-body-sm cursor-pointer shrink-0">
+                <select name="categoryId" class="bg-transparent border-0 outline-none text-on-surface cursor-pointer text-sm font-medium pr-1">
+                    <option value="">Táº¥t cáº£ danh má»¥c</option>
+                    <option value="1">TrÃ¡i CÃ¢y Ná»™i Äá»‹a</option>
+                    <option value="2">TrÃ¡i CÃ¢y Nháº­p Kháº©u</option>
+                    <option value="3">Há»™p QuÃ  & Combo</option>
+                    <option value="4">TrÃ¡i CÃ¢y Sáº¥y</option>
+                </select>
+            </div>
+            <div class="h-5 w-px bg-outline-variant/40 mr-3"></div>
+            <div class="flex items-center flex-1 gap-space-sm">
+                <input class="w-full bg-transparent border-0 outline-none text-on-surface placeholder:text-on-surface-variant/70 font-body-sm text-body-sm"
+                       name="search" placeholder="TÃ¬m kiáº¿m dÃ¢u tÃ¢y, bÆ¡ sÃ¡p, nho máº«u Ä‘Æ¡n..." type="text">
+                <button type="submit" class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-on-primary-fixed-variant transition-colors shrink-0">
+                    <span class="material-symbols-outlined text-[18px]">search</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Right Header Action Pills -->
+        <div class="flex items-center gap-space-md shrink-0">
+            <!-- Cart Button Pill -->
+            <a class="flex items-center gap-2.5 py-1.5 px-3.5 rounded-full border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors" data-path="cart" href="<c:out value='${cartUrl}'/>">
+                <div class="relative flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-[24px]">shopping_cart</span>
+                    <span class="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 bg-error text-on-error rounded-full font-label-caps text-[10px] flex items-center justify-center" id="nav-cart-badge">
+                        <c:out value="${cart ne null ? (cart.totalQuantity gt 99 ? '99+' : cart.totalQuantity) : 0}"/>
+                    </span>
+                </div>
+            </a>
+
+            <!-- User Account Pill -->
+            <div class="relative group">
+                <c:choose>
+                    <c:when test="${not empty sessionScope.user}">
+                        <div class="flex items-center gap-2 py-1.5 px-3 rounded-full bg-surface-container-low hover:bg-surface-container transition-colors cursor-pointer border border-outline-variant/30">
+                            <c:choose>
+                                <c:when test="${not empty sessionScope.user.avatarUrl}">
+                                    <img alt="Profile" class="w-7 h-7 rounded-full object-cover" src="<c:out value='${sessionScope.user.avatarUrl}'/>">
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+                                        <c:out value="${sessionScope.user.fullName.substring(0, 1)}"/>
+                                    </span>
+                                </c:otherwise>
+                            </c:choose>
+                            <span class="font-medium text-sm text-on-surface max-w-[140px] truncate"><c:out value="${sessionScope.user.fullName}"/></span>
+                            <span class="material-symbols-outlined text-on-surface-variant text-[18px]">expand_more</span>
+                        </div>
+                        <!-- Dropdown Menu -->
+                        <div class="absolute right-0 mt-1 w-48 bg-surface-container-lowest rounded-xl shadow-lg border border-outline-variant/30 py-2 hidden group-hover:block z-50">
+                            <a href="<c:url value='/profile'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">person</span> Há»“ sÆ¡ cÃ¡ nhÃ¢n
+                            </a>
+                            <a href="<c:url value='/change-password'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-on-surface hover:bg-surface-container-low transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">key</span> Äá»•i máº­t kháº©u
+                            </a>
+                            <div class="h-px bg-outline-variant/20 my-1"></div>
+                            <a href="<c:url value='/logout'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error-container/20 transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">logout</span> ÄÄƒng xuáº¥t
+                            </a>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="<c:url value='/login'/>" class="flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-primary text-on-primary text-sm font-semibold hover:bg-on-primary-fixed-variant transition-colors">
+                            <span class="material-symbols-outlined text-[18px]">login</span> ÄÄƒng nháº­p
+                        </a>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Navigation Bar -->
+    <div class="bg-surface-container-lowest border-t border-outline-variant/20 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+        <div class="max-w-[1360px] mx-auto px-margin-sm lg:px-margin h-11 flex items-center justify-between">
+            <nav class="flex items-center gap-space-lg text-body-md font-body-md">
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="<c:out value='${homeUrl}'/>">Trang Chá»§</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="<c:out value='${productsUrl}'/>">Cá»­a HÃ ng</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="<c:out value='${productsUrl}'/>">Danh Má»¥c TrÃ¡i CÃ¢y</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="<c:out value='${productsUrl}'/>">Há»™p QuÃ  &amp; Combo</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="<c:out value='${homeUrl}'/>#about">Vá» NÃ´ng Tráº¡i</a>
+                <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="<c:out value='${homeUrl}'/>#contact">LiÃªn Há»‡</a>
+            </nav>
+            <div class="flex items-center">
+                <span hidden="" class="flex items-center gap-1.5 px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed rounded-full font-label-caps text-label-caps font-semibold">
+                    <span class="material-symbols-outlined text-[14px] text-tertiary">bolt</span>
+                    <span hidden="">Flash Sale HÃ´m Nay: <strong>Giáº£m 30% Cam &amp; BÆ°á»Ÿi Da Xanh</strong></span>
+                </span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- ==================== MAIN CONTENT ==================== -->
+<main class="w-full pt-36 bg-surface min-h-[calc(100vh-280px)]">
+<div class="flex flex-col w-full">
+<section class="w-full max-w-[1360px] mx-auto px-margin-sm lg:px-margin pb-space-xl">
+
+    <!-- ThÃ´ng bÃ¡o lá»—i hoáº·c thÃ nh cÃ´ng -->
+    <c:if test="${not empty errorMessage}">
+        <div class="mb-4 p-4 rounded-xl bg-error-container text-on-error-container font-semibold flex items-center gap-2 shadow-sm">
+            <span class="material-symbols-outlined">error</span> <c:out value="${errorMessage}"/>
+        </div>
+    </c:if>
+    <c:if test="${not empty successMessage}">
+        <div class="mb-4 p-4 rounded-xl bg-primary-fixed text-on-primary-fixed font-semibold flex items-center gap-2 shadow-sm">
+            <span class="material-symbols-outlined">check_circle</span> <c:out value="${successMessage}"/>
+        </div>
+    </c:if>
+    <c:if test="${not empty stockNotice}">
+        <div class="mb-4 p-4 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 font-semibold flex items-center gap-2 shadow-sm" role="status">
+            <span class="material-symbols-outlined">inventory</span> <c:out value="${stockNotice}"/>
+        </div>
+    </c:if>
+
+    <!-- Breadcrumb & TiÃªu Ä‘á» trang -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pt-space-md pb-space-lg">
+        <div class="flex flex-col gap-space-xs">
+            <nav class="flex items-center gap-space-xs text-body-sm font-body-sm text-on-surface-variant">
+                <a class="hover:text-primary transition-colors flex items-center gap-1" href="<c:out value='${homeUrl}'/>">
+                    <span class="material-symbols-outlined text-[16px]">home</span>
+                    <span>Trang Chá»§</span>
+                </a>
+                <span>/</span>
+                <a class="hover:text-primary transition-colors" href="<c:out value='${productsUrl}'/>">Cá»­a HÃ ng</a>
+                <span>/</span>
+                <span class="text-on-surface font-semibold">Giá» HÃ ng</span>
+            </nav>
+            <div class="flex items-center gap-space-sm mt-1">
+                <h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">Shopping Cart</h1>
+                <span class="px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-caps text-label-caps" id="badge-total-items">
+                    <c:out value="${cart ne null and not empty cart.items ? cart.items.size() : 0}"/> mÃ³n trong giá»
+                </span>
+            </div>
+        </div>
+        <c:if test="${cart ne null and not empty cart.items}">
+            <div class="flex items-center gap-space-sm text-body-sm font-medium text-on-surface-variant bg-surface-container-lowest px-space-md py-2 rounded-xl shadow-sm border border-outline-variant/30">
+                <span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+                <span id="selected-summary-count">ÄÃ£ chá»n: <strong class="text-on-surface font-bold"><c:out value="${cart.items.size()}"/>/<c:out value="${cart.items.size()}"/> mÃ³n</strong></span>
+            </div>
+        </c:if>
+    </div>
+
+    <c:choose>
+        <c:when test="${cart eq null or empty cart.items}">
+            <!-- Tráº¡ng thÃ¡i giá» hÃ ng trá»‘ng -->
+            <div class="bg-surface-container-lowest rounded-2xl p-12 text-center border border-outline-variant/20 shadow-sm my-6">
+                <div class="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+                    <span class="material-symbols-outlined text-[42px]">shopping_basket</span>
+                </div>
+                <h2 class="text-headline-sm font-headline-sm text-on-surface mb-2">Giá» hÃ ng cá»§a báº¡n Ä‘ang trá»‘ng</h2>
+                <p class="text-on-surface-variant text-body-md mb-6 max-w-md mx-auto">HÃ£y khÃ¡m phÃ¡ cÃ¡c loáº¡i trÃ¡i cÃ¢y tÆ°Æ¡i ngon tá»« nÃ´ng tráº¡i sáº¡ch cá»§a FreshFruit vÃ  thÃªm vÃ o giá» hÃ ng ngay nhÃ©!</p>
+                <a href="<c:out value='${productsUrl}'/>" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-on-primary font-semibold hover:bg-on-primary-fixed-variant transition-colors shadow-md">
+                    <span class="material-symbols-outlined">storefront</span> Mua sáº¯m ngay
+                </a>
+            </div>
+        </c:when>
+        <c:otherwise>
+            <!-- Báº£ng giá» hÃ ng & Cá»™t chi tiáº¿t -->
+            <div class="grid grid-cols-1 gap-gutter items-start">
+                <div class="flex flex-col gap-space-lg w-full">
+                    <div class="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden border border-outline-variant/20">
+                        <!-- Table Header -->
+                        <div class="px-space-md sm:px-space-lg py-space-md bg-surface-container-low text-on-surface-variant font-label-caps text-label-caps uppercase tracking-wider flex items-center justify-between border-b border-outline-variant/20">
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                    <input checked class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 accent-primary cursor-pointer"
+                                           id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" type="checkbox">
+                                    <span class="font-bold text-on-surface text-body-sm normal-case">
+                                        Chá»n táº¥t cáº£ / Select All (<span id="select-all-count"><c:out value="${cart.items.size()}"/></span>)
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="hidden sm:grid grid-cols-12 gap-2 flex-1 max-w-[500px] text-right">
+                                <div class="col-span-4 text-center">ÄÆ¡n giÃ¡</div>
+                                <div class="col-span-4 text-center">Sá»‘ lÆ°á»£ng</div>
+                                <div class="col-span-4 text-right pr-1">ThÃ nh tiá»n</div>
+                            </div>
+                        </div>
+
+                        <!-- Danh sÃ¡ch Cart Items -->
+                        <c:forEach var="item" items="${cart.items}" varStatus="status">
+                            <c:set var="available" value="${item.availabilityStatus eq 'AVAILABLE'}"/>
+                            <c:set var="variantUnavailable" value="${item.availabilityStatus eq 'VARIANT_UNAVAILABLE'}"/>
+                            <div class="p-space-md sm:px-space-lg sm:py-space-lg bg-surface-container-lowest transition-colors hover:bg-surface-container-low/30 border-b border-outline-variant/20 last:border-b-0"
+                                 data-item-id="${item.cartItemID}" data-shop-id="${item.variant.product.shopId}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" id="cart-item-${item.cartItemID}">
+                                <div class="grid grid-cols-1 sm:grid-cols-12 gap-space-md items-center">
+                                    <!-- Cá»™t Sáº£n pháº©m & áº¢nh -->
+                                    <div class="sm:col-span-6 flex items-center gap-space-sm min-w-0">
+                                        <input <c:if test="${available}">checked</c:if> <c:if test="${not available}">disabled</c:if> class="item-checkbox w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary/20 accent-primary cursor-pointer shrink-0 disabled:cursor-not-allowed disabled:opacity-40"
+                                               data-target="${item.cartItemID}" onchange="handleItemCheckChange()" type="checkbox">
+                                        <div class="relative w-20 h-20 rounded-xl overflow-hidden bg-surface-container shrink-0 shadow-sm ml-1">
+                                            <c:choose>
+                                                <c:when test="${not empty item.variant.product.image}">
+                                                    <img class="w-full h-full object-cover" src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>">
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="w-full h-full flex items-center justify-center bg-surface-container-high text-on-surface-variant">
+                                                        <span class="material-symbols-outlined text-[28px]">image</span>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                        <div class="flex flex-col min-w-0 pl-1">
+                                            <span class="font-headline-sm text-headline-sm text-on-surface truncate"><c:out value="${item.variant.product.name}"/></span>
+                                            <c:choose>
+                                                <c:when test="${item.availabilityStatus ne 'NOT_FOUND'}">
+                                                    <button type="button"
+                                                            class="group/variant flex items-center gap-1 text-left text-body-sm font-body-sm text-on-surface-variant hover:text-primary transition-colors"
+                                                            onclick="openVariantDialog('${item.cartItemID}')"
+                                                            aria-haspopup="dialog"
+                                                            aria-controls="variant-dialog-${item.cartItemID}">
+                                                        <span>
+                                                            PhÃ¢n loáº¡i hÃ ng:
+                                                            <strong class="font-semibold"><c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}"> - <c:out value="${item.variant.unit}"/></c:if></strong>
+                                                        </span>
+                                                        <span class="material-symbols-outlined text-[17px] transition-transform group-hover/variant:translate-y-0.5">expand_more</span>
+                                                    </button>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-body-sm font-body-sm text-on-surface-variant">
+                                                        <c:out value="${item.variant.variantName}"/> <c:if test="${not empty item.variant.unit}">- <c:out value="${item.variant.unit}"/></c:if>
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                            <c:choose>
+                                                <c:when test="${available}"><div class="flex items-center gap-1.5 mt-1 text-primary text-[12px] font-medium"><span class="material-symbols-outlined text-[14px]">check_circle</span><span>CÃ²n hÃ ng Â· Kho: <c:out value="${item.variant.stockQuantity}"/></span></div></c:when>
+                                                <c:when test="${variantUnavailable}"><div class="flex items-center gap-1.5 mt-1 text-amber-700 text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">swap_horiz</span><span>PhÃ¢n loáº¡i nÃ y Ä‘Ã£ háº¿t hÃ ng</span></div></c:when>
+                                                <c:when test="${item.availabilityStatus eq 'SOLD_OUT'}"><div class="flex items-center gap-1.5 mt-1 text-error text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">production_quantity_limits</span><span>Sáº£n pháº©m Ä‘Ã£ bÃ¡n háº¿t</span></div></c:when>
+                                                <c:when test="${item.availabilityStatus eq 'NOT_FOUND'}"><div class="flex items-center gap-1.5 mt-1 text-error text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">block</span><span>Sáº£n pháº©m khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ ngá»«ng bÃ¡n</span></div></c:when>
+                                                <c:otherwise><div class="flex items-center gap-1.5 mt-1 text-error text-[12px] font-semibold"><span class="material-symbols-outlined text-[14px]">error</span><span>Sáº£n pháº©m hiá»‡n khÃ´ng kháº£ dá»¥ng</span></div></c:otherwise>
+                                            </c:choose>
+                                            <c:if test="${item.quantityAdjusted}"><div class="mt-1 text-[11px] font-semibold text-tertiary">Sá»‘ lÆ°á»£ng Ä‘Æ°á»£c Ä‘iá»u chá»‰nh tá»« <c:out value="${item.previousQuantity}"/> xuá»‘ng <c:out value="${item.quantity}"/> theo tá»“n kho hiá»‡n táº¡i.</div></c:if>
+                                        </div>
+                                    </div>
+
+                                    <!-- Cá»™t ÄÆ¡n giÃ¡ -->
+                                    <div class="sm:col-span-2 text-left sm:text-center">
+                                        <span class="sm:hidden text-body-sm text-on-surface-variant mr-2">ÄÆ¡n giÃ¡:</span>
+                                        <span class="font-headline-sm text-headline-sm text-on-surface">
+                                            <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                        </span>
+                                    </div>
+
+                                    <!-- Cá»™t Sá»‘ lÆ°á»£ng (CÃ³ nÃºt + - vÃ  form cáº­p nháº­t DB) -->
+                                    <div class="sm:col-span-2 flex items-center justify-start sm:justify-center">
+                                        <c:if test="${available}">
+                                        <form method="post" action="<c:out value='${updateUrl}'/>" class="flex items-center gap-1.5" id="qty-form-${item.cartItemID}">
+                                            <input type="hidden" name="cartItemId" value="${item.cartItemID}">
+                                            <c:if test="${not empty sessionScope.cartCsrfToken}">
+                                                <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
+                                            </c:if>
+                                            <div class="flex items-center bg-surface-container-low rounded-xl p-1 shadow-sm border border-outline-variant/30">
+                                                <button aria-label="Giáº£m sá»‘ lÆ°á»£ng" type="button"
+                                                        class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-surface-container hover:text-primary transition-all active:scale-95 shadow-sm"
+                                                        onclick="decrementQty('qty-${item.cartItemID}', ${item.variant.price}, 'sub-${item.cartItemID}')">
+                                                    <span class="material-symbols-outlined text-[16px]">remove</span>
+                                                </button>
+                                                <input class="w-10 text-center bg-transparent font-bold text-on-surface text-body-md outline-none"
+                                                       id="qty-${item.cartItemID}" name="quantity" type="number" min="1" max="${item.variant.stockQuantity}"
+                                                       value="${item.quantity}" data-saved-quantity="${item.quantity}" onchange="recalcTotals()">
+                                                <button aria-label="TÄƒng sá»‘ lÆ°á»£ng" type="button"
+                                                        class="w-8 h-8 rounded-lg bg-surface-container-lowest text-on-surface flex items-center justify-center hover:bg-surface-container hover:text-primary transition-all active:scale-95 shadow-sm"
+                                                        onclick="incrementQty('qty-${item.cartItemID}', ${item.variant.price}, 'sub-${item.cartItemID}')">
+                                                    <span class="material-symbols-outlined text-[16px]">add</span>
+                                                </button>
+                                            </div>
+                                            <button type="submit" title="LÆ°u sá»‘ lÆ°á»£ng" class="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors hidden sm:inline-flex" id="btn-save-${item.cartItemID}">
+                                                <span class="material-symbols-outlined text-[18px]">save</span>
+                                            </button>
+                                        </form>
+                                        </c:if>
+                                        <c:if test="${variantUnavailable}">
+                                            <button type="button" class="px-3 py-2 rounded-xl bg-primary text-white text-xs font-bold" onclick="openVariantDialog('${item.cartItemID}')">Chá»n phÃ¢n loáº¡i</button>
+                                        </c:if>
+                                    </div>
+
+                                    <!-- Cá»™t ThÃ nh tiá»n & NÃºt XÃ³a -->
+                                    <div class="sm:col-span-2 flex items-center justify-between sm:justify-end gap-space-md">
+                                        <div class="flex flex-col text-right">
+                                            <span class="sm:hidden text-body-sm text-on-surface-variant">ThÃ nh tiá»n</span>
+                                            <span class="font-price-md text-price-md text-primary font-bold" data-price="${item.variant.price}" id="sub-${item.cartItemID}">
+                                                <fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                            </span>
+                                        </div>
+                                        <form method="post" action="<c:out value='${removeUrl}'/>" onsubmit="return confirm('Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a sáº£n pháº©m nÃ y?');">
+                                            <input type="hidden" name="cartItemId" value="${item.cartItemID}">
+                                            <c:if test="${not empty sessionScope.cartCsrfToken}">
+                                                <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
+                                            </c:if>
+                                            <button type="submit" class="p-2 rounded-xl text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors" title="XÃ³a sáº£n pháº©m">
+                                                <span class="material-symbols-outlined text-[20px]">delete</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <c:if test="${item.availabilityStatus ne 'NOT_FOUND'}">
+                                <dialog id="variant-dialog-${item.cartItemID}" aria-labelledby="variant-dialog-title-${item.cartItemID}" class="rounded-2xl border border-outline-variant/40 shadow-2xl p-0 w-[min(520px,calc(100%-24px))] backdrop:bg-black/40 backdrop:backdrop-blur-sm">
+                                    <form method="post" action="<c:out value='${changeVariantUrl}'/>" class="p-5">
+                                        <input type="hidden" name="cartItemId" value="${item.cartItemID}">
+                                        <c:if test="${not empty sessionScope.cartCsrfToken}"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"></c:if>
+                                        <div class="flex items-start justify-between gap-4 mb-1">
+                                            <div>
+                                                <h3 id="variant-dialog-title-${item.cartItemID}" class="font-bold text-lg">Chá»n phÃ¢n loáº¡i hÃ ng</h3>
+                                                <p class="text-sm text-on-surface-variant mt-1"><c:out value="${item.variant.product.name}"/></p>
+                                            </div>
+                                            <button type="button" class="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors" aria-label="ÄÃ³ng" onclick="closeVariantDialog('${item.cartItemID}')">
+                                                <span class="material-symbols-outlined text-[20px]">close</span>
+                                            </button>
+                                        </div>
+                                        <p class="text-sm text-on-surface-variant mb-4">Sá»‘ lÆ°á»£ng sáº½ Ä‘Æ°á»£c giá»¯ láº¡i trong giá»›i háº¡n tá»“n kho cá»§a phÃ¢n loáº¡i má»›i.</p>
+                                        <div class="flex flex-col gap-2">
+                                            <label class="p-3 border-2 ${available ? 'border-primary bg-primary/5 cursor-pointer' : 'border-outline-variant/30 bg-surface-container opacity-50 cursor-not-allowed'} rounded-xl flex items-center gap-3">
+                                                    <input type="radio" name="variantId" value="${item.variant.variantId}" <c:if test="${available}">checked</c:if> <c:if test="${not available}">disabled</c:if> required class="accent-primary disabled:cursor-not-allowed">
+                                                    <span class="flex-1 min-w-0">
+                                                        <strong class="block text-on-surface"><c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}"> - <c:out value="${item.variant.unit}"/></c:if></strong>
+                                                        <small class="text-on-surface-variant"><fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> Â· <c:choose><c:when test="${available}">CÃ²n <c:out value="${item.variant.stockQuantity}"/></c:when><c:otherwise>Háº¿t hÃ ng</c:otherwise></c:choose></small>
+                                                    </span>
+                                                    <span class="text-xs font-bold text-primary">Äang chá»n</span>
+                                            </label>
+                                            <c:forEach var="alternative" items="${item.alternativeVariants}" varStatus="alternativeStatus">
+                                                <c:set var="alternativeAvailable" value="${alternative.active and alternative.stockQuantity > 0}"/>
+                                                <label class="p-3 border border-outline-variant/40 rounded-xl flex items-center gap-3 transition-colors ${alternativeAvailable ? 'cursor-pointer hover:border-primary hover:bg-primary/5' : 'bg-surface-container opacity-50 cursor-not-allowed'}">
+                                                    <input type="radio" name="variantId" value="${alternative.variantId}" <c:if test="${not alternativeAvailable}">disabled</c:if> required class="accent-primary disabled:cursor-not-allowed">
+                                                    <span class="flex-1 min-w-0">
+                                                        <strong class="block text-on-surface"><c:out value="${alternative.variantName}"/><c:if test="${not empty alternative.unit}"> - <c:out value="${alternative.unit}"/></c:if></strong>
+                                                        <small class="text-on-surface-variant"><fmt:formatNumber value="${alternative.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> Â· <c:choose><c:when test="${alternativeAvailable}">CÃ²n <c:out value="${alternative.stockQuantity}"/></c:when><c:otherwise>Háº¿t hÃ ng</c:otherwise></c:choose></small>
+                                                    </span>
+                                                </label>
+                                            </c:forEach>
+                                        </div>
+                                        <div class="flex justify-end gap-2 mt-5"><button type="button" class="px-4 py-2 rounded-xl border border-outline-variant/40 hover:bg-surface-container transition-colors" onclick="closeVariantDialog('${item.cartItemID}')">Trá»Ÿ láº¡i</button><button type="submit" class="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-on-primary-fixed-variant transition-colors disabled:opacity-50 disabled:cursor-not-allowed" <c:if test="${item.availabilityStatus eq 'SOLD_OUT'}">disabled</c:if>>XÃ¡c nháº­n</button></div>
+                                    </form>
+                                </dialog>
+                            </c:if>
+                        </c:forEach>
+
+                        <!-- Bottom Controls -->
+                        <div class="p-space-md sm:p-space-lg bg-surface-container-low/70 flex flex-col gap-space-md border-t border-outline-variant/20">
+                            <!-- HÃ ng hÃ nh Ä‘á»™ng & MÃ£ giáº£m giÃ¡ -->
+                            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-md pb-space-sm border-b border-outline-variant/20">
+                                <div class="flex flex-wrap items-center gap-space-sm">
+                                    <a class="inline-flex items-center gap-space-xs text-primary font-bold text-body-md hover:underline mr-space-md" href="<c:out value='${productsUrl}'/>">
+                                        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                                        <span>Tiáº¿p tá»¥c mua hÃ ng / Continue Shopping</span>
+                                    </a>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                                    <!-- NÃºt Chá»n MÃ£ Khuyáº¿n MÃ£i -->
+                                    <button type="button" onclick="openVoucherModal()" class="px-3.5 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/40 hover:border-primary text-body-sm font-semibold text-on-surface shadow-sm transition-colors flex items-center gap-1.5 active:scale-95">
+                                        <span class="material-symbols-outlined text-[18px] text-primary">confirmation_number</span>
+                                        <span>Chá»n mÃ£</span>
+                                        <span class="material-symbols-outlined text-[16px] text-on-surface-variant">chevron_right</span>
+                                    </button>
+
+                                    <!-- Ã” Nháº­p MÃ£ Khuyáº¿n MÃ£i (Máº·c Ä‘á»‹nh khÃ´ng chá»n) -->
+                                    <div class="flex-1 sm:w-56 bg-surface-container-lowest rounded-xl border border-outline-variant/40 px-3.5 py-2 flex items-center shadow-sm focus-within:border-primary transition-colors">
+                                        <span class="material-symbols-outlined text-[18px] text-outline mr-2">sell</span>
+                                        <input class="w-full bg-transparent border-0 outline-none text-on-surface font-body-md text-[13px] placeholder:text-on-surface-variant/60"
+                                               id="coupon-input" placeholder="Nháº­p mÃ£ giáº£m giÃ¡..." type="text" value="">
+                                    </div>
+                                    <button type="button" onclick="applyCoupon()" class="px-4 py-2 rounded-xl bg-on-background text-on-secondary font-semibold text-body-sm hover:bg-black active:scale-95 transition-all shadow-sm">
+                                        Ãp dá»¥ng
+                                    </button>
+                                    <!-- Pill Voucher Äang Chá»n (Máº·c Ä‘á»‹nh áº©n) -->
+                                    <div class="inline-flex items-center justify-between p-1.5 px-2.5 rounded-xl bg-tertiary-fixed text-on-tertiary-fixed font-body-sm shadow-sm" id="applied-pill" style="display: none;">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="material-symbols-outlined text-[16px] text-tertiary">check_circle</span>
+                                            <span class="font-bold text-xs" id="applied-code-text"></span>
+                                            <span class="text-xs" id="applied-discount-text"></span>
+                                        </div>
+                                        <button type="button" class="w-5 h-5 rounded-full hover:bg-tertiary-fixed-dim/60 flex items-center justify-center transition-colors ml-1.5" onclick="removeCoupon()" title="Bá» mÃ£">
+                                            <span class="material-symbols-outlined text-[13px]">close</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- HÃ ng Tá»•ng káº¿t thanh toÃ¡n -->
+                            <div class="flex flex-col md:flex-row items-center justify-between gap-space-md">
+                                <div class="flex flex-wrap items-center gap-space-md text-body-sm">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-on-surface-variant">Táº¡m tÃ­nh (<span id="items-count-text" class="font-medium"><c:out value="${cart.items.size()}"/> mÃ³n</span>):</span>
+                                        <span class="font-bold text-on-surface text-price-md" id="summary-subtotal">
+                                            <fmt:formatNumber value="${cart.totalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1 text-tertiary" id="promo-row" style="display: none;">
+                                        <span class="material-symbols-outlined text-[16px]">sell</span>
+                                        <span>Giáº£m giÃ¡:</span>
+                                        <span class="font-bold" id="promo-amount">-0 â‚«</span>
+                                    </div>
+                                    <div class="hidden sm:flex items-center gap-1 text-on-surface-variant">
+                                        <span>Váº­n chuyá»ƒn:</span>
+                                        <span class="font-semibold text-on-surface" id="summary-delivery">0 â‚«</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between sm:justify-end gap-space-lg w-full md:w-auto">
+                                    <div class="flex flex-col text-right">
+                                        <span class="text-[11px] font-label-caps text-on-surface-variant uppercase">Tá»•ng thanh toÃ¡n / Total</span>
+                                        <span class="text-price-hero font-price-hero text-primary" id="summary-total">
+                                            <fmt:formatNumber value="${cart.totalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                        </span>
+                                    </div>
+                                    <a href="<c:out value='${checkoutUrl}'/>" onclick="submitCheckout(event)" class="py-3 px-space-lg rounded-xl bg-primary text-on-primary font-headline-sm text-headline-sm flex items-center justify-center gap-space-sm hover:bg-on-primary-fixed-variant transition-all duration-200 active:scale-[0.98] shadow-md hover:shadow-lg no-underline cursor-pointer" id="btn-checkout">
+                                        <span id="btn-checkout-label">Mua hÃ ng (<c:out value="${cart.items.size()}"/>)</span>
+                                        <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form ngáº§m gá»­i cÃ¡c cartItemId Ä‘Æ°á»£c chá»n sang /checkout -->
+                        <form id="checkout-form" method="post" action="${pageContext.request.contextPath}/checkout" class="hidden">
+                            <c:if test="${not empty sessionScope.cartCsrfToken}">
+                                <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
+                            </c:if>
+                            <input type="hidden" name="couponCode" id="checkout-form-coupon" value="">
+                            <div id="checkout-form-items"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </c:otherwise>
+    </c:choose>
+</section>
+</div>
+</main>
+
+<!-- ==================== MODAL CHá»ŒN MÃƒ KHUYáº¾N MÃƒI ==================== -->
+<dialog id="voucher-modal" aria-labelledby="voucher-modal-title" data-vouchers-url="<c:out value='${vouchersUrl}'/>" class="p-0 rounded-2xl w-[min(520px,calc(100%-24px))] backdrop:bg-black/50 backdrop:backdrop-blur-sm">
+    <div class="bg-surface-container-lowest w-full max-w-lg rounded-2xl shadow-2xl border border-outline-variant/30 overflow-hidden transform transition-all">
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-outline-variant/20 flex items-center justify-between bg-surface-container-low/50">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary text-[24px]">confirmation_number</span>
+                <h3 id="voucher-modal-title" class="font-headline-sm text-headline-sm text-on-surface">Chá»n voucher</h3>
+            </div>
+            <button type="button" aria-label="ÄÃ³ng danh sÃ¡ch voucher" onclick="closeVoucherModal()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+
+        <!-- Modal Body (Danh sÃ¡ch voucher) -->
+        <div class="p-6 max-h-[60vh] overflow-y-auto flex flex-col gap-3">
+            <p id="voucher-status" class="text-sm text-on-surface-variant" role="status" aria-live="polite"></p>
+            <div id="voucher-list" class="flex flex-col gap-3"></div>
+            <p class="text-xs text-outline">Äiá»u kiá»‡n Ä‘Æ°á»£c xÃ©t trÃªn cÃ¡c sáº£n pháº©m Ä‘ang chá»n. PhÃ­ ship vÃ  sá»‘ tiá»n giáº£m lÃ  táº¡m tÃ­nh.</p>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-3 border-t border-outline-variant/20 bg-surface-container-low/30 text-right">
+            <button type="button" onclick="closeVoucherModal()" class="px-4 py-1.5 rounded-xl border border-outline-variant/40 text-sm font-semibold text-on-surface hover:bg-surface-container transition-colors">
+                ÄÃ³ng
+            </button>
+        </div>
+    </div>
+</dialog>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="w-full mt-space-xl border-t border-primary/10 bg-[#f2f7f2] text-on-surface-variant">
+    <div class="max-w-[1360px] mx-auto px-margin-sm lg:px-margin">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 py-10">
+            <div class="max-w-md">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-primary text-on-primary shrink-0">
+                        <span class="material-symbols-outlined text-[25px]" aria-hidden="true">eco</span>
+                    </span>
+                    <div>
+                        <p class="text-xl font-bold tracking-tight text-primary">FreshFruit</p>
+                        <p class="text-[11px] font-semibold tracking-widest uppercase text-primary/70">TÆ°Æ¡i ngon má»—i ngÃ y</p>
+                    </div>
+                </div>
+                <p class="text-sm leading-relaxed">Má»™t chÃºt tÆ°Æ¡i xanh cho bá»¯a Äƒn, má»™t chÃºt ngá»t lÃ nh cho ngÃ y má»›i. Cáº£m Æ¡n báº¡n Ä‘Ã£ chá»n FreshFruit cho giá» hÃ ng cá»§a mÃ¬nh.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start gap-5 lg:items-center md:justify-self-end">
+                <div>
+                    <p class="text-xs font-bold tracking-widest uppercase text-primary mb-2">Äá»“ng hÃ nh cÃ¹ng báº¡n</p>
+                    <h2 class="text-lg font-semibold text-on-surface">Cáº§n há»— trá»£ Ä‘Æ¡n hÃ ng?</h2>
+                    <p class="text-sm leading-relaxed mt-1 max-w-xs">LiÃªn há»‡ Ä‘á»ƒ Ä‘Æ°á»£c há»— trá»£ vá» sáº£n pháº©m, giao nháº­n vÃ  Ä‘Æ¡n hÃ ng cá»§a báº¡n.</p>
+                </div>
+                <a href="tel:19006868" aria-label="Gá»i há»— trá»£ Ä‘áº·t hÃ ng: 1900 6868" class="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-white border border-primary/15 text-primary shadow-sm hover:bg-primary hover:text-on-primary transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary shrink-0">
+                    <span class="material-symbols-outlined text-[22px]" aria-hidden="true">support_agent</span>
+                    <span class="flex flex-col">
+                        <span class="text-[11px] font-medium">Hotline há»— trá»£</span>
+                        <span class="text-lg font-bold tracking-wide">1900 6868</span>
+                    </span>
+                </a>
+            </div>
+        </div>
+        <div class="border-t border-primary/10 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <p>Â© 2026 FreshFruit Marketplace. Báº£o lÆ°u má»i quyá»n.</p>
+            <span class="inline-flex items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">favorite</span>
+                Cáº£m Æ¡n báº¡n Ä‘Ã£ mua sáº¯m cÃ¹ng FreshFruit
+            </span>
+        </div>
+    </div>
+</footer>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script src="<c:url value='/assets/js/cart-vouchers.js'/>"></script>
+<script>
+    const FREE_SHIPPING_GOAL = 200000;
+    let couponApplied = false;
+    function formatVND(val) {
+        return Math.round(val).toLocaleString('vi-VN') + ' â‚«';
+    }
+
+    function incrementQty(qtyId, price, subId) {
+        const input = document.getElementById(qtyId);
+        if (!input) return;
+        let val = parseInt(input.value) || 1;
+        const max = parseInt(input.max) || Number.MAX_SAFE_INTEGER;
+        val = Math.min(val + 1, max);
+        input.value = val;
+        const sub = document.getElementById(subId);
+        if (sub) {
+            sub.innerText = formatVND(val * price);
+        }
+        recalcTotals();
+    }
+
+    function decrementQty(qtyId, price, subId) {
+        const input = document.getElementById(qtyId);
+        if (!input) return;
+        let val = parseInt(input.value) || 1;
+        if (val > 1) {
+            val -= 1;
+            input.value = val;
+            const sub = document.getElementById(subId);
+            if (sub) {
+                sub.innerText = formatVND(val * price);
+            }
+            recalcTotals();
+        }
+    }
+
+    function toggleSelectAll(isChecked) {
+        const checkboxes = document.querySelectorAll('.item-checkbox:not(:disabled)');
+        checkboxes.forEach(cb => {
+            cb.checked = isChecked;
+        });
+        recalcTotals();
+    }
+
+    function handleItemCheckChange() {
+        const checkboxes = Array.from(document.querySelectorAll('.item-checkbox:not(:disabled)'));
+        const selectAll = document.getElementById('select-all-checkbox');
+        if (selectAll) {
+            const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+            const someChecked = checkboxes.some(cb => cb.checked);
+            selectAll.checked = allChecked;
+            selectAll.indeterminate = (!allChecked && someChecked);
+        }
+        recalcTotals();
+    }
+
+    function removeCoupon() {
+        couponApplied = false;
+        const pill = document.getElementById('applied-pill');
+        const row = document.getElementById('promo-row');
+        const input = document.getElementById('coupon-input');
+        if (pill) pill.style.display = 'none';
+        if (row) row.style.display = 'none';
+        if (input) input.value = '';
+        recalcTotals();
+    }
+
+    function openVoucherModal() {
+        const modal = document.getElementById('voucher-modal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeVoucherModal() {
+        const modal = document.getElementById('voucher-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function chooseVoucher(code) {
+        const input = document.getElementById('coupon-input');
+        if (input) input.value = code;
+        closeVoucherModal();
+    }
+
+    function applyCoupon() {
+        const input = document.getElementById('coupon-input');
+        const pill = document.getElementById('applied-pill');
+        const row = document.getElementById('promo-row');
+        if (input && input.value.trim() !== '') {
+            couponApplied = true;
+            const code = input.value.trim().toUpperCase();
+            input.value = code;
+            const codeOutput = document.getElementById('applied-code-text');
+            const discountOutput = document.getElementById('applied-discount-text');
+            if (codeOutput) codeOutput.innerText = code;
+            if (discountOutput) discountOutput.innerText = '(Kiá»ƒm tra á»Ÿ bÆ°á»›c thanh toÃ¡n)';
+            if (pill) pill.style.display = 'inline-flex';
+            if (row) row.style.display = 'none';
+            recalcTotals();
+        } else {
+            alert('Vui lÃ²ng chá»n hoáº·c nháº­p mÃ£ giáº£m giÃ¡!');
+        }
+    }
+    function recalcTotals() {
+        const allRows = document.querySelectorAll('[id^="cart-item-"]');
+        const purchasableRows = Array.from(allRows).filter(row => row.dataset.cartStatus === 'AVAILABLE');
+        const totalRowsCount = purchasableRows.length;
+        let checkedCount = 0;
+        let totalItemsQty = 0;
+        let selectedSubtotal = 0;
+
+        purchasableRows.forEach(row => {
+            const checkbox = row.querySelector('.item-checkbox');
+            const qtyInput = row.querySelector('input[name="quantity"]');
+            const subEl = row.querySelector('[id^="sub-"]');
+            const unitPrice = parseFloat(subEl ? subEl.getAttribute('data-price') : 0) || 0;
+            const max = parseInt(qtyInput ? qtyInput.max : 1) || 1;
+            const qty = Math.max(1, Math.min(max, parseInt(qtyInput ? qtyInput.value : 1) || 1));
+            if (qtyInput) qtyInput.value = qty;
+            if (subEl) subEl.innerText = formatVND(unitPrice * qty);
+
+            if (checkbox && checkbox.checked) {
+                checkedCount++;
+                totalItemsQty += qty;
+                selectedSubtotal += (unitPrice * qty);
+            }
+        });
+
+        // Cáº­p nháº­t sá»‘ lÆ°á»£ng hiá»ƒn thá»‹
+        const selectedSummaryCount = document.getElementById('selected-summary-count');
+        if (selectedSummaryCount) {
+            selectedSummaryCount.innerHTML = 'ÄÃ£ chá»n: <strong class="text-on-surface font-bold">' + checkedCount + '/' + totalRowsCount + ' mÃ³n</strong>';
+        }
+
+        const itemsCountText = document.getElementById('items-count-text');
+        if (itemsCountText) {
+            itemsCountText.innerText = checkedCount + ' mÃ³n';
+        }
+
+        const btnCheckoutLabel = document.getElementById('btn-checkout-label');
+        const btnCheckout = document.getElementById('btn-checkout');
+        if (btnCheckoutLabel) {
+            btnCheckoutLabel.innerText = checkedCount > 0 ? ('Mua hÃ ng (' + checkedCount + ')') : 'Chá»n mÃ³n Ä‘á»ƒ mua';
+        }
+        if (btnCheckout) {
+            if (checkedCount === 0) {
+                btnCheckout.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                btnCheckout.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        // TÃ­nh giáº£m giÃ¡ & thÃ nh tiá»n
+        const baseDelivery = (selectedSubtotal >= FREE_SHIPPING_GOAL || selectedSubtotal === 0) ? 0 : 25000;
+        const savings = typeof window.cartVoucherSavings === 'function'
+            ? window.cartVoucherSavings(selectedSubtotal, baseDelivery)
+            : {product: 0, shipping: 0};
+        const discount = savings.product;
+        const delivery = baseDelivery - savings.shipping;
+        const promoRow = document.getElementById('promo-row');
+        if (promoRow) {
+            promoRow.style.display = (discount > 0) ? 'flex' : 'none';
+        }
+        const grandTotal = Math.max(0, selectedSubtotal - discount + delivery);
+
+        const subEl = document.getElementById('summary-subtotal');
+        if (subEl) subEl.innerText = formatVND(selectedSubtotal);
+
+        const delEl = document.getElementById('summary-delivery');
+        if (delEl) {
+            delEl.innerText = formatVND(delivery);
+        }
+
+        const totEl = document.getElementById('summary-total');
+        if (totEl) totEl.innerText = formatVND(grandTotal);
+
+        const navBadge = document.getElementById('nav-cart-badge');
+        if (navBadge) navBadge.innerText = totalItemsQty > 99 ? '99+' : totalItemsQty;
+
+    }
+
+    function openVariantDialog(cartItemId) {
+        const dialog = document.getElementById('variant-dialog-' + cartItemId);
+        if (dialog && typeof dialog.showModal === 'function') dialog.showModal();
+    }
+
+    function closeVariantDialog(cartItemId) {
+        const dialog = document.getElementById('variant-dialog-' + cartItemId);
+        if (dialog) dialog.close();
+    function submitCheckout(e) {
+        if (e) e.preventDefault();
+        const checkedBoxes = Array.from(document.querySelectorAll('.item-checkbox:checked'));
+        if (checkedBoxes.length === 0) {
+            alert('Vui lÃ²ng chá»n Ã­t nháº¥t má»™t sáº£n pháº©m Ä‘á»ƒ mua hÃ ng!');
+            return;
+        }
+        const changedQuantities = checkedBoxes.filter(cb => {
+            const row = cb.closest('[id^="cart-item-"]');
+            const qty = row ? row.querySelector('input[name="quantity"]') : null;
+            return qty && qty.value !== qty.getAttribute('data-saved-quantity');
+        });
+        if (changedQuantities.length > 0) {
+            alert('Báº¡n Ä‘Ã£ thay Ä‘á»•i sá»‘ lÆ°á»£ng. Vui lÃ²ng báº¥m biá»ƒu tÆ°á»£ng lÆ°u táº¡i tá»«ng sáº£n pháº©m trÆ°á»›c khi mua hÃ ng!');
+            return;
+        }
+        const container = document.getElementById('checkout-form-items');
+        if (!container) return;
+        container.innerHTML = '';
+        checkedBoxes.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'cartItemIds';
+            input.value = cb.getAttribute('data-target');
+            container.appendChild(input);
+        });
+
+        const couponInput = document.getElementById('coupon-input');
+        const formCoupon = document.getElementById('checkout-form-coupon');
+        if (couponApplied && couponInput && formCoupon) {
+            formCoupon.value = couponInput.value.trim();
+        }
+
+        document.getElementById('checkout-form').submit();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        handleItemCheckChange();
+    });
+</script>
+
+</body>
 </html>

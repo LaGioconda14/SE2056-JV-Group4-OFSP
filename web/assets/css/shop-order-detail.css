@@ -1,0 +1,131 @@
+/* ========================================================
+   FreshFruit Seller Center - Shop Order Detail Stylesheet
+   ======================================================== */
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Sidebar navigation links */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background-color: #f8fafc;
+    color: #15803d;
+}
+
+.sidebar-link.active {
+    background-color: #f0fdf4;
+    color: #15803d;
+    font-weight: 700;
+}
+
+/* 5-Step Order Progress Stepper line */
+.stepper-line {
+    height: 2px;
+    background-color: #e2e8f0;
+    flex-grow: 1;
+    margin-top: 18px;
+    transition: background-color 0.3s ease;
+}
+
+.stepper-line.completed {
+    background-color: #16a34a;
+}
+
+/* Custom interactive checklist box */
+.qc-check-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 0.875rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.qc-check-label:hover {
+    border-color: #4ade80;
+    background-color: #fafdfa;
+}
+
+.qc-check-label.is-checked {
+    border-color: #bbf7d0;
+    background-color: #f0fdf4;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* ========================================================
+   Modal Styles for Cancel Sub-Order & Confirmation
+   ======================================================== */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 60;
+}
+
+.modal-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 520px;
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 65;
+    animation: modalPop 0.2s ease-out;
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.cancel-reason-option.is-selected {
+    border-color: #f43f5e;
+    background-color: #fff1f2;
+}
+
+
+

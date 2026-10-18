@@ -4,6 +4,8 @@ nbproject/private/
 # VS Code local run scripts and tasks (keep local for VS Code users)
 .vscode/tasks.json
 .vscode/*.ps1
+.classpath
+.project
 
 
 # Build and distribution directories
@@ -23,4 +25,8 @@ web/assets/images/avatars/*
 !web/assets/images/avatars/.gitkeep
 
 docs/
+.vscode/
+# OAuth private credentials (keep secret)
+*oauth.properties
+!*oauth.properties.example
 .vscode/
