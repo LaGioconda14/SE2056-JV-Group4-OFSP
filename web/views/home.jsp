@@ -245,6 +245,11 @@
                                 <i class="fa-solid fa-sliders text-emerald-600"></i> Kênh Người Bán
                             </a>
                         </c:if>
+                        <c:if test="${currentUser.role eq 'DRIVER'}">
+                            <a href="${pageContext.request.contextPath}/shipper/deliveries" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 rounded-xl text-xs font-bold transition shadow-xs">
+                                <i class="fa-solid fa-truck text-amber-600"></i> Cổng Giao Vận
+                            </a>
+                        </c:if>
                         <c:choose>
                             <c:when test="${empty sessionScope.account and empty sessionScope.user}">
                                 <div class="flex items-center gap-2">

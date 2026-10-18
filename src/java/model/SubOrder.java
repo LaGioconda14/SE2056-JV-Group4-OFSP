@@ -23,9 +23,72 @@ public class SubOrder {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
+    private String subOrderCode;
+    private String orderCode;
+    private String paymentMethod = "COD";
+    private String paymentStatus = "PENDING";
+    private String trackingNumber;
+    private String carrierName = "FreshFruit Cold-Chain";
+    private ShippingAddress shippingAddress;
     private List<OrderItem> items = new ArrayList<>();
 
     public SubOrder() {
+    }
+
+    public String getSubOrderCode() {
+        return subOrderCode != null ? subOrderCode : ("SUB-" + subOrderId);
+    }
+
+    public void setSubOrderCode(String subOrderCode) {
+        this.subOrderCode = subOrderCode;
+    }
+
+    public String getOrderCode() {
+        return orderCode != null ? orderCode : ("ORD-" + orderId);
+    }
+
+    public void setOrderCode(String orderCode) {
+        this.orderCode = orderCode;
+    }
+
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public String getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public String getTrackingNumber() {
+        return trackingNumber != null ? trackingNumber : ("FFX-" + (subOrderCode != null ? subOrderCode.replace("SUB-", "") : subOrderId) + "-VN");
+    }
+
+    public void setTrackingNumber(String trackingNumber) {
+        this.trackingNumber = trackingNumber;
+    }
+
+    public String getCarrierName() {
+        return carrierName;
+    }
+
+    public void setCarrierName(String carrierName) {
+        this.carrierName = carrierName;
+    }
+
+    public ShippingAddress getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(ShippingAddress shippingAddress) {
+        this.shippingAddress = shippingAddress;
     }
 
     public long getSubOrderId() {

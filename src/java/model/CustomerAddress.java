@@ -1,8 +1,10 @@
 package model;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class CustomerAddress {
+public class CustomerAddress implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private long addressId;
     private long userId;
@@ -12,11 +14,27 @@ public class CustomerAddress {
     private String ward;
     private String district;
     private String city;
-    private boolean defaultAddress;
+    private boolean isDefault;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
     public CustomerAddress() {
+    }
+
+    public CustomerAddress(long addressId, long userId, String recipientName, String recipientPhone,
+                           String streetAddress, String ward, String district, String city,
+                           boolean isDefault, Timestamp createdAt, Timestamp updatedAt) {
+        this.addressId = addressId;
+        this.userId = userId;
+        this.recipientName = recipientName;
+        this.recipientPhone = recipientPhone;
+        this.streetAddress = streetAddress;
+        this.ward = ward;
+        this.district = district;
+        this.city = city;
+        this.isDefault = isDefault;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public long getAddressId() {
@@ -83,12 +101,28 @@ public class CustomerAddress {
         this.city = city;
     }
 
+    public boolean isDefault() {
+        return isDefault;
+    }
+
+    public boolean getIsDefault() {
+        return isDefault;
+    }
+
+    public void setDefault(boolean isDefault) {
+        this.isDefault = isDefault;
+    }
+
+    public void setIsDefault(boolean isDefault) {
+        this.isDefault = isDefault;
+    }
+
     public boolean isDefaultAddress() {
-        return defaultAddress;
+        return isDefault;
     }
 
     public void setDefaultAddress(boolean defaultAddress) {
-        this.defaultAddress = defaultAddress;
+        this.isDefault = defaultAddress;
     }
 
     public Timestamp getCreatedAt() {
@@ -105,25 +139,5 @@ public class CustomerAddress {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public String getFullAddress() {
-        StringBuilder sb = new StringBuilder();
-        if (streetAddress != null && !streetAddress.trim().isEmpty()) {
-            sb.append(streetAddress.trim());
-        }
-        if (ward != null && !ward.trim().isEmpty()) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(ward.trim());
-        }
-        if (district != null && !district.trim().isEmpty()) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(district.trim());
-        }
-        if (city != null && !city.trim().isEmpty()) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(city.trim());
-        }
-        return sb.toString();
     }
 }

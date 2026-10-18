@@ -1,4 +1,4 @@
-package dao;
+﻿package dao;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -30,7 +30,7 @@ public class OrderDAO extends DBContext {
     private static final Logger LOGGER = Logger.getLogger(OrderDAO.class.getName());
     private final CouponDAO couponDAO = new CouponDAO();
 
-    // 1. LẤY CÁC CART ITEMS ĐƯỢC CHỌN CỦA KHÁCH HÀNG
+    // 1. Láº¤Y CÃC CART ITEMS ÄÆ¯á»¢C CHá»ŒN Cá»¦A KHÃCH HÃ€NG
     public List<CartItem> getSelectedCartItems(long customerId, List<Long> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
             return Collections.emptyList();
@@ -62,7 +62,7 @@ public class OrderDAO extends DBContext {
         Connection conn = getConnection();
         if (conn == null) {
             LOGGER.severe("Cannot establish DB connection in getSelectedCartItems");
-            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!");
+            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i sáº£n pháº©m thanh toÃ¡n. Vui lÃ²ng thá»­ láº¡i!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -105,12 +105,12 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting selected cart items for customer " + customerId, ex);
-            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!", ex);
+            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i sáº£n pháº©m thanh toÃ¡n. Vui lÃ²ng thá»­ láº¡i!", ex);
         }
         return items;
     }
 
-    // 2. LẤY ĐỊA CHỈ MẶC ĐỊNH HOẶC ĐỊA CHỈ GẦN NHẤT CỦA KHÁCH HÀNG
+    // 2. Láº¤Y Äá»ŠA CHá»ˆ Máº¶C Äá»ŠNH HOáº¶C Äá»ŠA CHá»ˆ Gáº¦N NHáº¤T Cá»¦A KHÃCH HÃ€NG
     public CustomerAddress getDefaultAddress(long customerId) {
         String sql = "SELECT TOP 1 address_id, user_id, recipient_name, recipient_phone, "
                 + "street_address, ward, district, city, is_default "
@@ -153,7 +153,7 @@ public class OrderDAO extends DBContext {
         List<CustomerAddress> addresses = new ArrayList<>();
         Connection conn = getConnection();
         if (conn == null) {
-            throw new IllegalStateException("Không thể tải danh sách địa chỉ. Vui lòng thử lại!");
+            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i danh sÃ¡ch Ä‘á»‹a chá»‰. Vui lÃ²ng thá»­ láº¡i!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -166,7 +166,7 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting addresses for customer " + customerId, ex);
-            throw new IllegalStateException("Không thể tải danh sách địa chỉ. Vui lòng thử lại!", ex);
+            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i danh sÃ¡ch Ä‘á»‹a chá»‰. Vui lÃ²ng thá»­ láº¡i!", ex);
         }
         return addresses;
     }
@@ -177,7 +177,7 @@ public class OrderDAO extends DBContext {
                 + "FROM customer_addresses WHERE address_id = ? AND user_id = ?";
         Connection conn = getConnection();
         if (conn == null) {
-            throw new IllegalStateException("Không thể tải địa chỉ giao hàng. Vui lòng thử lại!");
+            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i Ä‘á»‹a chá»‰ giao hÃ ng. Vui lÃ²ng thá»­ láº¡i!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -188,7 +188,7 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting customer address " + addressId, ex);
-            throw new IllegalStateException("Không thể tải địa chỉ giao hàng. Vui lòng thử lại!", ex);
+            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i Ä‘á»‹a chá»‰ giao hÃ ng. Vui lÃ²ng thá»­ láº¡i!", ex);
         }
     }
 
@@ -208,7 +208,7 @@ public class OrderDAO extends DBContext {
         return address;
     }
 
-    // 3. TẠO ĐƠN HÀNG TOÀN DIỆN (TRANSACTION AN TOÀN)
+    // 3. Táº O ÄÆ N HÃ€NG TOÃ€N DIá»†N (TRANSACTION AN TOÃ€N)
     public long createOrder(Order order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
         String insertOrderSql = "INSERT INTO orders (customer_id, coupon_id, total_goods_amount, "
@@ -252,11 +252,11 @@ public class OrderDAO extends DBContext {
 
         Connection conn = getConnection();
         if (conn == null) {
-            throw new Exception("Không thể kết nối đến cơ sở dữ liệu!");
+            throw new Exception("KhÃ´ng thá»ƒ káº¿t ná»‘i Ä‘áº¿n cÆ¡ sá»Ÿ dá»¯ liá»‡u!");
         }
 
         try {
-            conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
+            conn.setAutoCommit(false); // Báº®T Äáº¦U TRANSACTION
 
             lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
 
@@ -265,7 +265,7 @@ public class OrderDAO extends DBContext {
                         order.getCustomerId(), address);
             }
 
-            // Khóa và kiểm tra lại voucher trong cùng transaction để tránh vượt lượt dùng.
+            // KhÃ³a vÃ  kiá»ƒm tra láº¡i voucher trong cÃ¹ng transaction Ä‘á»ƒ trÃ¡nh vÆ°á»£t lÆ°á»£t dÃ¹ng.
             if (order.getCouponId() != null) {
                 Coupon coupon = couponDAO.findByIdForUpdate(conn, order.getCouponId());
                 validateCouponForOrder(coupon, order.getTotalGoodsAmount());
@@ -302,7 +302,7 @@ public class OrderDAO extends DBContext {
                         orderId = rs.getLong(1);
                         order.setOrderId(orderId);
                     } else {
-                        throw new SQLException("Tạo hóa đơn thất bại, không nhận được Order ID.");
+                        throw new SQLException("Táº¡o hÃ³a Ä‘Æ¡n tháº¥t báº¡i, khÃ´ng nháº­n Ä‘Æ°á»£c Order ID.");
                     }
                 }
             }
@@ -338,12 +338,12 @@ public class OrderDAO extends DBContext {
                             subOrderId = rs.getLong(1);
                             sub.setSubOrderId(subOrderId);
                         } else {
-                            throw new SQLException("Tạo Sub-Order thất bại, không nhận được ID.");
+                            throw new SQLException("Táº¡o Sub-Order tháº¥t báº¡i, khÃ´ng nháº­n Ä‘Æ°á»£c ID.");
                         }
                     }
                 }
 
-                // D. INSERT TỪNG ORDER_ITEM
+                // D. INSERT Tá»ªNG ORDER_ITEM
                 for (OrderItem item : sub.getItems()) {
                     try (PreparedStatement ps = conn.prepareStatement(insertOrderItemSql)) {
                         ps.setLong(1, subOrderId);
@@ -362,7 +362,7 @@ public class OrderDAO extends DBContext {
                         ps.executeUpdate();
                     }
 
-                    // E. TRỪ TỒN KHO NGUYÊN TỬ
+                    // E. TRá»ª Tá»’N KHO NGUYÃŠN Tá»¬
                     if (item.getVariantId() != null) {
                         try (PreparedStatement ps = conn.prepareStatement(deductStockSql)) {
                             ps.setInt(1, item.getQuantity());
@@ -372,16 +372,16 @@ public class OrderDAO extends DBContext {
 
                             int updated = ps.executeUpdate();
                             if (updated == 0) {
-                                throw new SQLException("Sản phẩm '" + item.getProductNameSnapshot()
-                                        + "' vừa hết hàng, đổi giá hoặc cửa hàng đã ngừng hoạt động. "
-                                        + "Vui lòng quay lại giỏ hàng để kiểm tra!");
+                                throw new SQLException("Sáº£n pháº©m '" + item.getProductNameSnapshot()
+                                        + "' vá»«a háº¿t hÃ ng, Ä‘á»•i giÃ¡ hoáº·c cá»­a hÃ ng Ä‘Ã£ ngá»«ng hoáº¡t Ä‘á»™ng. "
+                                        + "Vui lÃ²ng quay láº¡i giá» hÃ ng Ä‘á»ƒ kiá»ƒm tra!");
                             }
                         }
                     }
                 }
             }
 
-            // F. XÓA CÁC SẢN PHẨM ĐÃ MUA KHỎI GIỎ HÀNG
+            // F. XÃ“A CÃC Sáº¢N PHáº¨M ÄÃƒ MUA KHá»ŽI GIá»Ž HÃ€NG
             if (cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
                 try (PreparedStatement ps = conn.prepareStatement(deleteCartItemsSql)) {
                     for (Long itemId : cartItemIdsToDelete) {
@@ -392,18 +392,18 @@ public class OrderDAO extends DBContext {
                     int[] deletedRows = ps.executeBatch();
                     for (int deleted : deletedRows) {
                         if (deleted == 0) {
-                            throw new SQLException("Có sản phẩm không còn thuộc giỏ hàng của bạn!");
+                            throw new SQLException("CÃ³ sáº£n pháº©m khÃ´ng cÃ²n thuá»™c giá» hÃ ng cá»§a báº¡n!");
                         }
                     }
                 }
             }
 
-            // Chỉ tăng used_count nếu mọi bước tạo đơn, trừ kho và xóa giỏ đều thành công.
+            // Chá»‰ tÄƒng used_count náº¿u má»i bÆ°á»›c táº¡o Ä‘Æ¡n, trá»« kho vÃ  xÃ³a giá» Ä‘á»u thÃ nh cÃ´ng.
             if (order.getCouponId() != null) {
                 couponDAO.incrementUsage(conn, order.getCouponId());
             }
 
-            // Ghi nhận phương thức thanh toán trong cùng transaction.
+            // Ghi nháº­n phÆ°Æ¡ng thá»©c thanh toÃ¡n trong cÃ¹ng transaction.
             try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
                 ps.setLong(1, orderId);
                 ps.setString(2, paymentMethod);
@@ -413,12 +413,12 @@ public class OrderDAO extends DBContext {
                 ps.executeUpdate();
             }
 
-            conn.commit(); // THÀNH CÔNG -> COMMIT!
+            conn.commit(); // THÃ€NH CÃ”NG -> COMMIT!
             return orderId;
 
         } catch (Exception ex) {
             try {
-                conn.rollback(); // LỖI -> HOÀN TÁC TOÀN BỘ!
+                conn.rollback(); // Lá»–I -> HOÃ€N TÃC TOÃ€N Bá»˜!
             } catch (SQLException rEx) {
                 LOGGER.log(Level.SEVERE, "Rollback failed", rEx);
             }
@@ -452,7 +452,7 @@ public class OrderDAO extends DBContext {
     private void lockAndValidateCartItems(Connection conn, Order order,
             List<Long> cartItemIds) throws SQLException {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
-            throw new SQLException("Không có sản phẩm nào được chọn để đặt hàng!");
+            throw new SQLException("KhÃ´ng cÃ³ sáº£n pháº©m nÃ o Ä‘Æ°á»£c chá»n Ä‘á»ƒ Ä‘áº·t hÃ ng!");
         }
 
         StringBuilder placeholders = new StringBuilder();
@@ -492,33 +492,33 @@ public class OrderDAO extends DBContext {
         }
 
         if (rowCount != cartItemIds.size() || !actualQuantities.equals(expectedQuantities)) {
-            throw new SQLException("Giỏ hàng vừa thay đổi. Vui lòng quay lại giỏ hàng và kiểm tra lại!");
+            throw new SQLException("Giá» hÃ ng vá»«a thay Ä‘á»•i. Vui lÃ²ng quay láº¡i giá» hÃ ng vÃ  kiá»ƒm tra láº¡i!");
         }
     }
 
     private void validateCouponForOrder(Coupon coupon, BigDecimal eligibleAmount) throws SQLException {
         if (coupon == null) {
-            throw new SQLException("Mã giảm giá không còn tồn tại!");
+            throw new SQLException("MÃ£ giáº£m giÃ¡ khÃ´ng cÃ²n tá»“n táº¡i!");
         }
         if (!coupon.isActive()) {
-            throw new SQLException("Mã giảm giá hiện không hoạt động!");
+            throw new SQLException("MÃ£ giáº£m giÃ¡ hiá»‡n khÃ´ng hoáº¡t Ä‘á»™ng!");
         }
 
         java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
         if (coupon.getStartDate() == null || now.before(coupon.getStartDate())) {
-            throw new SQLException("Mã giảm giá chưa đến thời gian sử dụng!");
+            throw new SQLException("MÃ£ giáº£m giÃ¡ chÆ°a Ä‘áº¿n thá»i gian sá»­ dá»¥ng!");
         }
         if (coupon.getEndDate() == null || now.after(coupon.getEndDate())) {
-            throw new SQLException("Mã giảm giá đã hết hạn!");
+            throw new SQLException("MÃ£ giáº£m giÃ¡ Ä‘Ã£ háº¿t háº¡n!");
         }
         if (coupon.getUsedCount() >= coupon.getUsageLimit()) {
-            throw new SQLException("Mã giảm giá đã hết lượt sử dụng!");
+            throw new SQLException("MÃ£ giáº£m giÃ¡ Ä‘Ã£ háº¿t lÆ°á»£t sá»­ dá»¥ng!");
         }
 
         BigDecimal minimum = coupon.getMinOrderValue() != null
                 ? coupon.getMinOrderValue() : BigDecimal.ZERO;
         if (eligibleAmount.compareTo(minimum) < 0) {
-            throw new SQLException("Đơn hàng không còn đủ điều kiện giá trị tối thiểu của mã giảm giá!");
+            throw new SQLException("ÄÆ¡n hÃ ng khÃ´ng cÃ²n Ä‘á»§ Ä‘iá»u kiá»‡n giÃ¡ trá»‹ tá»‘i thiá»ƒu cá»§a mÃ£ giáº£m giÃ¡!");
         }
     }
 
@@ -534,7 +534,7 @@ public class OrderDAO extends DBContext {
         } else if ("FIXED_AMOUNT".equals(type)) {
             discount = coupon.getDiscountValue();
         } else {
-            throw new SQLException("Loại mã giảm giá không hợp lệ!");
+            throw new SQLException("Loáº¡i mÃ£ giáº£m giÃ¡ khÃ´ng há»£p lá»‡!");
         }
 
         if (coupon.getMaxDiscountAmount() != null
@@ -545,7 +545,7 @@ public class OrderDAO extends DBContext {
                 .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
-    // 4. LẤY CHI TIẾT ĐƠN HÀNG THEO ID
+    // 4. Láº¤Y CHI TIáº¾T ÄÆ N HÃ€NG THEO ID
     public Order getOrderById(long orderId) {
         String sqlOrder = "SELECT o.order_id, o.customer_id, o.coupon_id, o.total_goods_amount, "
                 + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, "
@@ -604,7 +604,7 @@ public class OrderDAO extends DBContext {
             }
 
             if (order != null) {
-                // Lấy sub_orders
+                // Láº¥y sub_orders
                 try (PreparedStatement psSub = conn.prepareStatement(sqlSub)) {
                     psSub.setLong(1, orderId);
                     try (ResultSet rsSub = psSub.executeQuery()) {
@@ -622,7 +622,7 @@ public class OrderDAO extends DBContext {
                             sub.setStatus(rsSub.getString("status"));
                             sub.setCreatedAt(rsSub.getTimestamp("created_at"));
 
-                            // Lấy order_items của từng sub_order
+                            // Láº¥y order_items cá»§a tá»«ng sub_order
                             try (PreparedStatement psItem = conn.prepareStatement(sqlItems)) {
                                 psItem.setLong(1, sub.getSubOrderId());
                                 try (ResultSet rsItem = psItem.executeQuery()) {
@@ -653,5 +653,139 @@ public class OrderDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error getting order by id: " + orderId, ex);
         }
         return null;
+
+    public List<Order> getOrdersByCustomerId(long customerId) {
+        List<Order> list = new ArrayList<>();
+        String sql = "SELECT o.order_id, o.order_code, o.customer_id, o.coupon_id, "
+                   + "       o.total_goods_amount, o.total_shipping_fee, o.platform_discount, "
+                   + "       o.final_amount, o.payment_status, o.payment_method, "
+                   + "       CASE "
+                   + "           WHEN EXISTS (SELECT 1 FROM sub_orders so_c WHERE so_c.order_id = o.order_id) "
+                   + "                AND NOT EXISTS (SELECT 1 FROM sub_orders so_nc WHERE so_nc.order_id = o.order_id AND so_nc.status <> 'CANCELLED') THEN 'CANCELLED' "
+                   + "           ELSE o.order_status "
+                   + "       END AS order_status, o.created_at, o.updated_at, "
+                   + "       (SELECT STRING_AGG(CONCAT(oi.product_name_snapshot, ' (x', oi.quantity, ')'), ', ') "
+                   + "        FROM order_items oi "
+                   + "        JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
+                   + "        WHERE so.order_id = o.order_id) AS items_summary "
+                   + "FROM orders o "
+                   + "WHERE o.customer_id = ? "
+                   + "ORDER BY o.created_at DESC";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            return list;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = new Order(
+                        rs.getLong("order_id"),
+                        rs.getString("order_code"),
+                        rs.getLong("customer_id"),
+                        rs.getObject("coupon_id") != null ? rs.getInt("coupon_id") : null,
+                        rs.getDouble("total_goods_amount"),
+                        rs.getDouble("total_shipping_fee"),
+                        rs.getDouble("platform_discount"),
+                        rs.getDouble("final_amount"),
+                        rs.getString("payment_status"),
+                        rs.getString("payment_method"),
+                        rs.getString("order_status"),
+                        rs.getTimestamp("created_at"),
+                        rs.getTimestamp("updated_at"),
+                        rs.getString("items_summary")
+                    );
+
+                    loadOrderItemsAndShop(order);
+                    loadShippingAddress(order);
+                    list.add(order);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error in getOrdersByCustomerId for customerId: " + customerId, ex);
+        }
+        return list;
+    }
+
+    private void loadOrderItemsAndShop(Order order) {
+        String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.product_name_snapshot, "
+                       + "       oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
+                       + "       oi.total_price, s.shop_name, s.logo_url "
+                       + "FROM order_items oi "
+                       + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
+                       + "JOIN shops s ON so.shop_id = s.shop_id "
+                       + "WHERE so.order_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            return;
+        }
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(itemSql)) {
+            ps.setLong(1, order.getOrderId());
+            try (ResultSet rs = ps.executeQuery()) {
+                List<OrderItem> items = new ArrayList<>();
+                String firstShopName = null;
+                String firstShopLogo = null;
+
+                while (rs.next()) {
+                    OrderItem item = new OrderItem(
+                        rs.getLong("order_item_id"),
+                        rs.getLong("sub_order_id"),
+                        rs.getString("product_name_snapshot"),
+                        rs.getString("variant_name_snapshot"),
+                        rs.getString("unit"),
+                        rs.getDouble("unit_price"),
+                        rs.getInt("quantity"),
+                        rs.getDouble("total_price"),
+                        rs.getString("logo_url")
+                    );
+                    items.add(item);
+
+                    if (firstShopName == null) {
+                        firstShopName = rs.getString("shop_name");
+                        firstShopLogo = rs.getString("logo_url");
+                    }
+                }
+
+                order.setItems(items);
+                if (firstShopName != null) {
+                    order.setShopName(firstShopName);
+                    order.setShopLogoUrl(firstShopLogo);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error in loadOrderItemsAndShop for orderId: " + order.getOrderId(), ex);
+        }
+    }
+
+    private void loadShippingAddress(Order order) {
+        String sql = "SELECT recipient_name, recipient_phone, street_address, ward, district, city "
+                   + "FROM order_shipping_addresses WHERE order_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) return;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, order.getOrderId());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    ShippingAddress addr = new ShippingAddress(
+                        order.getOrderId(),
+                        rs.getString("recipient_name"),
+                        rs.getString("recipient_phone"),
+                        rs.getString("street_address"),
+                        rs.getString("ward"),
+                        rs.getString("district"),
+                        rs.getString("city")
+                    );
+                    order.setShippingAddress(addr);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error loading shipping address for orderId: " + order.getOrderId(), ex);
+        }
     }
 }

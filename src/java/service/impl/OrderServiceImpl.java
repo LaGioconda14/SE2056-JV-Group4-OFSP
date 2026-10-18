@@ -52,59 +52,77 @@ public class OrderServiceImpl implements IOrderService {
             throw new IllegalArgumentException("Danh sách sản phẩm thanh toán không hợp lệ!");
         }
 
-        List<CartItem> items = orderDAO.getSelectedCartItems(customerId, new ArrayList<>(uniqueIds));
-        if (items.isEmpty()) {
-            throw new IllegalArgumentException("Không tìm thấy sản phẩm hợp lệ nào trong giỏ hàng!");
-        }
-        if (items.size() != uniqueIds.size()) {
-            throw new IllegalArgumentException("Có sản phẩm không thuộc giỏ hàng của bạn hoặc đã bị xóa!");
+        List<CartItem> selected = orderDAO.getSelectedCartItems(customerId, new ArrayList<>(uniqueIds));
+        if (selected == null || selected.isEmpty()) {
+            throw new IllegalStateException("Không tìm thấy sản phẩm hợp lệ nào trong giỏ hàng để đặt hàng!");
         }
 
-        // Kiểm tra tồn kho & trạng thái hoạt động của từng sản phẩm
-        for (CartItem item : items) {
-            if (item.getVariant() == null || !item.getVariant().isActive()
-                    || item.getVariant().getProduct() == null
-                    || !item.getVariant().getProduct().isActive()) {
-                throw new IllegalStateException("Sản phẩm '" + (item.getVariant() != null ? item.getVariant().getVariantName() : "")
-                        + "' hiện không còn khả dụng!");
+        for (CartItem item : selected) {
+            if (item.getVariant() == null) {
+                throw new IllegalStateException("Một số sản phẩm không tồn tại hoặc đã ngừng kinh doanh!");
             }
-            if (!"ACTIVE".equalsIgnoreCase(item.getVariant().getProduct().getShopStatus())) {
-                throw new IllegalStateException("Cửa hàng của sản phẩm '"
-                        + item.getVariant().getProduct().getName() + "' hiện không hoạt động!");
-            }
-            if (item.getQuantity() <= 0) {
-                throw new IllegalStateException("Số lượng sản phẩm thanh toán phải lớn hơn 0!");
-            }
-            if (item.getQuantity() > item.getVariant().getStockQuantity()) {
-                throw new IllegalStateException("Sản phẩm '" + item.getVariant().getProduct().getName()
-                        + " - " + item.getVariant().getVariantName()
-                        + "' chỉ còn " + item.getVariant().getStockQuantity() + " sản phẩm trong kho!");
+            if (item.getVariant().getStockQuantity() < item.getQuantity()) {
+                throw new IllegalStateException("Sản phẩm '" + item.getVariant().getProductName() + " - "
+                        + item.getVariant().getVariantName() + "' chỉ còn "
+                        + item.getVariant().getStockQuantity() + " sản phẩm trong kho!");
             }
         }
 
-        return items;
+        return selected;
     }
 
     @Override
     public Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode) {
         Order order = new Order();
         order.setCustomerId(customerId);
+        order.setPaymentStatus("PENDING");
 
-        // Nhóm các món hàng theo từng Shop (Mỗi Shop tạo thành 1 SubOrder)
         Map<Long, List<CartItem>> itemsByShop = new HashMap<>();
-        Map<Long, String> shopNames = new HashMap<>();
+        BigDecimal totalGoods = BigDecimal.ZERO;
 
-        for (CartItem ci : selectedItems) {
-            long shopId = ci.getVariant().getProduct().getShopId();
-            itemsByShop.computeIfAbsent(shopId, k -> new ArrayList<>()).add(ci);
-            if (ci.getVariant().getProduct().getShopName() != null) {
-                shopNames.put(shopId, ci.getVariant().getProduct().getShopName());
-            }
+        for (CartItem item : selectedItems) {
+            long shopId = item.getVariant().getProduct() != null ? item.getVariant().getProduct().getShopId() : 1L;
+            itemsByShop.computeIfAbsent(shopId, k -> new ArrayList<>()).add(item);
+            BigDecimal itemTotal = item.getVariant().getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            totalGoods = totalGoods.add(itemTotal);
         }
 
-        BigDecimal totalGoods = BigDecimal.ZERO;
-        BigDecimal totalShipping = BigDecimal.ZERO;
+        order.setTotalGoodsAmount(totalGoods);
+
+        BigDecimal shippingPerShop = new BigDecimal("15000");
+        BigDecimal totalShipping = shippingPerShop.multiply(BigDecimal.valueOf(itemsByShop.size()));
+        order.setTotalShippingFee(totalShipping);
+
+        BigDecimal discount = BigDecimal.ZERO;
+        if (couponCode != null && !couponCode.trim().isEmpty()) {
+            Coupon coupon = couponDAO.findByCode(couponCode.trim());
+            if (coupon != null && coupon.isValid() && totalGoods.compareTo(coupon.getMinOrderAmount()) >= 0) {
+                order.setCouponId(coupon.getCouponId());
+                if ("PERCENT".equalsIgnoreCase(coupon.getDiscountType())) {
+                    discount = totalGoods.multiply(coupon.getDiscountValue())
+                            .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+                    if (coupon.getMaxDiscountAmount() != null && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
+                        discount = coupon.getMaxDiscountAmount();
+                    }
+                } else {
+                    discount = coupon.getDiscountValue();
+                }
+                if (discount.compareTo(totalGoods) > 0) {
+                    discount = totalGoods;
+                }
+            }
+        }
+        order.setPlatformDiscount(discount);
+
+        BigDecimal finalAmount = totalGoods.add(totalShipping).subtract(discount);
+        if (finalAmount.compareTo(BigDecimal.ZERO) < 0) {
+            finalAmount = BigDecimal.ZERO;
+        }
+        order.setFinalAmount(finalAmount);
+
         List<SubOrder> subOrders = new ArrayList<>();
+        BigDecimal remainingDiscount = discount;
+        int remainingShops = itemsByShop.size();
 
         for (Map.Entry<Long, List<CartItem>> entry : itemsByShop.entrySet()) {
             long shopId = entry.getKey();
@@ -112,111 +130,61 @@ public class OrderServiceImpl implements IOrderService {
 
             SubOrder sub = new SubOrder();
             sub.setShopId(shopId);
-            sub.setShopName(shopNames.getOrDefault(shopId, "Cửa hàng"));
-            sub.setStatus("NEW");
+            sub.setStatus("PENDING");
 
-            BigDecimal shopSubtotal = BigDecimal.ZERO;
+            BigDecimal shopGoods = BigDecimal.ZERO;
             List<OrderItem> orderItems = new ArrayList<>();
 
             for (CartItem ci : shopItems) {
                 OrderItem oi = new OrderItem();
                 oi.setVariantId(ci.getVariant().getVariantId());
-                oi.setProductNameSnapshot(ci.getVariant().getProduct().getName());
+                oi.setProductNameSnapshot(ci.getVariant().getProductName());
                 oi.setVariantNameSnapshot(ci.getVariant().getVariantName());
                 oi.setSkuSnapshot(ci.getVariant().getSku());
-                oi.setUnit(ci.getVariant().getUnit() != null ? ci.getVariant().getUnit() : "phần");
+                oi.setUnit(ci.getVariant().getUnit());
                 oi.setUnitPrice(ci.getVariant().getPrice());
                 oi.setQuantity(ci.getQuantity());
-                oi.setTotalPrice(ci.getSubtotal());
+
+                BigDecimal lineTotal = ci.getVariant().getPrice().multiply(BigDecimal.valueOf(ci.getQuantity()));
+                oi.setTotalPrice(lineTotal);
 
                 orderItems.add(oi);
-                shopSubtotal = shopSubtotal.add(ci.getSubtotal());
+                shopGoods = shopGoods.add(lineTotal);
             }
 
             sub.setItems(orderItems);
-            sub.setShopSubtotal(shopSubtotal);
+            sub.setGoodsAmount(shopGoods);
+            sub.setShippingFee(shippingPerShop);
 
-            // Tạm thời chưa tính phí giao hàng; giữ trường dữ liệu để bổ sung công thức sau.
-            BigDecimal shopShip = BigDecimal.ZERO;
-            sub.setShopShippingFee(shopShip);
-            sub.setShopDiscount(BigDecimal.ZERO);
-            sub.setShopTotal(shopSubtotal.add(shopShip));
+            BigDecimal shopDiscount = BigDecimal.ZERO;
+            if (discount.compareTo(BigDecimal.ZERO) > 0 && totalGoods.compareTo(BigDecimal.ZERO) > 0) {
+                if (remainingShops == 1) {
+                    shopDiscount = remainingDiscount;
+                } else {
+                    shopDiscount = discount.multiply(shopGoods)
+                            .divide(totalGoods, 2, RoundingMode.HALF_UP);
+                    if (shopDiscount.compareTo(remainingDiscount) > 0) {
+                        shopDiscount = remainingDiscount;
+                    }
+                    remainingDiscount = remainingDiscount.subtract(shopDiscount);
+                }
+            }
+            remainingShops--;
+
+            sub.setPlatformDiscountShare(shopDiscount);
+            sub.setShopVoucherDiscount(BigDecimal.ZERO);
+
+            BigDecimal subFinal = shopGoods.add(shippingPerShop).subtract(shopDiscount);
+            if (subFinal.compareTo(BigDecimal.ZERO) < 0) {
+                subFinal = BigDecimal.ZERO;
+            }
+            sub.setFinalAmount(subFinal);
 
             subOrders.add(sub);
-            totalGoods = totalGoods.add(shopSubtotal);
-            totalShipping = totalShipping.add(shopShip);
         }
 
         order.setSubOrders(subOrders);
-        order.setTotalGoodsAmount(totalGoods);
-        order.setTotalShippingFee(totalShipping);
-
-        // Áp dụng voucher toàn sàn từ database
-        BigDecimal discount = BigDecimal.ZERO;
-        Integer couponId = null;
-        if (couponCode != null && !couponCode.trim().isEmpty()) {
-            Coupon coupon = couponDAO.findByCode(couponCode);
-            validateCoupon(coupon, totalGoods);
-            couponId = coupon.getCouponId();
-            discount = calculateCouponDiscount(coupon, totalGoods);
-        }
-
-        order.setCouponId(couponId);
-        order.setPlatformDiscount(discount);
-        BigDecimal finalAmount = totalGoods.add(totalShipping).subtract(discount).max(BigDecimal.ZERO);
-        order.setFinalAmount(finalAmount);
-
         return order;
-    }
-
-    private void validateCoupon(Coupon coupon, BigDecimal eligibleAmount) {
-        if (coupon == null) {
-            throw new IllegalArgumentException("Mã giảm giá không tồn tại!");
-        }
-        if (!coupon.isActive()) {
-            throw new IllegalArgumentException("Mã giảm giá hiện không hoạt động!");
-        }
-
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        if (coupon.getStartDate() == null || now.before(coupon.getStartDate())) {
-            throw new IllegalArgumentException("Mã giảm giá chưa đến thời gian sử dụng!");
-        }
-        if (coupon.getEndDate() == null || now.after(coupon.getEndDate())) {
-            throw new IllegalArgumentException("Mã giảm giá đã hết hạn!");
-        }
-        if (coupon.getUsedCount() >= coupon.getUsageLimit()) {
-            throw new IllegalArgumentException("Mã giảm giá đã hết lượt sử dụng!");
-        }
-
-        BigDecimal minimum = coupon.getMinOrderValue() != null
-                ? coupon.getMinOrderValue() : BigDecimal.ZERO;
-        if (eligibleAmount.compareTo(minimum) < 0) {
-            throw new IllegalArgumentException("Đơn hàng cần đạt tối thiểu "
-                    + minimum.setScale(0, RoundingMode.HALF_UP).toPlainString()
-                    + "đ để sử dụng mã " + coupon.getCode() + "!");
-        }
-    }
-
-    private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount) {
-        BigDecimal discount;
-        String type = coupon.getDiscountType() == null
-                ? "" : coupon.getDiscountType().trim().toUpperCase(Locale.ROOT);
-
-        if ("PERCENTAGE".equals(type)) {
-            discount = eligibleAmount.multiply(coupon.getDiscountValue())
-                    .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-        } else if ("FIXED_AMOUNT".equals(type)) {
-            discount = coupon.getDiscountValue();
-        } else {
-            throw new IllegalArgumentException("Loại mã giảm giá không hợp lệ!");
-        }
-
-        if (coupon.getMaxDiscountAmount() != null
-                && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
-            discount = coupon.getMaxDiscountAmount();
-        }
-        return discount.min(eligibleAmount).max(BigDecimal.ZERO)
-                .setScale(2, RoundingMode.HALF_UP);
     }
 
     @Override
@@ -224,59 +192,42 @@ public class OrderServiceImpl implements IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             boolean saveAddress) throws Exception {
 
-        if (address.getRecipientName() == null || address.getRecipientName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng nhập họ tên người nhận!");
-        }
-        if (address.getRecipientPhone() == null || address.getRecipientPhone().trim().isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng nhập số điện thoại người nhận!");
-        }
-        String normalizedPhone = address.getRecipientPhone().trim();
-        if (!normalizedPhone.matches("^(0|\\+84)[0-9]{9,10}$")) {
-            throw new IllegalArgumentException("Số điện thoại người nhận không hợp lệ!");
-        }
-        if (address.getStreetAddress() == null || address.getStreetAddress().trim().isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng nhập địa chỉ giao hàng cụ thể!");
-        }
-        if (address.getWard() == null || address.getWard().trim().isEmpty()
-                || address.getDistrict() == null || address.getDistrict().trim().isEmpty()
-                || address.getCity() == null || address.getCity().trim().isEmpty()) {
-            throw new IllegalArgumentException("Vui lòng nhập đầy đủ phường/xã, quận/huyện và tỉnh/thành phố!");
+        if (address == null) {
+            throw new IllegalArgumentException("Vui lòng cung cấp địa chỉ giao hàng hợp lệ!");
         }
 
-        String normalizedSlot = deliverySlot == null ? "" : deliverySlot.trim().toUpperCase(Locale.ROOT);
-        if (!("MORNING".equals(normalizedSlot)
-                || "AFTERNOON".equals(normalizedSlot)
-                || "EVENING".equals(normalizedSlot))) {
-            throw new IllegalArgumentException("Khung giờ giao hàng không hợp lệ!");
-        }
-
-        String normalizedPayment = paymentMethod == null
-                ? "" : paymentMethod.trim().toUpperCase(Locale.ROOT);
-        if (!"COD".equals(normalizedPayment)) {
-            throw new IllegalArgumentException("Hiện tại hệ thống chỉ hỗ trợ thanh toán khi nhận hàng (COD)!");
-        }
-
-        address.setRecipientName(address.getRecipientName().trim());
-        address.setRecipientPhone(normalizedPhone);
-        address.setStreetAddress(address.getStreetAddress().trim());
-        address.setWard(address.getWard().trim());
-        address.setDistrict(address.getDistrict().trim());
-        address.setCity(address.getCity().trim());
-
-        // Lấy lại các item và xác minh tồn kho
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
-        Order order = buildDraftOrder(customerId, selectedItems, couponCode);
+        Order draft = buildDraftOrder(customerId, selectedItems, couponCode);
 
-        // Gán deliverySlot cho các sub_orders
-        for (SubOrder sub : order.getSubOrders()) {
-            sub.setDeliverySlot(normalizedSlot);
+        draft.setShippingAddress(address);
+        draft.setPaymentStatus("PENDING");
+
+        String slot = (deliverySlot == null || deliverySlot.trim().isEmpty())
+                ? "Hỏa tốc trong ngày (2h - 4h)" : deliverySlot.trim();
+        for (SubOrder sub : draft.getSubOrders()) {
+            sub.setDeliverySlot(slot);
         }
 
-        // Thiết lập trạng thái thanh toán
-        order.setPaymentStatus("PENDING");
+        long orderId = orderDAO.createOrderWithSubOrders(draft, cartItemIds);
 
-        // Gọi DAO lưu vào DB trong 1 Transaction nguyên tử
-        return orderDAO.createOrder(order, address, cartItemIds, normalizedPayment, saveAddress);
+        if (saveAddress && address != null) {
+            CustomerAddress ca = new CustomerAddress();
+            ca.setUserId(customerId);
+            ca.setRecipientName(address.getRecipientName());
+            ca.setRecipientPhone(address.getRecipientPhone());
+            ca.setStreetAddress(address.getStreetAddress());
+            ca.setWard(address.getWard());
+            ca.setDistrict(address.getDistrict());
+            ca.setCity(address.getCity());
+            ca.setDefaultAddress(true);
+            try {
+                orderDAO.saveCustomerAddress(ca);
+            } catch (Exception e) {
+                // Ignore address save error
+            }
+        }
+
+        return orderId;
     }
 
     @Override
@@ -286,7 +237,7 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public CustomerAddress getDefaultCustomerAddress(long customerId) {
-        return orderDAO.getDefaultAddress(customerId);
+        return orderDAO.getDefaultCustomerAddress(customerId);
     }
 
     @Override
@@ -302,5 +253,10 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public List<Coupon> getAvailableCoupons(BigDecimal orderAmount) {
         return couponDAO.findAvailableForAmount(orderAmount);
+    }
+
+    @Override
+    public List<Order> getOrdersByCustomerId(long customerId) {
+        return orderDAO.getOrdersByCustomerId(customerId);
     }
 }

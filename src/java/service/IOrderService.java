@@ -1,9 +1,10 @@
 package service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import model.CartItem;
-import model.CustomerAddress;
 import model.Coupon;
+import model.CustomerAddress;
 import model.Order;
 import model.ShippingAddress;
 
@@ -25,5 +26,7 @@ public interface IOrderService {
 
     CustomerAddress getCustomerAddress(long customerId, long addressId);
 
-    List<Coupon> getAvailableCoupons(java.math.BigDecimal orderAmount);
+    List<Coupon> getAvailableCoupons(BigDecimal orderAmount);
+
+    List<Order> getOrdersByCustomerId(long customerId);
 }
