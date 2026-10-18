@@ -1,9 +1,12 @@
 (() => {
-    let selectedVoucher = null;
+    let selectedPlatformVoucher = null;
+    let selectedShopVouchers = {}; // { [shopId]: voucher }
     let selectedKey = '';
     let requestId = 0;
     let pendingRequest = null;
     let lastFocus = null;
+    let cachedVouchers = null;
+    let currentFilter = { scope: 'PLATFORM', shopId: null, shopName: null };
 
     function selection() {
         const params = new URLSearchParams();
@@ -20,8 +23,10 @@
 
     function status(message, error = false) {
         const element = document.getElementById('voucher-status');
-        element.textContent = message;
-        element.classList.toggle('text-error', error);
+        if (element) {
+            element.textContent = message;
+            element.classList.toggle('text-error', error);
+        }
     }
 
     function clearRequest() {
@@ -36,6 +41,7 @@
         const controller = new AbortController();
         pendingRequest = controller;
         const modal = document.getElementById('voucher-modal');
+        if (!modal) return null;
         try {
             const response = await fetch(modal.dataset.vouchersUrl + (key ? '?' + key : ''), {
                 credentials: 'same-origin',
@@ -48,12 +54,13 @@
                 throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
             }
             if (!(response.headers.get('content-type') || '').includes('application/json')) {
-                throw new Error('Không tải được voucher (HTTP ' + response.status + '). Vui lòng tải lại trang hoặc thử lại sau.');
+                throw new Error('Không tải được voucher (HTTP ' + response.status + '). Vui lòng thử lại sau.');
             }
             const result = await response.json();
             if (currentId !== requestId || key !== selection()) return null;
             if (!response.ok) throw new Error(result.error || 'Không tải được voucher. Vui lòng thử lại.');
             if (!Array.isArray(result.vouchers)) throw new Error('Dữ liệu voucher không hợp lệ.');
+            cachedVouchers = result.vouchers;
             return result.vouchers;
         } catch (error) {
             if (error.name === 'AbortError' || currentId !== requestId || key !== selection()) return null;
@@ -70,47 +77,130 @@
         return element;
     }
 
+    function filterVouchers(vouchers) {
+        if (!Array.isArray(vouchers)) return [];
+        if (currentFilter.scope === 'SHOP') {
+            return vouchers.filter(v => {
+                if (v.issuerType !== 'SHOP') return false;
+                if (currentFilter.shopId) {
+                    return String(v.shopId) === String(currentFilter.shopId);
+                }
+                return true;
+            });
+        } else if (currentFilter.scope === 'PLATFORM') {
+            return vouchers.filter(v => v.issuerType === 'PLATFORM');
+        }
+        return vouchers;
+    }
+
     function renderVouchers(vouchers) {
         const list = document.getElementById('voucher-list');
+        if (!list) return;
         list.replaceChildren();
-        const eligibleCount = vouchers.filter(voucher => voucher.eligible === true).length;
-        status(vouchers.length ? eligibleCount + '/' + vouchers.length + ' voucher có thể sử dụng.' : 'Hiện chưa có voucher nào đang phát hành.');
-        [...vouchers].sort((a, b) => Number(b.eligible === true) - Number(a.eligible === true)).forEach(voucher => {
+
+        const filtered = filterVouchers(vouchers);
+        const eligibleCount = filtered.filter(voucher => voucher.eligible === true).length;
+        const scopeDesc = currentFilter.scope === 'SHOP'
+            ? ('cửa hàng ' + (currentFilter.shopName || 'được chọn'))
+            : 'sàn FreshFruit';
+
+        if (filtered.length === 0) {
+            status('Hiện chưa có voucher khả dụng cho ' + scopeDesc + '.');
+            return;
+        }
+
+        status(eligibleCount + '/' + filtered.length + ' voucher ' + scopeDesc + ' có thể áp dụng.');
+
+        [...filtered].sort((a, b) => Number(b.eligible === true) - Number(a.eligible === true)).forEach(voucher => {
             const eligible = voucher.eligible === true;
-            const card = textElement('div', 'p-4 rounded-xl border flex items-center justify-between gap-4 '
-                + (eligible ? 'border-primary/40 bg-primary/5' : 'border-outline-variant/30 bg-surface-container-low opacity-50'), '');
+            const card = textElement('div', 'p-4 rounded-xl border flex items-center justify-between gap-4 transition-colors '
+                + (eligible ? 'border-primary/40 bg-primary/5 hover:border-primary' : 'border-outline-variant/30 bg-surface-container-low opacity-60'), '');
             const details = textElement('div', 'flex flex-col gap-1 min-w-0', '');
-            const scope = voucher.issuerType === 'SHOP' ? 'Shop: ' + (voucher.shopName || voucher.shopId) : 'Voucher sàn';
+            const isShop = voucher.issuerType === 'SHOP';
+            const scopeTag = isShop ? ('Shop: ' + (voucher.shopName || voucher.shopId)) : 'Voucher Sàn';
             const target = voucher.applyTo === 'SHIPPING' ? 'Giảm phí ship' : 'Giảm tiền hàng';
             const reduction = voucher.discountType === 'PERCENTAGE'
                 ? voucher.discountValue + '%' + (voucher.maxDiscountAmount == null ? '' : ' (tối đa ' + formatVND(voucher.maxDiscountAmount) + ')')
                 : formatVND(voucher.discountValue);
-            details.append(
-                textElement('strong', 'text-sm text-primary break-all', voucher.code),
-                textElement('span', 'text-xs font-semibold text-on-surface', scope),
-                textElement('span', 'text-sm', target + ' ' + reduction),
-                textElement('span', 'text-xs text-on-surface-variant', 'Tiền hàng ' + (voucher.issuerType === 'SHOP' ? 'của shop ' : '') + 'từ ' + formatVND(voucher.minOrderValue)),
-                textElement('span', 'text-xs text-outline', 'HSD: ' + voucher.endDate),
-                textElement('span', 'text-xs font-semibold ' + (eligible ? 'text-primary' : 'text-on-surface-variant'),
-                    eligible ? 'Tạm giảm: ' + formatVND(voucher.discountAmount) : (voucher.reason || 'Chưa đủ điều kiện sử dụng'))
+
+            const headerRow = textElement('div', 'flex items-center gap-2', '');
+            headerRow.append(
+                textElement('strong', 'text-base font-bold text-primary break-all', voucher.code),
+                textElement('span', 'px-2 py-0.5 rounded text-[11px] font-semibold ' + (isShop ? 'bg-amber-100 text-amber-900' : 'bg-primary/10 text-primary'), scopeTag)
             );
-            const button = textElement('button', 'px-3.5 py-1.5 rounded-lg font-semibold text-xs shrink-0 '
-                + (eligible ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant cursor-not-allowed'), eligible ? 'Chọn' : 'Chưa đủ điều kiện');
+
+            details.append(
+                headerRow,
+                textElement('span', 'text-sm font-semibold text-on-surface', target + ' ' + reduction),
+                textElement('span', 'text-xs text-on-surface-variant', 'Đơn tối thiểu ' + (isShop ? 'của shop ' : '') + formatVND(voucher.minOrderValue)),
+                textElement('span', 'text-xs text-outline', 'HSD: ' + voucher.endDate),
+                textElement('span', 'text-xs font-semibold ' + (eligible ? 'text-primary' : 'text-error'),
+                    eligible ? 'Ưu đãi: -' + formatVND(voucher.discountAmount) : (voucher.reason || 'Chưa đủ điều kiện sử dụng'))
+            );
+
+            const button = textElement('button', 'px-4 py-2 rounded-xl font-bold text-xs shrink-0 cursor-pointer shadow-xs transition '
+                + (eligible ? 'bg-primary text-on-primary hover:bg-[#005323]' : 'bg-surface-container-high text-on-surface-variant cursor-not-allowed'), eligible ? 'Chọn mã' : 'Chưa đủ điều kiện');
             button.type = 'button';
             button.disabled = !eligible;
-            if (eligible) button.addEventListener('click', () => chooseVoucher(voucher.code));
+            if (eligible) {
+                button.addEventListener('click', () => chooseVoucher(voucher.code, voucher.issuerType, voucher.shopId));
+            }
             card.append(details, button);
             list.append(card);
         });
     }
 
-    window.openVoucherModal = async function () {
+    function updateTabStyles() {
+        const tabPlatform = document.getElementById('tab-voucher-platform');
+        const tabShop = document.getElementById('tab-voucher-shop');
+        if (tabPlatform && tabShop) {
+            const isPlatform = currentFilter.scope === 'PLATFORM';
+            tabPlatform.className = 'pb-2.5 text-sm font-bold border-b-2 transition-colors cursor-pointer '
+                + (isPlatform ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-primary');
+            tabShop.className = 'pb-2.5 text-sm font-bold border-b-2 transition-colors cursor-pointer '
+                + (!isPlatform ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-primary');
+            if (currentFilter.shopName) {
+                tabShop.textContent = 'Voucher Shop (' + currentFilter.shopName + ')';
+            } else {
+                tabShop.textContent = 'Voucher Cửa Hàng';
+            }
+        }
+    }
+
+    window.setVoucherFilter = function(scope) {
+        currentFilter.scope = scope;
+        updateTabStyles();
+        const title = document.getElementById('voucher-modal-title');
+        if (title) {
+            title.textContent = scope === 'SHOP'
+                ? ('Voucher của ' + (currentFilter.shopName || 'Cửa hàng'))
+                : 'Voucher Sàn FreshFruit';
+        }
+        if (cachedVouchers) {
+            renderVouchers(cachedVouchers);
+        }
+    };
+
+    window.openVoucherModal = async function (scope = 'PLATFORM', shopId = null, shopName = null) {
         const modal = document.getElementById('voucher-modal');
+        if (!modal) return;
         lastFocus = document.activeElement;
+        currentFilter = { scope: scope || 'PLATFORM', shopId: shopId ? String(shopId) : null, shopName: shopName };
+
+        const title = document.getElementById('voucher-modal-title');
+        if (title) {
+            title.textContent = scope === 'SHOP'
+                ? ('Voucher của ' + (shopName || 'Cửa hàng'))
+                : 'Voucher Sàn FreshFruit';
+        }
+        updateTabStyles();
+
         if (!modal.open) modal.showModal();
-        document.getElementById('voucher-list').replaceChildren();
+        const list = document.getElementById('voucher-list');
+        if (list) list.replaceChildren();
+
         const key = selection();
-        status('Đang tải voucher...');
+        status('Đang tải danh sách voucher...');
         try {
             const vouchers = await fetchVouchers(key);
             if (vouchers) renderVouchers(vouchers);
@@ -120,20 +210,15 @@
     };
 
     window.closeVoucherModal = function () {
-        document.getElementById('voucher-modal').close();
+        const modal = document.getElementById('voucher-modal');
+        if (modal && modal.open) modal.close();
         clearRequest();
         if (lastFocus) lastFocus.focus();
     };
 
-    window.chooseVoucher = async function (code) {
-        const modal = document.getElementById('voucher-modal');
-        if (!modal.open) {
-            lastFocus = document.activeElement;
-            modal.showModal();
-        }
+    window.chooseVoucher = async function (code, issuerType = null, shopId = null) {
         const key = selection();
-        document.getElementById('voucher-list').replaceChildren();
-        status('Đang kiểm tra mã...');
+        status('Đang kiểm tra voucher...');
         try {
             const vouchers = await fetchVouchers(key);
             if (!vouchers) return;
@@ -143,9 +228,34 @@
                 status(voucher ? voucher.reason || 'Voucher chưa đủ điều kiện sử dụng.' : 'Mã không hợp lệ hoặc đã hết hạn. Hãy chọn mã khác.', true);
                 return;
             }
-            selectedVoucher = voucher;
-            selectedKey = key;
-            document.getElementById('coupon-input').value = voucher.code;
+
+            if (voucher.issuerType === 'SHOP' && voucher.shopId) {
+                selectedShopVouchers[voucher.shopId] = voucher;
+                const badge = document.getElementById('shop-voucher-badge-' + voucher.shopId);
+                const btnRemove = document.getElementById('btn-remove-shop-voucher-' + voucher.shopId);
+                if (badge) {
+                    badge.innerHTML = '<span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-xs">'
+                        + voucher.code + ' (-' + formatVND(voucher.discountAmount) + ')</span>';
+                }
+                if (btnRemove) btnRemove.style.display = 'inline-block';
+            } else {
+                selectedPlatformVoucher = voucher;
+                const pill = document.getElementById('applied-pill');
+                const codeText = document.getElementById('applied-code-text');
+                const discountText = document.getElementById('applied-discount-text');
+                if (pill) pill.style.display = 'inline-flex';
+                if (codeText) codeText.textContent = voucher.code;
+                if (discountText) discountText.textContent = '−' + formatVND(voucher.discountAmount);
+                const input = document.getElementById('coupon-input');
+                if (input) input.value = voucher.code;
+            }
+
+            // Sync main input for checkout form
+            const formCoupon = document.getElementById('checkout-form-coupon');
+            if (formCoupon) {
+                formCoupon.value = voucher.code;
+            }
+
             closeVoucherModal();
             recalcTotals();
         } catch (error) {
@@ -155,54 +265,87 @@
 
     window.applyCoupon = function () {
         const input = document.getElementById('coupon-input');
-        if (!input.value.trim()) {
-            openVoucherModal();
+        if (!input || !input.value.trim()) {
+            openVoucherModal('PLATFORM');
             return;
         }
-        chooseVoucher(input.value);
+        chooseVoucher(input.value.trim(), 'PLATFORM');
     };
 
     window.removeCoupon = function () {
-        clearRequest();
-        selectedVoucher = null;
-        selectedKey = '';
-        document.getElementById('coupon-input').value = '';
+        selectedPlatformVoucher = null;
+        const pill = document.getElementById('applied-pill');
+        if (pill) pill.style.display = 'none';
+        const input = document.getElementById('coupon-input');
+        if (input) input.value = '';
+        const formCoupon = document.getElementById('checkout-form-coupon');
+        if (formCoupon) formCoupon.value = '';
+        recalcTotals();
+    };
+
+    window.removeShopVoucher = function (shopId) {
+        if (selectedShopVouchers[shopId]) {
+            delete selectedShopVouchers[shopId];
+        }
+        const badge = document.getElementById('shop-voucher-badge-' + shopId);
+        if (badge) badge.innerHTML = '';
+        const btnRemove = document.getElementById('btn-remove-shop-voucher-' + shopId);
+        if (btnRemove) btnRemove.style.display = 'none';
         recalcTotals();
     };
 
     window.cartVoucherSavings = function (subtotal, delivery) {
-        if (selectedVoucher && selectedKey !== selection()) {
-            selectedVoucher = null;
-            selectedKey = '';
-            document.getElementById('coupon-input').value = '';
+        const key = selection();
+        if (selectedKey !== key) {
+            selectedKey = key;
         }
-        const shipping = selectedVoucher && selectedVoucher.applyTo === 'SHIPPING'
-            ? Math.min(delivery, Number(selectedVoucher.discountAmount)) : 0;
-        const product = selectedVoucher && selectedVoucher.applyTo === 'PRODUCT'
-            ? Math.min(subtotal, Number(selectedVoucher.discountAmount)) : 0;
-        const pill = document.getElementById('applied-pill');
-        if (pill) {
-            pill.style.display = selectedVoucher ? 'inline-flex' : 'none';
-            document.getElementById('applied-code-text').textContent = selectedVoucher ? selectedVoucher.code : '';
-            document.getElementById('applied-discount-text').textContent = selectedVoucher ? '−' + formatVND(product + shipping) : '';
-            document.getElementById('promo-row').style.display = product + shipping > 0 ? 'flex' : 'none';
-            document.getElementById('promo-amount').textContent = '−' + formatVND(product + shipping);
+
+        let totalProduct = 0;
+        let totalShipping = 0;
+
+        if (selectedPlatformVoucher) {
+            if (selectedPlatformVoucher.applyTo === 'SHIPPING') {
+                totalShipping += Math.min(delivery, Number(selectedPlatformVoucher.discountAmount));
+            } else {
+                totalProduct += Math.min(subtotal, Number(selectedPlatformVoucher.discountAmount));
+            }
         }
-        return {product, shipping};
+
+        Object.values(selectedShopVouchers).forEach(sv => {
+            if (sv.applyTo === 'SHIPPING') {
+                totalShipping += Math.min(delivery, Number(sv.discountAmount));
+            } else {
+                totalProduct += Math.min(subtotal, Number(sv.discountAmount));
+            }
+        });
+
+        const promoRow = document.getElementById('promo-row');
+        const promoAmount = document.getElementById('promo-amount');
+        if (promoRow && promoAmount) {
+            const totalDiscount = totalProduct + totalShipping;
+            promoRow.style.display = totalDiscount > 0 ? 'flex' : 'none';
+            promoAmount.textContent = '−' + formatVND(totalDiscount);
+        }
+
+        return { product: totalProduct, shipping: totalShipping };
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('voucher-modal');
-        modal.addEventListener('cancel', clearRequest);
-        modal.addEventListener('click', event => {
-            if (event.target === modal) closeVoucherModal();
-        });
+        if (modal) {
+            modal.addEventListener('cancel', clearRequest);
+            modal.addEventListener('click', event => {
+                if (event.target === modal) closeVoucherModal();
+            });
+        }
         const input = document.getElementById('coupon-input');
-        if (input) input.addEventListener('keydown', event => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                applyCoupon();
-            }
-        });
+        if (input) {
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    applyCoupon();
+                }
+            });
+        }
     });
 })();

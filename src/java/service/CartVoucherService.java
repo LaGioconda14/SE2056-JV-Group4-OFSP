@@ -42,7 +42,7 @@ public class CartVoucherService {
         Map<Long, Integer> selection = parseSelection(itemIds, quantities);
         Map<Long, BigDecimal> subtotals = selection.isEmpty() ? Collections.emptyMap()
                 : shopSubtotals(selection, voucherDAO.findCartItems(customerId));
-        return evaluateVouchers(subtotals, voucherDAO.findActiveCoupons());
+        return evaluateVouchers(subtotals, voucherDAO.findActiveCoupons(customerId));
     }
 
     public static Map<Long, Integer> parseSelection(String[] itemIds, String[] quantities) {

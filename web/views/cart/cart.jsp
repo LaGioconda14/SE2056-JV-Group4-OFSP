@@ -188,7 +188,46 @@
 
         <!-- Right Header Action Pills -->
         <div class="flex items-center gap-space-md shrink-0">
-            <!-- Cart Button Pill -->
+            <!-- Nút Thông Báo (Bell Button) -->
+            <div class="relative" id="header-noti-container">
+                <button type="button" id="header-noti-btn" onclick="toggleHeaderNotification(event)"
+                        class="relative flex items-center justify-center w-10 h-10 rounded-full border border-outline-variant/30 bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                        title="Thông báo">
+                    <span class="material-symbols-outlined text-[22px]">notifications</span>
+                    <span id="header-noti-badge" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-error text-on-error rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                        1
+                    </span>
+                </button>
+
+                <!-- Dropdown Thông Báo -->
+                <div id="header-noti-popover" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-surface-container-lowest rounded-2xl shadow-2xl border border-outline-variant/30 p-4 z-50 transform origin-top-right transition-all">
+                    <div class="flex items-center justify-between pb-3 border-b border-outline-variant/20 mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-[20px]">notifications_active</span>
+                            <span class="font-bold text-on-surface text-sm">Thông báo</span>
+                        </div>
+                        <button type="button" onclick="clearAllNotifications(event)" class="text-xs text-primary hover:underline font-semibold cursor-pointer">Đánh dấu đã đọc</button>
+                    </div>
+                    <div class="max-h-72 overflow-y-auto space-y-2.5" id="header-noti-list">
+                        <div class="flex items-start gap-3 p-2.5 rounded-xl bg-primary/10 border border-primary/20 text-xs text-on-surface shadow-2xs">
+                            <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">shopping_bag</span>
+                            <div class="flex-1">
+                                <p class="font-bold text-on-surface">Giỏ hàng của bạn</p>
+                                <p class="text-on-surface-variant text-[11px] mt-0.5">Bạn đang có <strong class="text-primary"><c:out value="${cart ne null ? cart.totalQuantity : 0}"/></strong> món trong giỏ hàng.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3 p-2.5 rounded-xl bg-tertiary-fixed/60 border border-tertiary-fixed text-xs text-on-surface shadow-2xs">
+                            <span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5">confirmation_number</span>
+                            <div class="flex-1">
+                                <p class="font-bold text-on-surface">Mã giảm giá</p>
+                                <p class="text-on-surface-variant text-[11px] mt-0.5">Mã sàn SAN10K và mã Shop đã sẵn sàng trong giỏ hàng.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart Button Pill (BÊN TRÁI PROFILE) -->
             <a class="flex items-center gap-2.5 py-1.5 px-3.5 rounded-full border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors" data-path="cart" href="<c:out value='${cartUrl}'/>">
                 <div class="relative flex items-center justify-center">
                     <span class="material-symbols-outlined text-primary text-[24px]">shopping_cart</span>
@@ -382,17 +421,28 @@
                             </c:if>
                         </c:forEach>
 
-                        <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/60 px-5 py-3 text-xs">
-                            <div class="flex items-center gap-2 text-tertiary"><span class="material-symbols-outlined text-[18px]">confirmation_number</span><span>Voucher của Shop</span></div>
-                            <button type="button" onclick="openVoucherModal()" class="font-semibold text-primary hover:underline">Xem thêm voucher</button>
+                        <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/60 px-5 py-3 text-xs" id="shop-voucher-row-${shopEntry.key}">
+                            <div class="flex items-center gap-2 text-tertiary">
+                                <span class="material-symbols-outlined text-[18px]">confirmation_number</span>
+                                <span>Voucher của Shop:</span>
+                                <span id="shop-voucher-badge-${shopEntry.key}"></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="openVoucherModal('SHOP', '${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Shop'}"/>')" class="font-semibold text-primary hover:underline">
+                                    Xem thêm voucher
+                                </button>
+                                <button type="button" id="btn-remove-shop-voucher-${shopEntry.key}" style="display:none;" onclick="removeShopVoucher('${shopEntry.key}')" class="text-error hover:underline ml-1">
+                                    Bỏ chọn
+                                </button>
+                            </div>
                         </div>
                     </section>
                 </c:forEach>
 
                 <div class="sticky bottom-0 z-30 overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-lowest/95 shadow-[0_-10px_35px_rgba(15,23,42,0.14)] backdrop-blur-xl">
                     <div class="flex flex-wrap items-center justify-end gap-3 border-b border-outline-variant/20 px-5 py-3">
-                        <span class="material-symbols-outlined text-[19px] text-tertiary">confirmation_number</span><strong class="text-sm">FreshFruit Voucher</strong>
-                        <button type="button" onclick="openVoucherModal()" class="text-xs font-semibold text-primary hover:underline">Chọn hoặc nhập mã</button>
+                        <span class="material-symbols-outlined text-[19px] text-tertiary">confirmation_number</span><strong class="text-sm">FreshFruit Voucher (Sàn)</strong>
+                        <button type="button" onclick="openVoucherModal('PLATFORM')" class="text-xs font-semibold text-primary hover:underline">Chọn hoặc nhập mã</button>
                         <div class="flex min-w-[210px] items-center rounded-lg border border-outline-variant/40 px-3 py-2"><input id="coupon-input" type="text" placeholder="Nhập mã giảm giá" class="w-full bg-transparent text-xs outline-none"><button type="button" onclick="applyCoupon()" class="font-bold text-primary">Áp dụng</button></div>
                         <div id="applied-pill" style="display:none" class="items-center gap-2 rounded-lg bg-tertiary-fixed px-3 py-2 text-xs"><strong id="applied-code-text"></strong><span id="applied-discount-text"></span><button type="button" onclick="removeCoupon()"><span class="material-symbols-outlined text-[14px]">close</span></button></div>
                     </div>
@@ -419,8 +469,20 @@
                 <span class="material-symbols-outlined text-primary text-[24px]">confirmation_number</span>
                 <h3 id="voucher-modal-title" class="font-headline-sm text-headline-sm text-on-surface">Chọn voucher</h3>
             </div>
-            <button type="button" aria-label="Đóng danh sách voucher" onclick="closeVoucherModal()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors">
+            <button type="button" aria-label="Đóng danh sách voucher" onclick="closeVoucherModal()" class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer">
                 <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+
+        <!-- Scope Tabs (Voucher Sàn & Voucher Shop) -->
+        <div class="flex border-b border-outline-variant/20 px-6 pt-2 bg-surface-container-low/30 gap-6">
+            <button type="button" id="tab-voucher-platform" onclick="setVoucherFilter('PLATFORM')"
+                    class="pb-2.5 text-sm font-bold border-b-2 border-primary text-primary transition-colors cursor-pointer">
+                Voucher Sàn
+            </button>
+            <button type="button" id="tab-voucher-shop" onclick="setVoucherFilter('SHOP')"
+                    class="pb-2.5 text-sm font-semibold border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors cursor-pointer">
+                Voucher Shop
             </button>
         </div>
 
@@ -682,6 +744,28 @@
 
         document.getElementById('checkout-form').submit();
     }
+
+    function toggleHeaderNotification(e) {
+        if (e) e.stopPropagation();
+        const popover = document.getElementById('header-noti-popover');
+        if (popover) {
+            popover.classList.toggle('hidden');
+        }
+    }
+
+    function clearAllNotifications(e) {
+        if (e) e.stopPropagation();
+        const badge = document.getElementById('header-noti-badge');
+        if (badge) badge.classList.add('hidden');
+    }
+
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('header-noti-container');
+        const popover = document.getElementById('header-noti-popover');
+        if (container && popover && !container.contains(e.target)) {
+            popover.classList.add('hidden');
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         handleItemCheckChange();

@@ -81,8 +81,18 @@ public class AddToCartServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
         String returnUrl = safeReturnUrl(request.getParameter("returnUrl"));
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || "true".equals(request.getParameter("ajax"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
 
         if (user == null) {
+            if (isAjax) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"redirect\":\"" + request.getContextPath()
+                        + "/login\",\"message\":\"Vui lòng đăng nhập để thêm sản phẩm vào giỏ!\"}");
+                return;
+            }
             request.getSession(true).setAttribute("errorMessage", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ!");
             response.sendRedirect(request.getContextPath() + "/login");
             return;
@@ -107,11 +117,30 @@ public class AddToCartServlet extends HttpServlet {
                 return;
             }
             session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
-            session.setAttribute("cartSize",
-                    cartService.getCart((long) user.getId()).getTotalQuantity());
+            int newCartSize = cartService.getCart((long) user.getId()).getTotalQuantity();
+            session.setAttribute("cartSize", newCartSize);
+            if (isAjax) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":true,\"message\":\"Đã thêm sản phẩm vào giỏ hàng thành công!\",\"cartSize\":"
+                        + newCartSize + "}");
+                return;
+            }
         } catch (NumberFormatException e) {
+            if (isAjax) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"message\":\"Dữ liệu không hợp lệ!\"}");
+                return;
+            }
             session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
         } catch (Exception e) {
+            if (isAjax) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":false,\"message\":\""
+                        + (e.getMessage() != null ? e.getMessage().replace("\"", "\\\"") : "Không thể thêm vào giỏ!") + "\"}");
+                return;
+            }
             session.setAttribute("cartError", e.getMessage());
         }
 
