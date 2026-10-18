@@ -248,8 +248,9 @@
                             </div>
 
                             <!-- Nút Thêm Vào Giỏ Hàng -->
-                            <form action="${pageContext.request.contextPath}/add-to-cart" method="GET" class="pt-4 border-t border-gray-100">
-                                <input type="hidden" name="productId" value="${product.id}" />
+                            <form action="${pageContext.request.contextPath}/cart/add" method="POST" class="pt-4 border-t border-gray-100">
+                                <input type="hidden" name="variantId" value="${not empty product.variants ? product.variants[0].variantId : 1}" />
+                                <input type="hidden" name="quantity" value="1" />
                                 <div class="flex items-center gap-4">
                                     <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-3 text-base">
                                         <i class="fa-solid fa-cart-plus text-lg"></i> Thêm Vào Giỏ Hàng
