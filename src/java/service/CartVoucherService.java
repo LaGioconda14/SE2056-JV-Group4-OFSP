@@ -34,15 +34,20 @@ public class CartVoucherService {
         return findVouchers(customerId, itemIds, quantities);
     }
 
-    public List<CartVoucher> findVouchers(long customerId, String[] itemIds, String[] quantities)
-            throws SQLException {
+    public List<CartVoucher> findVouchers(long customerId, String[] itemIds, String[] quantities,
+            String scope, Long shopId) throws SQLException {
         if (customerId <= 0) {
             throw new IllegalArgumentException("Invalid customer");
         }
         Map<Long, Integer> selection = parseSelection(itemIds, quantities);
         Map<Long, BigDecimal> subtotals = selection.isEmpty() ? Collections.emptyMap()
                 : shopSubtotals(selection, voucherDAO.findCartItems(customerId));
-        return evaluateVouchers(subtotals, voucherDAO.findActiveCoupons(customerId));
+        return evaluateVouchers(subtotals, voucherDAO.findActiveCoupons(customerId, scope, shopId));
+    }
+
+    public List<CartVoucher> findVouchers(long customerId, String[] itemIds, String[] quantities)
+            throws SQLException {
+        return findVouchers(customerId, itemIds, quantities, null, null);
     }
 
     public static Map<Long, Integer> parseSelection(String[] itemIds, String[] quantities) {

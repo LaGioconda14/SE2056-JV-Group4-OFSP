@@ -1,6 +1,7 @@
 package dao;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -211,18 +212,18 @@ public class OrderDAO extends DBContext {
     // 3. Táº O ÄÆ N HÃ€NG TOÃ€N DIá»†N (TRANSACTION AN TOÃ€N)
     public long createOrder(Order order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
-        String insertOrderSql = "INSERT INTO orders (customer_id, coupon_id, total_goods_amount, "
-                + "total_shipping_fee, platform_discount, final_amount, payment_status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String insertOrderSql = "INSERT INTO orders (order_code, customer_id, coupon_id, total_goods_amount, "
+                + "total_shipping_fee, platform_discount, final_amount, payment_status, payment_method, order_status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String insertAddressSql = "INSERT INTO order_shipping_addresses "
                 + "(order_id, recipient_name, recipient_phone, street_address, ward, district, city) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         String insertSubOrderSql = "INSERT INTO sub_orders "
-                + "(order_id, shop_id, delivery_slot, shop_subtotal, shop_shipping_fee, "
-                + "shop_discount, shop_total, status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(sub_order_code, order_id, shop_id, delivery_slot, shop_subtotal, shop_shipping_fee, "
+                + "shop_discount, shop_total, commission_rate, commission_amount, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String insertOrderItemSql = "INSERT INTO order_items "
                 + "(sub_order_id, variant_id, product_name_snapshot, variant_name_snapshot, "
@@ -282,19 +283,25 @@ public class OrderDAO extends DBContext {
             }
 
             long orderId;
+            String orderCode = "ORD-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 9000 + 1000);
+            order.setOrderCode(orderCode);
+
             // A. INSERT ORDERS
             try (PreparedStatement ps = conn.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setLong(1, order.getCustomerId());
+                ps.setString(1, orderCode);
+                ps.setLong(2, order.getCustomerId());
                 if (order.getCouponId() != null) {
-                    ps.setInt(2, order.getCouponId());
+                    ps.setInt(3, order.getCouponId());
                 } else {
-                    ps.setNull(2, Types.INTEGER);
+                    ps.setNull(3, Types.INTEGER);
                 }
-                ps.setBigDecimal(3, order.getTotalGoodsAmount());
-                ps.setBigDecimal(4, order.getTotalShippingFee());
-                ps.setBigDecimal(5, order.getPlatformDiscount());
-                ps.setBigDecimal(6, order.getFinalAmount());
-                ps.setString(7, order.getPaymentStatus());
+                ps.setBigDecimal(4, order.getTotalGoodsAmount());
+                ps.setBigDecimal(5, order.getTotalShippingFee());
+                ps.setBigDecimal(6, order.getPlatformDiscount());
+                ps.setBigDecimal(7, order.getFinalAmount());
+                ps.setString(8, order.getPaymentStatus() != null ? order.getPaymentStatus() : "PENDING");
+                ps.setString(9, paymentMethod != null && !paymentMethod.trim().isEmpty() ? paymentMethod : "COD");
+                ps.setString(10, order.getOrderStatus() != null ? order.getOrderStatus() : "CONFIRMED");
 
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -302,7 +309,7 @@ public class OrderDAO extends DBContext {
                         orderId = rs.getLong(1);
                         order.setOrderId(orderId);
                     } else {
-                        throw new SQLException("Táº¡o hÃ³a Ä‘Æ¡n tháº¥t báº¡i, khÃ´ng nháº­n Ä‘Æ°á»£c Order ID.");
+                        throw new SQLException("Tạo hóa đơn thất bại, không nhận được Order ID.");
                     }
                 }
             }
@@ -322,15 +329,23 @@ public class OrderDAO extends DBContext {
             // C. INSERT SUB_ORDERS & ORDER_ITEMS & DEDUCT STOCK
             for (SubOrder sub : order.getSubOrders()) {
                 long subOrderId;
+                String subCode = "SUB-" + System.currentTimeMillis() + "-" + sub.getShopId() + "-" + (int) (Math.random() * 900 + 100);
+                sub.setSubOrderCode(subCode);
+                BigDecimal commissionRate = new BigDecimal("8.00");
+                BigDecimal commissionAmount = sub.getShopSubtotal().multiply(new BigDecimal("0.08")).setScale(2, RoundingMode.HALF_UP);
+
                 try (PreparedStatement ps = conn.prepareStatement(insertSubOrderSql, Statement.RETURN_GENERATED_KEYS)) {
-                    ps.setLong(1, orderId);
-                    ps.setLong(2, sub.getShopId());
-                    ps.setString(3, sub.getDeliverySlot());
-                    ps.setBigDecimal(4, sub.getShopSubtotal());
-                    ps.setBigDecimal(5, sub.getShopShippingFee());
-                    ps.setBigDecimal(6, sub.getShopDiscount());
-                    ps.setBigDecimal(7, sub.getShopTotal());
-                    ps.setString(8, sub.getStatus());
+                    ps.setString(1, subCode);
+                    ps.setLong(2, orderId);
+                    ps.setLong(3, sub.getShopId());
+                    ps.setString(4, sub.getDeliverySlot());
+                    ps.setBigDecimal(5, sub.getShopSubtotal());
+                    ps.setBigDecimal(6, sub.getShopShippingFee());
+                    ps.setBigDecimal(7, sub.getShopDiscount());
+                    ps.setBigDecimal(8, sub.getShopTotal());
+                    ps.setBigDecimal(9, commissionRate);
+                    ps.setBigDecimal(10, commissionAmount);
+                    ps.setString(11, sub.getStatus() != null ? sub.getStatus() : "NEW");
 
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -338,7 +353,7 @@ public class OrderDAO extends DBContext {
                             subOrderId = rs.getLong(1);
                             sub.setSubOrderId(subOrderId);
                         } else {
-                            throw new SQLException("Táº¡o Sub-Order tháº¥t báº¡i, khÃ´ng nháº­n Ä‘Æ°á»£c ID.");
+                            throw new SQLException("Tạo Sub-Order thất bại, không nhận được ID.");
                         }
                     }
                 }

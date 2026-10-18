@@ -475,7 +475,7 @@
         </div>
 
         <!-- Scope Tabs (Voucher Sàn & Voucher Shop) -->
-        <div class="flex border-b border-outline-variant/20 px-6 pt-2 bg-surface-container-low/30 gap-6">
+        <div id="voucher-tabs-container" class="hidden border-b border-outline-variant/20 px-6 pt-2 bg-surface-container-low/30 gap-6">
             <button type="button" id="tab-voucher-platform" onclick="setVoucherFilter('PLATFORM')"
                     class="pb-2.5 text-sm font-bold border-b-2 border-primary text-primary transition-colors cursor-pointer">
                 Voucher Sàn
@@ -544,7 +544,7 @@
 </footer>
 
 <!-- ==================== JAVASCRIPT ==================== -->
-<script src="<c:url value='/assets/js/cart-vouchers.js'/>"></script>
+<script src="<c:url value='/assets/js/cart-vouchers.js?v=20261019'/>"></script>
 <script>
     function formatVND(val) {
         return Math.round(val).toLocaleString('vi-VN') + ' ₫';

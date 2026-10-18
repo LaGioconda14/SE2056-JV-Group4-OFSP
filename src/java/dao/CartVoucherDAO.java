@@ -39,45 +39,58 @@ public class CartVoucherDAO extends DBContext {
         return items;
     }
 
-    public List<VoucherCoupon> findActiveCoupons(long customerId) throws SQLException {
-        String sql = "SELECT c.coupon_id, c.code, c.issuer_type, c.shop_id, s.shop_name, "
-                + "c.apply_to, c.discount_type, c.discount_value, c.min_order_value, "
-                + "c.max_discount_amount, c.end_date, "
-                + "uc.user_coupon_id, uc.per_user_limit, uc.used_count AS user_used_count "
-                + "FROM coupons c "
-                + "LEFT JOIN shops s ON s.shop_id = c.shop_id "
-                + "LEFT JOIN user_coupons uc ON uc.coupon_id = c.coupon_id AND uc.user_id = ? "
-                + "WHERE c.is_active = 1 AND c.start_date <= CURRENT_TIMESTAMP "
-                + "AND c.end_date > CURRENT_TIMESTAMP AND c.used_count < c.usage_limit "
-                + "AND (c.issuer_type = 'PLATFORM' OR (c.issuer_type = 'SHOP' AND s.status = 'ACTIVE')) "
-                + "ORDER BY c.end_date, c.coupon_id";
+    public List<VoucherCoupon> findActiveCoupons(long customerId, String scope, Long shopId) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT c.coupon_id, c.code, c.shop_id, s.shop_name, ")
+                .append("c.discount_type, c.discount_value, c.min_order_value, ")
+                .append("c.max_discount_amount, c.end_date, ")
+                .append("CASE WHEN c.shop_id IS NULL THEN 'PLATFORM' ELSE 'SHOP' END AS issuer_type, ")
+                .append("CASE WHEN c.discount_type = 'FREESHIP' THEN 'SHIPPING' ELSE 'PRODUCT' END AS apply_to ")
+                .append("FROM coupons c ")
+                .append("LEFT JOIN shops s ON s.shop_id = c.shop_id ")
+                .append("WHERE c.is_active = 1 AND c.start_date <= CURRENT_TIMESTAMP ")
+                .append("AND c.end_date > CURRENT_TIMESTAMP AND c.used_count < c.usage_limit ");
+
+        if ("PLATFORM".equalsIgnoreCase(scope)) {
+            sql.append("AND c.shop_id IS NULL ");
+        } else if ("SHOP".equalsIgnoreCase(scope)) {
+            sql.append("AND c.shop_id IS NOT NULL AND (s.status = 'ACTIVE' OR s.status IS NULL) ");
+            if (shopId != null && shopId > 0) {
+                sql.append("AND c.shop_id = ? ");
+            }
+        } else {
+            sql.append("AND (c.shop_id IS NULL OR (c.shop_id IS NOT NULL AND (s.status = 'ACTIVE' OR s.status IS NULL))) ");
+        }
+        sql.append("ORDER BY c.end_date, c.coupon_id");
+
         List<VoucherCoupon> coupons = new ArrayList<>();
         try (Connection connection = requireConnection();
-                PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setLong(1, customerId);
+                PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            if ("SHOP".equalsIgnoreCase(scope) && shopId != null && shopId > 0) {
+                statement.setLong(1, shopId);
+            }
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
-                    long shopId = result.getLong("shop_id");
-                    Long nullableShopId = result.wasNull() ? null : shopId;
-                    result.getLong("user_coupon_id");
-                    boolean inWallet = !result.wasNull();
-                    int perUserLimit = inWallet ? result.getInt("per_user_limit") : 1;
-                    int userUsedCount = inWallet ? result.getInt("user_used_count") : 0;
+                    long sId = result.getLong("shop_id");
+                    Long nullableShopId = result.wasNull() ? null : sId;
                     coupons.add(new VoucherCoupon(result.getLong("coupon_id"), result.getString("code"),
                             result.getString("issuer_type"), nullableShopId, result.getString("shop_name"),
                             result.getString("apply_to"), result.getString("discount_type"),
                             result.getBigDecimal("discount_value"), result.getBigDecimal("min_order_value"),
                             result.getBigDecimal("max_discount_amount"),
                             result.getTimestamp("end_date").toLocalDateTime(),
-                            inWallet, perUserLimit, userUsedCount));
+                            true, 1, 0));
                 }
             }
         }
         return coupons;
     }
 
+    public List<VoucherCoupon> findActiveCoupons(long customerId) throws SQLException {
+        return findActiveCoupons(customerId, null, null);
+    }
+
     public List<VoucherCoupon> findActiveCoupons() throws SQLException {
-        return findActiveCoupons(0);
+        return findActiveCoupons(0, null, null);
     }
 
     private Connection requireConnection() throws SQLException {

@@ -777,22 +777,52 @@ public class ProductDAO extends DBContext {
 
     public List<Category> getHierarchyCategories() {
         List<Category> list = new ArrayList<>();
-        String query = "SELECT category_id, category_name, slug, description, is_active "
-                + "FROM categories WHERE is_active = 1 ORDER BY category_id ASC";
+        String queryParents = "SELECT category_id, category_name, slug, description, image_url, icon_class, display_order "
+                + "FROM categories WHERE parent_id IS NULL AND is_active = 1 "
+                + "ORDER BY display_order ASC, category_id ASC";
+        String querySubs = "SELECT category_id, parent_id, category_name, slug, description, image_url, icon_class, display_order "
+                + "FROM categories WHERE parent_id IS NOT NULL AND is_active = 1 "
+                + "ORDER BY display_order ASC, category_id ASC";
 
-        try (Connection conn = getConnection();
-                PreparedStatement ps = conn.prepareStatement(query);
-                ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Category category = new Category();
-                category.setCategoryId(rs.getInt("category_id"));
-                category.setParentId(null);
-                category.setCategoryName(rs.getString("category_name"));
-                category.setSlug(rs.getString("slug"));
-                category.setDescription(rs.getString("description"));
-                category.setDisplayOrder(rs.getInt("category_id"));
-                category.setIsActive(rs.getBoolean("is_active"));
-                list.add(category);
+        try (Connection conn = getConnection()) {
+            if (conn != null) {
+                try (PreparedStatement ps = conn.prepareStatement(queryParents); ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Category c = new Category();
+                        c.setCategoryId(rs.getInt("category_id"));
+                        c.setCategoryName(rs.getString("category_name"));
+                        c.setSlug(rs.getString("slug"));
+                        c.setDescription(rs.getString("description"));
+                        c.setImageUrl(rs.getString("image_url"));
+                        c.setIconClass(rs.getString("icon_class"));
+                        c.setDisplayOrder(rs.getInt("display_order"));
+                        c.setIsActive(true);
+                        list.add(c);
+                    }
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(querySubs); ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        int parentId = rs.getInt("parent_id");
+                        Category sub = new Category();
+                        sub.setCategoryId(rs.getInt("category_id"));
+                        sub.setParentId(parentId);
+                        sub.setCategoryName(rs.getString("category_name"));
+                        sub.setSlug(rs.getString("slug"));
+                        sub.setDescription(rs.getString("description"));
+                        sub.setImageUrl(rs.getString("image_url"));
+                        sub.setIconClass(rs.getString("icon_class"));
+                        sub.setDisplayOrder(rs.getInt("display_order"));
+                        sub.setIsActive(true);
+
+                        for (Category parent : list) {
+                            if (parent.getCategoryId() == parentId) {
+                                parent.addSubCategory(sub);
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -803,7 +833,7 @@ public class ProductDAO extends DBContext {
     public List<Product> getHomeProducts() {
         List<Product> list = new ArrayList<>();
         String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
-                + "p.origin, pi.image_url, "
+                + "p.origin, p.certification, p.storage_temp, pi.image_url, "
                 + "dv.variant_id AS default_variant_id, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
                 + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
@@ -821,7 +851,7 @@ public class ProductDAO extends DBContext {
                 + "    ORDER BY price ASC, variant_id ASC"
                 + ") dv "
                 + "WHERE p.is_active = 1 "
-                + "ORDER BY p.product_id DESC";
+                + "ORDER BY p.is_featured DESC, p.product_id DESC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
 
@@ -853,7 +883,8 @@ public class ProductDAO extends DBContext {
                 p.setCategoryId(catId);
                 p.setCategorySlug(categorySlug);
                 p.setOrigin(rs.getString("origin"));
-                p.setCertification(null);
+                p.setCertification(rs.getString("certification"));
+                p.setStorageTemp(rs.getString("storage_temp"));
                 p.setDefaultVariantId(rs.getLong("default_variant_id"));
                 p.setUnit(rs.getString("unit"));
                 int totalStock = rs.getInt("total_stock");
@@ -871,7 +902,7 @@ public class ProductDAO extends DBContext {
     public List<Product> getProductsByCategorySlug(String categorySlug) {
         List<Product> list = new ArrayList<>();
         String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
-                + "p.origin, pi.image_url, dv.variant_id AS default_variant_id, "
+                + "p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
                 + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
                 + "(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock "
@@ -921,7 +952,8 @@ public class ProductDAO extends DBContext {
                     p.setCategoryId(catId);
                     p.setCategorySlug(categorySlugVal);
                     p.setOrigin(rs.getString("origin"));
-                    p.setCertification(null);
+                    p.setCertification(rs.getString("certification"));
+                    p.setStorageTemp(rs.getString("storage_temp"));
                     p.setDefaultVariantId(rs.getLong("default_variant_id"));
                     p.setUnit(rs.getString("unit"));
                     int totalStock = rs.getInt("total_stock");
@@ -941,7 +973,7 @@ public class ProductDAO extends DBContext {
     public Product getProductById(int productId) {
         Product p = null;
         String sql = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
-                + "p.shop_id, p.origin, p.description, "
+                + "p.shop_id, p.origin, p.description, p.storage_temp, p.certification, "
                 + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop') AS image_url, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
                 + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
@@ -990,8 +1022,8 @@ public class ProductDAO extends DBContext {
 
                     p.setOrigin(rs.getString("origin"));
                     p.setDescription(rs.getString("description"));
-                    p.setStorageTemp(null);
-                    p.setCertification(null);
+                    p.setStorageTemp(rs.getString("storage_temp"));
+                    p.setCertification(rs.getString("certification"));
 
                     int totalStock = rs.getInt("total_stock");
                     p.setStockQuantity(totalStock);
@@ -1013,8 +1045,9 @@ public class ProductDAO extends DBContext {
     public List<ProductVariant> getVariantsByProductId(long productId) {
         List<ProductVariant> list = new ArrayList<>();
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, "
-                + "pv.weight_kg, pv.price, pv.stock_quantity, pv.is_active, "
-                + "p.name AS product_name, p.origin, p.description, c.category_name, pi.image_url "
+                + "pv.weight_kg, pv.price, pv.original_price, pv.stock_quantity, pv.is_active, "
+                + "p.name AS product_name, p.origin, p.description, p.certification, p.storage_temp, "
+                + "c.category_name, pi.image_url "
                 + "FROM product_variants pv "
                 + "JOIN products p ON pv.product_id = p.product_id "
                 + "LEFT JOIN categories c ON p.category_id = c.category_id "
@@ -1035,16 +1068,16 @@ public class ProductDAO extends DBContext {
                     v.setProductName(rs.getString("product_name"));
                     v.setVariantName(rs.getString("variant_name"));
                     v.setPrice(rs.getBigDecimal("price"));
-                    v.setOriginalPrice(rs.getBigDecimal("price"));
+                    v.setOriginalPrice(rs.getBigDecimal("original_price") != null ? rs.getBigDecimal("original_price") : rs.getBigDecimal("price"));
                     v.setWeightKg(rs.getBigDecimal("weight_kg"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
                     v.setUnit(rs.getString("unit"));
                     v.setImage(rs.getString("image_url"));
                     v.setOrigin(rs.getString("origin"));
                     v.setCategoryName(rs.getString("category_name"));
-                    v.setCertification(null);
+                    v.setCertification(rs.getString("certification"));
                     v.setIsActive(rs.getBoolean("is_active"));
-                    v.setStorageTemp(null);
+                    v.setStorageTemp(rs.getString("storage_temp"));
                     v.setDescription(rs.getString("description"));
 
                     list.add(v);
@@ -1082,7 +1115,7 @@ public class ProductDAO extends DBContext {
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
-                .append("p.origin, pi.image_url, dv.variant_id AS default_variant_id, ")
+                .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
                 .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
                 .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
                 .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock ")
@@ -1167,7 +1200,8 @@ public class ProductDAO extends DBContext {
                     p.setReviewsCount(15);
 
                     p.setOrigin(rs.getString("origin"));
-                    p.setCertification(null);
+                    p.setCertification(rs.getString("certification"));
+                    p.setStorageTemp(rs.getString("storage_temp"));
                     p.setDefaultVariantId(rs.getLong("default_variant_id"));
                     p.setUnit(rs.getString("unit"));
 

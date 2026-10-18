@@ -49,10 +49,22 @@ public class CartVouchersServlet extends HttpServlet {
             writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
             return;
         }
+        String scope = request.getParameter("scope");
+        String shopIdParam = request.getParameter("shopId");
+        Long shopId = (shopIdParam != null && shopIdParam.matches("^[0-9]+$")) ? Long.parseLong(shopIdParam) : null;
+
         String json;
         try {
-            json = GSON.toJson(Map.of("vouchers", voucherService.findVouchers(user.getId(),
-                    request.getParameterValues("itemId"), request.getParameterValues("quantity"))));
+            List<CartVoucher> vouchers;
+            if (scope != null || shopId != null) {
+                vouchers = voucherService.findVouchers(user.getId(),
+                        request.getParameterValues("itemId"), request.getParameterValues("quantity"),
+                        scope, shopId);
+            } else {
+                vouchers = voucherService.findVouchers(user.getId(),
+                        request.getParameterValues("itemId"), request.getParameterValues("quantity"));
+            }
+            json = GSON.toJson(Map.of("vouchers", vouchers));
         } catch (IllegalArgumentException ex) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Sản phẩm hoặc số lượng trong giỏ hàng không hợp lệ!");
             return;

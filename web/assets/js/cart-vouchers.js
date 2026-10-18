@@ -43,7 +43,15 @@
         const modal = document.getElementById('voucher-modal');
         if (!modal) return null;
         try {
-            const response = await fetch(modal.dataset.vouchersUrl + (key ? '?' + key : ''), {
+            const params = new URLSearchParams(key || '');
+            if (currentFilter.scope) {
+                params.set('scope', currentFilter.scope);
+            }
+            if (currentFilter.shopId) {
+                params.set('shopId', currentFilter.shopId);
+            }
+            const query = params.toString();
+            const response = await fetch(modal.dataset.vouchersUrl + (query ? '?' + query : ''), {
                 credentials: 'same-origin',
                 cache: 'no-store',
                 headers: {Accept: 'application/json'},
