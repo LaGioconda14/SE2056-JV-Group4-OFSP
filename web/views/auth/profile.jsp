@@ -17,8 +17,11 @@
 </head>
 <body>
 
-<!-- Header & Navigation -->
-<%@include file="components/profile/header.jsp"%>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Header & Navigation Đồng Bộ Home -->
+<jsp:include page="/views/common/header.jsp" />
 
 <div class="container py-4">
     <!-- Breadcrumb & Hero Banner -->
