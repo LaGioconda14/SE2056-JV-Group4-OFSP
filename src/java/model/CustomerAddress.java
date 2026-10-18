@@ -101,6 +101,25 @@ public class CustomerAddress implements Serializable {
         this.city = city;
     }
 
+    public String getFullAddress() {
+        StringBuilder address = new StringBuilder();
+        appendPart(address, streetAddress);
+        appendPart(address, ward);
+        appendPart(address, district);
+        appendPart(address, city);
+        return address.toString();
+    }
+
+    private void appendPart(StringBuilder address, String part) {
+        if (part == null || part.trim().isEmpty()) {
+            return;
+        }
+        if (address.length() > 0) {
+            address.append(", ");
+        }
+        address.append(part.trim());
+    }
+
     public boolean isDefault() {
         return isDefault;
     }

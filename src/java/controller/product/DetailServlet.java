@@ -13,6 +13,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import model.Product;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
@@ -51,6 +52,12 @@ public class DetailServlet extends HttpServlet {
                 if (product != null) {
                     System.out.println(">>> [DEBUG DETAIL] Đã tìm thấy sản phẩm: " + product.getName());
                     request.setAttribute("product", product);
+                    HttpSession session = request.getSession(false);
+                    if (session != null) {
+                        request.setAttribute("currentUser", session.getAttribute("user"));
+                        transferFlashMessage(session, request, "cartSuccess", "successMessage");
+                        transferFlashMessage(session, request, "cartError", "errorMessage");
+                    }
                     
                     // 3. Forward dữ liệu sang trang detail.jsp đã tạo
                     request.getRequestDispatcher("/views/product/product-detail.jsp").forward(request, response);
@@ -67,6 +74,15 @@ public class DetailServlet extends HttpServlet {
         // Nếu ID không hợp lệ hoặc không tìm thấy sản phẩm thì mới chuyển hướng về trang danh sách
         response.sendRedirect(request.getContextPath() + "/products");
     } 
+
+    private void transferFlashMessage(HttpSession session, HttpServletRequest request,
+            String sessionKey, String requestKey) {
+        Object message = session.getAttribute(sessionKey);
+        if (message != null) {
+            request.setAttribute(requestKey, message);
+            session.removeAttribute(sessionKey);
+        }
+    }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /** 

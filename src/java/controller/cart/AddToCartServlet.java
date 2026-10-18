@@ -80,6 +80,7 @@ public class AddToCartServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
+        String returnUrl = safeReturnUrl(request.getParameter("returnUrl"));
 
         if (user == null) {
             request.getSession(true).setAttribute("errorMessage", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ!");
@@ -106,12 +107,28 @@ public class AddToCartServlet extends HttpServlet {
                 return;
             }
             session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
+            session.setAttribute("cartSize",
+                    cartService.getCart((long) user.getId()).getTotalQuantity());
         } catch (NumberFormatException e) {
             session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
         } catch (Exception e) {
             session.setAttribute("cartError", e.getMessage());
         }
 
-        response.sendRedirect(request.getContextPath() + "/cart");
+        response.sendRedirect(request.getContextPath()
+                + (returnUrl != null ? returnUrl : "/cart"));
+    }
+
+    private String safeReturnUrl(String returnUrl) {
+        if (returnUrl == null) {
+            return null;
+        }
+        String normalized = returnUrl.trim();
+        if (!normalized.startsWith("/") || normalized.startsWith("//")
+                || normalized.contains("://") || normalized.contains("\r")
+                || normalized.contains("\n")) {
+            return null;
+        }
+        return normalized;
     }
 }

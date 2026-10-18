@@ -67,7 +67,7 @@ public class CartDAO extends DBContext {
                 + "pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
                 + "p.product_id, p.shop_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
-                + "s.status AS shop_status, "
+                + "s.shop_name, s.status AS shop_status, "
                 + "(SELECT COUNT(*) FROM product_variants pv2 "
                 + " WHERE pv2.product_id = p.product_id AND pv2.is_active = 1 "
                 + " AND pv2.stock_quantity > 0) AS available_variant_count, "
@@ -90,6 +90,7 @@ public class CartDAO extends DBContext {
                             CartItem item = new CartItem();
                             item.setCartItemID(rs.getLong("cart_item_id"));
                             item.setVariant(mapVariant(rs));
+                            item.getVariant().getProduct().setShopName(rs.getString("shop_name"));
                             item.getVariant().getProduct().setThumbnailUrl(rs.getString("thumbnail_url"));
 
                             int storedQuantity = rs.getInt("quantity");

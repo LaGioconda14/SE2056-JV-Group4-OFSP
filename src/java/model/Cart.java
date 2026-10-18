@@ -6,7 +6,9 @@ package model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -67,6 +69,15 @@ public class Cart {
             }
         }
         return total;
+    }
+
+    public Map<Long, List<CartItem>> getItemsByShop() {
+        Map<Long, List<CartItem>> grouped = new LinkedHashMap<>();
+        for (CartItem item : items) {
+            long shopId = item.getVariant().getProduct().getShopId();
+            grouped.computeIfAbsent(shopId, key -> new ArrayList<>()).add(item);
+        }
+        return grouped;
     }
 
     public boolean isEmpty() {

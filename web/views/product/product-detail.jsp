@@ -164,6 +164,18 @@
 
         <!-- Khung Nội Dung Chi Tiết Sản Phẩm -->
         <main class="max-w-7xl mx-auto px-4 py-6">
+            <c:if test="${not empty successMessage}">
+                <div id="product-toast" class="mb-5 flex items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-800 shadow-sm" role="status">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-circle-check text-lg"></i><strong><c:out value="${successMessage}"/></strong></div>
+                    <button type="button" aria-label="Đóng thông báo" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-950"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </c:if>
+            <c:if test="${not empty errorMessage}">
+                <div id="product-toast" class="mb-5 flex items-center justify-between gap-4 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700 shadow-sm" role="alert">
+                    <div class="flex items-center gap-3"><i class="fa-solid fa-circle-exclamation text-lg"></i><strong><c:out value="${errorMessage}"/></strong></div>
+                    <button type="button" aria-label="Đóng thông báo" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-900"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </c:if>
             <c:choose>
                 <c:when test="${not empty product}">
                     <div class="bg-white rounded-3xl p-6 sm:p-10 border border-gray-100 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
@@ -218,7 +230,7 @@
 
                                 <!-- Khung Giá & Khuyến Mãi -->
                                 <div class="bg-emerald-50/70 p-5 rounded-2xl mb-6 border border-emerald-100 flex items-baseline gap-4">
-                                    <span class="text-3xl sm:text-4xl font-extrabold text-emerald-600">
+                                    <span id="detail-price" class="text-3xl sm:text-4xl font-extrabold text-emerald-600">
                                         <fmt:formatNumber value="${product.price}" pattern="#,###" />đ
                                     </span>
                                     <c:if test="${product.oldPrice gt product.price}">
@@ -226,10 +238,33 @@
                                             <fmt:formatNumber value="${product.oldPrice}" pattern="#,###" />đ
                                         </span>
                                     </c:if>
-                                    <span class="text-sm font-bold text-emerald-800/80">
+                                    <span id="detail-unit" class="text-sm font-bold text-emerald-800/80">
                                         /${not empty product.unit ? product.unit : 'kg'}
                                     </span>
                                 </div>
+
+                                <c:if test="${not empty product.variants}">
+                                    <div class="mb-6">
+                                        <div class="flex items-center justify-between gap-3 mb-3">
+                                            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-500">Chọn phân loại</h3>
+                                            <span id="detail-stock" class="text-xs font-semibold text-emerald-700">Còn ${product.variants[0].stockQuantity} sản phẩm</span>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="variant-options">
+                                            <c:forEach var="variant" items="${product.variants}" varStatus="variantStatus">
+                                                <label class="variant-option cursor-pointer rounded-2xl border-2 p-4 transition ${variantStatus.first ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-emerald-300'} ${variant.stockQuantity le 0 ? 'opacity-50 cursor-not-allowed' : ''}">
+                                                    <input type="radio" name="displayVariant" value="${variant.variantId}" class="sr-only"
+                                                           data-price="${variant.price}" data-unit="${variant.unit}" data-stock="${variant.stockQuantity}"
+                                                           <c:if test="${variantStatus.first}">checked</c:if> <c:if test="${variant.stockQuantity le 0}">disabled</c:if>>
+                                                    <span class="block font-bold text-gray-900"><c:out value="${variant.variantName}"/></span>
+                                                    <span class="mt-1 flex items-center justify-between gap-2 text-xs text-gray-500">
+                                                        <span><fmt:formatNumber value="${variant.price}" pattern="#,###"/>đ / <c:out value="${variant.unit}"/></span>
+                                                        <span>Kho: <c:out value="${variant.stockQuantity}"/></span>
+                                                    </span>
+                                                </label>
+                                            </c:forEach>
+                                        </div>
+                                    </div>
+                                </c:if>
 
                                 <!-- Mô Tả Sản Phẩm -->
                                 <div class="space-y-2 mb-6">
@@ -250,7 +285,8 @@
                             <!-- Nút Thêm Vào Giỏ Hàng -->
                             <form action="${pageContext.request.contextPath}/cart/add" method="POST" class="pt-4 border-t border-gray-100">
                                 <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
-                                <input type="hidden" name="variantId" value="${not empty product.variants ? product.variants[0].variantId : 0}" />
+                                <input type="hidden" name="returnUrl" value="/detail?id=${product.id}" />
+                                <input type="hidden" id="selected-variant-id" name="variantId" value="${not empty product.variants ? product.variants[0].variantId : 0}" />
                                 <input type="hidden" name="quantity" value="1" />
                                 <div class="flex items-center gap-4">
                                     <button type="submit" ${empty product.variants ? 'disabled' : ''} class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-extrabold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-3 text-base">
@@ -320,5 +356,40 @@
                 </div>
             </div>
         </footer>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const formatter = new Intl.NumberFormat('vi-VN');
+                const radios = document.querySelectorAll('input[name="displayVariant"]');
+                const selectedVariant = document.getElementById('selected-variant-id');
+                const price = document.getElementById('detail-price');
+                const unit = document.getElementById('detail-unit');
+                const stock = document.getElementById('detail-stock');
+
+                function selectVariant(radio) {
+                    if (!radio || radio.disabled) return;
+                    if (selectedVariant) selectedVariant.value = radio.value;
+                    if (price) price.textContent = formatter.format(Number(radio.dataset.price || 0)) + 'đ';
+                    if (unit) unit.textContent = '/' + (radio.dataset.unit || 'sản phẩm');
+                    if (stock) stock.textContent = 'Còn ' + radio.dataset.stock + ' sản phẩm';
+                    document.querySelectorAll('.variant-option').forEach(function (option) {
+                        option.classList.remove('border-emerald-500', 'bg-emerald-50');
+                        option.classList.add('border-gray-200');
+                    });
+                    const option = radio.closest('.variant-option');
+                    if (option) {
+                        option.classList.remove('border-gray-200');
+                        option.classList.add('border-emerald-500', 'bg-emerald-50');
+                    }
+                }
+
+                radios.forEach(function (radio) {
+                    radio.addEventListener('change', function () { selectVariant(radio); });
+                });
+                selectVariant(document.querySelector('input[name="displayVariant"]:checked'));
+
+                const toast = document.getElementById('product-toast');
+                if (toast) window.setTimeout(function () { toast.remove(); }, 4500);
+            });
+        </script>
     </body>
 </html>
