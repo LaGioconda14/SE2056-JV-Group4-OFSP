@@ -2,267 +2,615 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <fmt:setLocale value="vi_VN"/>
-<c:url var="homeUrl" value="/home.jsp"/>
-<c:url var="productsUrl" value="/products"/>
 <c:url var="cartUrl" value="/cart"/>
 <c:url var="placeOrderUrl" value="/order/place"/>
 <c:url var="paymentUrl" value="/payment"/>
-<c:url var="checkoutCssUrl" value="/assets/css/checkout.css"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thanh toán - FreshFruit</title>
+    <title>Thanh toán đơn hàng - FreshFruit</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
-    <link href="<c:out value='${checkoutCssUrl}'/>" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f5f5f5;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .shopee-border-stripe {
+            height: 3px;
+            width: 100%;
+            background-position-x: -30px;
+            background-size: 116px 3px;
+            background-image: repeating-linear-gradient(45deg, #6fa6d6, #6fa6d6 33px, transparent 0, transparent 41px, #f18d9b 0, #f18d9b 74px, transparent 0, transparent 82px);
+        }
+    </style>
 </head>
-<body>
-<header class="site-header">
-    <div class="header-main shell">
-        <a class="brand" href="<c:out value='${homeUrl}'/>">
-            <svg class="brand-apple" viewBox="0 0 36 36" aria-hidden="true">
-                <path d="M19 4s5 0 4 5c-3 0-5-2-4-5Z" fill="#16a34a"/><path d="M18 6.5c-.5 2-2 4-3 5" stroke="#4b5563" stroke-width="2" stroke-linecap="round"/><path d="M18 12.5c-2-3-7-3-10 0-4 4-3 11 1 16 3 4 6 4 9 2 3 2 6 2 9-2 4-5 5-12 1-16-3-3-8-3-10 0Z" fill="#ef4444"/>
-            </svg>
-            <span><strong>FreshFruit</strong><small>DIRECT FROM ORCHARD</small></span>
-        </a>
-        <form class="header-search" method="get" action="<c:out value='${productsUrl}'/>">
-            <input type="search" name="search" placeholder="Tìm kiếm trái cây tươi ngon..." aria-label="Tìm kiếm sản phẩm">
-            <button type="submit" aria-label="Tìm kiếm"><span class="material-symbols-outlined">search</span></button>
-        </form>
-        <div class="header-actions">
-            <a class="header-pill" href="<c:out value='${cartUrl}'/>"><span class="material-symbols-outlined">shopping_cart</span><span>Giỏ hàng</span></a>
-            <c:choose>
-                <c:when test="${not empty sessionScope.user}">
-                    <a class="header-pill user-pill" href="<c:url value='/profile'/>">
-                        <span class="avatar"><c:choose><c:when test="${not empty sessionScope.user.fullName}"><c:out value="${sessionScope.user.fullName.substring(0, 1)}"/></c:when><c:otherwise>U</c:otherwise></c:choose></span>
-                        <span><c:out value="${sessionScope.user.fullName}"/></span>
-                    </a>
-                </c:when>
-                <c:otherwise><a class="header-pill user-pill" href="<c:url value='/login'/>">Đăng nhập</a></c:otherwise>
-            </c:choose>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+<!-- Header chuẩn đồng bộ với Cart & Home -->
+<jsp:include page="/views/common/header.jsp" />
+
+<main class="flex-1 max-w-[1240px] w-full mx-auto px-4 py-6">
+    <c:if test="${not empty checkoutError or not empty sessionScope.checkoutError}">
+        <div class="mb-5 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 font-bold flex items-center gap-3 shadow-xs" role="alert">
+            <span class="material-symbols-outlined text-red-600">error</span>
+            <span><c:out value="${not empty checkoutError ? checkoutError : sessionScope.checkoutError}"/></span>
         </div>
-    </div>
-    <div class="nav-row">
-        <nav class="shell">
-            <a href="<c:out value='${homeUrl}'/>">Trang Chủ</a><a href="<c:out value='${productsUrl}'/>">Cửa Hàng</a><a href="<c:out value='${productsUrl}'/>">Danh Mục Trái Cây</a><a href="<c:out value='${productsUrl}'/>">Hộp Quà &amp; Combo</a><a href="<c:out value='${homeUrl}'/>#about">Về Nông Trại</a><a href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a>
-        </nav>
-    </div>
-</header>
+        <c:remove var="checkoutError" scope="session"/>
+    </c:if>
 
-<main class="page-main">
-    <div class="shell checkout-shell">
-        <div class="page-heading">
-            <div><p class="eyebrow">FreshFruit checkout</p><h1>Hoàn tất đơn hàng</h1><p>Kiểm tra sản phẩm và điền thông tin nhận hàng của bạn.</p></div>
-            <a class="back-link" href="<c:out value='${cartUrl}'/>"><span class="material-symbols-outlined">arrow_back</span> Quay lại giỏ hàng</a>
-        </div>
+    <c:choose>
+        <c:when test="${empty selectedItems or empty draftOrder}">
+            <div class="bg-white rounded-2xl p-12 text-center border border-gray-200/80 shadow-xs my-6">
+                <span class="material-symbols-outlined text-gray-400 text-6xl">remove_shopping_cart</span>
+                <h2 class="text-xl font-bold text-gray-900 mt-4 mb-2">Không có sản phẩm để thanh toán</h2>
+                <p class="text-gray-500 text-sm mb-6">Vui lòng quay lại giỏ hàng và chọn ít nhất một sản phẩm.</p>
+                <a href="<c:out value='${cartUrl}'/>" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#00652c] text-white font-bold hover:bg-[#005323] transition shadow-md">
+                    Về giỏ hàng
+                </a>
+            </div>
+        </c:when>
+        <c:otherwise>
+            <form method="post" action="<c:out value='${placeOrderUrl}'/>" id="checkout-form"
+                  data-order-action="<c:out value='${placeOrderUrl}'/>"
+                  data-payment-action="<c:out value='${paymentUrl}'/>"
+                  class="space-y-4">
 
-        <c:if test="${not empty checkoutError or not empty sessionScope.checkoutError}">
-            <div class="alert error" role="alert"><span class="material-symbols-outlined">error</span><c:out value="${not empty checkoutError ? checkoutError : sessionScope.checkoutError}"/></div>
-            <c:remove var="checkoutError" scope="session"/>
-        </c:if>
+                <!-- Hidden parameters -->
+                <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.cartCsrfToken}'/>">
+                <c:forEach var="cartItemId" items="${cartItemIds}">
+                    <input type="hidden" name="cartItemIds" value="<c:out value='${cartItemId}'/>">
+                </c:forEach>
+                <input type="hidden" name="couponCode" id="checkout-coupon-code" value="<c:out value='${couponCode}'/>">
+                <input type="hidden" name="deliverySlot" value="AFTERNOON">
 
-        <c:choose>
-            <c:when test="${empty selectedItems or empty draftOrder}">
-                <section class="empty-state">
-                    <span class="material-symbols-outlined">remove_shopping_cart</span><h2>Không có sản phẩm để thanh toán</h2><p>Vui lòng quay lại giỏ hàng và chọn ít nhất một sản phẩm.</p>
-                    <a class="primary-button" href="<c:out value='${cartUrl}'/>">Về giỏ hàng</a>
-                </section>
-            </c:when>
-            <c:otherwise>
-                <form method="post" action="<c:out value='${placeOrderUrl}'/>" class="checkout-grid" id="checkout-form"
-                      data-order-action="<c:out value='${placeOrderUrl}'/>"
-                      data-payment-action="<c:out value='${paymentUrl}'/>">
-                    <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.cartCsrfToken}'/>">
-                    <c:forEach var="cartItemId" items="${cartItemIds}"><input type="hidden" name="cartItemIds" value="<c:out value='${cartItemId}'/>"></c:forEach>
-                    <input type="hidden" name="couponCode" value="<c:out value='${couponCode}'/>">
-
-                    <div class="checkout-content">
-                        <section class="panel products-panel">
-                            <div class="products-panel-heading">
-                                <div class="panel-heading products-title">
-                                    <span class="panel-icon material-symbols-outlined">nutrition</span>
-                                    <div>
-                                        <p class="section-kicker">Sản phẩm đã chọn</p>
-                                        <h2>Sản phẩm đặt mua (<c:out value="${selectedItems.size()}"/> món)</h2>
-                                        <p>Kiểm tra lại sản phẩm, phân loại và số lượng trước khi đặt hàng.</p>
-                                    </div>
-                                </div>
-                                <a class="edit-cart-button" href="<c:out value='${cartUrl}'/>"><span class="material-symbols-outlined">edit_note</span>Chỉnh sửa giỏ hàng</a>
+                <!-- ==================== 1. KHỐI ĐỊA CHỈ NHẬN HÀNG (GIỐNG SHOPEE) ==================== -->
+                <div class="bg-white rounded-xl shadow-xs overflow-hidden border border-gray-200/70">
+                    <div class="shopee-border-stripe"></div>
+                    <div class="p-6">
+                        <div class="flex items-center justify-between gap-4 mb-3">
+                            <div class="flex items-center gap-2 text-[#00652c] font-bold text-base">
+                                <span class="material-symbols-outlined text-[22px]">location_on</span>
+                                <span>Địa Chỉ Nhận Hàng</span>
                             </div>
-                            <div class="checkout-product-list">
-                                <c:choose>
-                                    <c:when test="${not empty itemsByShop}">
-                                        <c:forEach var="shopEntry" items="${itemsByShop}">
-                                            <c:set var="shopItems" value="${shopEntry.value}"/>
-                                            <c:set var="shop" value="${shopItems[0].variant.product}"/>
-                                            <c:set var="shopSubtotal" value="${0}"/>
-                                            <div class="checkout-shop-group">
-                                                <div class="checkout-shop-header">
-                                                    <div class="checkout-shop-info">
-                                                        <span class="checkout-shop-icon material-symbols-outlined">storefront</span>
-                                                        <strong class="checkout-shop-name"><c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng nông sản'}"/></strong>
-                                                        <span class="checkout-shop-badge">Chính hãng</span>
-                                                    </div>
-                                                    <span class="checkout-shop-count"><c:out value="${shopItems.size()}"/> món</span>
+                            <button type="button" onclick="openAddressModal()" class="text-xs font-bold text-blue-600 hover:underline cursor-pointer">
+                                Thay Đổi
+                            </button>
+                        </div>
+
+                        <!-- Active Selected Address Display -->
+                        <div id="active-address-display">
+                            <c:choose>
+                                <c:when test="${not empty customerAddresses}">
+                                    <c:set var="activeAddr" value="${not empty defaultAddress ? defaultAddress : customerAddresses[0]}"/>
+                                    <div class="flex flex-wrap items-baseline gap-3 text-sm">
+                                        <strong class="font-extrabold text-gray-900" id="display-recipient-name">
+                                            <c:out value="${activeAddr.recipientName}"/> (<c:out value="${activeAddr.recipientPhone}"/>)
+                                        </strong>
+                                        <span class="text-gray-700" id="display-recipient-address">
+                                            <c:out value="${activeAddr.fullAddress}"/>
+                                        </span>
+                                        <span id="display-default-badge" class="px-2 py-0.5 text-[11px] font-bold text-red-600 border border-red-500 rounded bg-red-50 <c:if test='${not activeAddr.defaultAddress}'>hidden</c:if>">
+                                            Mặc định
+                                        </span>
+                                    </div>
+                                </c:when>
+                                <c:otherwise>
+                                    <p class="text-sm text-gray-500">Chưa có địa chỉ nhận hàng. Vui lòng bấm Thay Đổi để nhập địa chỉ.</p>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== 2. TABLE HEADER (SẢN PHẨM | ĐƠN GIÁ | SỐ LƯỢNG | THÀNH TIỀN) ==================== -->
+                <div class="hidden md:grid grid-cols-12 gap-4 bg-white px-6 py-4 rounded-xl border border-gray-200/70 text-sm font-semibold text-gray-500 shadow-xs">
+                    <div class="col-span-6">Sản phẩm</div>
+                    <div class="col-span-2 text-center">Đơn giá</div>
+                    <div class="col-span-2 text-center">Số lượng</div>
+                    <div class="col-span-2 text-right">Thành tiền</div>
+                </div>
+
+                <!-- ==================== 3. DANH SÁCH SẢN PHẨM THEO TỪNG GIAN HÀNG (GIỐNG SHOPEE) ==================== -->
+                <c:choose>
+                    <c:when test="${not empty itemsByShop}">
+                        <c:forEach var="shopEntry" items="${itemsByShop}">
+                            <c:set var="shopItems" value="${shopEntry.value}"/>
+                            <c:set var="shop" value="${shopItems[0].variant.product}"/>
+                            <c:set var="shopSubtotal" value="${0}"/>
+                            <c:forEach var="item" items="${shopItems}">
+                                <c:set var="shopSubtotal" value="${shopSubtotal + item.subtotal}"/>
+                            </c:forEach>
+
+                            <section class="bg-white rounded-xl shadow-xs border border-gray-200/70 overflow-hidden">
+                                <!-- Shop Header -->
+                                <div class="px-6 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-50 text-[#00652c]">
+                                            <span class="material-symbols-outlined text-[18px]">storefront</span>
+                                        </span>
+                                        <strong class="text-sm font-bold text-gray-900">
+                                            <c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng nông sản'}"/>
+                                        </strong>
+                                        <span class="text-gray-300">|</span>
+                                        <button type="button" class="flex items-center gap-1 text-xs text-emerald-700 font-semibold hover:underline cursor-pointer">
+                                            <span class="material-symbols-outlined text-[15px]">chat</span> Chat ngay
+                                        </button>
+                                    </div>
+                                    <span class="text-xs text-gray-400 font-medium"><c:out value="${shopItems.size()}"/> sản phẩm</span>
+                                </div>
+
+                                <!-- Shop Items List -->
+                                <div class="divide-y divide-gray-100">
+                                    <c:forEach var="item" items="${shopItems}">
+                                        <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                                            <div class="md:col-span-6 flex items-center gap-3.5 min-w-0">
+                                                <div class="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
+                                                    <c:choose>
+                                                        <c:when test="${not empty item.variant.product.image}">
+                                                            <img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" class="w-full h-full object-cover">
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="w-full h-full flex items-center justify-center text-gray-300"><span class="material-symbols-outlined">image</span></div>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
-                                                <div class="checkout-shop-items">
-                                                    <c:forEach var="item" items="${shopItems}">
-                                                        <c:set var="shopSubtotal" value="${shopSubtotal + item.subtotal}"/>
-                                                        <article class="checkout-product-row">
-                                                            <div class="checkout-product-image">
-                                                                <c:choose>
-                                                                    <c:when test="${not empty item.variant.product.image}">
-                                                                        <img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200';">
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <span class="material-symbols-outlined">image</span>
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                                <span class="checkout-quantity-badge">SL: <c:out value="${item.quantity}"/></span>
-                                                            </div>
-                                                            <div class="checkout-product-info">
-                                                                <div class="product-meta">
-                                                                    <span class="fresh-label">Nông sản sạch</span>
-                                                                    <c:if test="${not empty item.variant.product.origin}">
-                                                                        <span><span class="material-symbols-outlined">pin_drop</span><c:out value="${item.variant.product.origin}"/></span>
-                                                                    </c:if>
-                                                                </div>
-                                                                <h3><c:out value="${item.variant.product.name}"/></h3>
-                                                                <p>Quy cách: <strong><c:out value="${item.variant.variantName}"/></strong><c:if test="${not empty item.variant.unit}"> · <c:out value="${item.variant.unit}"/></c:if> · Số lượng: <strong><c:out value="${item.quantity}"/></strong></p>
-                                                                <small>Đơn giá: <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> / <c:out value="${item.variant.unit}"/></small>
-                                                            </div>
-                                                            <div class="checkout-line-total">
-                                                                <strong><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
-                                                                <span>Tổng <c:out value="${item.quantity}"/> <c:out value="${item.variant.unit}"/></span>
-                                                            </div>
-                                                        </article>
-                                                    </c:forEach>
-                                                </div>
-                                                <div class="checkout-shop-footer">
-                                                    <span>Tạm tính gian hàng:</span>
-                                                    <strong><fmt:formatNumber value="${shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
+                                                <div class="min-w-0">
+                                                    <h4 class="text-sm font-bold text-gray-900 line-clamp-2 leading-snug"><c:out value="${item.variant.product.name}"/></h4>
+                                                    <p class="text-xs text-gray-500 mt-1">Phân loại: <strong class="text-gray-700"><c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}">, <c:out value="${item.variant.unit}"/></c:if></strong></p>
                                                 </div>
                                             </div>
-                                        </c:forEach>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <c:forEach var="item" items="${selectedItems}">
-                                            <article class="checkout-product-row">
-                                                <div class="checkout-product-image">
-                                                    <c:choose><c:when test="${not empty item.variant.product.image}"><img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" loading="lazy" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200';"></c:when><c:otherwise><span class="material-symbols-outlined">image</span></c:otherwise></c:choose>
-                                                    <span class="checkout-quantity-badge">SL: <c:out value="${item.quantity}"/></span>
-                                                </div>
-                                                <div class="checkout-product-info">
-                                                    <div class="product-meta"><span class="fresh-label">Nông sản sạch</span><c:if test="${not empty item.variant.product.origin}"><span><span class="material-symbols-outlined">pin_drop</span><c:out value="${item.variant.product.origin}"/></span></c:if></div>
-                                                    <h3><c:out value="${item.variant.product.name}"/></h3>
-                                                    <p>Quy cách: <strong><c:out value="${item.variant.variantName}"/></strong><c:if test="${not empty item.variant.unit}"> · <c:out value="${item.variant.unit}"/></c:if> · Số lượng: <strong><c:out value="${item.quantity}"/></strong></p>
-                                                    <small>Đơn giá: <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/> / <c:out value="${item.variant.unit}"/></small>
-                                                </div>
-                                                <div class="checkout-line-total"><strong><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong><span>Tổng <c:out value="${item.quantity}"/> <c:out value="${item.variant.unit}"/></span></div>
-                                            </article>
-                                        </c:forEach>
-                                    </c:otherwise>
-                                </c:choose>
-                            </div>
-                            <div class="products-panel-footer"><span><span class="material-symbols-outlined">verified</span>Tất cả sản phẩm được kiểm tra tồn kho và trạng thái cửa hàng trước khi đặt.</span><strong>Tổng tiền hàng: <fmt:formatNumber value="${draftOrder.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
-                        </section>
-
-                        <section class="panel">
-                            <div class="panel-heading"><span class="panel-icon material-symbols-outlined">location_on</span><div><p class="section-kicker">Bước 1</p><h2>Thông tin giao hàng</h2></div></div>
-                            <div class="address-options">
-                                <c:forEach var="address" items="${customerAddresses}">
-                                    <label class="address-option"><input type="radio" name="addressSelection" value="saved:<c:out value='${address.addressId}'/>" <c:if test="${address.defaultAddress or (not empty defaultAddress and defaultAddress.addressId eq address.addressId)}">checked</c:if> required><span class="address-radio"></span><span class="address-copy"><span class="address-name"><strong><c:out value="${address.recipientName}"/></strong><c:if test="${address.defaultAddress}"><em>Mặc định</em></c:if></span><span><c:out value="${address.fullAddress}"/></span><small><span class="material-symbols-outlined">phone_iphone</span><c:out value="${address.recipientPhone}"/></small></span></label>
-                                </c:forEach>
-                                <label class="address-option add-address-option"><input type="radio" name="addressSelection" value="new" <c:if test="${empty customerAddresses}">checked</c:if> required><span class="address-radio"></span><span class="material-symbols-outlined add-address-icon">add_location_alt</span><span class="address-copy"><strong>Thêm địa chỉ mới</strong><small>Nhập địa chỉ khác cho đơn hàng này.</small></span></label>
-                            </div>
-                            <div class="new-address-form <c:if test='${not empty customerAddresses}'>is-hidden</c:if>" data-new-address-form>
-                                <div class="form-grid">
-                                    <label class="field"><span>Họ và tên người nhận</span><input type="text" name="recipientName" autocomplete="name" data-new-address-field></label>
-                                    <label class="field"><span>Số điện thoại</span><input type="tel" name="recipientPhone" autocomplete="tel" inputmode="tel" data-new-address-field></label>
-                                    <label class="field full"><span>Địa chỉ (số nhà, tên đường)</span><input type="text" name="streetAddress" autocomplete="street-address" data-new-address-field></label>
-                                    <label class="field"><span>Phường / Xã</span><input type="text" name="ward" data-new-address-field></label>
-                                    <label class="field"><span>Quận / Huyện</span><input type="text" name="district" data-new-address-field></label>
-                                    <label class="field full"><span>Tỉnh / Thành phố</span><input type="text" name="city" data-new-address-field></label>
-                                </div>
-                                <label class="save-address-option"><input type="checkbox" name="saveAddress" value="true" checked><span><strong>Lưu địa chỉ này vào sổ địa chỉ</strong><small>Lần mua sau bạn có thể chọn lại địa chỉ này mà không cần nhập lại.</small></span></label>
-                            </div>
-                        </section>
-
-                        <input type="hidden" name="deliverySlot" value="AFTERNOON">
-
-                        <section class="panel">
-                            <div class="panel-heading"><span class="panel-icon material-symbols-outlined">payments</span><div><p class="section-kicker">Bước 2</p><h2>Phương thức thanh toán</h2></div></div>
-                            <div class="payment-list">
-                                <label class="payment-option"><input type="radio" name="paymentMethod" value="COD" checked required><span class="payment-radio"></span><span class="payment-icon material-symbols-outlined">payments</span><span><strong>Thanh toán khi nhận hàng (COD)</strong><small>Thanh toán bằng tiền mặt cho nhân viên giao hàng.</small></span><span class="status-tag">Khả dụng</span></label>
-                                <div class="payment-option disabled" aria-disabled="true"><span class="payment-radio"></span><span class="payment-icon material-symbols-outlined">account_balance_wallet</span><span><strong>Ví điện tử</strong><small>Phương thức này chưa được hỗ trợ.</small></span><span class="status-tag muted">Sắp có</span></div>
-                                <label class="payment-option"><input type="radio" name="paymentMethod" value="CARD" required><span class="payment-radio"></span><span class="payment-icon material-symbols-outlined">credit_card</span><span><strong>Thẻ ngân hàng</strong><small>Nhập thông tin thẻ và tiếp tục sang cổng thanh toán.</small></span><span class="status-tag">Khả dụng</span></label>
-                            </div>
-                            <div class="card-payment-form is-hidden" data-card-payment-form>
-                                <div class="card-form-heading"><span class="material-symbols-outlined">lock</span><span><strong>Thông tin thẻ</strong></span></div>
-                                <div class="form-grid">
-                                    <label class="field full"><span>Tên chủ thẻ</span><input type="text" name="cardHolder" autocomplete="cc-name" maxlength="100" placeholder="NGUYEN VAN A" data-card-field></label>
-                                    <label class="field full"><span>Số thẻ</span><input type="text" name="cardNumber" autocomplete="cc-number" inputmode="numeric" maxlength="23" placeholder="1234 5678 9012 3456" data-card-number data-card-field></label>
-                                    <label class="field"><span>Ngày hết hạn</span><input type="text" name="cardExpiry" autocomplete="cc-exp" inputmode="numeric" maxlength="5" placeholder="MM/YY" data-card-expiry data-card-field></label>
-                                    <label class="field"><span>CVV/CVC</span><input type="password" name="cardCvv" autocomplete="cc-csc" inputmode="numeric" maxlength="4" placeholder="•••" data-card-cvv data-card-field></label>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-
-                    <aside class="order-summary">
-                        <section class="panel summary-panel">
-                            <div class="summary-title"><div><p class="section-kicker">Đơn hàng của bạn</p><h2><c:out value="${selectedItems.size()}"/> sản phẩm</h2></div><span class="material-symbols-outlined">shopping_bag</span></div>
-                            <div class="summary-product-note"><span class="material-symbols-outlined">inventory_2</span><span><strong><c:out value="${selectedItems.size()}"/> dòng sản phẩm</strong><small><c:choose><c:when test="${not empty itemsByShop and itemsByShop.size() gt 1}">Từ <c:out value="${itemsByShop.size()}"/> cửa hàng nông sản</c:when><c:otherwise>Chi tiết sản phẩm được hiển thị ở cột bên trái.</c:otherwise></c:choose></small></span></div>
-                            <div class="checkout-voucher">
-                                <div class="checkout-voucher-heading"><span><span class="material-symbols-outlined">sell</span>Voucher</span><button type="button" data-voucher-toggle><c:choose><c:when test="${not empty couponCode}"><c:out value="${couponCode}"/></c:when><c:otherwise>Chọn mã</c:otherwise></c:choose><span class="material-symbols-outlined">chevron_right</span></button></div>
-                                <div class="voucher-options is-hidden" data-voucher-options>
-                                    <label class="voucher-option"><input type="radio" name="couponPicker" value="" <c:if test="${empty couponCode}">checked</c:if>><span><strong>Không dùng voucher</strong><small>Thanh toán theo giá gốc.</small></span></label>
-                                    <c:forEach var="coupon" items="${availableCoupons}">
-                                        <label class="voucher-option"><input type="radio" name="couponPicker" value="<c:out value='${coupon.code}'/>" <c:if test="${coupon.code eq couponCode}">checked</c:if>><span><strong><c:out value="${coupon.code}"/></strong><small><c:choose><c:when test="${coupon.discountType eq 'PERCENTAGE'}">Giảm <fmt:formatNumber value="${coupon.discountValue}" maxFractionDigits="0"/>%</c:when><c:otherwise>Giảm <fmt:formatNumber value="${coupon.discountValue}" type="currency" currencyCode="VND" maxFractionDigits="0"/></c:otherwise></c:choose> · Đơn từ <fmt:formatNumber value="${coupon.minOrderValue}" type="currency" currencyCode="VND" maxFractionDigits="0"/></small></span><button type="button" data-apply-voucher>Áp dụng</button></label>
+                                            <div class="md:col-span-2 text-left md:text-center text-sm text-gray-700">
+                                                <span class="md:hidden text-xs text-gray-400 mr-1">Đơn giá:</span>
+                                                <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                            </div>
+                                            <div class="md:col-span-2 text-left md:text-center text-sm text-gray-700">
+                                                <span class="md:hidden text-xs text-gray-400 mr-1">Số lượng:</span>
+                                                <c:out value="${item.quantity}"/>
+                                            </div>
+                                            <div class="md:col-span-2 text-left md:text-right text-sm font-extrabold text-[#00652c]">
+                                                <span class="md:hidden text-xs text-gray-400 mr-1">Thành tiền:</span>
+                                                <fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                            </div>
+                                        </div>
                                     </c:forEach>
                                 </div>
-                                <c:if test="${not empty couponCode}"><p class="voucher-applied"><span class="material-symbols-outlined">check_circle</span>Đã áp dụng mã <strong><c:out value="${couponCode}"/></strong></p></c:if>
+
+                                <!-- Shop Voucher Row (Giống Shopee) -->
+                                <div class="px-6 py-3 border-t border-dashed border-gray-200 flex items-center justify-between text-xs bg-gray-50/40">
+                                    <div class="flex items-center gap-2 text-gray-700">
+                                        <span class="material-symbols-outlined text-[18px] text-amber-600">confirmation_number</span>
+                                        <span class="font-semibold">Voucher của Shop</span>
+                                    </div>
+                                    <button type="button" onclick="alert('Voucher của shop này đã được áp dụng trong giỏ hàng.')" class="text-blue-600 hover:underline font-semibold cursor-pointer">
+                                        Chọn Voucher
+                                    </button>
+                                </div>
+
+                                <!-- Delivery & Note Row (Giống Shopee) -->
+                                <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 grid grid-cols-1 md:grid-cols-12 gap-4 items-center text-xs">
+                                    <div class="md:col-span-5 flex items-center gap-2.5">
+                                        <span class="text-gray-600 shrink-0 font-medium">Lời nhắn:</span>
+                                        <input type="text" name="shopNote_${shopEntry.key}" placeholder="Lưu ý cho Người bán..." class="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-emerald-600">
+                                    </div>
+                                    <div class="md:col-span-7 flex flex-col md:flex-row md:items-center justify-between gap-2 md:pl-6 border-l-0 md:border-l border-gray-200">
+                                        <div>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                <span class="text-gray-700 font-semibold">Phương thức vận chuyển:</span>
+                                                <span class="font-bold text-gray-900">Nhanh (Giao trong ngày / 2h - 4h)</span>
+                                                <button type="button" class="text-blue-600 hover:underline text-[11px] font-semibold cursor-pointer">Thay Đổi</button>
+                                            </div>
+                                            <div class="text-[11px] text-gray-400 mt-0.5">Được đồng kiểm khi nhận hàng</div>
+                                        </div>
+                                        <strong class="text-sm font-bold text-gray-900">0₫</strong>
+                                    </div>
+                                </div>
+
+                                <!-- Shop Subtotal (Giống Shopee) -->
+                                <div class="px-6 py-3.5 border-t border-gray-100 bg-white flex justify-end items-center gap-3 text-sm">
+                                    <span class="text-gray-500">Tổng số tiền (${shopItems.size()} sản phẩm):</span>
+                                    <strong class="text-base text-[#00652c] font-extrabold">
+                                        <fmt:formatNumber value="${shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                    </strong>
+                                </div>
+                            </section>
+                        </c:forEach>
+                    </c:when>
+                </c:choose>
+
+                <!-- ==================== 4. FRESHFRUIT VOUCHER CARD (GIỐNG SHOPEE) ==================== -->
+                <div class="bg-white rounded-xl shadow-xs border border-gray-200/70 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2.5">
+                        <span class="material-symbols-outlined text-[22px] text-amber-600">confirmation_number</span>
+                        <strong class="text-sm text-gray-900 font-bold">FreshFruit Voucher</strong>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <c:choose>
+                            <c:when test="${not empty couponCode}">
+                                <span class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[16px]">check_circle</span>
+                                    <span>Mã: <c:out value="${couponCode}"/> (-<fmt:formatNumber value="${draftOrder.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/>)</span>
+                                </span>
+                                <button type="button" onclick="openCheckoutVoucherModal()" class="text-blue-600 hover:underline text-xs font-semibold cursor-pointer">Thay Đổi</button>
+                                <button type="button" onclick="removeCheckoutCoupon()" class="text-red-500 hover:underline text-xs cursor-pointer">Xóa</button>
+                            </c:when>
+                            <c:otherwise>
+                                <button type="button" onclick="openCheckoutVoucherModal()" class="text-blue-600 hover:underline text-sm font-semibold cursor-pointer">
+                                    Chọn hoặc nhập mã
+                                </button>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                </div>
+
+                <!-- ==================== 5. PHƯƠNG THỨC THANH TOÁN & TỔNG KẾT (GIỐNG SHOPEE) ==================== -->
+                <div class="bg-white rounded-xl shadow-xs border border-gray-200/70 p-6 space-y-6">
+                    <!-- Hàng chọn phương thức thanh toán -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
+                        <strong class="text-base text-gray-900 font-bold">Phương thức thanh toán</strong>
+                        <div class="flex flex-wrap items-center gap-3" id="payment-options-container">
+                            <label class="payment-method-pill px-4 py-2 rounded-xl border-2 border-[#00652c] bg-emerald-50/60 text-[#00652c] text-xs font-bold cursor-pointer transition select-none flex items-center gap-1.5">
+                                <input type="radio" name="paymentMethod" value="COD" checked class="hidden">
+                                <span class="material-symbols-outlined text-[16px]">check</span>
+                                <span>Thanh toán khi nhận hàng (COD)</span>
+                            </label>
+                            <label class="payment-method-pill px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-medium cursor-pointer transition select-none flex items-center gap-1.5">
+                                <input type="radio" name="paymentMethod" value="CARD" class="hidden">
+                                <span>Thẻ ngân hàng (CARD)</span>
+                            </label>
+                            <span class="px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed">
+                                Ví điện tử (Sắp có)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Khung nhập thẻ (Chỉ hiển thị khi chọn Thẻ ngân hàng) -->
+                    <div id="card-payment-form" class="hidden bg-emerald-50/40 border border-emerald-200 rounded-xl p-5 space-y-4">
+                        <div class="flex items-center gap-2 text-[#00652c] font-bold text-sm">
+                            <span class="material-symbols-outlined text-[20px]">credit_card</span>
+                            <span>Thông tin thẻ ngân hàng</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardHolder">Tên chủ thẻ (Không dấu)</label>
+                                <input type="text" id="cardHolder" name="cardHolder" placeholder="NGUYEN VAN A" autocomplete="cc-name" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm uppercase outline-none focus:border-emerald-600">
                             </div>
-                            <div class="totals">
-                                <div><span>Tạm tính</span><strong><fmt:formatNumber value="${draftOrder.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
-                                <div><span>Phí giao hàng</span><strong><fmt:formatNumber value="${draftOrder.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
-                                <c:if test="${draftOrder.platformDiscount gt 0}"><div class="discount"><span>Giảm giá<c:if test="${not empty couponCode}"> (<c:out value="${couponCode}"/>)</c:if></span><strong>-<fmt:formatNumber value="${draftOrder.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div></c:if>
-                                <div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${draftOrder.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardNumber">Số thẻ</label>
+                                <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" autocomplete="cc-number" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
                             </div>
-                            <button class="submit-order" type="submit"><span data-submit-label>Đặt hàng</span><span class="material-symbols-outlined">arrow_forward</span></button>
-                            <p class="secure-note"><span class="material-symbols-outlined">verified_user</span> Thông tin của bạn được bảo mật an toàn.</p>
-                        </section>
-                    </aside>
-                </form>
-            </c:otherwise>
-        </c:choose>
-    </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardExpiry">Ngày hết hạn (MM/YY)</label>
+                                <input type="text" id="cardExpiry" name="cardExpiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardCvv">Mã bảo mật CVV/CVC</label>
+                                <input type="password" id="cardCvv" name="cardCvv" placeholder="•••" maxlength="4" autocomplete="cc-csc" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bảng tổng hợp chi phí (Căn phải giống Shopee) -->
+                    <div class="flex flex-col items-end space-y-3 pt-3 text-sm">
+                        <div class="flex justify-between w-full sm:w-80 text-gray-500">
+                            <span>Tổng tiền hàng:</span>
+                            <span class="font-semibold text-gray-900"><fmt:formatNumber value="${draftOrder.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                        </div>
+                        <div class="flex justify-between w-full sm:w-80 text-gray-500">
+                            <span>Tổng tiền phí vận chuyển:</span>
+                            <span class="font-semibold text-gray-900"><fmt:formatNumber value="${draftOrder.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                        </div>
+                        <c:if test="${draftOrder.platformDiscount gt 0}">
+                            <div class="flex justify-between w-full sm:w-80 text-red-600">
+                                <span>Tổng cộng Voucher giảm giá:</span>
+                                <span class="font-bold">-<fmt:formatNumber value="${draftOrder.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                            </div>
+                        </c:if>
+                        <div class="flex justify-between items-baseline w-full sm:w-80 pt-3 border-t border-gray-100">
+                            <span class="text-sm font-bold text-gray-900">Tổng thanh toán:</span>
+                            <strong class="text-2xl sm:text-3xl font-extrabold text-[#00652c]">
+                                <fmt:formatNumber value="${draftOrder.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                            </strong>
+                        </div>
+                    </div>
+
+                    <!-- Nút Đặt Hàng & Điều khoản (Giống Shopee) -->
+                    <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p class="text-xs text-gray-500 text-center sm:text-left">
+                            Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo <a href="#" class="text-blue-600 hover:underline">Điều khoản FreshFruit</a>
+                        </p>
+                        <button type="submit" id="submit-order-btn" class="w-full sm:w-56 py-3.5 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold rounded-xl text-base shadow-md transition duration-200 active:scale-95 cursor-pointer">
+                            Đặt hàng
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ==================== MODAL CHỌN / ĐỔI ĐỊA CHỈ NHẬN HÀNG ==================== -->
+                <dialog id="address-modal" class="p-0 rounded-2xl w-[min(640px,calc(100%-24px))] shadow-2xl backdrop:bg-black/50 border border-gray-200">
+                    <div class="bg-white rounded-2xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <h3 class="font-bold text-base text-gray-900">Địa Chỉ Của Tôi</h3>
+                            <button type="button" onclick="closeAddressModal()" class="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700">
+                                <span class="material-symbols-outlined text-[20px]">close</span>
+                            </button>
+                        </div>
+                        <div class="p-6 max-h-[60vh] overflow-y-auto space-y-3">
+                            <c:forEach var="address" items="${customerAddresses}">
+                                <label class="p-4 border rounded-xl flex items-start gap-3 cursor-pointer hover:border-emerald-500 transition <c:if test='${address.defaultAddress or (not empty defaultAddress and defaultAddress.addressId eq address.addressId)}'>border-emerald-600 bg-emerald-50/20</c:if>">
+                                    <input type="radio" name="addressSelection" value="saved:<c:out value='${address.addressId}'/>"
+                                           data-name="<c:out value='${address.recipientName}'/>"
+                                           data-phone="<c:out value='${address.recipientPhone}'/>"
+                                           data-full="<c:out value='${address.fullAddress}'/>"
+                                           data-default="${address.defaultAddress}"
+                                           <c:if test="${address.defaultAddress or (not empty defaultAddress and defaultAddress.addressId eq address.addressId)}">checked</c:if>
+                                           class="mt-1 accent-[#00652c]">
+                                    <div class="flex-1 text-xs space-y-1">
+                                        <div class="flex items-center gap-2">
+                                            <strong class="text-sm font-bold text-gray-900"><c:out value="${address.recipientName}"/></strong>
+                                            <span class="text-gray-400">|</span>
+                                            <span class="text-gray-600"><c:out value="${address.recipientPhone}"/></span>
+                                            <c:if test="${address.defaultAddress}">
+                                                <span class="px-2 py-0.5 text-[10px] font-bold text-red-600 border border-red-500 rounded bg-red-50">Mặc định</span>
+                                            </c:if>
+                                        </div>
+                                        <p class="text-gray-700"><c:out value="${address.fullAddress}"/></p>
+                                    </div>
+                                </label>
+                            </c:forEach>
+
+                            <!-- Thêm địa chỉ mới option -->
+                            <label class="p-4 border rounded-xl flex items-start gap-3 cursor-pointer hover:border-emerald-500 transition">
+                                <input type="radio" name="addressSelection" value="new" id="radio-address-new" class="mt-1 accent-[#00652c]" <c:if test="${empty customerAddresses}">checked</c:if>>
+                                <div class="flex-1 text-xs">
+                                    <strong class="text-sm font-bold text-gray-900">+ Thêm địa chỉ nhận hàng mới</strong>
+                                </div>
+                            </label>
+
+                            <!-- Form nhập địa chỉ mới -->
+                            <div id="new-address-inputs" class="space-y-3 pt-3 border-t border-dashed border-gray-200 <c:if test='${not empty customerAddresses}'>hidden</c:if>">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                    <div>
+                                        <label class="block font-bold text-gray-700 mb-1">Họ tên người nhận</label>
+                                        <input type="text" name="recipientName" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-gray-700 mb-1">Số điện thoại</label>
+                                        <input type="tel" name="recipientPhone" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block font-bold text-gray-700 mb-1">Địa chỉ (số nhà, tên đường)</label>
+                                        <input type="text" name="streetAddress" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-gray-700 mb-1">Phường / Xã</label>
+                                        <input type="text" name="ward" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-gray-700 mb-1">Quận / Huyện</label>
+                                        <input type="text" name="district" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block font-bold text-gray-700 mb-1">Tỉnh / Thành phố</label>
+                                        <input type="text" name="city" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" name="saveAddress" value="true" checked class="accent-[#00652c]">
+                                            <span class="text-gray-600">Lưu địa chỉ này vào sổ địa chỉ</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-2">
+                            <button type="button" onclick="closeAddressModal()" class="px-4 py-2 border rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100">
+                                Đóng
+                            </button>
+                            <button type="button" onclick="confirmAddressSelection()" class="px-5 py-2 bg-[#00652c] text-white rounded-xl text-xs font-bold hover:bg-[#005323]">
+                                Xác nhận
+                            </button>
+                        </div>
+                    </div>
+                </dialog>
+
+                <!-- ==================== MODAL CHỌN VOUCHER SÀN ==================== -->
+                <dialog id="checkout-voucher-modal" class="p-0 rounded-2xl w-[min(520px,calc(100%-24px))] shadow-2xl backdrop:bg-black/50 border border-gray-200">
+                    <div class="bg-white rounded-2xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                            <h3 class="font-bold text-base text-gray-900">Chọn FreshFruit Voucher</h3>
+                            <button type="button" onclick="closeCheckoutVoucherModal()" class="w-8 h-8 rounded-full hover:bg-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700">
+                                <span class="material-symbols-outlined text-[20px]">close</span>
+                            </button>
+                        </div>
+                        <div class="p-6 max-h-[60vh] overflow-y-auto space-y-3">
+                            <div class="flex gap-2">
+                                <input type="text" id="manual-coupon-input" placeholder="Nhập mã giảm giá..." class="flex-1 border rounded-xl px-3 py-2 text-xs uppercase outline-none focus:border-emerald-600">
+                                <button type="button" onclick="applyManualCoupon()" class="px-4 py-2 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-black">
+                                    Áp dụng
+                                </button>
+                            </div>
+                            <div class="pt-3 border-t border-gray-100 space-y-2.5">
+                                <c:forEach var="c" items="${availableCoupons}">
+                                    <div class="p-3.5 border border-emerald-200 bg-emerald-50/40 rounded-xl flex items-center justify-between gap-3 text-xs">
+                                        <div>
+                                            <div class="flex items-center gap-2">
+                                                <strong class="text-sm font-bold text-[#00652c]"><c:out value="${c.code}"/></strong>
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-[#00652c] font-semibold">Voucher Sàn</span>
+                                            </div>
+                                            <p class="text-gray-700 mt-1">
+                                                <c:choose>
+                                                    <c:when test="${c.discountType eq 'PERCENTAGE'}">Giảm <fmt:formatNumber value="${c.discountValue}" maxFractionDigits="0"/>%</c:when>
+                                                    <c:otherwise>Giảm <fmt:formatNumber value="${c.discountValue}" type="currency" currencyCode="VND" maxFractionDigits="0"/></c:otherwise>
+                                                </c:choose>
+                                                · Đơn từ <fmt:formatNumber value="${c.minOrderValue}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                            </p>
+                                        </div>
+                                        <button type="button" onclick="applyCouponCode('<c:out value="${c.code}"/>')" class="px-3.5 py-1.5 bg-[#00652c] hover:bg-[#005323] text-white rounded-lg font-bold text-xs">
+                                            Áp dụng
+                                        </button>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </div>
+                        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50/50 flex justify-end">
+                            <button type="button" onclick="closeCheckoutVoucherModal()" class="px-4 py-2 border rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-100">
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </dialog>
+            </form>
+        </c:otherwise>
+    </c:choose>
 </main>
 
-<footer class="site-footer"><div class="shell footer-main"><div><strong class="footer-brand">FreshFruit</strong><p>Trái cây tươi hái tận vườn, giao hàng tận nơi.</p></div><nav><a href="<c:out value='${homeUrl}'/>">Trang Chủ</a><a href="<c:out value='${productsUrl}'/>">Cửa Hàng</a><a href="<c:out value='${homeUrl}'/>#about">Về Chúng Tôi</a><a href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a></nav><span class="hotline"><span class="material-symbols-outlined">call</span>1900 6868</span></div><div class="shell footer-bottom"><span>&copy; 2026 FreshFruit Marketplace. Đã đăng ký bản quyền.</span><span>Trái cây sạch cho mọi gia đình.</span></div></footer>
+<!-- ==================== JAVASCRIPT XỬ LÝ THANH TOÁN ==================== -->
 <script>
-document.addEventListener('DOMContentLoaded',function(){
-const addressInputs=document.querySelectorAll('input[name="addressSelection"]'),newAddressForm=document.querySelector('[data-new-address-form]'),newAddressFields=document.querySelectorAll('[data-new-address-field]');
-function syncAddressForm(){const selected=document.querySelector('input[name="addressSelection"]:checked'),isNew=selected&&selected.value==='new';if(newAddressForm)newAddressForm.classList.toggle('is-hidden',!isNew);newAddressFields.forEach(function(field){field.required=Boolean(isNew);});}
-addressInputs.forEach(function(input){input.addEventListener('change',syncAddressForm);});syncAddressForm();
-const checkoutForm=document.getElementById('checkout-form'),paymentInputs=document.querySelectorAll('input[name="paymentMethod"]'),cardForm=document.querySelector('[data-card-payment-form]'),cardFields=document.querySelectorAll('[data-card-field]'),cardNumber=document.querySelector('[data-card-number]'),cardExpiry=document.querySelector('[data-card-expiry]'),cardCvv=document.querySelector('[data-card-cvv]'),submitLabel=document.querySelector('[data-submit-label]');
-function selectedPayment(){const selected=document.querySelector('input[name="paymentMethod"]:checked');return selected?selected.value:'COD';}
-function syncPaymentForm(){const isCard=selectedPayment()==='CARD';if(cardForm)cardForm.classList.toggle('is-hidden',!isCard);cardFields.forEach(function(field){field.required=isCard;field.disabled=!isCard;if(!isCard)field.setCustomValidity('');});if(checkoutForm)checkoutForm.action=isCard?checkoutForm.dataset.paymentAction:checkoutForm.dataset.orderAction;if(submitLabel)submitLabel.textContent=isCard?'Thanh toán':'Đặt hàng';}
-function digits(value){return value.replace(/\D/g,'');}
-function validLuhn(value){const number=digits(value);if(number.length<13||number.length>19)return false;let sum=0,doubleDigit=false;for(let index=number.length-1;index>=0;index--){let digit=Number(number.charAt(index));if(doubleDigit){digit*=2;if(digit>9)digit-=9;}sum+=digit;doubleDigit=!doubleDigit;}return sum%10===0;}
-function validateExpiry(){if(!cardExpiry)return true;const match=cardExpiry.value.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);let valid=Boolean(match);if(match){const expiry=new Date(2000+Number(match[2]),Number(match[1]),0,23,59,59);valid=expiry>=new Date();}cardExpiry.setCustomValidity(valid?'':'Ngày hết hạn không hợp lệ. Dùng định dạng MM/YY.');return valid;}
-if(cardNumber){cardNumber.addEventListener('input',function(){const number=digits(this.value).slice(0,19);this.value=number.replace(/(.{4})/g,'$1 ').trim();this.setCustomValidity('');});cardNumber.addEventListener('blur',function(){this.setCustomValidity(validLuhn(this.value)?'':'Số thẻ không hợp lệ.');});}
-if(cardExpiry){cardExpiry.addEventListener('input',function(){const value=digits(this.value).slice(0,4);this.value=value.length>2?value.slice(0,2)+'/'+value.slice(2):value;this.setCustomValidity('');});cardExpiry.addEventListener('blur',validateExpiry);}
-if(cardCvv)cardCvv.addEventListener('input',function(){this.value=digits(this.value).slice(0,4);this.setCustomValidity(this.value.length>=3?'':'CVV/CVC phải có 3 hoặc 4 chữ số.');});
-paymentInputs.forEach(function(input){input.addEventListener('change',syncPaymentForm);});syncPaymentForm();
-if(checkoutForm)checkoutForm.addEventListener('submit',function(event){if(selectedPayment()!=='CARD')return;const numberValid=cardNumber&&validLuhn(cardNumber.value),expiryValid=validateExpiry(),cvvValid=cardCvv&&/^\d{3,4}$/.test(cardCvv.value);if(cardNumber)cardNumber.setCustomValidity(numberValid?'':'Số thẻ không hợp lệ.');if(cardCvv)cardCvv.setCustomValidity(cvvValid?'':'CVV/CVC phải có 3 hoặc 4 chữ số.');if(!numberValid||!expiryValid||!cvvValid){event.preventDefault();checkoutForm.reportValidity();}});
-const voucherToggle=document.querySelector('[data-voucher-toggle]'),voucherOptions=document.querySelector('[data-voucher-options]');if(voucherToggle&&voucherOptions)voucherToggle.addEventListener('click',function(){voucherOptions.classList.toggle('is-hidden');});
-document.querySelectorAll('[data-apply-voucher]').forEach(function(button){button.addEventListener('click',function(){const option=button.closest('.voucher-option'),radio=option?option.querySelector('input[name="couponPicker"]'):null;if(!radio)return;radio.checked=true;const url=new URL(window.location.href);url.searchParams.set('couponCode',radio.value);window.location.href=url.toString();});});
-const noVoucher=document.querySelector('.voucher-option input[value=""]');if(noVoucher)noVoucher.addEventListener('change',function(){if(this.checked){const url=new URL(window.location.href);url.searchParams.set('couponCode','');window.location.href=url.toString();}});
-});
+    // 1. Xử lý mở / đóng modal địa chỉ
+    function openAddressModal() {
+        const dialog = document.getElementById('address-modal');
+        if (dialog) dialog.showModal();
+    }
+
+    function closeAddressModal() {
+        const dialog = document.getElementById('address-modal');
+        if (dialog) dialog.close();
+    }
+
+    // Toggle hiển thị form địa chỉ mới khi chọn radio
+    document.querySelectorAll('input[name="addressSelection"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const newInputs = document.getElementById('new-address-inputs');
+            if (newInputs) {
+                if (this.value === 'new') {
+                    newInputs.classList.remove('hidden');
+                } else {
+                    newInputs.classList.add('hidden');
+                }
+            }
+        });
+    });
+
+    function confirmAddressSelection() {
+        const selected = document.querySelector('input[name="addressSelection"]:checked');
+        if (!selected) {
+            closeAddressModal();
+            return;
+        }
+        if (selected.value === 'new') {
+            document.getElementById('display-recipient-name').textContent = 'Địa chỉ mới (nhập dưới)';
+            document.getElementById('display-recipient-address').textContent = 'Sẽ được lưu và dùng cho đơn này.';
+            document.getElementById('display-default-badge').classList.add('hidden');
+        } else {
+            const name = selected.dataset.name;
+            const phone = selected.dataset.phone;
+            const full = selected.dataset.full;
+            const isDef = selected.dataset.default === 'true';
+
+            document.getElementById('display-recipient-name').textContent = name + ' (' + phone + ')';
+            document.getElementById('display-recipient-address').textContent = full;
+            const badge = document.getElementById('display-default-badge');
+            if (badge) {
+                if (isDef) badge.classList.remove('hidden');
+                else badge.classList.add('hidden');
+            }
+        }
+        closeAddressModal();
+    }
+
+    // 2. Xử lý Voucher Sàn
+    function openCheckoutVoucherModal() {
+        const dialog = document.getElementById('checkout-voucher-modal');
+        if (dialog) dialog.showModal();
+    }
+
+    function closeCheckoutVoucherModal() {
+        const dialog = document.getElementById('checkout-voucher-modal');
+        if (dialog) dialog.close();
+    }
+
+    function applyCouponCode(code) {
+        document.getElementById('checkout-coupon-code').value = code;
+        window.location.href = '${pageContext.request.contextPath}/checkout?couponCode=' + encodeURIComponent(code);
+    }
+
+    function applyManualCoupon() {
+        const input = document.getElementById('manual-coupon-input');
+        if (input && input.value.trim()) {
+            applyCouponCode(input.value.trim().toUpperCase());
+        }
+    }
+
+    function removeCheckoutCoupon() {
+        document.getElementById('checkout-coupon-code').value = '';
+        window.location.href = '${pageContext.request.contextPath}/checkout';
+    }
+
+    // 3. Xử lý chuyển đổi phương thức thanh toán (COD vs CARD)
+    const paymentForm = document.getElementById('checkout-form');
+    const paymentLabels = document.querySelectorAll('.payment-method-pill');
+    const cardForm = document.getElementById('card-payment-form');
+    const submitBtn = document.getElementById('submit-order-btn');
+
+    paymentLabels.forEach(label => {
+        label.addEventListener('click', function() {
+            paymentLabels.forEach(l => {
+                l.classList.remove('border-2', 'border-[#00652c]', 'bg-emerald-50/60', 'text-[#00652c]', 'font-bold');
+                l.classList.add('border-gray-200', 'text-gray-700', 'font-medium');
+                const checkIcon = l.querySelector('.material-symbols-outlined');
+                if (checkIcon) checkIcon.remove();
+            });
+
+            this.classList.add('border-2', 'border-[#00652c]', 'bg-emerald-50/60', 'text-[#00652c]', 'font-bold');
+            this.classList.remove('border-gray-200', 'text-gray-700', 'font-medium');
+
+            const check = document.createElement('span');
+            check.className = 'material-symbols-outlined text-[16px]';
+            check.textContent = 'check';
+            this.prepend(check);
+
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                if (radio.value === 'CARD') {
+                    if (cardForm) cardForm.classList.remove('hidden');
+                    if (paymentForm) paymentForm.action = paymentForm.dataset.paymentAction;
+                    if (submitBtn) submitBtn.textContent = 'Thanh toán';
+                } else {
+                    if (cardForm) cardForm.classList.add('hidden');
+                    if (paymentForm) paymentForm.action = paymentForm.dataset.orderAction;
+                    if (submitBtn) submitBtn.textContent = 'Đặt hàng';
+                }
+            }
+        });
+    });
+
+    // Format số thẻ & Expiry
+    const cardNumber = document.getElementById('cardNumber');
+    const cardExpiry = document.getElementById('cardExpiry');
+    if (cardNumber) {
+        cardNumber.addEventListener('input', function() {
+            let v = this.value.replace(/\D/g, '').slice(0, 19);
+            this.value = v.replace(/(.{4})/g, '$1 ').trim();
+        });
+    }
+    if (cardExpiry) {
+        cardExpiry.addEventListener('input', function() {
+            let v = this.value.replace(/\D/g, '').slice(0, 4);
+            if (v.length > 2) this.value = v.slice(0, 2) + '/' + v.slice(2);
+            else this.value = v;
+        });
+    }
 </script>
+
 </body>
 </html>
