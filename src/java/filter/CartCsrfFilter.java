@@ -12,7 +12,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-@WebFilter(filterName = "CartCsrfFilter", urlPatterns = {"/cart", "/cart/*"})
+@WebFilter(filterName = "CartCsrfFilter", urlPatterns = {
+    "/cart", "/cart/*", "/checkout", "/order/place"
+})
 public class CartCsrfFilter implements Filter {
 
     @Override
