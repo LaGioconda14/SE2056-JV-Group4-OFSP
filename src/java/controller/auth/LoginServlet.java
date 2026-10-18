@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
+import model.Shop;
+import dao.ShopDAO;
 import service.IUserService;
 import service.impl.UserServiceImpl;
 
@@ -19,21 +21,24 @@ import service.impl.UserServiceImpl;
 public class LoginServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();
+    private final ShopDAO shopDAO = new ShopDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         HttpSession session = request.getSession(false);
-        // If already logged in, redirect to home page
-        // If already logged in, redirect based on role
+        // If already logged in, redirect based on role or home page
         if (session != null && session.getAttribute("user") != null) {
-            User user = (User) session.getAttribute("user");
-            if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
-                response.sendRedirect(request.getContextPath() + "/admin");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
+            User loggedUser = (User) session.getAttribute("user");
+            if (loggedUser != null && "ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                return;
+            } else if (loggedUser != null && "SHOP_OWNER".equalsIgnoreCase(loggedUser.getRole())) {
+                response.sendRedirect(request.getContextPath() + "/shop/products");
+                return;
             }
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
             return;
         }
 
@@ -94,6 +99,8 @@ public class LoginServlet extends HttpServlet {
         // Authentication Successful -> Store session
         HttpSession session = request.getSession(true);
         session.setAttribute("user", user);
+        session.setAttribute("userfullname", user.getFullName());
+        session.setAttribute("email", user.getEmail());
 
         // Process Remember Me Cookies (Expires in 7 days)
         int cookieMaxAge = (remember != null) ? (7 * 24 * 60 * 60) : 0;
@@ -113,13 +120,31 @@ public class LoginServlet extends HttpServlet {
         cookieRem.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
         response.addCookie(cookieRem);
 
-        // Redirect based on user role: ADMIN -> /admin, others -> /home.jsp
-        if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
-            response.sendRedirect(request.getContextPath() + "/admin");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+        // Role-based redirection & Session enrichment
+        String role = user.getRole();
+        if ("SHOP_OWNER".equalsIgnoreCase(role)) {
+            // Lấy thông tin Shop của chủ shop theo ID user
+            try {
+                Shop shop = shopDAO.getShopByOwnerId(user.getId());
+                if (shop != null) {
+                    session.setAttribute("shopId", shop.getShopId());
+                    session.setAttribute("shopName", shop.getShopName());
+                    session.setAttribute("shopLogo", shop.getLogoUrl());
+                    session.setAttribute("shopObj", shop);
+                    session.setAttribute("shopStatus", shop.getStatus());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            // Đăng nhập chủ shop xong -> Chuyển hướng thẳng vào trang Quản lý sản phẩm
+            response.sendRedirect(request.getContextPath() + "/shop/products");
+            return;
+        } else if ("ADMIN".equalsIgnoreCase(role)) {
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            return;
         }
+
+        // Khách hàng thông thường -> Redirect về trang chủ mua sắm
+        response.sendRedirect(request.getContextPath() + "/home.jsp");
     }
 }
-
-
