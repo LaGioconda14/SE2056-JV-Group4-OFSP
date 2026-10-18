@@ -8,214 +8,19 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Gốc Vườn - Siêu Thị Hoa Quả Tươi Sạch</title>
-        <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
-        <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <!-- Google Fonts Inter -->
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        
-        <!-- CSS Tùy Chỉnh Đồng Bộ Giao Diện -->
-        <style>
-            body { font-family: 'Inter', sans-serif; }
-            .home-search-input {
-                width: 100%;
-                padding: 0.6rem 2.8rem 0.6rem 1rem;
-                background-color: #f3f4f6;
-                border: 1px solid #e5e7eb;
-                border-radius: 0.75rem;
-                font-size: 0.875rem;
-                outline: none;
-                transition: all 0.2s;
-            }
-            .home-search-input:focus {
-                background-color: #ffffff;
-                border-color: #10b981;
-                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-            }
-            .home-search-btn {
-                position: absolute;
-                right: 0.5rem;
-                top: 50%;
-                transform: translateY(-50%);
-                width: 2rem;
-                height: 2rem;
-                background-color: #10b981;
-                color: white;
-                border-radius: 0.5rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .home-nav-item {
-                padding: 0.75rem 1rem;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                color: #e5e7eb;
-                transition: color 0.2s;
-            }
-            .home-nav-item:hover, .home-nav-item.active {
-                color: #ffffff;
-                font-weight: 600;
-            }
-            .hero-banner {
-                background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #10b981 100%);
-                color: white;
-                padding: 4rem 2rem;
-                position: relative;
-                overflow: hidden;
-                border-radius: 1.5rem;
-                margin: 1.5rem auto;
-                max-width: 80rem;
-            }
-            .hero-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                background: rgba(255, 255, 255, 0.15);
-                backdrop-filter: blur(8px);
-                padding: 0.35rem 0.85rem;
-                border-radius: 9999px;
-                font-size: 0.75rem;
-                font-weight: 700;
-                margin-bottom: 1rem;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-            }
-            .hero-title {
-                font-size: 2.5rem;
-                font-weight: 800;
-                line-height: 1.2;
-                margin-bottom: 1rem;
-            }
-            @media (min-width: 640px) { .hero-title { font-size: 3.5rem; } }
-            .hero-desc {
-                font-size: 1rem;
-                color: #d1fae5;
-                margin-bottom: 1.75rem;
-                max-width: 36rem;
-            }
-            .hero-btn-primary {
-                background-color: #f59e0b;
-                color: #111827;
-                font-weight: 800;
-                padding: 0.75rem 1.75rem;
-                border-radius: 0.75rem;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.5rem;
-                transition: all 0.2s;
-                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-            }
-            .hero-btn-primary:hover {
-                background-color: #d97706;
-                transform: translateY(-2px);
-            }
-            .hero-btn-secondary {
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
-                font-weight: 700;
-                padding: 0.75rem 1.5rem;
-                border-radius: 0.75rem;
-                border: 1px solid rgba(255, 255, 255, 0.25);
-                transition: all 0.2s;
-            }
-            .hero-btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
-            
-            .product-card {
-                background: white;
-                border-radius: 1.25rem;
-                border: 1px solid #f3f4f6;
-                padding: 1rem;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-                height: 100%;
-                transition: all 0.3s ease;
-            }
-            .product-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
-                border-color: #a7f3d0;
-            }
-            .product-card > div:first-child {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-            }
-            .product-thumb {
-                position: relative;
-                width: 100%;
-                height: 180px;
-                border-radius: 0.85rem;
-                overflow: hidden;
-                margin-bottom: 0.75rem;
-                background-color: #f9fafb;
-                flex-shrink: 0;
-            }
-            .product-thumb img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                transition: transform 0.5s ease;
-            }
-            .product-card:hover .product-thumb img { transform: scale(1.08); }
-            .product-meta {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                margin-bottom: 0.35rem;
-            }
-            .product-cat-name { font-size: 0.7rem; font-weight: 700; color: #10b981; text-transform: uppercase; }
-            .product-name {
-                font-weight: 700;
-                font-size: 0.95rem;
-                color: #111827;
-                line-height: 1.4;
-                margin-bottom: 0.35rem;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                height: 2.8em;
-            }
-            .product-origin { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.5rem; }
-            .product-card-footer { 
-                display: flex; 
-                align-items: center; 
-                justify-content: space-between; 
-                padding-top: 0.75rem; 
-                border-top: 1px solid #f3f4f6; 
-                margin-top: auto;
-            }
-            .product-price { font-size: 1.1rem; font-weight: 800; color: #059669; }
-            .product-old-price { font-size: 0.75rem; color: #9ca3af; text-decoration: line-through; margin-left: 0.35rem; }
-            .btn-add-cart {
-                width: 2.25rem;
-                height: 2.25rem;
-                background-color: #ecfdf5;
-                color: #059669;
-                border-radius: 0.65rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.2s;
-                flex-shrink: 0;
-            }
-            .btn-add-cart:hover { background-color: #059669; color: white; }
-        </style>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/home.css">
     </head>
     <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
         <c:set var="currentUser" value="${not empty sessionScope.account ? sessionScope.account : sessionScope.user}" />
 
-        <!-- Header Đồng Bộ Cart -->
         <jsp:include page="/views/common/header.jsp" />
 
-        <!-- Hero Banner Section -->
         <section class="hero-banner">
-            <div class="max-w-7xl mx-auto px-4 relative z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div class="relative z-10 max-w-3xl">
                     <div class="hero-badge">
                         <i class="fa-solid fa-award text-amber-300"></i> 100% Organic Đạt Chuẩn VietGAP & GlobalGAP
@@ -238,7 +43,6 @@
             </div>
         </section>
 
-        <!-- Categories Section (Mapping ảnh chuẩn xác tuyệt đối cho từng danh mục) -->
         <section id="categories" class="max-w-7xl mx-auto px-4 py-8">
             <div class="flex justify-between items-end mb-6">
                 <div>
@@ -257,10 +61,8 @@
                     <c:forEach var="cat" items="${categories}">
                         <c:set var="nameLower" value="${fn:toLowerCase(cat.categoryName)}" />
                         
-                        <!-- Ảnh mặc định tổng hợp chất lượng cao -->
                         <c:set var="realImg" value="https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=200&h=200&fit=crop" />
                         
-                        <!-- Phân loại chi tiết chuẩn xác theo từng loại quả -->
                         <c:choose>
                             <c:when test="${fn:contains(nameLower, 'táo envy')}">
                                 <c:set var="realImg" value="https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&h=200&fit=crop" />
@@ -312,15 +114,13 @@
                         <a href="${pageContext.request.contextPath}/products?category=${cat.slug}" 
                            class="group flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50/70 hover:bg-emerald-50/60 border border-gray-100 hover:border-emerald-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-md text-center">
                             
-                            <!-- Khung ảnh tròn -->
                             <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-3 bg-white border-2 border-gray-100 group-hover:border-emerald-500 shadow-xs group-hover:scale-105 transition-all duration-300 overflow-hidden">
                                 <img src="${not empty cat.imageUrl ? pageContext.request.contextPath.concat('/').concat(cat.imageUrl) : realImg}" 
                                      alt="${cat.categoryName}" 
-                                     onerror="this.onerror=null; this.src='${realImg}';" 
-                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                     data-fallback="${realImg}" 
+                                     class="category-card-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                             </div>
 
-                            <!-- Tên danh mục -->
                             <h3 class="font-bold text-xs sm:text-sm text-gray-800 group-hover:text-emerald-600 transition line-clamp-2 leading-snug">
                                 ${cat.categoryName}
                             </h3>
@@ -330,7 +130,6 @@
             </div>
         </section>
 
-        <!-- Featured Products Section -->
         <section id="featured" class="max-w-7xl mx-auto px-4 py-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
@@ -339,7 +138,6 @@
                 </div>
             </div>
 
-            <!-- Product Grid -->
             <div id="homeProductGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 <c:choose>
                     <c:when test="${not empty listProduct}">
@@ -401,7 +199,6 @@
             </div>
         </section>
 
-        <!-- Full Footer -->
         <footer id="about" class="bg-gray-950 text-gray-300 pt-16 pb-8 border-t border-gray-800 mt-12">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
@@ -415,7 +212,7 @@
                                     <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
                                 </svg>
                             </div>
-                            <span class="text-xl font-extrabold text-white">Fresh<span class="text-emerald-500">Fruit</span></span>
+                            <span class="text-xl font-extrabold text-white">Gốc <span class="text-emerald-500">Vườn</span></span>
                         </div>
                         <p class="text-xs sm:text-sm text-gray-400 mb-6 leading-relaxed max-w-sm">
                             Hệ thống phân phối hoa quả tươi sạch hàng đầu Việt Nam. Mang thiên nhiên thuần khiết và nguồn dinh dưỡng an toàn đến từng gia đình.
@@ -439,8 +236,8 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Đăng Ký Nhận Bản Tin</h3>
-                        <form onsubmit="event.preventDefault(); alert('Đăng ký nhận bản tin thành công!');" class="space-y-2">
-                            <input type="email" placeholder="Nhập email của bạn..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        <form id="newsletterForm" class="space-y-2">
+                            <input type="email" placeholder="Nhập email của bạn..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" required>
                             <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow">Đăng Ký Ngay</button>
                         </form>
                     </div>
@@ -450,5 +247,7 @@
                 </div>
             </div>
         </footer>
+
+        <script src="${pageContext.request.contextPath}/assets/js/home.js" defer></script>
     </body>
 </html>

@@ -11,9 +11,6 @@ import model.User;
 import service.IUserService;
 import service.impl.UserServiceImpl;
 
-/**
- * Controller handling Change Password for authenticated users.
- */
 @WebServlet(name = "ChangePasswordServlet", urlPatterns = {"/change-password"})
 public class ChangePasswordServlet extends HttpServlet {
 
@@ -22,14 +19,12 @@ public class ChangePasswordServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -48,7 +43,6 @@ public class ChangePasswordServlet extends HttpServlet {
         try {
             userService.changePassword(sessionUser.getId(), oldPassword, newPassword, confirmPassword);
 
-            // Cập nhật lại thông tin user trong session
             User freshUser = userService.getUserById(sessionUser.getId());
             if (freshUser != null) {
                 session.setAttribute("user", freshUser);
@@ -62,5 +56,3 @@ public class ChangePasswordServlet extends HttpServlet {
         request.getRequestDispatcher("/views/auth/change-password.jsp").forward(request, response);
     }
 }
-
-

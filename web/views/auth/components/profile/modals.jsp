@@ -1,7 +1,6 @@
-<%@page pageEncoding="UTF-8"%>
+﻿<%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<!-- Modal Thêm Địa Chỉ Nhận Hàng Mới -->
 <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
@@ -88,7 +87,6 @@
     </div>
 </div>
 
-<!-- Modal Đánh Giá Đơn Hàng -->
 <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
@@ -123,12 +121,10 @@
     </div>
 </div>
 
-<!-- Modal Theo Dõi Hành Trình Đơn Hàng (GPS Live & Tiến Độ Chuỗi Lạnh) -->
 <div class="modal fade" id="orderTrackingModal" tabindex="-1" aria-labelledby="orderTrackingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden tracking-modal-content">
-            <!-- Modal Header -->
-            <div class="modal-header bg-white border-bottom px-4 py-3 align-items-center">
+                        <div class="modal-header bg-white border-bottom px-4 py-3 align-items-center">
                 <div class="flex-grow-1">
                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                         <h4 class="modal-title fw-bolder text-dark mb-0">Theo Dõi Hành Trình Đơn Hàng</h4>
@@ -155,10 +151,8 @@
                 </div>
             </div>
 
-            <!-- Modal Body -->
-            <div class="modal-body p-4 bg-slate-50">
-                <!-- 1. TIẾN ĐỘ GIAO HÀNG (Stepper) -->
-                <div class="tracking-card mb-4">
+                        <div class="modal-body p-4 bg-slate-50">
+                                <div class="tracking-card mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="fw-bold text-dark fs-6 d-flex align-items-center">
                             <i class="bi bi-clock-history text-success me-2 fs-5"></i> Tiến độ giao hàng
@@ -212,10 +206,8 @@
                 </div>
 
                 <div class="row g-4">
-                    <!-- CỘT TRÁI (Bản đồ GPS Live + Tài xế + Kiện hàng) -->
-                    <div class="col-lg-7">
-                        <!-- Card Bản đồ GPS Live -->
-                        <div class="tracking-card mb-4" id="trackGpsCard">
+                                        <div class="col-lg-7">
+                                                <div class="tracking-card mb-4" id="trackGpsCard">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="fw-bold text-dark d-flex align-items-center">
                                     <i class="bi bi-broadcast text-success me-2"></i> Lộ trình hỏa tốc thời gian thực (GPS Live)
@@ -225,8 +217,7 @@
                                 </span>
                             </div>
 
-                            <!-- Map Graphic Canvas -->
-                            <div class="gps-map-container mb-3 position-relative rounded-4 overflow-hidden border">
+                                                        <div class="gps-map-container mb-3 position-relative rounded-4 overflow-hidden border">
                                 <svg class="w-100 h-100 position-absolute inset-0" xmlns="http://www.w3.org/2000/svg" style="background: #edf7f1;">
                                     <defs>
                                         <pattern id="gridPattern" width="28" height="28" patternUnits="userSpaceOnUse">
@@ -238,44 +229,36 @@
                                         </linearGradient>
                                     </defs>
                                     <rect width="100%" height="100%" fill="url(#gridPattern)" />
-                                    <!-- River representation -->
-                                    <path d="M -30 200 Q 140 160 260 210 T 650 140" fill="none" stroke="#c7dffc" stroke-width="26" stroke-linecap="round"/>
-                                    <!-- City Arterial Roads -->
-                                    <path d="M 40 280 L 580 40" fill="none" stroke="#ffffff" stroke-width="14"/>
+                                                                        <path d="M -30 200 Q 140 160 260 210 T 650 140" fill="none" stroke="#c7dffc" stroke-width="26" stroke-linecap="round"/>
+                                                                        <path d="M 40 280 L 580 40" fill="none" stroke="#ffffff" stroke-width="14"/>
                                     <path d="M 120 20 L 420 300" fill="none" stroke="#ffffff" stroke-width="12"/>
                                     <path d="M 0 100 L 600 120" fill="none" stroke="#ffffff" stroke-width="10"/>
-                                    <!-- Delivery Route Pathway -->
-                                    <path d="M 50 230 Q 180 180 290 150 T 540 65" fill="none" stroke="url(#routeGradient)" stroke-width="8" stroke-dasharray="12 6" stroke-linecap="round"/>
+                                                                        <path d="M 50 230 Q 180 180 290 150 T 540 65" fill="none" stroke="url(#routeGradient)" stroke-width="8" stroke-dasharray="12 6" stroke-linecap="round"/>
                                 </svg>
 
-                                <!-- Origin Node -->
-                                <div class="map-node map-node-origin" style="left: 7%; top: 72%;">
+                                                                <div class="map-node map-node-origin" style="left: 7%; top: 72%;">
                                     <div class="map-pin-circle bg-success text-white shadow"><i class="bi bi-shop"></i></div>
                                     <span class="map-pin-tag" id="trackMapShopName">Nông Trại Hữu Cơ Mộc Châu</span>
                                 </div>
 
-                                <!-- Waypoint Street -->
-                                <div class="map-waypoint" style="left: 48%; top: 52%;">
+                                                                <div class="map-waypoint" style="left: 48%; top: 52%;">
                                     <span class="badge bg-white text-secondary border shadow-xs">Đường Nguyễn Hữu Cảnh</span>
                                 </div>
 
-                                <!-- Driver Marker (Moving Pulse) -->
-                                <div class="map-node map-node-driver pulse-driver" style="left: 48%; top: 35%;">
+                                                                <div class="map-node map-node-driver pulse-driver" style="left: 48%; top: 35%;">
                                     <div class="driver-bubble bg-amber-600 text-white shadow fw-bold">
                                         <i class="bi bi-truck me-1"></i> <span id="trackMapDriverTag">Tài xế Trần Văn Nam (Cách 1.5 km)</span>
                                     </div>
                                     <div class="map-pin-driver bg-amber-500 text-white shadow"><i class="bi bi-cursor-fill"></i></div>
                                 </div>
 
-                                <!-- Destination Node -->
-                                <div class="map-node map-node-dest" style="left: 82%; top: 16%;">
+                                                                <div class="map-node map-node-dest" style="left: 82%; top: 16%;">
                                     <div class="map-pin-circle bg-emerald-700 text-white shadow"><i class="bi bi-geo-alt-fill"></i></div>
                                     <span class="map-pin-tag text-emerald-800 fw-bold" id="trackMapDestName">Vinhomes Central Park</span>
                                 </div>
                             </div>
 
-                            <!-- Map Sub-Stats Bar -->
-                            <div class="row g-2">
+                                                        <div class="row g-2">
                                 <div class="col-sm-6">
                                     <div class="p-3 rounded-3 bg-white border d-flex align-items-center gap-3 h-100">
                                         <div class="stat-icon-circle bg-primary-subtle text-primary">
@@ -301,8 +284,7 @@
                             </div>
                         </div>
 
-                        <!-- Card Thông tin tài xế -->
-                        <div class="tracking-card mb-4" id="trackDriverCard">
+                                                <div class="tracking-card mb-4" id="trackDriverCard">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                                 <div class="d-flex align-items-center gap-3">
                                     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" class="driver-avatar rounded-circle border shadow-xs" alt="Tài xế">
@@ -328,8 +310,7 @@
                             </div>
                         </div>
 
-                        <!-- Card Kiện hàng đóng gói riêng biệt -->
-                        <div class="tracking-card">
+                                                <div class="tracking-card">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="fw-bold text-dark d-flex align-items-center">
                                     <i class="bi bi-box-seam text-success me-2"></i> Kiện hàng đóng gói riêng biệt (<span id="trackItemCount">1</span> kiện)
@@ -337,15 +318,12 @@
                                 <span class="text-muted small">Bảo quản độc lập theo tiêu chuẩn nông trại</span>
                             </div>
                             <div id="trackItemsContainer" class="d-flex flex-column gap-3">
-                                <!-- Dynamic Items Injected Here -->
-                            </div>
+                                                            </div>
                         </div>
                     </div>
 
-                    <!-- CỘT PHẢI (Địa chỉ nhận hàng + Chi tiết thanh toán + Cam kết Gốc Vườn) -->
-                    <div class="col-lg-5">
-                        <!-- Card Địa chỉ nhận hàng -->
-                        <div class="tracking-card mb-4">
+                                        <div class="col-lg-5">
+                                                <div class="tracking-card mb-4">
                             <div class="fw-bold text-dark mb-3 d-flex align-items-center">
                                 <i class="bi bi-geo-alt-fill text-success me-2"></i> Địa chỉ nhận hàng
                             </div>
@@ -361,8 +339,7 @@
                             </div>
                         </div>
 
-                        <!-- Card Chi tiết thanh toán -->
-                        <div class="tracking-card mb-4">
+                                                <div class="tracking-card mb-4">
                             <div class="fw-bold text-dark mb-3 d-flex align-items-center">
                                 <i class="bi bi-credit-card text-success me-2"></i> Chi tiết thanh toán
                             </div>
@@ -393,8 +370,7 @@
                             </div>
                         </div>
 
-                        <!-- Card Cam kết Gốc Vườn -->
-                        <div class="tracking-card">
+                                                <div class="tracking-card">
                             <div class="fw-bold text-dark mb-2 d-flex align-items-center">
                                 <i class="bi bi-patch-check-fill text-success me-2"></i> Cam kết Gốc Vườn
                             </div>
@@ -426,9 +402,6 @@
     </div>
 </div>
 
-<!-- ========================================================================
-     MODAL 1: YÊU CẦU TRẢ HÀNG / HOÀN TIỀN (CUSTOMER RETURN & REFUND)
-     ======================================================================== -->
 <div class="modal fade" id="returnOrderModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
@@ -457,8 +430,7 @@
                         </div>
                     </div>
 
-                    <!-- Reason Category -->
-                    <div class="mb-3">
+                                        <div class="mb-3">
                         <label class="form-label fw-bold small text-dark">
                             <i class="bi bi-exclamation-circle text-danger me-1"></i> Lý do trả hàng / hoàn tiền:
                         </label>
@@ -470,15 +442,13 @@
                         </select>
                     </div>
 
-                    <!-- Description -->
-                    <div class="mb-3">
+                                        <div class="mb-3">
                         <label class="form-label fw-bold small text-dark">Mô tả cụ thể sự cố quả tươi:</label>
                         <textarea class="form-control" name="complaintText" id="returnComplaintText" rows="3"
                                   placeholder="Mô tả cụ thể tình trạng quả bạn nhận được (vị trí dập, độ chín, số lượng bị lỗi...)" required></textarea>
                     </div>
 
-                    <!-- Evidence Photo -->
-                    <div class="mb-3">
+                                        <div class="mb-3">
                         <label class="form-label fw-bold small text-dark">
                             <i class="bi bi-camera text-success me-1"></i> Link ảnh bằng chứng thực tế:
                         </label>
@@ -503,8 +473,7 @@
                         </div>
                     </div>
 
-                    <!-- Claim Amount & Refund Destination -->
-                    <div class="row g-2 mb-3">
+                                        <div class="row g-2 mb-3">
                         <div class="col-sm-6">
                             <label class="form-label fw-bold small text-dark">Số tiền yêu cầu hoàn:</label>
                             <input type="text" class="form-control fw-bold text-success" name="claimAmount" id="returnClaimAmountInput" required>
@@ -533,9 +502,6 @@
     </div>
 </div>
 
-<!-- ========================================================================
-     MODAL 2: XEM CHI TIẾT KHIẾU NẠI TRẢ HÀNG (RETURN & DISPUTE DETAILS)
-     ======================================================================== -->
 <div class="modal fade" id="returnDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">

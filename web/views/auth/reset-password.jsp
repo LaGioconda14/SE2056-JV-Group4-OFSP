@@ -7,20 +7,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đặt lại mật khẩu - Gốc Vườn</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Custom Auth Stylesheet -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css?v=2">
 </head>
 <body>
 
 <div class="login-wrapper">
-    <!-- LEFT PANEL: Brand, Showcase & Metrics -->
     <div class="showcase-panel">
         <div>
             <div class="brand-logo-wrap">
@@ -41,7 +36,6 @@
             </div>
         </div>
 
-        <!-- 3 Feature Metrics -->
         <div class="metrics-grid">
             <div class="metric-box">
                 <i class="bi bi-shield-check"></i>
@@ -58,10 +52,8 @@
         </div>
     </div>
 
-    <!-- RIGHT PANEL: Reset Password Form -->
     <div class="form-panel">
         <div>
-            <!-- Top Status Bar -->
             <div class="top-status-bar">
                 <div class="secure-pill">
                     <span class="secure-dot"></span>
@@ -73,7 +65,6 @@
                 </a>
             </div>
 
-            <!-- Tab Switcher -->
             <div class="auth-nav-tabs">
                 <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Sign In</a>
                 <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Create Account</a>
@@ -83,7 +74,6 @@
             <h1 class="form-title">Đặt lại mật khẩu</h1>
             <p class="form-subtitle">Nhập mã xác thực OTP 6 số đã được gửi qua email và tạo mật khẩu mới.</p>
 
-            <!-- Error Alert -->
             <c:if test="${not empty errorMessage}">
                 <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-6 flex-shrink-0"></i>
@@ -92,7 +82,6 @@
                 </div>
             </c:if>
 
-            <!-- Success Alert -->
             <c:if test="${not empty successMessage}">
                 <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
                     <i class="bi bi-check-circle-fill me-2 fs-6 flex-shrink-0"></i>
@@ -101,9 +90,7 @@
                 </div>
             </c:if>
 
-            <!-- Form -->
             <form action="${pageContext.request.contextPath}/reset-password" method="POST" id="resetForm">
-                <!-- Email Address -->
                 <div class="field-group">
                     <label class="field-label" for="email">Email nhận mã OTP *</label>
                     <div class="input-box-wrapper">
@@ -118,7 +105,6 @@
                     </div>
                 </div>
 
-                <!-- 6-digit OTP -->
                 <div class="field-group">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <label class="field-label mb-0" for="otp">Mã xác thực OTP (6 chữ số) *</label>
@@ -142,7 +128,6 @@
                     </div>
                 </div>
 
-                <!-- New Password -->
                 <div class="field-group">
                     <label class="field-label" for="newPassword">Mật khẩu mới *</label>
                     <div class="input-box-wrapper">
@@ -159,7 +144,6 @@
                     </div>
                 </div>
 
-                <!-- Confirm New Password -->
                 <div class="field-group">
                     <label class="field-label" for="confirmPassword">Xác nhận mật khẩu mới *</label>
                     <div class="input-box-wrapper">
@@ -177,7 +161,6 @@
                     <div class="form-hint" id="passwordMatchHint"></div>
                 </div>
 
-                <!-- Submit Button -->
                 <button type="submit" class="btn-submit-main mt-2">
                     <span>Cập Nhật Mật Khẩu</span>
                     <i class="bi bi-arrow-right"></i>
@@ -194,13 +177,10 @@
     </div>
 </div>
 
-<!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Custom Auth JS -->
 <script src="${pageContext.request.contextPath}/assets/js/auth.js"></script>
 
 <script>
-    // Live match check for newPassword & confirmPassword
     document.addEventListener('DOMContentLoaded', function() {
         const pass = document.getElementById('newPassword');
         const confirm = document.getElementById('confirmPassword');

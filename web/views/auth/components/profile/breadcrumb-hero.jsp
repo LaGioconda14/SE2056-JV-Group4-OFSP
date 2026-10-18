@@ -1,7 +1,6 @@
 <%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="profile-breadcrumb">
     <ol class="breadcrumb mb-0">
         <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/home.jsp">Trang chủ</a></li>
@@ -10,7 +9,6 @@
     </ol>
 </nav>
 
-<!-- Profile Hero Banner -->
 <div class="profile-hero">
     <div>
         <h1 class="profile-title">Hồ Sơ Cá Nhân & Cài Đặt Tài Khoản</h1>
@@ -20,7 +18,6 @@
     </button>
 </div>
 
-<!-- Alert Messages -->
 <c:if test="${not empty successMessage}">
     <div class="alert alert-success alert-dismissible fade show profile-alert" role="alert">
         <i class="bi bi-check-circle-fill me-2 fs-5"></i>
@@ -54,4 +51,3 @@
         <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 </c:if>
-

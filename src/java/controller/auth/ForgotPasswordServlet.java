@@ -10,9 +10,6 @@ import jakarta.servlet.http.HttpSession;
 import service.IUserService;
 import service.impl.UserServiceImpl;
 
-/**
- * Controller handling Forgot Password request and OTP generation.
- */
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = {"/forgot-password"})
 public class ForgotPasswordServlet extends HttpServlet {
 
@@ -21,14 +18,12 @@ public class ForgotPasswordServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         request.getRequestDispatcher("/views/auth/forgot-password.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -41,7 +36,6 @@ public class ForgotPasswordServlet extends HttpServlet {
         try {
             String otp = userService.sendForgotPasswordOtp(email);
 
-            // Lưu thông tin OTP và thời gian hết hạn (5 phút) vào Web Session
             long expiryTime = System.currentTimeMillis() + (5 * 60 * 1000L);
             HttpSession session = request.getSession(true);
             session.setAttribute("resetEmail", email);
@@ -57,5 +51,3 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
     }
 }
-
-

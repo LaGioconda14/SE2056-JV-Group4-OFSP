@@ -13,15 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 
-/**
- * Authentication Filter to protect secure resources (e.g. /change-password).
- */
 @WebFilter(filterName = "AuthFilter", urlPatterns = {"/change-password", "/profile", "/cart", "/cart/*"})
 public class AuthFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // Initialization if needed
     }
 
     @Override
@@ -31,7 +27,6 @@ public class AuthFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Prevent browser caching of sensitive pages
         httpResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         httpResponse.setHeader("Pragma", "no-cache");
         httpResponse.setDateHeader("Expires", 0);
@@ -40,14 +35,12 @@ public class AuthFilter implements Filter {
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
         if (user == null) {
-            // Not logged in -> redirect to login with error message
             httpRequest.getSession(true).setAttribute("errorMessage", "Vui lòng đăng nhập để truy cập tính năng này!");
             httpResponse.sendRedirect(httpRequest.getContextPath() + "/login");
             return;
         }
 
         if (!user.isActive()) {
-            // Account has been locked -> invalidate session and redirect
             if (session != null) {
                 session.invalidate();
             }
@@ -56,13 +49,10 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // Authenticated -> continue request
         chain.doFilter(request, response);
     }
 
     @Override
     public void destroy() {
-        // Cleanup if needed
     }
 }
-

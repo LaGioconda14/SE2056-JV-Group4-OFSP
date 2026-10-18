@@ -1,7 +1,6 @@
 <%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<!-- Main Navbar -->
 <nav class="navbar-main">
     <div class="container navbar-main-inner">
         <a href="${pageContext.request.contextPath}/home.jsp" class="brand-link">
@@ -88,7 +87,6 @@
     </div>
 </nav>
 
-<!-- Sub Navigation -->
 <div class="sub-nav">
     <div class="container sub-nav-inner">
         <div class="sub-nav-links">
@@ -104,4 +102,3 @@
         </div>
     </div>
 </div>
-
