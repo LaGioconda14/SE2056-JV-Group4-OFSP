@@ -16,6 +16,7 @@ public class Product {
     private String filterSlugs;
     private String image;
     private String thumbnailUrl;
+    private long defaultVariantId;
     private BigDecimal price;
     private BigDecimal oldPrice;
     private BigDecimal minPrice;
@@ -106,6 +107,9 @@ public class Product {
             this.image = thumbnailUrl;
         }
     }
+
+    public long getDefaultVariantId() { return defaultVariantId; }
+    public void setDefaultVariantId(long defaultVariantId) { this.defaultVariantId = defaultVariantId; }
 
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }

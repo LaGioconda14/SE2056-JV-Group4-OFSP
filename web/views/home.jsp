@@ -261,12 +261,12 @@
                             <c:otherwise>
                                 <div class="flex items-center gap-3 relative group">
                                     <div class="flex items-center gap-2.5 cursor-pointer py-1">
-                                        <img src="${not empty currentUser.avatar ? currentUser.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}" 
+                                        <img src="${not empty currentUser.avatarUrl ? currentUser.avatarUrl : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}"
                                              alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow-sm">
                                         <div class="hidden md:block text-left">
                                             <span class="block text-[10px] text-gray-400 font-medium leading-none">Xin chào,</span>
                                             <span class="text-sm font-bold text-gray-800 group-hover:text-emerald-600 transition leading-tight">
-                                                ${not empty currentUser.fullName ? currentUser.fullName : currentUser.username}
+                                                ${not empty currentUser.fullName ? currentUser.fullName : currentUser.email}
                                             </span>
                                         </div>
                                     </div>
@@ -467,9 +467,11 @@
                                             </span>
                                         </c:if>
                                     </div>
-                                    <form action="${pageContext.request.contextPath}/add-to-cart" method="GET">
-                                        <input type="hidden" name="productId" value="${p.id}" />
-                                        <button type="submit" class="btn-add-cart" title="Thêm vào giỏ hàng">
+                                    <form action="${pageContext.request.contextPath}/cart/add" method="POST">
+                                        <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
+                                        <input type="hidden" name="variantId" value="${p.defaultVariantId}" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <button type="submit" class="btn-add-cart" title="${p.defaultVariantId gt 0 ? 'Thêm vào giỏ hàng' : 'Sản phẩm đã hết hàng'}" ${p.defaultVariantId le 0 ? 'disabled' : ''}>
                                             <i class="fa-solid fa-cart-plus"></i>
                                         </button>
                                     </form>

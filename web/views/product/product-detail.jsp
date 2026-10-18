@@ -111,12 +111,12 @@
                             <c:otherwise>
                                 <div class="flex items-center gap-3 relative group">
                                     <div class="flex items-center gap-2.5 cursor-pointer py-1">
-                                        <img src="${not empty currentUser.avatar ? currentUser.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}" 
+                                        <img src="${not empty currentUser.avatarUrl ? currentUser.avatarUrl : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}"
                                              alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow-sm">
                                         <div class="hidden md:block text-left">
                                             <span class="block text-[10px] text-gray-400 font-medium leading-none">Xin chào,</span>
                                             <span class="text-sm font-bold text-gray-800 group-hover:text-emerald-600 transition leading-tight">
-                                                ${not empty currentUser.fullName ? currentUser.fullName : currentUser.username}
+                                                ${not empty currentUser.fullName ? currentUser.fullName : currentUser.email}
                                             </span>
                                         </div>
                                     </div>
@@ -249,10 +249,11 @@
 
                             <!-- Nút Thêm Vào Giỏ Hàng -->
                             <form action="${pageContext.request.contextPath}/cart/add" method="POST" class="pt-4 border-t border-gray-100">
-                                <input type="hidden" name="variantId" value="${not empty product.variants ? product.variants[0].variantId : 1}" />
+                                <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
+                                <input type="hidden" name="variantId" value="${not empty product.variants ? product.variants[0].variantId : 0}" />
                                 <input type="hidden" name="quantity" value="1" />
                                 <div class="flex items-center gap-4">
-                                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-3 text-base">
+                                    <button type="submit" ${empty product.variants ? 'disabled' : ''} class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-extrabold py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-3 text-base">
                                         <i class="fa-solid fa-cart-plus text-lg"></i> Thêm Vào Giỏ Hàng
                                     </button>
                                 </div>

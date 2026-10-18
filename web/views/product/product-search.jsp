@@ -268,9 +268,11 @@
                             </c:if>
                         </div>
                         
-                        <form action="${pageContext.request.contextPath}/add-to-cart" method="GET">
-                            <input type="hidden" name="productId" value="${p.id}" />
-                            <button type="submit" class="w-10 h-10 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-2xl flex items-center justify-center transition-all shadow-xs" title="Thêm vào giỏ hàng">
+                        <form action="${pageContext.request.contextPath}/cart/add" method="POST">
+                            <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
+                            <input type="hidden" name="variantId" value="${p.defaultVariantId}" />
+                            <input type="hidden" name="quantity" value="1" />
+                            <button type="submit" ${p.defaultVariantId le 0 ? 'disabled' : ''} class="w-10 h-10 bg-emerald-50 hover:bg-emerald-600 disabled:bg-gray-100 disabled:text-gray-300 disabled:cursor-not-allowed text-emerald-600 hover:text-white rounded-2xl flex items-center justify-center transition-all shadow-xs" title="${p.defaultVariantId gt 0 ? 'Thêm vào giỏ hàng' : 'Sản phẩm đã hết hàng'}">
                                 <i class="fa-solid fa-cart-plus text-sm"></i>
                             </button>
                         </form>

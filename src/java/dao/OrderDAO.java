@@ -1,4 +1,4 @@
-﻿package dao;
+package dao;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -653,6 +653,7 @@ public class OrderDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error getting order by id: " + orderId, ex);
         }
         return null;
+    }
 
     public List<Order> getOrdersByCustomerId(long customerId) {
         List<Order> list = new ArrayList<>();

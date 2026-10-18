@@ -15,7 +15,7 @@ import model.Product;
 import model.ProductVariant;
 import util.DBContext;
 
-@WebServlet(name = "ProductListServlet", urlPatterns = {"/products", "/product-detail"})
+@WebServlet(name = "ProductListServlet", urlPatterns = {"/product-detail"})
 public class ProductListServlet extends HttpServlet {
 
     @Override

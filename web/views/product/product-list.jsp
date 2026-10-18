@@ -410,9 +410,11 @@
                                         </div>
 
                                         <!-- Add Button -->
-                                        <form action="${pageContext.request.contextPath}/add-to-cart" method="GET">
-                                            <input type="hidden" name="productId" value="${p.id}">
-                                            <button type="submit" class="btn-card-add">
+                                        <form action="${pageContext.request.contextPath}/cart/add" method="POST">
+                                            <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
+                                            <input type="hidden" name="variantId" value="${p.defaultVariantId}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" ${p.defaultVariantId le 0 ? 'disabled' : ''} class="btn-card-add disabled:opacity-50 disabled:cursor-not-allowed">
                                                 <i class="fa-solid fa-plus text-[10px]"></i>
                                                 <span>Thêm</span>
                                             </button>

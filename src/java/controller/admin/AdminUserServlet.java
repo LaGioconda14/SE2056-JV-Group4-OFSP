@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 
-@WebServlet(name = "AdminUserServlet", urlPatterns = {"/admin", "/admin/users"})
+@WebServlet(name = "AdminUserServlet", urlPatterns = {"/admin/users"})
 public class AdminUserServlet extends HttpServlet {
     private final AdminManagementDAO dao = new AdminManagementDAO();
     private final Gson gson = new Gson();
