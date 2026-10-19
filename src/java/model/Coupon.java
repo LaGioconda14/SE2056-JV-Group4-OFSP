@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 public class Coupon {
 
     private int couponId;
+    private Long shopId;
     private String code;
     private String discountType;
     private BigDecimal discountValue;
@@ -115,5 +116,13 @@ public class Coupon {
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getShopId() {
+        return shopId;
+    }
+
+    public void setShopId(Long shopId) {
+        this.shopId = shopId;
     }
 }

@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -87,6 +88,12 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode) {
+        return buildDraftOrder(customerId, selectedItems, couponCode, Collections.emptyMap());
+    }
+
+    @Override
+    public Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
+            Map<Long, String> shopCouponCodes) {
         Order order = new Order();
         order.setCustomerId(customerId);
 
@@ -103,6 +110,7 @@ public class OrderServiceImpl implements IOrderService {
 
         BigDecimal totalGoods = BigDecimal.ZERO;
         BigDecimal totalShipping = BigDecimal.ZERO;
+        BigDecimal totalShopDiscount = BigDecimal.ZERO;
         List<SubOrder> subOrders = new ArrayList<>();
 
         for (Map.Entry<Long, List<CartItem>> entry : itemsByShop.entrySet()) {
@@ -138,12 +146,26 @@ public class OrderServiceImpl implements IOrderService {
 
             BigDecimal shopShippingFee = BigDecimal.ZERO;
             sub.setShopShippingFee(shopShippingFee);
-            sub.setShopDiscount(BigDecimal.ZERO);
-            sub.setShopTotal(shopSubtotal.add(shopShippingFee));
+
+            BigDecimal shopDiscount = BigDecimal.ZERO;
+            if (shopCouponCodes != null && shopCouponCodes.containsKey(shopId)) {
+                String sCode = shopCouponCodes.get(shopId);
+                if (sCode != null && !sCode.trim().isEmpty()) {
+                    Coupon sc = couponDAO.findByCode(sCode.trim());
+                    validateShopCoupon(sc, shopId, shopSubtotal);
+                    shopDiscount = calculateCouponDiscount(sc, shopSubtotal);
+                    sub.setShopCouponId(sc.getCouponId());
+                    sub.setShopCouponCode(sc.getCode());
+                }
+            }
+
+            sub.setShopDiscount(shopDiscount);
+            sub.setShopTotal(shopSubtotal.add(shopShippingFee).subtract(shopDiscount).max(BigDecimal.ZERO));
 
             subOrders.add(sub);
             totalGoods = totalGoods.add(shopSubtotal);
             totalShipping = totalShipping.add(shopShippingFee);
+            totalShopDiscount = totalShopDiscount.add(shopDiscount);
         }
 
         order.setSubOrders(subOrders);
@@ -154,15 +176,35 @@ public class OrderServiceImpl implements IOrderService {
         Integer couponId = null;
         if (couponCode != null && !couponCode.trim().isEmpty()) {
             Coupon coupon = couponDAO.findByCode(couponCode.trim());
-            validateCoupon(coupon, totalGoods);
+            validatePlatformCoupon(coupon, totalGoods);
             couponId = coupon.getCouponId();
             discount = calculateCouponDiscount(coupon, totalGoods);
         }
 
         order.setCouponId(couponId);
         order.setPlatformDiscount(discount);
-        order.setFinalAmount(totalGoods.add(totalShipping).subtract(discount).max(BigDecimal.ZERO));
+        order.setFinalAmount(totalGoods.subtract(totalShopDiscount).add(totalShipping).subtract(discount).max(BigDecimal.ZERO));
         return order;
+    }
+
+    private void validateShopCoupon(Coupon coupon, long shopId, BigDecimal eligibleAmount) {
+        if (coupon == null) {
+            throw new IllegalArgumentException("Mã giảm giá của shop không tồn tại!");
+        }
+        if (coupon.getShopId() == null || coupon.getShopId() != shopId) {
+            throw new IllegalArgumentException("Mã giảm giá '" + coupon.getCode() + "' không thuộc cửa hàng này!");
+        }
+        validateCoupon(coupon, eligibleAmount);
+    }
+
+    private void validatePlatformCoupon(Coupon coupon, BigDecimal eligibleAmount) {
+        if (coupon == null) {
+            throw new IllegalArgumentException("Mã giảm giá không tồn tại!");
+        }
+        if (coupon.getShopId() != null) {
+            throw new IllegalArgumentException("Mã giảm giá '" + coupon.getCode() + "' là voucher của cửa hàng, không thể áp dụng cho toàn sàn!");
+        }
+        validateCoupon(coupon, eligibleAmount);
     }
 
     private void validateCoupon(Coupon coupon, BigDecimal eligibleAmount) {
@@ -219,6 +261,14 @@ public class OrderServiceImpl implements IOrderService {
     public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
             boolean saveAddress) throws Exception {
+        return placeOrder(customerId, cartItemIds, address, deliverySlot, paymentMethod, couponCode, Collections.emptyMap(), saveAddress);
+    }
+
+    @Override
+    public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes,
+            boolean saveAddress) throws Exception {
 
         if (address == null || address.getRecipientName() == null
                 || address.getRecipientName().trim().isEmpty()) {
@@ -264,7 +314,7 @@ public class OrderServiceImpl implements IOrderService {
         address.setCity(address.getCity().trim());
 
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
-        Order order = buildDraftOrder(customerId, selectedItems, couponCode);
+        Order order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
         for (SubOrder sub : order.getSubOrders()) {
             sub.setDeliverySlot(normalizedSlot);
         }
@@ -297,6 +347,11 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public List<Coupon> getAvailableCoupons(BigDecimal orderAmount) {
         return couponDAO.findAvailableForAmount(orderAmount);
+    }
+
+    @Override
+    public List<Coupon> getAvailableShopCoupons(long shopId) {
+        return couponDAO.findAvailableForShop(shopId);
     }
 
     @Override

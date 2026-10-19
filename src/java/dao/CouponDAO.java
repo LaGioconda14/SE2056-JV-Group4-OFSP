@@ -21,7 +21,7 @@ public class CouponDAO extends DBContext {
             return null;
         }
 
-        String sql = "SELECT coupon_id, code, discount_type, discount_value, min_order_value, "
+        String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
                 + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
                 + "is_active, created_at FROM coupons WHERE UPPER(code) = ?";
         Connection conn = getConnection();
@@ -41,10 +41,10 @@ public class CouponDAO extends DBContext {
     }
 
     public List<Coupon> findAvailableForAmount(java.math.BigDecimal orderAmount) {
-        String sql = "SELECT coupon_id, code, discount_type, discount_value, min_order_value, "
+        String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
                 + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
                 + "is_active, created_at FROM coupons "
-                + "WHERE is_active = 1 AND GETDATE() BETWEEN start_date AND end_date "
+                + "WHERE is_active = 1 AND shop_id IS NULL AND GETDATE() BETWEEN start_date AND end_date "
                 + "AND used_count < usage_limit AND min_order_value <= ? "
                 + "ORDER BY min_order_value, discount_value DESC";
         List<Coupon> coupons = new ArrayList<>();
@@ -65,8 +65,32 @@ public class CouponDAO extends DBContext {
         return coupons;
     }
 
+    public List<Coupon> findAvailableForShop(long shopId) {
+        String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
+                + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
+                + "is_active, created_at FROM coupons "
+                + "WHERE is_active = 1 AND shop_id = ? AND GETDATE() BETWEEN start_date AND end_date "
+                + "AND used_count < usage_limit "
+                + "ORDER BY min_order_value, discount_value DESC";
+        List<Coupon> coupons = new ArrayList<>();
+        Connection conn = getConnection();
+        if (conn == null) {
+            return coupons;
+        }
+
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) coupons.add(mapCoupon(rs));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error loading shop coupons", ex);
+        }
+        return coupons;
+    }
+
     public Coupon findByIdForUpdate(Connection conn, int couponId) throws SQLException {
-        String sql = "SELECT coupon_id, code, discount_type, discount_value, min_order_value, "
+        String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
                 + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
                 + "is_active, created_at FROM coupons WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE coupon_id = ?";
@@ -96,6 +120,11 @@ public class CouponDAO extends DBContext {
     private Coupon mapCoupon(ResultSet rs) throws SQLException {
         Coupon coupon = new Coupon();
         coupon.setCouponId(rs.getInt("coupon_id"));
+        try {
+            long sId = rs.getLong("shop_id");
+            coupon.setShopId(rs.wasNull() ? null : sId);
+        } catch (SQLException ignored) {
+        }
         coupon.setCode(rs.getString("code"));
         coupon.setDiscountType(rs.getString("discount_type"));
         coupon.setDiscountValue(rs.getBigDecimal("discount_value"));

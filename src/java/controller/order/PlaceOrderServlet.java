@@ -2,7 +2,11 @@ package controller.order;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -62,6 +66,30 @@ public class PlaceOrderServlet extends HttpServlet {
         String couponCode = request.getParameter("couponCode");
         boolean saveAddress = "true".equalsIgnoreCase(request.getParameter("saveAddress"));
 
+        // Thu thập shop coupon codes
+        Map<Long, String> shopCouponCodes = new LinkedHashMap<>();
+        Enumeration<String> paramNames = request.getParameterNames();
+        while (paramNames.hasMoreElements()) {
+            String pName = paramNames.nextElement();
+            if (pName.startsWith("shopCoupon_")) {
+                try {
+                    long sId = Long.parseLong(pName.substring("shopCoupon_".length()));
+                    String val = request.getParameter(pName);
+                    if (val != null && !val.trim().isEmpty()) {
+                        shopCouponCodes.put(sId, val.trim().toUpperCase(Locale.ROOT));
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        if (shopCouponCodes.isEmpty() && session != null) {
+            @SuppressWarnings("unchecked")
+            Map<Long, String> savedShopCoupons = (Map<Long, String>) session.getAttribute("checkoutShopCoupons");
+            if (savedShopCoupons != null) {
+                shopCouponCodes.putAll(savedShopCoupons);
+            }
+        }
+
         ShippingAddress shippingAddress = new ShippingAddress();
         if (addressSelection != null && addressSelection.startsWith("saved:")) {
             try {
@@ -96,12 +124,13 @@ public class PlaceOrderServlet extends HttpServlet {
 
         try {
             long orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
-                    deliverySlot, paymentMethod, couponCode,
+                    deliverySlot, paymentMethod, couponCode, shopCouponCodes,
                     "new".equals(addressSelection) && saveAddress);
 
             // Dọn dẹp session sau khi đặt hàng thành công
             session.removeAttribute("checkoutItemIds");
             session.removeAttribute("checkoutCouponCode");
+            session.removeAttribute("checkoutShopCoupons");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
 
             response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);

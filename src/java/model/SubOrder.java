@@ -31,6 +31,8 @@ public class SubOrder {
     private String carrierName = "FreshFruit Cold-Chain";
     private ShippingAddress shippingAddress;
     private List<OrderItem> items = new ArrayList<>();
+    private Integer shopCouponId;
+    private String shopCouponCode;
 
     public SubOrder() {
     }
@@ -217,5 +219,21 @@ public class SubOrder {
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public Integer getShopCouponId() {
+        return shopCouponId;
+    }
+
+    public void setShopCouponId(Integer shopCouponId) {
+        this.shopCouponId = shopCouponId;
+    }
+
+    public String getShopCouponCode() {
+        return shopCouponCode;
+    }
+
+    public void setShopCouponCode(String shopCouponCode) {
+        this.shopCouponCode = shopCouponCode;
     }
 }

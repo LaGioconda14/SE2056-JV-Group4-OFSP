@@ -266,21 +266,38 @@ public class OrderDAO extends DBContext {
                         order.getCustomerId(), address);
             }
 
-            // KhÃ³a vÃ  kiá»ƒm tra láº¡i voucher trong cÃ¹ng transaction Ä‘á»ƒ trÃ¡nh vÆ°á»£t lÆ°á»£t dÃ¹ng.
+            // Khóa và kiểm tra lại voucher trong cùng transaction để tránh vượt lượt dùng.
+            BigDecimal totalShopDiscounts = BigDecimal.ZERO;
+            for (SubOrder sub : order.getSubOrders()) {
+                if (sub.getShopCouponId() != null) {
+                    Coupon sc = couponDAO.findByIdForUpdate(conn, sub.getShopCouponId());
+                    validateCouponForShop(sc, sub.getShopId(), sub.getShopSubtotal());
+                    BigDecimal sDiscount = calculateCouponDiscount(sc, sub.getShopSubtotal());
+                    sub.setShopDiscount(sDiscount);
+                    sub.setShopTotal(sub.getShopSubtotal().add(sub.getShopShippingFee()).subtract(sDiscount).max(BigDecimal.ZERO));
+                    totalShopDiscounts = totalShopDiscounts.add(sDiscount);
+                } else {
+                    if (sub.getShopDiscount() == null) {
+                        sub.setShopDiscount(BigDecimal.ZERO);
+                    }
+                    totalShopDiscounts = totalShopDiscounts.add(sub.getShopDiscount());
+                }
+            }
+
             if (order.getCouponId() != null) {
                 Coupon coupon = couponDAO.findByIdForUpdate(conn, order.getCouponId());
                 validateCouponForOrder(coupon, order.getTotalGoodsAmount());
                 BigDecimal discount = calculateCouponDiscount(coupon, order.getTotalGoodsAmount());
                 order.setPlatformDiscount(discount);
-                order.setFinalAmount(order.getTotalGoodsAmount()
-                        .add(order.getTotalShippingFee())
-                        .subtract(discount)
-                        .max(BigDecimal.ZERO));
             } else {
                 order.setPlatformDiscount(BigDecimal.ZERO);
-                order.setFinalAmount(order.getTotalGoodsAmount()
-                        .add(order.getTotalShippingFee()));
             }
+
+            BigDecimal totalDiscounts = totalShopDiscounts.add(order.getPlatformDiscount());
+            order.setFinalAmount(order.getTotalGoodsAmount()
+                    .add(order.getTotalShippingFee())
+                    .subtract(totalDiscounts)
+                    .max(BigDecimal.ZERO));
 
             long orderId;
             String orderCode = "ORD-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 9000 + 1000);
@@ -417,6 +434,11 @@ public class OrderDAO extends DBContext {
             if (order.getCouponId() != null) {
                 couponDAO.incrementUsage(conn, order.getCouponId());
             }
+            for (SubOrder sub : order.getSubOrders()) {
+                if (sub.getShopCouponId() != null) {
+                    couponDAO.incrementUsage(conn, sub.getShopCouponId());
+                }
+            }
 
             // Ghi nháº­n phÆ°Æ¡ng thá»©c thanh toÃ¡n trong cÃ¹ng transaction.
             try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
@@ -509,6 +531,16 @@ public class OrderDAO extends DBContext {
         if (rowCount != cartItemIds.size() || !actualQuantities.equals(expectedQuantities)) {
             throw new SQLException("Giá» hÃ ng vá»«a thay Ä‘á»•i. Vui lÃ²ng quay láº¡i giá» hÃ ng vÃ  kiá»ƒm tra láº¡i!");
         }
+    }
+
+    private void validateCouponForShop(Coupon coupon, long shopId, BigDecimal eligibleAmount) throws SQLException {
+        if (coupon == null) {
+            throw new SQLException("Mã giảm giá của cửa hàng không còn tồn tại!");
+        }
+        if (coupon.getShopId() == null || coupon.getShopId() != shopId) {
+            throw new SQLException("Mã giảm giá không thuộc cửa hàng này!");
+        }
+        validateCouponForOrder(coupon, eligibleAmount);
     }
 
     private void validateCouponForOrder(Coupon coupon, BigDecimal eligibleAmount) throws SQLException {
