@@ -2,7 +2,7 @@
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <fmt:setLocale value="vi_VN"/>
-<c:url var="homeUrl" value="/home.jsp"/>
+<c:url var="homeUrl" value="/home"/>
 <c:url var="productsUrl" value="/products"/>
 <c:url var="cartUrl" value="/cart"/>
 <c:url var="checkoutCssUrl" value="/assets/css/checkout.css"/>
@@ -12,22 +12,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Xác nhận đơn hàng - Gốc Vườn</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <link href="<c:out value='${checkoutCssUrl}'/>" rel="stylesheet">
+    <style>
+        .page-main.confirmation-main {
+            padding-top: 32px !important;
+        }
+        .success-hero h1 {
+            font-weight: 800;
+        }
+        .panel-heading h2 {
+            font-weight: 700;
+        }
+        .empty-state h1 {
+            font-weight: 700;
+        }
+    </style>
 </head>
-<body>
-<header class="site-header">
-    <div class="header-main shell">
-        <a class="brand" href="<c:out value='${homeUrl}'/>"><svg class="brand-apple" viewBox="0 0 36 36" aria-hidden="true"><path d="M19 4s5 0 4 5c-3 0-5-2-4-5Z" fill="#16a34a"/><path d="M18 6.5c-.5 2-2 4-3 5" stroke="#4b5563" stroke-width="2" stroke-linecap="round"/><path d="M18 12.5c-2-3-7-3-10 0-4 4-3 11 1 16 3 4 6 4 9 2 3 2 6 2 9-2 4-5 5-12 1-16-3-3-8-3-10 0Z" fill="#ef4444"/></svg><span><strong>Gốc Vườn</strong><small>NÔNG SẢN TẬN VƯỜN</small></span></a>
-        <form class="header-search" method="get" action="<c:out value='${productsUrl}'/>"><input type="search" name="search" placeholder="Tìm kiếm trái cây tươi ngon..." aria-label="Tìm kiếm sản phẩm"><button type="submit" aria-label="Tìm kiếm"><span class="material-symbols-outlined">search</span></button></form>
-        <div class="header-actions"><a class="header-pill" href="<c:out value='${cartUrl}'/>"><span class="material-symbols-outlined">shopping_cart</span><span>Giỏ hàng</span></a><c:choose><c:when test="${not empty sessionScope.user}"><a class="header-pill user-pill" href="<c:url value='/profile'/>"><span class="avatar"><c:choose><c:when test="${not empty sessionScope.user.fullName}"><c:out value="${sessionScope.user.fullName.substring(0, 1)}"/></c:when><c:otherwise>U</c:otherwise></c:choose></span><span><c:out value="${sessionScope.user.fullName}"/></span></a></c:when><c:otherwise><a class="header-pill user-pill" href="<c:url value='/login'/>">Đăng nhập</a></c:otherwise></c:choose></div>
-    </div>
-    <div class="nav-row"><nav class="shell"><a href="<c:out value='${homeUrl}'/>">Trang Chủ</a><a href="<c:out value='${productsUrl}'/>">Cửa Hàng</a><a href="<c:out value='${productsUrl}'/>">Danh Mục Trái Cây</a><a href="<c:out value='${productsUrl}'/>">Hộp Quà &amp; Combo</a><a href="<c:out value='${homeUrl}'/>#about">Về Nông Trại</a><a href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a></nav></div>
-</header>
+<body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
 
-<main class="page-main confirmation-main">
+<!-- Header chuẩn đồng bộ với Cart, Home, Checkout -->
+<jsp:include page="/views/common/header.jsp" />
+
+<main class="page-main confirmation-main flex-1">
     <div class="shell confirmation-shell">
         <nav class="stepper" aria-label="Tiến trình thanh toán"><div class="step complete"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Giỏ hàng</span></div><span class="step-line active"></span><div class="step complete"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Thanh toán</span></div><span class="step-line active"></span><div class="step complete current" aria-current="step"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Hoàn tất</span></div></nav>
 
