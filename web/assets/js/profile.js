@@ -63,32 +63,293 @@ function openAddAddressModal() {
     }
 }
 
-function submitAvatarForm() {
-    const fileInput = document.getElementById('avatarFileInput');
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
+let initialProfileData = {};
+
+function captureInitialProfileData() {
+    const form = document.getElementById('profileMainForm');
+    if (!form) return;
+    const fullNameInput = document.getElementById('fullName');
+    const displayNameInput = document.getElementById('displayName');
+    const phoneInput = document.getElementById('phone');
+    const birthDateInput = document.getElementById('birthDate');
+    const checkedGender = form.querySelector('input[name="gender"]:checked');
+    const languageSelect = document.getElementById('language');
+    const previewImg = document.getElementById('avatarImagePreview');
+    const placeholder = document.getElementById('avatarPlaceholderPreview');
+    const deleteBtn = document.getElementById('btnDeleteAvatar');
+
+    initialProfileData = {
+        fullName: fullNameInput ? fullNameInput.value : '',
+        displayName: displayNameInput ? displayNameInput.value : '',
+        phone: phoneInput ? phoneInput.value : '',
+        birthDate: birthDateInput ? birthDateInput.value : '',
+        gender: checkedGender ? checkedGender.value : '',
+        language: languageSelect ? languageSelect.value : '',
+        avatarSrc: previewImg ? previewImg.getAttribute('src') : '',
+        hasAvatar: previewImg && !previewImg.classList.contains('d-none') && !!previewImg.getAttribute('src'),
+        deleteBtnVisible: deleteBtn && !deleteBtn.classList.contains('d-none')
+    };
+}
+
+function enableProfileEdit() {
+    const form = document.getElementById('profileMainForm');
+    if (!form) return;
+
+    form.classList.remove('profile-view-mode');
+    form.classList.add('profile-edit-mode');
+
+    // Mở khóa các input cho phép sửa
+    const editableInputs = form.querySelectorAll('#fullName, #displayName, #phone, #birthDate, input[name="gender"], #language');
+    editableInputs.forEach(input => {
+        input.removeAttribute('disabled');
+        input.disabled = false;
+    });
+
+    // Mở khóa các nút avatar
+    const btnUploadAvatar = document.getElementById('btnUploadAvatar');
+    const btnDeleteAvatar = document.getElementById('btnDeleteAvatar');
+    if (btnUploadAvatar) {
+        btnUploadAvatar.removeAttribute('disabled');
+        btnUploadAvatar.disabled = false;
+    }
+    if (btnDeleteAvatar) {
+        btnDeleteAvatar.removeAttribute('disabled');
+        btnDeleteAvatar.disabled = false;
+    }
+
+    // Cập nhật các nút ở header card
+    const btnEditTop = document.getElementById('btnEditProfileTop');
+    const btnCancelTop = document.getElementById('btnCancelEditTop');
+    const btnSaveTop = document.getElementById('btnSaveProfileTop');
+    const badge = document.getElementById('editStatusBadge');
+    if (btnEditTop) btnEditTop.classList.add('d-none');
+    if (btnCancelTop) btnCancelTop.classList.remove('d-none');
+    if (btnSaveTop) btnSaveTop.classList.remove('d-none');
+    if (badge) badge.classList.remove('d-none');
+
+    // Cập nhật các nút ở bottom action bar
+    const btnEditBottom = document.getElementById('btnEditProfileBottom');
+    const btnCancelBottom = document.getElementById('btnCancelEditBottom');
+    const btnSaveBottom = document.getElementById('btnSaveProfileBottom');
+    const hint = document.getElementById('actionBarHint');
+    if (btnEditBottom) btnEditBottom.style.display = 'none';
+    if (btnCancelBottom) btnCancelBottom.style.display = 'inline-block';
+    if (btnSaveBottom) btnSaveBottom.style.display = 'inline-block';
+    if (hint) {
+        hint.innerHTML = '<i class="bi bi-info-circle text-success me-1"></i> Đang chỉnh sửa thông tin cá nhân. Nhấn <strong>"Lưu thay đổi"</strong> để lưu vào hệ thống.';
+    }
+
+    // Tự động focus vào ô Họ và tên
+    const fullNameInput = document.getElementById('fullName');
+    if (fullNameInput) {
+        fullNameInput.focus();
+    }
+}
+
+function cancelProfileEdit() {
+    const form = document.getElementById('profileMainForm');
+    if (!form) return;
+
+    // Khôi phục lại các giá trị ban đầu
+    if (initialProfileData) {
+        const fullNameInput = document.getElementById('fullName');
+        if (fullNameInput) fullNameInput.value = initialProfileData.fullName || '';
+
+        const displayNameInput = document.getElementById('displayName');
+        if (displayNameInput) displayNameInput.value = initialProfileData.displayName || '';
+
+        const phoneInput = document.getElementById('phone');
+        if (phoneInput) phoneInput.value = initialProfileData.phone || '';
+
+        const birthDateInput = document.getElementById('birthDate');
+        if (birthDateInput) birthDateInput.value = initialProfileData.birthDate || '';
+
+        if (initialProfileData.gender) {
+            const r = form.querySelector('input[name="gender"][value="' + initialProfileData.gender + '"]');
+            if (r) r.checked = true;
+        } else {
+            form.querySelectorAll('input[name="gender"]').forEach(r => r.checked = false);
+        }
+
+        const languageSelect = document.getElementById('language');
+        if (languageSelect && initialProfileData.language) {
+            languageSelect.value = initialProfileData.language;
+        }
+
+        // Khôi phục avatar
+        const fileInput = document.getElementById('avatarFileInput');
+        if (fileInput) fileInput.value = '';
+        const deleteFlag = document.getElementById('deleteAvatarFlag');
+        if (deleteFlag) deleteFlag.value = 'false';
+
+        const previewImg = document.getElementById('avatarImagePreview');
+        const placeholder = document.getElementById('avatarPlaceholderPreview');
+        const deleteBtn = document.getElementById('btnDeleteAvatar');
+
+        if (previewImg && placeholder) {
+            if (initialProfileData.hasAvatar) {
+                previewImg.src = initialProfileData.avatarSrc;
+                previewImg.classList.remove('d-none');
+                placeholder.classList.add('d-none');
+            } else {
+                previewImg.src = '';
+                previewImg.classList.add('d-none');
+                placeholder.classList.remove('d-none');
+            }
+        }
+        if (deleteBtn) {
+            if (initialProfileData.deleteBtnVisible) {
+                deleteBtn.classList.remove('d-none');
+            } else {
+                deleteBtn.classList.add('d-none');
+            }
+        }
+    }
+
+    // Khóa lại các input
+    const editableInputs = form.querySelectorAll('#fullName, #displayName, #phone, #birthDate, input[name="gender"], #language');
+    editableInputs.forEach(input => {
+        input.setAttribute('disabled', 'disabled');
+        input.disabled = true;
+    });
+
+    // Khóa lại các nút avatar
+    const btnUploadAvatar = document.getElementById('btnUploadAvatar');
+    const btnDeleteAvatar = document.getElementById('btnDeleteAvatar');
+    if (btnUploadAvatar) {
+        btnUploadAvatar.setAttribute('disabled', 'disabled');
+        btnUploadAvatar.disabled = true;
+    }
+    if (btnDeleteAvatar) {
+        btnDeleteAvatar.setAttribute('disabled', 'disabled');
+        btnDeleteAvatar.disabled = true;
+    }
+
+    form.classList.remove('profile-edit-mode');
+    form.classList.add('profile-view-mode');
+
+    // Khôi phục các nút header
+    const btnEditTop = document.getElementById('btnEditProfileTop');
+    const btnCancelTop = document.getElementById('btnCancelEditTop');
+    const btnSaveTop = document.getElementById('btnSaveProfileTop');
+    const badge = document.getElementById('editStatusBadge');
+    if (btnEditTop) btnEditTop.classList.remove('d-none');
+    if (btnCancelTop) btnCancelTop.classList.add('d-none');
+    if (btnSaveTop) btnSaveTop.classList.add('d-none');
+    if (badge) badge.classList.add('d-none');
+
+    // Khôi phục các nút bottom action bar
+    const btnEditBottom = document.getElementById('btnEditProfileBottom');
+    const btnCancelBottom = document.getElementById('btnCancelEditBottom');
+    const btnSaveBottom = document.getElementById('btnSaveProfileBottom');
+    const hint = document.getElementById('actionBarHint');
+    if (btnEditBottom) btnEditBottom.style.display = 'inline-block';
+    if (btnCancelBottom) btnCancelBottom.style.display = 'none';
+    if (btnSaveBottom) btnSaveBottom.style.display = 'none';
+    if (hint) {
+        hint.innerHTML = '<i class="bi bi-info-circle text-success me-1"></i> Nhấn <strong>"Sửa thông tin"</strong> để thay đổi thông tin cá nhân của bạn.';
+    }
+}
+
+function submitProfileForm() {
+    const form = document.getElementById('profileMainForm');
+    if (!form) return;
+
+    // Đảm bảo mở disabled để trình duyệt serialize gửi đầy đủ các trường
+    const editableInputs = form.querySelectorAll('#fullName, #displayName, #phone, #birthDate, input[name="gender"], #language');
+    editableInputs.forEach(input => {
+        input.removeAttribute('disabled');
+        input.disabled = false;
+    });
+
+    if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+    } else {
+        form.submit();
+    }
+}
+
+function handleAvatarFileSelect(input) {
+    if (input && input.files && input.files[0]) {
+        const file = input.files[0];
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         if (!validTypes.includes(file.type)) {
             alert('Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.');
-            fileInput.value = '';
+            input.value = '';
             return;
         }
         if (file.size > 2 * 1024 * 1024) {
             alert('Kích thước file vượt quá 2MB! Vui lòng chọn ảnh nhẹ hơn.');
-            fileInput.value = '';
+            input.value = '';
             return;
         }
-        document.getElementById('avatarUploadForm').submit();
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const previewImg = document.getElementById('avatarImagePreview');
+            const placeholder = document.getElementById('avatarPlaceholderPreview');
+            const deleteBtn = document.getElementById('btnDeleteAvatar');
+
+            if (previewImg) {
+                previewImg.src = e.target.result;
+                previewImg.classList.remove('d-none');
+            }
+            if (placeholder) {
+                placeholder.classList.add('d-none');
+            }
+            if (deleteBtn) {
+                deleteBtn.classList.remove('d-none');
+                deleteBtn.removeAttribute('disabled');
+                deleteBtn.disabled = false;
+            }
+
+            const deleteFlag = document.getElementById('deleteAvatarFlag');
+            if (deleteFlag) deleteFlag.value = 'false';
+        };
+        reader.readAsDataURL(file);
     }
+}
+
+function handleStageDeleteAvatar() {
+    const deleteFlag = document.getElementById('deleteAvatarFlag');
+    if (deleteFlag) deleteFlag.value = 'true';
+
+    const fileInput = document.getElementById('avatarFileInput');
+    if (fileInput) fileInput.value = '';
+
+    const previewImg = document.getElementById('avatarImagePreview');
+    const placeholder = document.getElementById('avatarPlaceholderPreview');
+    const deleteBtn = document.getElementById('btnDeleteAvatar');
+
+    if (previewImg) previewImg.classList.add('d-none');
+    if (placeholder) placeholder.classList.remove('d-none');
+    if (deleteBtn) deleteBtn.classList.add('d-none');
+}
+
+function submitAvatarForm() {
+    // Tương thích ngược nếu còn lời gọi cũ
+    const fileInput = document.getElementById('avatarFileInput');
+    if (fileInput) handleAvatarFileSelect(fileInput);
 }
 
 function confirmDeleteAvatar() {
-    if (confirm('Bạn có chắc chắn muốn xóa ảnh đại diện hiện tại không?')) {
-        document.getElementById('avatarDeleteForm').submit();
-    }
+    // Tương thích ngược nếu còn lời gọi cũ
+    handleStageDeleteAvatar();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    captureInitialProfileData();
+
+    const profileMainForm = document.getElementById('profileMainForm');
+    if (profileMainForm) {
+        profileMainForm.addEventListener('submit', function() {
+            const editableInputs = this.querySelectorAll('#fullName, #displayName, #phone, #birthDate, input[name="gender"], #language');
+            editableInputs.forEach(input => {
+                input.removeAttribute('disabled');
+                input.disabled = false;
+            });
+        });
+    }
     const hash = window.location.hash;
     if (hash === '#security') {
         activateTab('#nav-security', 'nav-security-tab');

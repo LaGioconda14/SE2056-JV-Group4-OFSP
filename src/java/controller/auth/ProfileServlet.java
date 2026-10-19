@@ -267,10 +267,59 @@ public class ProfileServlet extends HttpServlet {
         String phone = request.getParameter("phone");
         String gender = request.getParameter("gender");
         String birthDateStr = request.getParameter("birthDate");
+        String deleteAvatar = request.getParameter("deleteAvatar");
 
         User currentUser = userService.getUserById(sessionUser.getId());
         if (currentUser == null) {
             currentUser = sessionUser;
+        }
+
+        // Xử lý avatar nếu người dùng thay đổi khi ấn Lưu
+        if ("true".equalsIgnoreCase(deleteAvatar)) {
+            try {
+                userService.updateAvatar(sessionUser.getId(), null);
+            } catch (Exception ex) {
+                // Tiếp tục xử lý cập nhật profile
+            }
+        } else {
+            try {
+                Part filePart = request.getPart("avatarFile");
+                if (filePart != null && filePart.getSize() > 0) {
+                    String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                    String ext = "";
+                    int dotIndex = submittedFileName.lastIndexOf('.');
+                    if (dotIndex > 0) {
+                        ext = submittedFileName.substring(dotIndex).toLowerCase();
+                    }
+
+                    if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".webp")) {
+                        session.setAttribute("errorMessage", "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
+                        response.sendRedirect(request.getContextPath() + "/profile");
+                        return;
+                    }
+
+                    if (filePart.getSize() > 2 * 1024 * 1024) {
+                        session.setAttribute("errorMessage", "Kích thước ảnh tối đa là 2MB!");
+                        response.sendRedirect(request.getContextPath() + "/profile");
+                        return;
+                    }
+
+                    String newFileName = "avatar_" + sessionUser.getId() + "_" + System.currentTimeMillis() + ext;
+                    String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/avatars");
+                    File uploadDir = new File(uploadDirRealPath);
+                    if (!uploadDir.exists()) {
+                        uploadDir.mkdirs();
+                    }
+
+                    String savedFilePath = uploadDirRealPath + File.separator + newFileName;
+                    filePart.write(savedFilePath);
+
+                    String avatarUrl = "assets/images/avatars/" + newFileName;
+                    userService.updateAvatar(sessionUser.getId(), avatarUrl);
+                }
+            } catch (Exception ex) {
+                // Tiếp tục nếu không có part upload
+            }
         }
 
         String phoneToUpdate = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;

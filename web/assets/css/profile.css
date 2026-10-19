@@ -1578,5 +1578,78 @@ body {
     flex-shrink: 0;
 }
 
+/* ========================================================
+   PROFILE VIEW MODE & EDIT MODE STYLES
+   ======================================================== */
+.profile-view-mode input:not(.input-readonly-fixed):disabled,
+.profile-view-mode select:disabled {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #334155 !important;
+    cursor: default !important;
+    user-select: text;
+    -webkit-text-fill-color: #334155;
+    opacity: 1;
+}
+
+.profile-view-mode .gender-choice {
+    cursor: default;
+    pointer-events: none;
+}
+
+.profile-view-mode .btn-check:disabled + .gender-choice {
+    cursor: default;
+    pointer-events: none;
+}
+
+.profile-view-mode .btn-check:checked + .gender-choice {
+    background-color: var(--primary-green) !important;
+    color: #ffffff !important;
+    border-color: var(--primary-green) !important;
+    opacity: 0.95;
+}
+
+.profile-view-mode .btn-check:not(:checked) + .gender-choice {
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    background-color: #f8fafc !important;
+    opacity: 0.75;
+}
+
+.profile-view-mode #btnUploadAvatar:disabled,
+.profile-view-mode #btnDeleteAvatar:disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+/* Edit mode transition & highlight */
+.profile-edit-mode input:not(.input-readonly-fixed),
+.profile-edit-mode select {
+    background-color: #ffffff !important;
+    border-color: #86efac !important;
+    color: #0f172a !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.profile-edit-mode input:not(.input-readonly-fixed):focus,
+.profile-edit-mode select:focus {
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.15) !important;
+}
+
+.profile-edit-mode .gender-choice {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.profile-edit-mode #btnUploadAvatar,
+.profile-edit-mode #btnDeleteAvatar {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+
 
 
