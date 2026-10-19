@@ -29,20 +29,18 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-        // If already logged in, redirect to home page
         // If already logged in, redirect based on role
         if (session != null && session.getAttribute("user") != null) {
             User user = (User) session.getAttribute("user");
             if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/admin");
             } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
             }
-
             return;
         }
 
-        // Check for any flash message from session (e.g. from Filter or Reset Pass)
+        // Check for any flash message from session
         if (session != null) {
             String errorMsg = (String) session.getAttribute("errorMessage");
             if (errorMsg != null) {
@@ -118,16 +116,11 @@ public class LoginServlet extends HttpServlet {
         cookieRem.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
         response.addCookie(cookieRem);
 
-        // Redirect based on user role: ADMIN -> /admin, others -> /home.jsp
-        if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
-            response.sendRedirect(request.getContextPath() + "/admin");
-        } else {
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
-        // Redirect to home / landing page
-        String role = user.getRole();
+        // Redirect based on user role
+        String role = user != null ? user.getRole() : "";
 
         if ("SHOP_OWNER".equalsIgnoreCase(role)) {
-            // Nếu là Chủ shop -> Lưu thông tin shop vào Session rồi điều hướng về trang home
+            // Nếu là Chủ shop -> Lưu thông tin shop vào Session rồi điều hướng
             Shop shop = shopProductService.getShopByOwnerId(user.getId());
             if (shop != null) {
                 session.setAttribute("shopLogo", shop.getLogoUrl());
@@ -138,12 +131,15 @@ public class LoginServlet extends HttpServlet {
             }
             session.setAttribute("email", user.getEmail());
             response.sendRedirect(request.getContextPath() + "/home");
+            return;
         } else if ("ADMIN".equalsIgnoreCase(role)) {
             // Nếu là Quản trị viên -> Điều hướng vào trang admin
             response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            return;
         } else {
             // Khách hàng thông thường về trang chủ mua sắm
             response.sendRedirect(request.getContextPath() + "/home");
+            return;
         }
     }
-    }}
+}

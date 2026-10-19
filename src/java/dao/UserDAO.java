@@ -457,4 +457,24 @@ public class UserDAO extends DBContext {
         user.setCreatedAt(rs.getTimestamp("created_at"));
         return user;
     }
+
+    /**
+     * Cập nhật riêng ngày sinh của user.
+     */
+    public boolean updateBirthDate(int userId, java.sql.Date birthDate) {
+        String sql = "UPDATE users SET birth_date = ?, updated_at = GETDATE() WHERE user_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in updateBirthDate");
+            return false;
+        }
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDate(1, birthDate);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating birth date for user ID: " + userId, ex);
+        }
+        return false;
+    }
 }

@@ -85,10 +85,6 @@ public class LoginGoogleServlet extends HttpServlet {
             }
 
             session.setAttribute("successMessage", "Đăng nhập Google thành công! Xin chào " + user.getFullName() + ".");
-            if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
-                response.sendRedirect(request.getContextPath() + "/admin");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
 
             // Kiểm tra và cảnh báo nếu người dùng chưa cập nhật số điện thoại
             if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {

@@ -1,0 +1,41 @@
+@layer base {
+  html, body { margin: 0; padding: 0; }
+  body { overscroll-behavior: none; }
+  main > :first-child { margin-top: 0 !important; }
+  main > :last-child { margin-bottom: 0 !important; }
+}
+.tab-content { display: none; }
+.tab-content.active { display: flex; }
+
+/* Nút trạng thái shop */
+.status-btn { color: #64748b; background: transparent; }
+.status-btn:hover { color: #0f172a; }
+.status-btn.is-active[data-status="open"]   { background: #059669; color: #fff; }
+.status-btn.is-active[data-status="paused"] { background: #d97706; color: #fff; }
+.status-btn.is-active[data-status="closed"] { background: #dc2626; color: #fff; }
+.status-btn.is-active span { background: #fff !important; }
+
+/* Combobox có tìm kiếm */
+.combo { position: relative; }
+.combo-input {
+  width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem;
+  padding: 0.625rem 2.25rem 0.625rem 1rem; font-size: 0.875rem; outline: none;
+}
+.combo-input:focus { border-color: #10b981; background: #fff; }
+.combo-input:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+.combo-arrow {
+  position: absolute; right: 0.9rem; top: 50%; transform: translateY(-50%);
+  font-size: 0.7rem; color: #94a3b8; pointer-events: none;
+}
+.combo-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 40;
+  max-height: 260px; overflow-y: auto; background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(15, 23, 42, .12); padding: 4px;
+}
+.combo-list.hidden { display: none; }
+.combo-item { padding: 0.5rem 0.75rem; font-size: 0.875rem; border-radius: 0.5rem; cursor: pointer; }
+.combo-item:hover, .combo-item.is-hover { background: #ecfdf5; color: #047857; }
+.combo-item.is-selected { font-weight: 600; color: #047857; }
+.combo-empty { padding: 0.75rem; font-size: 0.8rem; color: #94a3b8; text-align: center; }
+
+#logoLightbox.show { display: flex; }

@@ -154,7 +154,7 @@
     <servlet-mapping>
         <servlet-name>AdminDisputeServlet</servlet-name>
         <url-pattern>/admin/disputes</url-pattern>
-
+    </servlet-mapping>
         <!-- Shop Management Servlets -->
     <servlet>
         <servlet-name>ShopProductServlet</servlet-name>

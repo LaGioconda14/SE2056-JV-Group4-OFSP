@@ -4,195 +4,23 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh Sách Sản Phẩm Nông Sản - Kênh Người Bán Đà Lạt Organic</title>
-    
-    <!-- Google Fonts & Font Awesome 6 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Tailwind CSS (utility helper) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Custom CSS matching mockup -->
+
+    <!-- Head chung: meta, font, Font Awesome, Tailwind, shop-layout.css/js -->
+    <jsp:include page="/views/shop/layout/head.jsp" />
+
+    <!-- CSS riêng của trang -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-products.css">
 </head>
 <body class="bg-[#f8fafc] text-[#0f172a]">
 
     <!-- ========================================================
-         1. SIDEBAR NAVIGATION (KÊNH NGƯỜI BÁN)
+         SIDEBAR + HEADER DÙNG CHUNG (views/shop/layout/)
          ======================================================== -->
-    <aside class="shop-sidebar">
-        <div>
-            <!-- Shop Brand Header -->
-            <div class="shop-sidebar-brand">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-[#166534] flex items-center justify-center text-white text-lg shrink-0 shadow-sm">
-                        <i class="fa-solid fa-leaf text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <span class="font-extrabold text-sm text-gray-900 leading-tight block">
-                            ${not empty sessionScope.shopName ? sessionScope.shopName : 'Đà Lạt Organic'}
-                        </span>
-                        <span class="text-[10px] font-bold text-[#15803d] tracking-wider uppercase block">Kênh Người Bán</span>
-                    </div>
-                </div>
-                <span class="px-2 py-0.5 rounded-md bg-[#f1f5f9] text-[#64748b] text-[10px] font-black uppercase tracking-wider">SHOP</span>
-            </div>
-
-            <!-- Sidebar Navigation Groups -->
-            <nav class="space-y-1 mt-3">
-                <!-- Group: TỔNG QUAN -->
-                <div class="shop-sidebar-group-title">TỔNG QUAN</div>
-                <a href="${pageContext.request.contextPath}/shop/products" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-table-cells-large text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Tổng quan Shop</span>
-                    </span>
-                </a>
-
-                <!-- Group: SẢN PHẨM & KHO -->
-                <div class="shop-sidebar-group-title">SẢN PHẨM & KHO</div>
-                <a href="${pageContext.request.contextPath}/shop/products" class="shop-sidebar-link active">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-apple-whole text-white text-sm w-4 text-center"></i>
-                        <span>Tất cả sản phẩm</span>
-                    </span>
-                </a>
-                <a href="${pageContext.request.contextPath}/shop/product/add" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-circle-plus text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Thêm mới nông sản</span>
-                    </span>
-                </a>
-                <a href="${pageContext.request.contextPath}/shop/inventory" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-boxes-stacked text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Kho & Cảnh báo tồn</span>
-                    </span>
-                    <span class="badge-counter-red">${not empty lowStockCount ? lowStockCount : 3}</span>
-                </a>
-
-                <!-- Group: ĐƠN HÀNG -->
-                <div class="shop-sidebar-group-title">ĐƠN HÀNG</div>
-                <a href="${pageContext.request.contextPath}/shop/orders" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-receipt text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Đơn hàng con</span>
-                    </span>
-                    <span class="badge-counter-orange">8</span>
-                </a>
-                <a href="${pageContext.request.contextPath}/shop/shipping" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-truck-fast text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Đóng gói & Vận đơn</span>
-                    </span>
-                </a>
-
-                <!-- Group: TIẾP THỊ & KHÁCH HÀNG -->
-                <div class="shop-sidebar-group-title">TIẾP THỊ & KHÁCH HÀNG</div>
-                <a href="${pageContext.request.contextPath}/shop/coupons" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-tag text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Mã giảm giá Shop</span>
-                    </span>
-                </a>
-                <a href="${pageContext.request.contextPath}/shop/reviews" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-regular fa-star text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Đánh giá từ khách</span>
-                    </span>
-                </a>
-
-                <!-- Group: TÀI CHÍNH & THIẾT LẬP -->
-                <div class="shop-sidebar-group-title">TÀI CHÍNH & THIẾT LẬP</div>
-                <a href="${pageContext.request.contextPath}/shop/finance" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-regular fa-credit-card text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Doanh thu & Rút tiền</span>
-                    </span>
-                </a>
-                <a href="${pageContext.request.contextPath}/shop/settings" class="shop-sidebar-link">
-                    <span class="flex items-center gap-3">
-                        <i class="fa-solid fa-gear text-slate-400 text-sm w-4 text-center"></i>
-                        <span>Cài đặt Shop</span>
-                    </span>
-                </a>
-            </nav>
-        </div>
-
-        <!-- Sidebar Footer Links -->
-        <div class="pt-4 border-t border-slate-100 space-y-1">
-            <a href="${pageContext.request.contextPath}/home" class="shop-sidebar-link text-slate-600 hover:text-emerald-700">
-                <span class="flex items-center gap-3">
-                    <i class="fa-solid fa-store text-xs w-4 text-center"></i>
-                    <span>Xem trang mua sắm</span>
-                </span>
-            </a>
-            <a href="${pageContext.request.contextPath}/logout" class="shop-sidebar-link text-red-600 hover:bg-red-50 hover:text-red-700">
-                <span class="flex items-center gap-3">
-                    <i class="fa-solid fa-arrow-right-from-bracket text-xs w-4 text-center"></i>
-                    <span>Đăng xuất</span>
-                </span>
-            </a>
-        </div>
-    </aside>
-
-    <!-- ========================================================
-         2. TOP HEADER NAVBAR
-         ======================================================== -->
-    <header class="shop-header">
-        <!-- Search bar -->
-        <div class="header-search-container">
-            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <form action="${pageContext.request.contextPath}/shop/products" method="GET">
-                <input type="text" name="keyword" value="${param.keyword}" placeholder="Tìm theo SKU, tên trái cây, hoặc mã đơn con (Ctrl + K)..." class="header-search-input">
-            </form>
-        </div>
-
-        <!-- Right Header Items -->
-        <div class="flex items-center gap-4">
-            <!-- Active receiving orders status -->
-            <div class="status-receiving-orders">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>Đang nhận đơn</span>
-            </div>
-
-            <!-- Chat icon -->
-            <button class="header-icon-action" type="button" title="Tin nhắn">
-                <i class="fa-regular fa-comment-dots text-sm"></i>
-            </button>
-
-            <!-- Notification icon with badge 5 -->
-            <button class="header-icon-action" type="button" title="Thông báo">
-                <i class="fa-regular fa-bell text-sm"></i>
-                <span class="header-icon-badge">5</span>
-            </button>
-
-            <!-- User profile -->
-            <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
-                <div class="text-right hidden sm:block">
-                    <span class="text-xs font-bold text-gray-900 block leading-tight">
-                        ${not empty sessionScope.user.fullName ? sessionScope.user.fullName : 'Phạm Văn Nông'}
-                    </span>
-                    <span class="text-[11px] text-gray-500 block leading-tight">Chủ Vườn Đà Lạt</span>
-                </div>
-                <div class="w-9 h-9 rounded-full bg-[#166534] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
-                    <c:choose>
-                        <c:when test="${not empty sessionScope.user.avatarUrl}">
-                            <img src="${sessionScope.user.avatarUrl}" alt="Avatar" class="w-full h-full rounded-full object-cover">
-                        </c:when>
-                        <c:otherwise>
-                            <i class="fa-regular fa-user text-xs"></i>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-            </div>
-        </div>
-    </header>
+    <jsp:include page="/views/shop/layout/sidebar.jsp">
+        <jsp:param name="active" value="products" />
+    </jsp:include>
+    <jsp:include page="/views/shop/layout/header.jsp" />
 
     <!-- ========================================================
          3. MAIN CONTENT

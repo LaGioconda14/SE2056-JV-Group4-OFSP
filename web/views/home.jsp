@@ -73,11 +73,20 @@
 
                     <!-- User Actions -->
                     <div class="flex items-center gap-3 sm:gap-4">
-                        <c:if test="${currentUser.role eq 'SHOP_OWNER'}">
-                            <a href="${pageContext.request.contextPath}/shop/products" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-bold transition shadow-xs">
-                                <i class="fa-solid fa-sliders text-emerald-600"></i> Kênh Người Bán
-                            </a>
-                        </c:if>
+                        <!-- Xử lý hiển thị nút Kênh Người Bán hoặc Đăng Ký Shop dựa trên Role -->
+                        <c:choose>
+                            <c:when test="${currentUser.role eq 'SHOP_OWNER'}">
+                                <a href="${pageContext.request.contextPath}/shop/products" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 rounded-xl text-xs font-bold transition shadow-xs">
+                                    <i class="fa-solid fa-sliders text-emerald-600"></i> Kênh Người Bán
+                                </a>
+                            </c:when>
+                            <c:otherwise>
+                                <a href="${pageContext.request.contextPath}/register-shop" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/80 rounded-xl text-xs font-bold transition shadow-xs" title="Đăng ký mở gian hàng bán hoa quả">
+                                    <i class="fa-solid fa-store text-amber-600"></i> Đăng Ký Shop
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
+
                         <c:choose>
                             <c:when test="${empty sessionScope.account and empty sessionScope.user}">
                                 <div class="flex items-center gap-2">
@@ -108,14 +117,21 @@
                                                 <p class="text-[11px] text-gray-500 truncate">${currentUser.email}</p>
                                             </div>
                                             
-                                            <c:if test="${currentUser.role eq 'SHOP_OWNER'}">
-                                                <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition">
-                                                    <i class="fa-solid fa-sliders text-emerald-600"></i> Kênh Quản Lý Shop
-                                                </a>
-                                                <a href="${pageContext.request.contextPath}/store?id=${sessionScope.shopId != null ? sessionScope.shopId : 1}" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 rounded-xl hover:bg-amber-100 transition">
-                                                    <i class="fa-solid fa-store text-amber-600"></i> Gian Hàng Của Tôi
-                                                </a>
-                                            </c:if>
+                                            <c:choose>
+                                                <c:when test="${currentUser.role eq 'SHOP_OWNER'}">
+                                                    <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition">
+                                                        <i class="fa-solid fa-sliders text-emerald-600"></i> Kênh Quản Lý Shop
+                                                    </a>
+                                                    <a href="${pageContext.request.contextPath}/store?id=${sessionScope.shopId != null ? sessionScope.shopId : 1}" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 rounded-xl hover:bg-amber-100 transition">
+                                                        <i class="fa-solid fa-store text-amber-600"></i> Gian Hàng Của Tôi
+                                                    </a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${pageContext.request.contextPath}/register-shop" class="flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-800 bg-amber-50 rounded-xl hover:bg-amber-100 transition">
+                                                        <i class="fa-solid fa-store text-amber-600"></i> Đăng Ký Trở Thành Seller
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
 
                                             <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 rounded-xl hover:bg-gray-100 transition">
                                                 <i class="fa-solid fa-user-gear text-gray-400"></i> Tài khoản của tôi
@@ -427,4 +443,3 @@
         </footer>
     </body>
 </html>
-
