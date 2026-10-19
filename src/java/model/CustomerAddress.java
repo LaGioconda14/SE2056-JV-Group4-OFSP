@@ -101,6 +101,25 @@ public class CustomerAddress implements Serializable {
         this.city = city;
     }
 
+    public String getFullAddress() {
+        StringBuilder address = new StringBuilder();
+        appendPart(address, streetAddress);
+        appendPart(address, ward);
+        appendPart(address, district);
+        appendPart(address, city);
+        return address.toString();
+    }
+
+    private void appendPart(StringBuilder address, String part) {
+        if (part == null || part.trim().isEmpty()) {
+            return;
+        }
+        if (address.length() > 0) {
+            address.append(", ");
+        }
+        address.append(part.trim());
+    }
+
     public boolean isDefault() {
         return isDefault;
     }
@@ -117,6 +136,14 @@ public class CustomerAddress implements Serializable {
         this.isDefault = isDefault;
     }
 
+    public boolean isDefaultAddress() {
+        return isDefault;
+    }
+
+    public void setDefaultAddress(boolean defaultAddress) {
+        this.isDefault = defaultAddress;
+    }
+
     public Timestamp getCreatedAt() {
         return createdAt;
     }
@@ -131,25 +158,5 @@ public class CustomerAddress implements Serializable {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public String getFullAddress() {
-        StringBuilder sb = new StringBuilder();
-        if (streetAddress != null && !streetAddress.trim().isEmpty()) {
-            sb.append(streetAddress.trim());
-        }
-        if (ward != null && !ward.trim().isEmpty()) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(ward.trim());
-        }
-        if (district != null && !district.trim().isEmpty()) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(district.trim());
-        }
-        if (city != null && !city.trim().isEmpty()) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(city.trim());
-        }
-        return sb.toString();
     }
 }

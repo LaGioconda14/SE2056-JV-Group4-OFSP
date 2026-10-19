@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hòa Giải Khiếu Nại, Tranh Chấp & Hoàn Tiền - FreshFruit Admin</title>
+    <title>Hòa Giải Khiếu Nại, Tranh Chấp & Hoàn Tiền - Gốc Vườn Admin</title>
     <!-- Google Fonts & Bootstrap -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -320,16 +320,16 @@
                             </div>
                         </div>
 
-                        <!-- Phán quyết Trọng Tài Sàn FreshFruit -->
+                        <!-- Phán quyết Trọng Tài Sàn Gốc Vườn -->
                         <div class="dispute-arbitration-box mb-3" id="arbitrationDecisionBox">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <i class="bi bi-shield-check text-success fs-5"></i>
-                                <h5 class="fw-bold text-dark mb-0 fs-7">Phán quyết Trọng Tài Sàn FreshFruit</h5>
+                                <h5 class="fw-bold text-dark mb-0 fs-7">Phán quyết Trọng Tài Sàn Gốc Vườn</h5>
                             </div>
                             <div class="text-muted fs-8 mb-2">Kết luận thẩm định chất lượng nông sản:</div>
                             
                             <div class="p-2 rounded-2 bg-light border mb-3 fs-7 text-dark" id="detailArbitrationText">
-                                ${not empty firstDis ? firstDis.resolutionNote : 'Hồ sơ khiếu nại đang được hội đồng trọng tài sàn FreshFruit kiểm duyệt đối soát dữ liệu đóng gói cùng camera giao nhận vận chuyển.'}
+                                ${not empty firstDis ? firstDis.resolutionNote : 'Hồ sơ khiếu nại đang được hội đồng trọng tài sàn Gốc Vườn kiểm duyệt đối soát dữ liệu đóng gói cùng camera giao nhận vận chuyển.'}
                             </div>
 
                             <!-- 3 Arbitration Action Buttons -->
@@ -411,7 +411,7 @@
                                     </div>
                                     <div class="timeline-content-bubble bg-success-subtle border-success-subtle">
                                         <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <strong class="text-success-emphasis">FreshFruit SuperAdmin (Sarah Jenkins)</strong>
+                                            <strong class="text-success-emphasis">Gốc Vườn SuperAdmin (Sarah Jenkins)</strong>
                                             <span class="text-muted fs-8">10:45 Hôm nay</span>
                                         </div>
                                         <div class="text-success-emphasis">Đã tiếp nhận hồ sơ sang giai đoạn phán quyết trọng tài cấp sàn. Tạm phong tỏa ₫680,000 trong ví đối tác.</div>
@@ -423,7 +423,7 @@
                     </div>
                 </div>
 
-                <!-- RIGHT COLUMN: Dispute Queue & FreshFruit Policy (~35%) -->
+                <!-- RIGHT COLUMN: Dispute Queue & Gốc Vườn Policy (~35%) -->
                 <div class="col-lg-4">
                     <div class="admin-card p-3 mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
@@ -473,7 +473,7 @@
                             <h5 class="fw-bold text-white mb-0 fs-7">Cam Kết 100% Tươi Ngon</h5>
                         </div>
                         <p class="text-light fs-8 mb-3" style="line-height: 1.5; opacity: 0.9;">
-                            Quy chế bảo vệ người tiêu dùng FreshFruit: Hoa quả hư hao trên 20% khi bóc hộp được quyền đổi hoàn 1 đổi 1 hoặc hoàn tiền trong vòng 24 giờ.
+                            Quy chế bảo vệ người tiêu dùng Gốc Vườn: Hoa quả hư hao trên 20% khi bóc hộp được quyền đổi hoàn 1 đổi 1 hoặc hoàn tiền trong vòng 24 giờ.
                         </p>
                         <div class="d-flex justify-content-between align-items-center pt-2 border-top border-success-subtle">
                             <span class="badge bg-white text-success fw-bold fs-8">PHẢN HỒI TỰ ĐỘNG: 8 GIỜ</span>
@@ -492,9 +492,9 @@
                         <i class="bi bi-shield-check"></i>
                     </div>
                     <div>
-                        <div class="freshguard-title">Chính Sách Bảo Hành Độ Tươi FreshFruit 100% &amp; Ký Quỹ Bảo Lãnh Gian Hàng</div>
+                        <div class="freshguard-title">Chính Sách Bảo Hành Độ Tươi Gốc Vườn 100% &amp; Ký Quỹ Bảo Lãnh Gian Hàng</div>
                         <div class="freshguard-desc">
-                            Mỗi gian hàng trên FreshFruit đều duy trì tài khoản ký quỹ tối thiểu ₫10,000,000. Nếu gian hàng không phản hồi các khiếu nại chất lượng nông sản tươi trong vòng 8 giờ kể từ khi khách báo cáo, hệ thống Trọng tài thông minh sẽ tự động hoàn 100% số tiền cho khách hàng và ghi nhận cảnh cáo vi phạm cấp 1.
+                            Mỗi gian hàng trên Gốc Vườn đều duy trì tài khoản ký quỹ tối thiểu ₫10,000,000. Nếu gian hàng không phản hồi các khiếu nại chất lượng nông sản tươi trong vòng 8 giờ kể từ khi khách báo cáo, hệ thống Trọng tài thông minh sẽ tự động hoàn 100% số tiền cho khách hàng và ghi nhận cảnh cáo vi phạm cấp 1.
                         </div>
                     </div>
                 </div>
@@ -519,7 +519,7 @@
             </div>
             <div class="modal-body text-center p-3">
                 <img id="evidenceModalImg" src="" alt="Evidence" class="img-fluid rounded-3 border" style="max-height: 480px;">
-                <div class="text-muted fs-8 mt-2">Dữ liệu tệp đính kèm mã SHA-256 đã đóng dấu thời gian bảo mật chuỗi khối FreshFruit.</div>
+                <div class="text-muted fs-8 mt-2">Dữ liệu tệp đính kèm mã SHA-256 đã đóng dấu thời gian bảo mật chuỗi khối Gốc Vườn.</div>
             </div>
             <div class="modal-footer border-top bg-light">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
@@ -541,7 +541,7 @@
                         <i class="bi bi-snow2 fs-5"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold mb-0">Quy Tắc Bồi Hoàn &amp; Trách Nhiệm Chuỗi Lạnh FreshFruit</h5>
+                        <h5 class="modal-title fw-bold mb-0">Quy Tắc Bồi Hoàn &amp; Trách Nhiệm Chuỗi Lạnh Gốc Vườn</h5>
                         <div class="text-muted fs-8">Cập nhật theo Quyết định Ban Trọng Tài Nông Sản 2024</div>
                     </div>
                 </div>
@@ -705,7 +705,7 @@
     }
 
     function openHandbookModal() {
-        alert('Đang mở Sổ tay Trọng tài Giải quyết Tranh chấp Nông sản Sàn FreshFruit (Phiên bản v2.4).');
+        alert('Đang mở Sổ tay Trọng tài Giải quyết Tranh chấp Nông sản Sàn Gốc Vườn (Phiên bản v2.4).');
     }
 
     // Toast helper

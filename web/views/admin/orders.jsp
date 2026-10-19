@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreshFruit - Giám Sát Đơn Hàng & Giao Vận Toàn Sàn (Orders & Deliveries)</title>
+    <title>Gốc Vườn - Giám Sát Đơn Hàng & Giao Vận Toàn Sàn (Orders & Deliveries)</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -360,7 +360,7 @@
                             <i class="bi bi-shield-check text-success fs-5"></i>
                             <div>
                                 <strong class="text-dark" style="font-size: 0.78rem;">Chính Sách Cam Kết Độ Tươi & Bồi Thường Nông Sản</strong>
-                                <div class="text-muted" style="font-size: 0.7rem;">Sàn FreshFruit tự động hoàn tiền 100% nếu trái cây dập hỏng do chậm giao > 90 phút.</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Sàn Gốc Vườn tự động hoàn tiền 100% nếu trái cây dập hỏng do chậm giao > 90 phút.</div>
                             </div>
                         </div>
                         <a href="javascript:void(0)" onclick="alert('Đang mở quy chế bảo quản chuỗi lạnh SLA...');" class="btn btn-sm btn-light border fw-bold text-dark px-3" style="font-size: 0.72rem; border-radius: 8px;">

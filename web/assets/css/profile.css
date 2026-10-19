@@ -871,27 +871,28 @@ body {
 }
 
 .order-filter-nav {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     align-items: center;
-    gap: 8px 10px;
+    gap: 6px;
     background: #ffffff;
-    padding: 12px;
+    padding: 10px;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     margin-bottom: 1.25rem;
+    width: 100%;
 }
 
 .order-filter-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 14px;
+    gap: 4px;
+    padding: 8px 4px;
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 500;
     color: #475569;
     cursor: pointer;
@@ -899,6 +900,8 @@ body {
     white-space: nowrap;
     text-decoration: none;
     user-select: none;
+    width: 100%;
+    text-align: center;
 }
 
 .order-filter-btn:hover {
@@ -923,7 +926,7 @@ body {
     font-weight: 700;
     min-width: 18px;
     height: 18px;
-    padding: 0 6px;
+    padding: 0 5px;
     border-radius: 10px;
     background: #e2e8f0;
     color: #475569;
@@ -938,6 +941,21 @@ body {
 .order-filter-btn.active .badge-pill-count {
     background: rgba(255, 255, 255, 0.25);
     color: #ffffff;
+}
+
+@media (max-width: 991px) {
+    .order-filter-nav {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: thin;
+        padding-bottom: 8px;
+    }
+    .order-filter-btn {
+        flex: 1 0 auto;
+        padding: 8px 12px;
+        min-width: fit-content;
+    }
 }
 
 .order-card-footer {
@@ -1240,5 +1258,398 @@ body {
     background: #f0fdf4;
     color: #03542c;
 }
+
+/* ==========================================================================
+   ORDER ITEM ROW INTERACTION & TRACKING MODAL STYLES
+   ========================================================================== */
+.shopee-items-list {
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    transition: background-color 0.15s ease;
+}
+
+.shopee-items-list:hover {
+    background-color: #f8fafc;
+}
+
+.track-hint-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #046a38;
+    background-color: #f0fdf4;
+    border: 1px dashed #86efac;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-top: 8px;
+    transition: all 0.2s ease;
+}
+
+.shopee-items-list:hover .track-hint-bar {
+    background-color: #dcfce7;
+    border-color: #22c55e;
+    color: #03542c;
+    box-shadow: 0 1px 4px rgba(4, 106, 56, 0.1);
+}
+
+.bg-slate-50 {
+    background-color: #f8fafc !important;
+}
+
+.shadow-xs {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tracking-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.tracking-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 10px 0;
+    overflow-x: auto;
+}
+
+.stepper-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    z-index: 2;
+    position: relative;
+    min-width: 80px;
+    flex: 1;
+}
+
+.stepper-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    margin-bottom: 8px;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.stepper-step.completed .stepper-circle {
+    background: #046a38;
+    border-color: #046a38;
+    color: #ffffff;
+}
+
+.stepper-step.active .stepper-circle {
+    background: #046a38;
+    border-color: #046a38;
+    color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(4, 106, 56, 0.2);
+}
+
+.stepper-step.cancelled .stepper-circle {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: #ffffff;
+}
+
+.stepper-circle.pulse {
+    animation: stepperPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes stepperPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(4, 106, 56, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(4, 106, 56, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(4, 106, 56, 0);
+    }
+}
+
+.stepper-line {
+    flex: 1;
+    height: 3px;
+    background: #e2e8f0;
+    margin: 0 4px 28px 4px;
+    position: relative;
+    z-index: 1;
+}
+
+.stepper-line.completed {
+    background: #046a38;
+}
+
+.stepper-line.active {
+    background: linear-gradient(90deg, #046a38, #86efac);
+}
+
+.stepper-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 2px;
+    line-height: 1.3;
+}
+
+.stepper-step.completed .stepper-title {
+    color: #1e293b;
+}
+
+.stepper-time {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+/* GPS Map Styles */
+.gps-map-container {
+    height: 290px;
+    background: #edf7f1;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.map-pin-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 2px solid #ffffff;
+}
+
+.map-pin-tag {
+    margin-top: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #1e293b;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    border: 1px solid #e2e8f0;
+}
+
+.map-waypoint {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+}
+
+.map-pin-driver {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 2px solid #ffffff;
+}
+
+.driver-bubble {
+    margin-bottom: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.bg-amber-600 {
+    background-color: #d97706 !important;
+}
+
+.bg-amber-500 {
+    background-color: #f59e0b !important;
+}
+
+.bg-emerald-700 {
+    background-color: #047857 !important;
+}
+
+.text-emerald-800 {
+    color: #065f46 !important;
+}
+
+@keyframes pulseGlow {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0.5));
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.06);
+        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 0 0 rgba(245, 158, 11, 0.5));
+    }
+}
+
+.pulse-driver {
+    animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+.stat-icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.driver-avatar {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+}
+
+.tracking-item-card {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    gap: 12px;
+}
+
+.tracking-item-card img {
+    width: 54px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.tracking-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tracking-item-name {
+    font-weight: 600;
+    font-size: 13.5px;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.tracking-item-variant {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.tracking-item-price {
+    font-weight: 700;
+    color: #046a38;
+    font-size: 14px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* ========================================================
+   PROFILE VIEW MODE & EDIT MODE STYLES
+   ======================================================== */
+.profile-view-mode input:not(.input-readonly-fixed):disabled,
+.profile-view-mode select:disabled {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #334155 !important;
+    cursor: default !important;
+    user-select: text;
+    -webkit-text-fill-color: #334155;
+    opacity: 1;
+}
+
+.profile-view-mode .gender-choice {
+    cursor: default;
+    pointer-events: none;
+}
+
+.profile-view-mode .btn-check:disabled + .gender-choice {
+    cursor: default;
+    pointer-events: none;
+}
+
+.profile-view-mode .btn-check:checked + .gender-choice {
+    background-color: var(--primary-green) !important;
+    color: #ffffff !important;
+    border-color: var(--primary-green) !important;
+    opacity: 0.95;
+}
+
+.profile-view-mode .btn-check:not(:checked) + .gender-choice {
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    background-color: #f8fafc !important;
+    opacity: 0.75;
+}
+
+.profile-view-mode #btnUploadAvatar:disabled,
+.profile-view-mode #btnDeleteAvatar:disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+/* Edit mode transition & highlight */
+.profile-edit-mode input:not(.input-readonly-fixed),
+.profile-edit-mode select {
+    background-color: #ffffff !important;
+    border-color: #86efac !important;
+    color: #0f172a !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.profile-edit-mode input:not(.input-readonly-fixed):focus,
+.profile-edit-mode select:focus {
+    border-color: var(--primary-green) !important;
+    box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.15) !important;
+}
+
+.profile-edit-mode .gender-choice {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+.profile-edit-mode #btnUploadAvatar,
+.profile-edit-mode #btnDeleteAvatar {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+
 
 

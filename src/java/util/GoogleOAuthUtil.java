@@ -17,14 +17,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.GoogleAccount;
 
-/**
- * Utility helper for Google OAuth 2.0 authentication flow.
- */
 public class GoogleOAuthUtil {
 
     private static final Logger LOGGER = Logger.getLogger(GoogleOAuthUtil.class.getName());
 
-    // Placeholder mặc định an toàn cho Git (thực tế sẽ đọc từ oauth.properties hoặc biến môi trường)
     public static final String DEFAULT_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
     public static final String DEFAULT_CLIENT_SECRET = "YOUR_GOOGLE_CLIENT_SECRET";
 
@@ -88,9 +84,6 @@ public class GoogleOAuthUtil {
                 && secret != null && !secret.contains("YOUR_GOOGLE_CLIENT_SECRET");
     }
 
-    /**
-     * Generate Google OAuth authorization URL to redirect user for consent.
-     */
     public static String getGoogleLoginUrl() {
         return GOOGLE_AUTH_URL
                 + "?scope=email%20profile"
@@ -100,13 +93,6 @@ public class GoogleOAuthUtil {
                 + "&approval_prompt=force";
     }
 
-    /**
-     * Exchange authorization code for Google access token.
-     *
-     * @param code Authorization code returned from Google
-     * @return access_token string
-     * @throws IOException on network or HTTP error
-     */
     public static String getToken(String code) throws IOException {
         String params = "code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
                 + "&client_id=" + URLEncoder.encode(getClientId(), StandardCharsets.UTF_8)
@@ -156,13 +142,6 @@ public class GoogleOAuthUtil {
         }
     }
 
-    /**
-     * Fetch user profile info using access token.
-     *
-     * @param accessToken Google access token
-     * @return GoogleAccount model
-     * @throws IOException on network or HTTP error
-     */
     public static GoogleAccount getUserInfo(String accessToken) throws IOException {
         URL url = URI.create(GOOGLE_USER_INFO_URL + accessToken).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();

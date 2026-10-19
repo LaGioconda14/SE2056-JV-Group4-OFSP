@@ -10,9 +10,6 @@ import jakarta.servlet.http.HttpSession;
 import service.IUserService;
 import service.impl.UserServiceImpl;
 
-/**
- * Controller handling OTP verification and Password Reset.
- */
 @WebServlet(name = "ResetPasswordServlet", urlPatterns = {"/reset-password"})
 public class ResetPasswordServlet extends HttpServlet {
 
@@ -21,7 +18,6 @@ public class ResetPasswordServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         HttpSession session = request.getSession(false);
         if (session != null) {
             String resetEmail = (String) session.getAttribute("resetEmail");
@@ -46,7 +42,6 @@ public class ResetPasswordServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -58,14 +53,12 @@ public class ResetPasswordServlet extends HttpServlet {
         request.setAttribute("email", email);
         request.setAttribute("otp", otp);
 
-        // Basic check for empty OTP
         if (otp == null || otp.trim().isEmpty()) {
             request.setAttribute("errorMessage", "Vui lòng nhập mã OTP!");
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
 
-        // Verify OTP from Web Session
         HttpSession session = request.getSession(false);
         if (session == null) {
             request.setAttribute("errorMessage", "Phiên xác thực đã hết hạn. Vui lòng quay lại gửi yêu cầu mã OTP mới!");
@@ -83,7 +76,6 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        // Kiểm tra thời hạn hiệu lực của OTP (5 phút)
         if (System.currentTimeMillis() > sessionExpiry) {
             session.removeAttribute("resetOtp");
             session.removeAttribute("otpExpiryTime");
@@ -92,21 +84,18 @@ public class ResetPasswordServlet extends HttpServlet {
             return;
         }
 
-        // Kiểm tra email khớp với email đã nhận mã OTP
         if (email == null || !email.trim().equalsIgnoreCase(sessionEmail.trim())) {
             request.setAttribute("errorMessage", "Email không khớp với địa chỉ đã nhận mã xác thực OTP!");
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
 
-        // Kiểm tra mã OTP khớp
         if (!otp.trim().equals(sessionOtp.trim())) {
             request.setAttribute("errorMessage", "Mã OTP không chính xác. Vui lòng kiểm tra lại email của bạn!");
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
             return;
         }
 
-        // Reset password via Service
         try {
             userService.resetPassword(email, newPassword, confirmPassword);
 
@@ -122,5 +111,3 @@ public class ResetPasswordServlet extends HttpServlet {
         }
     }
 }
-
-

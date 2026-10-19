@@ -14,43 +14,24 @@ import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
-/**
- * Service to generate OTP and send emails via Gmail SMTP using JavaMail API.
- */
 public class EmailUtil {
 
     private static final Logger LOGGER = Logger.getLogger(EmailUtil.class.getName());
 
-    // CẤU HÌNH GMAIL SMTP (Thay bằng Email & Mật khẩu ứng dụng - App Password của bạn)
-    // Để lấy App Password: Google Account -> Security -> 2-Step Verification -> App Passwords
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
-    private static final String SENDER_EMAIL = "your_email@gmail.com";        // Thay bằng email Gmail của bạn
-    private static final String SENDER_PASSWORD = "your_app_password_here";  // Thay bằng Google App Password (16 ký tự)
+    private static final String SENDER_EMAIL = "your_email@gmail.com";
+    private static final String SENDER_PASSWORD = "your_app_password_here";
     private static final String SENDER_NAME = "Online Fruit Shop";
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    /**
-     * Generate a 6-digit numeric OTP code.
-     *
-     * @return 6-digit string, e.g. "482910"
-     */
     public static String generateOTP() {
         int otp = 100000 + RANDOM.nextInt(900000);
         return String.valueOf(otp);
     }
 
-    /**
-     * Send an OTP email for password reset with a stylized HTML template.
-     *
-     * @param recipientEmail Recipient's email address
-     * @param recipientName  Recipient's full name or email username
-     * @param otp            The 6-digit OTP code
-     * @return true if email sent successfully, false otherwise
-     */
     public static boolean sendOtpEmail(String recipientEmail, String recipientName, String otp) {
-        // If not configured, log reminder and return true for local development
         if ("your_email@gmail.com".equals(SENDER_EMAIL) || "your_app_password_here".equals(SENDER_PASSWORD)) {
             LOGGER.warning("=== [EmailUtil DEV MODE] ===");
             LOGGER.warning("Gmail sender email or App Password has NOT been configured yet in EmailUtil.java!");
@@ -83,7 +64,6 @@ public class EmailUtil {
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
             message.setSubject("Mã xác thực đặt lại mật khẩu - Online Fruit Shop");
 
-            // HTML Body Content with Fruit Shop Theme (Fresh Green)
             String displayName = (recipientName != null && !recipientName.trim().isEmpty()) ? recipientName : "Quý khách";
             String htmlContent = "<!DOCTYPE html>"
                     + "<html>"
@@ -129,5 +109,3 @@ public class EmailUtil {
         }
     }
 }
-
-

@@ -8,67 +8,29 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Shop;
 import model.User;
-import service.IShopProductService;
+import model.Shop;
+import dao.ShopDAO;
 import service.IUserService;
-import service.impl.ShopProductServiceImpl;
 import service.impl.UserServiceImpl;
 
-/**
- * Controller handling User Login and Remember Me Cookies.
- */
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
 public class LoginServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();
-    private final IShopProductService shopProductService = new ShopProductServiceImpl();
+    private final ShopDAO shopDAO = new ShopDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         HttpSession session = request.getSession(false);
-        // If already logged in, redirect based on role
-        if (session != null && session.getAttribute("user") != null) {
-            User user = (User) session.getAttribute("user");
-            if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
-                response.sendRedirect(request.getContextPath() + "/admin");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home");
-            }
+        if (isLoggedIn(session)) {
+            redirectByUserRole((User) session.getAttribute("user"), request, response);
             return;
         }
 
-        // Check for any flash message from session
-        if (session != null) {
-            String errorMsg = (String) session.getAttribute("errorMessage");
-            if (errorMsg != null) {
-                request.setAttribute("errorMessage", errorMsg);
-                session.removeAttribute("errorMessage");
-            }
-            String successMsg = (String) session.getAttribute("successMessage");
-            if (successMsg != null) {
-                request.setAttribute("successMessage", successMsg);
-                session.removeAttribute("successMessage");
-            }
-        }
-
-        // Check Remember Me cookies to auto-fill login form
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie c : cookies) {
-                if ("c_email".equals(c.getName())) {
-                    request.setAttribute("rememberEmail", c.getValue());
-                }
-                if ("c_pass".equals(c.getName())) {
-                    request.setAttribute("rememberPassword", c.getValue());
-                }
-                if ("c_rem".equals(c.getName())) {
-                    request.setAttribute("rememberChecked", "checked");
-                }
-            }
-        }
+        transferFlashMessages(session, request);
+        populateRememberMeCookies(request);
 
         request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
     }
@@ -76,7 +38,6 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -88,58 +49,121 @@ public class LoginServlet extends HttpServlet {
         try {
             user = userService.login(email, password);
         } catch (Exception ex) {
-            request.setAttribute("errorMessage", ex.getMessage());
-            request.setAttribute("email", email);
-            request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+            handleLoginError(request, response, email, ex.getMessage());
             return;
         }
 
-        // Authentication Successful -> Store session
         HttpSession session = request.getSession(true);
-        session.setAttribute("user", user);
+        initUserSession(session, user);
+        handleRememberMeCookies(request, response, email, password, remember);
 
-        // Process Remember Me Cookies (Expires in 7 days)
-        int cookieMaxAge = (remember != null) ? (7 * 24 * 60 * 60) : 0;
+        if ("SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
+            initShopSession(session, user.getId());
+        }
 
-        Cookie cookieEmail = new Cookie("c_email", (remember != null) ? email : "");
-        cookieEmail.setMaxAge(cookieMaxAge);
-        cookieEmail.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
-        response.addCookie(cookieEmail);
+        redirectByUserRole(user, request, response);
+    }
 
-        Cookie cookiePassword = new Cookie("c_pass", (remember != null) ? password : "");
-        cookiePassword.setMaxAge(cookieMaxAge);
-        cookiePassword.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
-        response.addCookie(cookiePassword);
+    private boolean isLoggedIn(HttpSession session) {
+        return session != null && session.getAttribute("user") != null;
+    }
 
-        Cookie cookieRem = new Cookie("c_rem", (remember != null) ? "checked" : "");
-        cookieRem.setMaxAge(cookieMaxAge);
-        cookieRem.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
-        response.addCookie(cookieRem);
+    private void transferFlashMessages(HttpSession session, HttpServletRequest request) {
+        if (session == null) {
+            return;
+        }
+        String errorMsg = (String) session.getAttribute("errorMessage");
+        if (errorMsg != null) {
+            request.setAttribute("errorMessage", errorMsg);
+            session.removeAttribute("errorMessage");
+        }
+        String successMsg = (String) session.getAttribute("successMessage");
+        if (successMsg != null) {
+            request.setAttribute("successMessage", successMsg);
+            session.removeAttribute("successMessage");
+        }
+    }
 
-        // Redirect based on user role
-        String role = user != null ? user.getRole() : "";
-
-        if ("SHOP_OWNER".equalsIgnoreCase(role)) {
-            // Nếu là Chủ shop -> Lưu thông tin shop vào Session rồi điều hướng
-            Shop shop = shopProductService.getShopByOwnerId(user.getId());
-            if (shop != null) {
-                session.setAttribute("shopLogo", shop.getLogoUrl());
-                session.setAttribute("shopId", shop.getShopId());   
-                session.setAttribute("shopName", shop.getShopName());
-                session.setAttribute("shop", shop.getStatus());
-                session.setAttribute("shopObj", shop);
+    private void populateRememberMeCookies(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) {
+            return;
+        }
+        for (Cookie c : cookies) {
+            if ("c_email".equals(c.getName())) {
+                request.setAttribute("rememberEmail", c.getValue());
+            } else if ("c_pass".equals(c.getName())) {
+                request.setAttribute("rememberPassword", c.getValue());
+            } else if ("c_rem".equals(c.getName())) {
+                request.setAttribute("rememberChecked", "checked");
             }
-            session.setAttribute("email", user.getEmail());
-            response.sendRedirect(request.getContextPath() + "/home");
+        }
+    }
+
+    private void handleLoginError(HttpServletRequest request, HttpServletResponse response,
+            String email, String errorMessage) throws ServletException, IOException {
+        request.setAttribute("errorMessage", errorMessage);
+        request.setAttribute("email", email);
+        request.getRequestDispatcher("/views/auth/login.jsp").forward(request, response);
+    }
+
+    private void initUserSession(HttpSession session, User user) {
+        session.setAttribute("user", user);
+        session.setAttribute("userfullname", user.getFullName());
+        session.setAttribute("email", user.getEmail());
+    }
+
+    private void handleRememberMeCookies(HttpServletRequest request, HttpServletResponse response,
+            String email, String password, String remember) {
+        int cookieMaxAge = (remember != null) ? (7 * 24 * 60 * 60) : 0;
+        String contextPath = request.getContextPath().isEmpty() ? "/" : request.getContextPath();
+
+        addCookie(response, "c_email", (remember != null) ? email : "", cookieMaxAge, contextPath);
+        addCookie(response, "c_pass", (remember != null) ? password : "", cookieMaxAge, contextPath);
+        addCookie(response, "c_rem", (remember != null) ? "checked" : "", cookieMaxAge, contextPath);
+    }
+
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAge, String path) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setMaxAge(maxAge);
+        cookie.setPath(path);
+        response.addCookie(cookie);
+    }
+
+    private void initShopSession(HttpSession session, int userId) {
+        try {
+            Shop shop = shopDAO.getShopByOwnerId(userId);
+            if (shop != null) {
+                session.setAttribute("shopId", shop.getShopId());
+                session.setAttribute("shopName", shop.getShopName());
+                session.setAttribute("shopLogo", shop.getLogoUrl());
+                session.setAttribute("shopObj", shop);
+                session.setAttribute("shopStatus", shop.getStatus());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void redirectByUserRole(User user, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (user == null || user.getRole() == null) {
+            response.sendRedirect(request.getContextPath() + "/home.jsp");
             return;
-        } else if ("ADMIN".equalsIgnoreCase(role)) {
-            // Nếu là Quản trị viên -> Điều hướng vào trang admin
-            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-            return;
-        } else {
-            // Khách hàng thông thường về trang chủ mua sắm
-            response.sendRedirect(request.getContextPath() + "/home");
-            return;
+        }
+
+        switch (user.getRole().toUpperCase()) {
+            case "ADMIN":
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                break;
+            case "SHOP_OWNER":
+                response.sendRedirect(request.getContextPath() + "/shop/products");
+                break;
+            case "DRIVER":
+                response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+                break;
+            default:
+                response.sendRedirect(request.getContextPath() + "/home.jsp");
+                break;
         }
     }
 }

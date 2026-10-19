@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kiểm Duyệt Sản Phẩm & Nông Sản Toàn Sàn - FreshFruit Platform Admin</title>
+    <title>Kiểm Duyệt Sản Phẩm & Nông Sản Toàn Sàn - Gốc Vườn Platform Admin</title>
     <!-- Google Fonts & Bootstrap -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -288,7 +288,7 @@
                                             <strong>Trạng thái hiển thị:</strong> ${p.isActive ? '<span class="text-success fw-semibold">Đang mở bán</span>' : '<span class="text-warning fw-semibold">Tạm ẩn / Đang xét duyệt</span>'}
                                         </div>
                                         <div class="mod-box-line">
-                                            <strong>Phân hạng sản phẩm:</strong> ${p.isFeatured ? '<span class="badge bg-primary-subtle text-primary">Sản Phẩm Tiêu Biểu</span>' : 'Tiêu chuẩn sàn FreshFruit'}
+                                            <strong>Phân hạng sản phẩm:</strong> ${p.isFeatured ? '<span class="badge bg-primary-subtle text-primary">Sản Phẩm Tiêu Biểu</span>' : 'Tiêu chuẩn sàn Gốc Vườn'}
                                         </div>
                                     </div>
                                 </div>
@@ -369,7 +369,7 @@
                         <i class="bi bi-book-half fs-5"></i>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold mb-0">Quy Chuẩn Kiểm Duyệt Nông Sản &amp; Trái Cây Sàn FreshFruit</h5>
+                        <h5 class="modal-title fw-bold mb-0">Quy Chuẩn Kiểm Duyệt Nông Sản &amp; Trái Cây Sàn Gốc Vườn</h5>
                         <div class="text-muted fs-8">Phiên bản ban hành FreshStandard v3.2 - Áp dụng từ 10/2024</div>
                     </div>
                 </div>

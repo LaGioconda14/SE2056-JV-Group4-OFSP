@@ -316,7 +316,6 @@ public class ShopDAO extends DBContext {
         }
         return total;
     }
-
     /**
      * Cập nhật logo/banner của shop (bảng shops). Tham số null = giữ nguyên.
      */

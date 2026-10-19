@@ -1,5 +1,6 @@
 package model;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,11 +12,11 @@ public class Order {
     private String orderCode;
     private long customerId;
     private Integer couponId;
-    private double totalGoodsAmount;
-    private double totalShippingFee;
-    private double platformDiscount;
-    private double finalAmount;
-    private String paymentStatus;
+    private BigDecimal totalGoodsAmount = BigDecimal.ZERO;
+    private BigDecimal totalShippingFee = BigDecimal.ZERO;
+    private BigDecimal platformDiscount = BigDecimal.ZERO;
+    private BigDecimal finalAmount = BigDecimal.ZERO;
+    private String paymentStatus = "PENDING";
     private String paymentMethod;
     private String orderStatus;
     private Timestamp createdAt;
@@ -23,6 +24,8 @@ public class Order {
     private String note;
     private String shopName;
     private String shopLogoUrl;
+    private ShippingAddress shippingAddress;
+    private List<SubOrder> subOrders = new ArrayList<>();
     private List<OrderItem> items = new ArrayList<>();
 
     public Order() {
@@ -36,10 +39,10 @@ public class Order {
         this.orderCode = orderCode;
         this.customerId = customerId;
         this.couponId = couponId;
-        this.totalGoodsAmount = totalGoodsAmount;
-        this.totalShippingFee = totalShippingFee;
-        this.platformDiscount = platformDiscount;
-        this.finalAmount = finalAmount;
+        this.totalGoodsAmount = BigDecimal.valueOf(totalGoodsAmount);
+        this.totalShippingFee = BigDecimal.valueOf(totalShippingFee);
+        this.platformDiscount = BigDecimal.valueOf(platformDiscount);
+        this.finalAmount = BigDecimal.valueOf(finalAmount);
         this.paymentStatus = paymentStatus;
         this.paymentMethod = paymentMethod;
         this.orderStatus = orderStatus;
@@ -61,7 +64,7 @@ public class Order {
     }
 
     public String getOrderCode() {
-        return orderCode;
+        return orderCode != null ? orderCode : ("ORD-" + orderId);
     }
 
     public void setOrderCode(String orderCode) {
@@ -84,40 +87,56 @@ public class Order {
         this.couponId = couponId;
     }
 
-    public double getTotalGoodsAmount() {
+    public BigDecimal getTotalGoodsAmount() {
         return totalGoodsAmount;
     }
 
-    public void setTotalGoodsAmount(double totalGoodsAmount) {
+    public void setTotalGoodsAmount(BigDecimal totalGoodsAmount) {
         this.totalGoodsAmount = totalGoodsAmount;
     }
 
-    public double getTotalShippingFee() {
+    public void setTotalGoodsAmount(double totalGoodsAmount) {
+        this.totalGoodsAmount = BigDecimal.valueOf(totalGoodsAmount);
+    }
+
+    public BigDecimal getTotalShippingFee() {
         return totalShippingFee;
     }
 
-    public void setTotalShippingFee(double totalShippingFee) {
+    public void setTotalShippingFee(BigDecimal totalShippingFee) {
         this.totalShippingFee = totalShippingFee;
     }
 
-    public double getPlatformDiscount() {
+    public void setTotalShippingFee(double totalShippingFee) {
+        this.totalShippingFee = BigDecimal.valueOf(totalShippingFee);
+    }
+
+    public BigDecimal getPlatformDiscount() {
         return platformDiscount;
     }
 
-    public void setPlatformDiscount(double platformDiscount) {
+    public void setPlatformDiscount(BigDecimal platformDiscount) {
         this.platformDiscount = platformDiscount;
     }
 
-    public double getFinalAmount() {
+    public void setPlatformDiscount(double platformDiscount) {
+        this.platformDiscount = BigDecimal.valueOf(platformDiscount);
+    }
+
+    public BigDecimal getFinalAmount() {
         return finalAmount;
     }
 
-    public void setFinalAmount(double finalAmount) {
+    public void setFinalAmount(BigDecimal finalAmount) {
         this.finalAmount = finalAmount;
     }
 
+    public void setFinalAmount(double finalAmount) {
+        this.finalAmount = BigDecimal.valueOf(finalAmount);
+    }
+
     public String getTotalAmount() {
-        return String.format("%,d", (long) finalAmount).replace(',', '.');
+        return String.format("%,d", finalAmount != null ? finalAmount.longValue() : 0).replace(',', '.');
     }
 
     public String getPaymentStatus() {
@@ -155,6 +174,10 @@ public class Order {
         return new SimpleDateFormat("dd/MM/yyyy HH:mm").format(createdAt);
     }
 
+    public Timestamp getCreatedAtTimestamp() {
+        return createdAt;
+    }
+
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
     }
@@ -165,6 +188,22 @@ public class Order {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public ShippingAddress getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(ShippingAddress shippingAddress) {
+        this.shippingAddress = shippingAddress;
+    }
+
+    public List<SubOrder> getSubOrders() {
+        return subOrders;
+    }
+
+    public void setSubOrders(List<SubOrder> subOrders) {
+        this.subOrders = subOrders;
     }
 
     public String getNote() {

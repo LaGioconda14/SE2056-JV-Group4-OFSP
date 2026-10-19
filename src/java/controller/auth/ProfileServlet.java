@@ -2,7 +2,13 @@ package controller.auth;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,9 +17,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
-import java.util.List;
 import model.CustomerAddress;
 import model.Order;
+import model.SubOrder;
 import model.User;
 import service.ICustomerAddressService;
 import service.IOrderService;
@@ -56,12 +62,23 @@ public class ProfileServlet extends HttpServlet {
         } else {
             request.setAttribute("user", sessionUser);
         }
-        long targetUserId = (currentUser != null) ? currentUser.getId() : sessionUser.getId();
-        List<CustomerAddress> addresses = addressService.getAddressesByUserId(targetUserId);
-        request.setAttribute("addresses", addresses);
 
-        List<Order> orders = orderService.getOrdersByCustomerId(targetUserId);
-        request.setAttribute("orders", orders);
+        long targetUserId = (currentUser != null) ? currentUser.getId() : sessionUser.getId();
+        try {
+            List<CustomerAddress> addresses = addressService.getAddressesByUserId(targetUserId);
+            request.setAttribute("addresses", addresses);
+        } catch (Exception ex) {
+            request.setAttribute("addresses", Collections.emptyList());
+        }
+
+        try {
+            List<Order> orders = orderService.getOrdersByCustomerId(targetUserId);
+            request.setAttribute("orders", orders != null ? orders : Collections.emptyList());
+            request.setAttribute("ordersCount", orders != null ? orders.size() : 0);
+        } catch (Exception ex) {
+            request.setAttribute("orders", Collections.emptyList());
+            request.setAttribute("ordersCount", 0);
+        }
 
         if (session != null) {
             String successMsg = (String) session.getAttribute("successMessage");
@@ -73,11 +90,6 @@ public class ProfileServlet extends HttpServlet {
             if (errorMsg != null) {
                 request.setAttribute("errorMessage", errorMsg);
                 session.removeAttribute("errorMessage");
-            }
-            String warningMsg = (String) session.getAttribute("warningMessage");
-            if (warningMsg != null) {
-                request.setAttribute("warningMessage", warningMsg);
-                session.removeAttribute("warningMessage");
             }
         }
 
@@ -104,195 +116,308 @@ public class ProfileServlet extends HttpServlet {
             action = "updateProfile";
         }
 
-        if ("uploadAvatar".equals(action)) {
-            try {
-                Part filePart = request.getPart("avatarFile");
-                if (filePart == null || filePart.getSize() == 0) {
-                    session.setAttribute("errorMessage", "Vui lòng chọn một file ảnh để tải lên!");
-                    response.sendRedirect(request.getContextPath() + "/profile");
-                    return;
-                }
+        switch (action) {
+            case "uploadAvatar":
+                handleUploadAvatar(request, response, session, sessionUser);
+                break;
+            case "deleteAvatar":
+                handleDeleteAvatar(request, response, session, sessionUser);
+                break;
+            case "changePassword":
+                handleChangePassword(request, response, session, sessionUser);
+                break;
+            case "addAddress":
+                handleAddAddress(request, response, session, sessionUser);
+                break;
+            case "setDefaultAddress":
+                handleSetDefaultAddress(request, response, session, sessionUser);
+                break;
+            case "deleteAddress":
+                handleDeleteAddress(request, response, session, sessionUser);
+                break;
+            case "cancelOrder":
+                handleCancelOrder(request, response, session, sessionUser);
+                break;
+            case "updateProfile":
+            default:
+                handleUpdateProfile(request, response, session, sessionUser);
+                break;
+        }
+    }
 
-                String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-                String ext = "";
-                int dotIndex = submittedFileName.lastIndexOf('.');
-                if (dotIndex > 0) {
-                    ext = submittedFileName.substring(dotIndex).toLowerCase();
-                }
-
-                if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".webp")) {
-                    session.setAttribute("errorMessage", "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
-                    response.sendRedirect(request.getContextPath() + "/profile");
-                    return;
-                }
-
-                if (filePart.getSize() > 2 * 1024 * 1024) {
-                    session.setAttribute("errorMessage", "Kích thước ảnh tối đa là 2MB!");
-                    response.sendRedirect(request.getContextPath() + "/profile");
-                    return;
-                }
-
-                String newFileName = "avatar_" + sessionUser.getId() + "_" + System.currentTimeMillis() + ext;
-                String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/avatars");
-                File uploadDir = new File(uploadDirRealPath);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs();
-                }
-
-                String savedFilePath = uploadDirRealPath + File.separator + newFileName;
-                filePart.write(savedFilePath);
-
-                String avatarUrl = "assets/images/avatars/" + newFileName;
-                userService.updateAvatar(sessionUser.getId(), avatarUrl);
-
-                User refreshed = userService.getUserById(sessionUser.getId());
-                if (refreshed != null) {
-                    session.setAttribute("user", refreshed);
-                }
-                session.setAttribute("successMessage", "Cập nhật ảnh đại diện thành công!");
-
-            } catch (Exception e) {
-                session.setAttribute("errorMessage", "Lỗi trong quá trình tải ảnh lên: " + e.getMessage());
+    private void handleUploadAvatar(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        try {
+            Part filePart = request.getPart("avatarFile");
+            if (filePart == null || filePart.getSize() == 0) {
+                session.setAttribute("errorMessage", "Vui lòng chọn một file ảnh để tải lên!");
+                response.sendRedirect(request.getContextPath() + "/profile");
+                return;
             }
-            response.sendRedirect(request.getContextPath() + "/profile");
-            return;
 
-        } else if ("deleteAvatar".equals(action)) {
+            String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+            String ext = "";
+            int dotIndex = submittedFileName.lastIndexOf('.');
+            if (dotIndex > 0) {
+                ext = submittedFileName.substring(dotIndex).toLowerCase();
+            }
+
+            if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".webp")) {
+                session.setAttribute("errorMessage", "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
+                response.sendRedirect(request.getContextPath() + "/profile");
+                return;
+            }
+
+            if (filePart.getSize() > 2 * 1024 * 1024) {
+                session.setAttribute("errorMessage", "Kích thước ảnh tối đa là 2MB!");
+                response.sendRedirect(request.getContextPath() + "/profile");
+                return;
+            }
+
+            String newFileName = "avatar_" + sessionUser.getId() + "_" + System.currentTimeMillis() + ext;
+            String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/avatars");
+            File uploadDir = new File(uploadDirRealPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            String savedFilePath = uploadDirRealPath + File.separator + newFileName;
+            filePart.write(savedFilePath);
+
+            String avatarUrl = "assets/images/avatars/" + newFileName;
+            userService.updateAvatar(sessionUser.getId(), avatarUrl);
+
+            User refreshed = userService.getUserById(sessionUser.getId());
+            if (refreshed != null) {
+                session.setAttribute("user", refreshed);
+            }
+            session.setAttribute("successMessage", "Cập nhật ảnh đại diện thành công!");
+
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", "Lỗi trong quá trình tải ảnh lên: " + e.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/profile");
+    }
+
+    private void handleDeleteAvatar(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        try {
+            userService.updateAvatar(sessionUser.getId(), null);
+            User refreshed = userService.getUserById(sessionUser.getId());
+            if (refreshed != null) {
+                session.setAttribute("user", refreshed);
+            }
+            session.setAttribute("successMessage", "Đã xóa ảnh đại diện thành công!");
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/profile");
+    }
+
+    private void handleChangePassword(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        String oldPassword = request.getParameter("oldPassword");
+        String newPassword = request.getParameter("newPassword");
+        String confirmPassword = request.getParameter("confirmPassword");
+
+        try {
+            userService.changePassword(sessionUser.getId(), oldPassword, newPassword, confirmPassword);
+            session.setAttribute("successMessage", "Cập nhật mật khẩu bảo vệ tài khoản thành công!");
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/profile#security");
+    }
+
+    private void handleAddAddress(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        String recipientName = request.getParameter("recipientName");
+        String recipientPhone = request.getParameter("recipientPhone");
+        String city = request.getParameter("city");
+        String district = request.getParameter("district");
+        String ward = request.getParameter("ward");
+        String streetAddress = request.getParameter("streetAddress");
+        boolean isDefault = "true".equalsIgnoreCase(request.getParameter("isDefault"));
+
+        CustomerAddress newAddress = new CustomerAddress();
+        newAddress.setUserId((long) sessionUser.getId());
+        newAddress.setRecipientName(recipientName);
+        newAddress.setRecipientPhone(recipientPhone);
+        newAddress.setCity(city);
+        newAddress.setDistrict(district);
+        newAddress.setWard(ward);
+        newAddress.setStreetAddress(streetAddress);
+        newAddress.setDefault(isDefault);
+
+        try {
+            addressService.addAddress(newAddress);
+            session.setAttribute("successMessage", "Thêm địa chỉ nhận hàng mới thành công!");
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/profile#address");
+    }
+
+    private void handleSetDefaultAddress(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        try {
+            long addressId = Long.parseLong(request.getParameter("addressId"));
+            addressService.setDefaultAddress(addressId, (long) sessionUser.getId());
+            session.setAttribute("successMessage", "Đã đặt làm địa chỉ nhận hàng mặc định!");
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/profile#address");
+    }
+
+    private void handleDeleteAddress(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        try {
+            long addressId = Long.parseLong(request.getParameter("addressId"));
+            addressService.deleteAddress(addressId, (long) sessionUser.getId());
+            session.setAttribute("successMessage", "Đã xóa địa chỉ nhận hàng!");
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/profile#address");
+    }
+
+    private void handleUpdateProfile(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        String fullName = request.getParameter("fullName");
+        String phone = request.getParameter("phone");
+        String gender = request.getParameter("gender");
+        String birthDateStr = request.getParameter("birthDate");
+        String deleteAvatar = request.getParameter("deleteAvatar");
+
+        User currentUser = userService.getUserById(sessionUser.getId());
+        if (currentUser == null) {
+            currentUser = sessionUser;
+        }
+
+        // Xử lý avatar nếu người dùng thay đổi khi ấn Lưu
+        if ("true".equalsIgnoreCase(deleteAvatar)) {
             try {
                 userService.updateAvatar(sessionUser.getId(), null);
-                User refreshed = userService.getUserById(sessionUser.getId());
-                if (refreshed != null) {
-                    session.setAttribute("user", refreshed);
-                }
-                session.setAttribute("successMessage", "Đã xóa ảnh đại diện thành công!");
-            } catch (Exception e) {
-                session.setAttribute("errorMessage", e.getMessage());
-            }
-            response.sendRedirect(request.getContextPath() + "/profile");
-            return;
-
-        } else if ("changePassword".equals(action)) {
-            String oldPassword = request.getParameter("oldPassword");
-            String newPassword = request.getParameter("newPassword");
-            String confirmPassword = request.getParameter("confirmPassword");
-
-            try {
-                userService.changePassword(sessionUser.getId(), oldPassword, newPassword, confirmPassword);
-                session.setAttribute("successMessage", "Cập nhật mật khẩu bảo vệ tài khoản thành công!");
-            } catch (Exception e) {
-                session.setAttribute("errorMessage", e.getMessage());
-            }
-            response.sendRedirect(request.getContextPath() + "/profile#security");
-            return;
-
-        } else if ("addAddress".equals(action)) {
-            String recipientName = request.getParameter("recipientName");
-            String recipientPhone = request.getParameter("recipientPhone");
-            String streetAddress = request.getParameter("streetAddress");
-            String ward = request.getParameter("ward");
-            String district = request.getParameter("district");
-            String city = request.getParameter("city");
-            String isDefaultParam = request.getParameter("isDefault");
-            boolean isDefault = "true".equalsIgnoreCase(isDefaultParam) 
-                             || "on".equalsIgnoreCase(isDefaultParam) 
-                             || "1".equals(isDefaultParam);
-
-            try {
-                CustomerAddress newAddr = new CustomerAddress();
-                newAddr.setUserId(sessionUser.getId());
-                newAddr.setRecipientName(recipientName);
-                newAddr.setRecipientPhone(recipientPhone);
-                newAddr.setStreetAddress(streetAddress);
-                newAddr.setWard(ward);
-                newAddr.setDistrict(district);
-                newAddr.setCity(city);
-                newAddr.setDefault(isDefault);
-
-                boolean success = addressService.addAddress(newAddr);
-                if (success) {
-                    session.setAttribute("successMessage", "Thêm địa chỉ nhận hàng thành công!");
-                } else {
-                    session.setAttribute("errorMessage", "Không thể lưu địa chỉ. Vui lòng kiểm tra lại thông tin!");
-                }
-            } catch (IllegalArgumentException ex) {
-                session.setAttribute("errorMessage", ex.getMessage());
             } catch (Exception ex) {
-                session.setAttribute("errorMessage", "Lỗi xử lý thêm địa chỉ: " + ex.getMessage());
+                // Tiếp tục xử lý cập nhật profile
             }
-            response.sendRedirect(request.getContextPath() + "/profile#address");
-            return;
-
-        } else if ("setDefaultAddress".equals(action)) {
-            try {
-                long addressId = Long.parseLong(request.getParameter("addressId"));
-                boolean success = addressService.setDefaultAddress(addressId, sessionUser.getId());
-                if (success) {
-                    session.setAttribute("successMessage", "Đã thiết lập địa chỉ mặc định thành công!");
-                } else {
-                    session.setAttribute("errorMessage", "Không thể cập nhật địa chỉ mặc định!");
-                }
-            } catch (Exception ex) {
-                session.setAttribute("errorMessage", "Lỗi: " + ex.getMessage());
-            }
-            response.sendRedirect(request.getContextPath() + "/profile#address");
-            return;
-
-        } else if ("deleteAddress".equals(action)) {
-            try {
-                long addressId = Long.parseLong(request.getParameter("addressId"));
-                boolean success = addressService.deleteAddress(addressId, sessionUser.getId());
-                if (success) {
-                    session.setAttribute("successMessage", "Đã xóa địa chỉ nhận hàng thành công!");
-                } else {
-                    session.setAttribute("errorMessage", "Không thể xóa địa chỉ này!");
-                }
-            } catch (Exception ex) {
-                session.setAttribute("errorMessage", "Lỗi khi xóa địa chỉ: " + ex.getMessage());
-            }
-            response.sendRedirect(request.getContextPath() + "/profile#address");
-            return;
-
         } else {
-            String fullName = request.getParameter("fullName");
-            String phone = request.getParameter("phone");
-            String gender = request.getParameter("gender");
-            String birthDateStr = request.getParameter("birthDate");
-
-            User currentUser = userService.getUserById(sessionUser.getId());
-            if (currentUser == null) {
-                currentUser = sessionUser;
-            }
-
-            String phoneToUpdate = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
-            if (phoneToUpdate != null && (phoneToUpdate.contains("*") || phoneToUpdate.equalsIgnoreCase("Chưa cập nhật"))) {
-                phoneToUpdate = currentUser.getPhone();
-            }
-
-            java.sql.Date birthDateToUpdate = currentUser.getBirthDate();
-            if (birthDateStr != null && !birthDateStr.trim().isEmpty() && !birthDateStr.contains("*")) {
-                try {
-                    birthDateToUpdate = java.sql.Date.valueOf(birthDateStr.trim());
-                } catch (IllegalArgumentException e) {
-                }
-            } else if (birthDateStr != null && birthDateStr.trim().isEmpty()) {
-                birthDateToUpdate = null;
-            }
-
             try {
-                userService.updateProfile(sessionUser.getId(), fullName, phoneToUpdate, gender, birthDateToUpdate);
-                User refreshedUser = userService.getUserById(sessionUser.getId());
-                if (refreshedUser != null) {
-                    session.setAttribute("user", refreshedUser);
+                Part filePart = request.getPart("avatarFile");
+                if (filePart != null && filePart.getSize() > 0) {
+                    String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                    String ext = "";
+                    int dotIndex = submittedFileName.lastIndexOf('.');
+                    if (dotIndex > 0) {
+                        ext = submittedFileName.substring(dotIndex).toLowerCase();
+                    }
+
+                    if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".webp")) {
+                        session.setAttribute("errorMessage", "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
+                        response.sendRedirect(request.getContextPath() + "/profile");
+                        return;
+                    }
+
+                    if (filePart.getSize() > 2 * 1024 * 1024) {
+                        session.setAttribute("errorMessage", "Kích thước ảnh tối đa là 2MB!");
+                        response.sendRedirect(request.getContextPath() + "/profile");
+                        return;
+                    }
+
+                    String newFileName = "avatar_" + sessionUser.getId() + "_" + System.currentTimeMillis() + ext;
+                    String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/avatars");
+                    File uploadDir = new File(uploadDirRealPath);
+                    if (!uploadDir.exists()) {
+                        uploadDir.mkdirs();
+                    }
+
+                    String savedFilePath = uploadDirRealPath + File.separator + newFileName;
+                    filePart.write(savedFilePath);
+
+                    String avatarUrl = "assets/images/avatars/" + newFileName;
+                    userService.updateAvatar(sessionUser.getId(), avatarUrl);
                 }
-                if (phoneToUpdate != null && !phoneToUpdate.trim().isEmpty()) {
-                    session.removeAttribute("phoneMissingWarning");
-                    session.removeAttribute("warningMessage");
-                }
-                session.setAttribute("successMessage", "Lưu thay đổi hồ sơ cá nhân thành công!");
-            } catch (Exception e) {
-                session.setAttribute("errorMessage", e.getMessage());
+            } catch (Exception ex) {
+                // Tiếp tục nếu không có part upload
             }
-            response.sendRedirect(request.getContextPath() + "/profile");
+        }
+
+        String phoneToUpdate = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
+        if (phoneToUpdate != null && phoneToUpdate.contains("*")) {
+            phoneToUpdate = currentUser.getPhone();
+        }
+
+        java.sql.Date birthDateToUpdate = currentUser.getBirthDate();
+        if (birthDateStr != null && !birthDateStr.trim().isEmpty() && !birthDateStr.contains("*")) {
+            try {
+                birthDateToUpdate = java.sql.Date.valueOf(birthDateStr.trim());
+            } catch (IllegalArgumentException e) {
+            }
+        }
+
+        try {
+            userService.updateProfile(sessionUser.getId(), fullName, phoneToUpdate, gender, birthDateToUpdate);
+            User refreshedUser = userService.getUserById(sessionUser.getId());
+            if (refreshedUser != null) {
+                session.setAttribute("user", refreshedUser);
+            }
+            session.setAttribute("successMessage", "Lưu thay đổi hồ sơ cá nhân thành công!");
+        } catch (Exception e) {
+            session.setAttribute("errorMessage", e.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/profile");
+    }
+
+    private void handleCancelOrder(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        String orderId = request.getParameter("orderId");
+        String reason = request.getParameter("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            reason = "Người mua hủy đơn trực tiếp";
+        }
+
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || request.getParameter("ajax") != null
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            if (orderId == null || orderId.trim().isEmpty()) {
+                throw new IllegalArgumentException("Mã đơn hàng không hợp lệ!");
+            }
+
+            boolean ok = orderService.cancelOrderByCustomer(sessionUser.getId(), orderId.trim(), reason.trim());
+            if (ok) {
+                result.put("success", true);
+                result.put("message", "Đã hủy đơn hàng thành công!");
+                if (session != null) {
+                    session.setAttribute("successMessage", "Đã hủy đơn hàng #" + orderId + " thành công!");
+                }
+            } else {
+                result.put("success", false);
+                result.put("message", "Không thể hủy đơn hàng. Vui lòng thử lại!");
+            }
+        } catch (Exception ex) {
+            result.put("success", false);
+            result.put("message", ex.getMessage());
+        }
+
+        if (isAjax) {
+            out.print(new Gson().toJson(result));
+            out.flush();
+        } else {
+            if ((boolean) result.getOrDefault("success", false)) {
+                response.sendRedirect(request.getContextPath() + "/profile#orders");
+            } else {
+                if (session != null) {
+                    session.setAttribute("errorMessage", result.get("message"));
+                }
+                response.sendRedirect(request.getContextPath() + "/profile#orders");
+            }
         }
     }
 }

@@ -2,33 +2,35 @@
 const i18nDict = {
     vi: {
         // Brand & Subtitle
-        "brand_badge": "PLATFORM ADMIN",
-        "brand_subtitle": "Platform Admin",
+        "brand_badge": "QUẢN TRỊ VIÊN",
+        "brand_subtitle": "Quản Trị Viên",
         
         // Sidebar Sections
-        "nav_sec_core": "CORE",
-        "nav_dashboard": "Overview Dashboard",
-        "nav_users": "Users & Permissions",
-        "nav_shops_apps": "Shops & Applications",
-        "nav_categories": "Global Categories",
-        "nav_products": "Products",
+        "nav_sec_core": "DANH MỤC CHÍNH",
+        "nav_dashboard": "Tổng Quan",
+        "nav_users": "Người Dùng & Phân Quyền",
+        "nav_shops_apps": "Gian Hàng & Hồ Sơ Duyệt",
+        "nav_categories": "Danh Mục Ngành Hàng",
+        "nav_products": "Sản Phẩm",
         
-        "nav_sec_gov": "GOVERNANCE",
-        "nav_orders": "Orders & Deliveries",
-        "nav_moderation": "Product Moderation",
-        "nav_disputes": "Disputes & Refunds",
-        "nav_vouchers": "Platform Vouchers",
+        "nav_sec_gov": "VẬN HÀNH & GIÁM SÁT",
+        "nav_orders": "Đơn Hàng & Giao Vận",
+        "nav_moderation": "Kiểm Duyệt Sản Phẩm",
+        "nav_disputes": "Khiếu Nại & Hoàn Tiền",
+        "nav_vouchers": "Mã Giảm Giá Sàn",
         
-        "nav_sec_finance": "FINANCE & SETTINGS",
-        "nav_payments": "Payments & Transactions",
-        "nav_settlements": "Vendor Settlement & Fees",
-        "nav_analytics": "Platform Analytics",
-        "nav_settings": "System Settings",
-        "user_role": "Platform Admin",
-        "sign_out": "Sign Out",
+        "nav_sec_finance": "TÀI CHÍNH & CÀI ĐẶT",
+        "nav_payments": "Thanh Toán & Giao Dịch",
+        "nav_settlements": "Quyết Toán & Phí Nhà Vườn",
+        "nav_analytics": "Phân Tích Nền Tảng",
+        "nav_settings": "Cài Đặt Hệ Thống",
+        "user_role": "Quản Trị Viên Sàn",
+        "sign_out": "Đăng Xuất",
         
         // Topbar
-        "search_placeholder": "Tìm kiếm gian hàng, hồ sơ KYC, khách mua, khiếu nại...",
+        "btn_date_filter": "30 ngày qua",
+        "btn_export_report": "Xuất báo cáo",
+        "search_placeholder": "Tìm kiếm đơn hàng, gian hàng, người dùng, báo cáo (Ctrl + K)...",
         "status_pill": "Trạng thái sàn: Hoạt động tốt (248 Gian hàng)",
         "create_campaign": "Tạo Chiến Dịch",
         "view_marketplace": "Xem Sàn Khách Hàng",
@@ -665,10 +667,31 @@ function openAssignRoleModal(userId, userName, currentRole) {
     if (nameDisplay) nameDisplay.textContent = userName + ' (ID: #' + userId + ')';
     if (roleSelect) roleSelect.value = currentRole;
     
-    const modalEl = document.getElementById('assignRoleModal');
-    if (modalEl && typeof bootstrap !== 'undefined') {
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
-    }
 }
 
+// Global context path resolver for Admin modules
+function getAdminContextPath() {
+    const meta = document.querySelector('meta[name="context-path"]');
+    if (meta && meta.content) return meta.content;
+    const body = document.querySelector('body[data-context-path]');
+    if (body && body.getAttribute('data-context-path')) return body.getAttribute('data-context-path');
+    const path = window.location.pathname;
+    const idx = path.indexOf('/', 1);
+    return idx > 0 ? path.substring(0, idx) : '';
+}
+
+// Global toast notifier for Admin modules
+function showAdminToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = 
+        '<div class="toast show align-items-center text-white bg-dark border-0 shadow-lg rounded-3" role="alert">' +
+            '<div class="d-flex">' +
+                '<div class="toast-body fs-7"><i class="bi bi-info-circle-fill text-success me-2"></i>' + message + '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.parentElement.remove()"></button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(toast);
+    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 4000);
+}

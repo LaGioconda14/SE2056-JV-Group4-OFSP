@@ -72,6 +72,41 @@
 }
 
 /* Card Image Box */
+
+/* ==========================================================================
+   PRODUCT CATALOG CSS - OFSP MARKETPLACE
+   Giao diện chuẩn E-commerce hiện đại, 100% Tiếng Việt, căn chỉnh hoàn hảo
+   ========================================================================== */
+
+:root {
+    --brand-primary: #00652c;
+    --brand-primary-hover: #005323;
+    --brand-emerald: #059669;
+    --brand-emerald-dark: #065f46;
+}
+
+/* Card Container */
+.catalog-product-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    padding: 0.875rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    position: relative;
+    height: 100%;
+}
+
+.catalog-product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
+    border-color: #cbd5e1;
+}
+
+/* Thumbnail Wrap */
 .catalog-img-wrap {
     position: relative;
     width: 100%;
@@ -196,3 +231,249 @@
     color: #ffffff;
 }
 
+.catalog-product-card:hover .catalog-img-wrap img {
+    transform: scale(1.06);
+}
+
+/* Badge Stack góc trên bên trái */
+.badge-stack {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    z-index: 10;
+}
+
+.card-badge-pill {
+    padding: 0.22rem 0.55rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    border-radius: 0.45rem;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    display: inline-block;
+    width: fit-content;
+}
+
+.badge-sale {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.badge-organic {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-local {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+}
+
+.badge-fresh {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+/* Add Button in Card */
+.btn-card-add {
+    padding: 0.42rem 0.95rem;
+    background-color: var(--brand-primary);
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    box-shadow: 0 1px 3px rgba(0, 101, 44, 0.2);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: none;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.btn-card-add:hover {
+    background-color: var(--brand-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 101, 44, 0.25);
+}
+
+.btn-card-add:active {
+    transform: scale(0.97);
+}
+
+/* Custom Checkbox */
+.custom-checkbox {
+    appearance: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 0.35rem;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.18s ease;
+    background-color: #ffffff;
+    flex-shrink: 0;
+}
+
+.custom-checkbox:hover {
+    border-color: var(--brand-primary);
+}
+
+.custom-checkbox:checked {
+    background-color: var(--brand-primary);
+    border-color: var(--brand-primary);
+}
+
+.custom-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+/* Custom Radio */
+.custom-radio {
+    appearance: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 50%;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.18s ease;
+    background-color: #ffffff;
+    flex-shrink: 0;
+}
+
+.custom-radio:hover {
+    border-color: var(--brand-primary);
+}
+
+.custom-radio:checked {
+    border-color: var(--brand-primary);
+}
+
+.custom-radio:checked::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--brand-primary);
+}
+
+/* Quick price pill buttons */
+.quick-price-btn {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.quick-price-btn:hover {
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+    color: var(--brand-primary);
+}
+
+.quick-price-btn.active {
+    background-color: #ecfdf5;
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+    font-weight: 700;
+}
+
+/* Catalog Page Pagination Button */
+.catalog-page-btn {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.65rem;
+    border-radius: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: all 0.2s ease;
+    color: #475569;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.catalog-page-btn:hover {
+    background-color: #f8fafc;
+    color: var(--brand-primary);
+    border-color: #cbd5e1;
+}
+
+.catalog-page-btn.active {
+    background-color: var(--brand-primary);
+    color: #ffffff;
+    border-color: var(--brand-primary);
+    box-shadow: 0 2px 6px rgba(0, 101, 44, 0.25);
+}
+
+/* List View Variant */
+.view-list #productGrid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+}
+
+.view-list .catalog-product-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 1rem 1.25rem !important;
+    gap: 1.5rem !important;
+}
+
+.view-list .catalog-img-wrap {
+    width: 140px !important;
+    height: 140px !important;
+    aspect-ratio: 1 / 1 !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+.view-list .card-body-content {
+    flex: 1 !important;
+}
+
+.view-list .card-footer-action {
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 0.75rem !important;
+    min-width: 160px !important;
+    border-top: none !important;
+    border-left: 1px solid #f1f5f9 !important;
+    padding-left: 1.25rem !important;
+    padding-top: 0 !important;
+}

@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Khuyến Mại & Voucher Toàn Sàn - FreshFruit Admin</title>
+    <title>Quản Lý Khuyến Mại & Voucher Toàn Sàn - Gốc Vườn Admin</title>
     <!-- Google Fonts & Bootstrap -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -157,7 +157,7 @@
                             <div class="col-6">
                                 <div class="p-2 rounded-2 border bg-light">
                                     <div class="d-flex align-items-center gap-1 fs-8 fw-bold text-success mb-1">
-                                        <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i> Sàn FreshFruit (65%)
+                                        <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i> Sàn Gốc Vườn (65%)
                                     </div>
                                     <div class="text-muted fs-8">Mức hỗ trợ sàn tối đa:</div>
                                     <div class="fw-bold text-dark fs-7">₫35,000 / đơn</div>
@@ -348,7 +348,7 @@
                                     </div>
                                     <div class="d-flex align-items-center gap-3 fs-8 text-secondary">
                                         <span><i class="bi bi-calendar3 me-1"></i> Áp dụng mùa vụ 2024</span>
-                                        <span>• <i class="bi bi-geo-alt me-1"></i> Toàn sàn FreshFruit</span>
+                                        <span>• <i class="bi bi-geo-alt me-1"></i> Toàn sàn Gốc Vườn</span>
                                     </div>
                                 </div>
 
@@ -471,7 +471,7 @@
                     <div class="col-md-6">
                         <label class="form-label fs-7 fw-bold">Nguồn Tài Trợ:</label>
                         <select class="form-select form-select-sm">
-                            <option>100% Sàn FreshFruit Tài Trợ</option>
+                            <option>100% Sàn Gốc Vườn Tài Trợ</option>
                             <option>Đồng Tài Trợ Co-funding (Sàn 65% - Shop 35%)</option>
                             <option>Đồng Tài Trợ Co-funding (Sàn 70% - Shop 30%)</option>
                         </select>

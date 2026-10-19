@@ -17,7 +17,7 @@ public class DBContext {
     private final String serverName = "localhost";
     private final String databaseName = "OnlineFruitShop";
     private final String portNumber = "1433";
-    private final String instanceName = ""; // Leave empty if default instance MSSQLSERVER
+    private final String instanceName = "SQLEXPRESS"; // Leave empty if default instance MSSQLSERVER
     private final String userId = "sa";
     private final String password = "sa"; // CHANGE TO YOUR SQL SERVER SA PASSWORD
 

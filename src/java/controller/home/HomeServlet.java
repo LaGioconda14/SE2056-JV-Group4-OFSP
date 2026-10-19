@@ -21,7 +21,7 @@ import service.impl.ProductServiceImpl;
  *
  * @author ADMIN
  */
-@WebServlet(name="HomeServlet", urlPatterns={"/home"})
+@WebServlet(name="HomeServlet", urlPatterns={"/home", ""})
 public class HomeServlet extends HttpServlet {
 
     private final IProductService productService = new ProductServiceImpl();
@@ -62,34 +62,27 @@ public class HomeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
         
-        // Gọi Service lấy danh sách sản phẩm và danh mục theo kiến trúc 3 lớp
-        List<Product> listProduct = productService.getHomeProducts();
-        List<model.Category> categories = productService.getAllCategories();
-        List<model.Category> homeTabs = productService.getHomeFeaturedTabs();
-        List<model.Category> hierarchyCategories = productService.getHierarchyCategories();
+        try {
+            // Gọi Service lấy dữ liệu an toàn
+            request.setAttribute("listProduct", productService.getHomeProducts());
+            request.setAttribute("categories", productService.getAllCategories());
+            request.setAttribute("homeTabs", productService.getHomeFeaturedTabs());
+            request.setAttribute("hierarchyCategories", productService.getHierarchyCategories());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         
-        // Set attribute để JSP nhận diện biến
-        request.setAttribute("listProduct", listProduct);
-        request.setAttribute("categories", categories);
-        request.setAttribute("homeTabs", homeTabs);
-        request.setAttribute("hierarchyCategories", hierarchyCategories);
-        
-        // Chuyển hướng tới trang /views/home.jsp
+        // KIỂM TRA LẠI: Nếu file home.jsp nằm ở gốc web, hãy dùng "/home.jsp" 
+        // Nếu nằm trong thư mục views/customer/home.jsp thì chỉnh lại cho khớp.
         request.getRequestDispatcher("/views/home.jsp").forward(request, response);
-    } 
+    }
 
-    /** 
-     * Handles the HTTP <code>POST</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        processRequest(request, response);
+        doGet(request, response);
     }
 
     /** 

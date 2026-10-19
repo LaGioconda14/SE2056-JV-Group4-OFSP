@@ -1,10 +1,3 @@
-/**
- * Authentication Module Scripts
- * Handles password visibility toggle, live email validation,
- * password matching, and social login interactions.
- */
-
-// Toggle Password Visibility
 function togglePasswordVisibility(fieldId, triggerEl) {
     const input = document.getElementById(fieldId);
     if (!input) return;
@@ -26,7 +19,6 @@ function togglePasswordVisibility(fieldId, triggerEl) {
     }
 }
 
-// Live Email Validation Indicator
 function checkEmailValidity(input) {
     const icon = document.getElementById('emailStatusIcon');
     if (!icon) return;
@@ -40,7 +32,6 @@ function checkEmailValidity(input) {
     }
 }
 
-// Live Password Match Checker for Registration
 function initPasswordMatchCheck() {
     const pass = document.getElementById('password');
     const confirm = document.getElementById('confirmPassword');
@@ -72,22 +63,15 @@ function initPasswordMatchCheck() {
     confirm.addEventListener('input', checkMatch);
 }
 
-// Social Login Button Handler
 function initSocialLogin() {
-    // Google button now directs naturally to /login-google endpoint
 }
 
-// Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
-    // Check pre-filled email
     const emailInput = document.getElementById('email');
     if (emailInput && emailInput.value) {
         checkEmailValidity(emailInput);
     }
 
-    // Init password matcher if present
     initPasswordMatchCheck();
-
-    // Init social login handlers
     initSocialLogin();
 });

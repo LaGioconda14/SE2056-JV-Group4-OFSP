@@ -5,29 +5,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - FreshFruit Platform</title>
+    <title>Đăng nhập - Gốc Vườn</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Custom Auth Stylesheet -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/auth.css?v=2">
 </head>
 <body>
 
 <div class="login-wrapper">
-    <!-- LEFT PANEL: Brand, Showcase & Metrics -->
     <div class="showcase-panel">
         <div>
             <div class="brand-logo-wrap">
                 <div class="brand-logo-icon">🍎</div>
                 <div>
-                    <div class="brand-name">FreshFruit</div>
-                    <div class="brand-sub">DIRECT FROM ORCHARD</div>
+                    <div class="brand-name">Gốc Vườn</div>
+                    <div class="brand-sub">NÔNG SẢN TẬN VƯỜN</div>
                 </div>
             </div>
             
@@ -36,7 +31,6 @@
             </p>
         </div>
 
-        <!-- 3 Feature Metrics -->
         <div class="metrics-grid">
             <div class="metric-box">
                 <i class="bi bi-shield-check"></i>
@@ -53,10 +47,8 @@
         </div>
     </div>
 
-    <!-- RIGHT PANEL: Sign In Form -->
     <div class="form-panel">
         <div>
-            <!-- Top Status Bar -->
             <div class="top-status-bar">
                 <div class="secure-pill">
                     <span class="secure-dot"></span>
@@ -68,7 +60,6 @@
                 </a>
             </div>
 
-            <!-- Tab Switcher -->
             <div class="auth-nav-tabs">
                 <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn active">Sign In</a>
                 <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Create Account</a>
@@ -78,7 +69,6 @@
             <h1 class="form-title">Welcome back!</h1>
             <p class="form-subtitle">Enter your account credentials to access fresh daily harvests.</p>
 
-            <!-- Error Alert -->
             <c:if test="${not empty errorMessage}">
                 <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2 fs-6 flex-shrink-0"></i>
@@ -87,7 +77,6 @@
                 </div>
             </c:if>
 
-            <!-- Success Alert -->
             <c:if test="${not empty successMessage}">
                 <div class="alert alert-success alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
                     <i class="bi bi-check-circle-fill me-2 fs-6 flex-shrink-0"></i>
@@ -96,7 +85,6 @@
                 </div>
             </c:if>
 
-            <!-- Social Sign-in Button -->
             <a href="${pageContext.request.contextPath}/login-google" class="social-btn w-100" id="btnGoogleLogin">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -107,14 +95,11 @@
                 <span>Continue with Google</span>
             </a>
 
-            <!-- Divider -->
             <div class="or-divider">
                 <span>OR EMAIL</span>
             </div>
 
-            <!-- Main Form -->
             <form action="${pageContext.request.contextPath}/login" method="POST" id="loginForm">
-                <!-- Email or Phone Number -->
                 <div class="field-group">
                     <label class="field-label" for="email">Email hoặc Số điện thoại</label>
                     <div class="input-box-wrapper">
@@ -131,7 +116,6 @@
                     </div>
                 </div>
 
-                <!-- Password -->
                 <div class="field-group">
                     <label class="field-label" for="password">Password</label>
                     <div class="input-box-wrapper">
@@ -149,7 +133,6 @@
                     </div>
                 </div>
 
-                <!-- Actions Row -->
                 <div class="form-actions-row">
                     <label class="remember-label" for="remember">
                         <input type="checkbox" 
@@ -162,9 +145,8 @@
                     <a href="${pageContext.request.contextPath}/forgot-password" class="forgot-link">Forgot password?</a>
                 </div>
 
-                <!-- Submit Button -->
                 <button type="submit" class="btn-submit-main">
-                    <span>Sign In to FreshFruit</span>
+                    <span>Đăng nhập vào Gốc Vườn</span>
                     <i class="bi bi-arrow-right"></i>
                 </button>
             </form>
@@ -177,10 +159,8 @@
     </div>
 </div>
 
-<!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom Auth JS -->
-    <script src="${pageContext.request.contextPath}/assets/js/auth.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/auth.js"></script>
 
 </body>
 </html>

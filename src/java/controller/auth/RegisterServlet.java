@@ -10,9 +10,6 @@ import jakarta.servlet.http.HttpSession;
 import service.IUserService;
 import service.impl.UserServiceImpl;
 
-/**
- * Controller handling Customer Account Registration.
- */
 @WebServlet(name = "RegisterServlet", urlPatterns = {"/register"})
 public class RegisterServlet extends HttpServlet {
 
@@ -21,8 +18,6 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        // If user already logged in, redirect to home
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute("user") != null) {
             response.sendRedirect(request.getContextPath() + "/home");
@@ -35,7 +30,6 @@ public class RegisterServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -45,7 +39,6 @@ public class RegisterServlet extends HttpServlet {
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
 
-        // Retain form inputs for re-rendering if error occurs
         request.setAttribute("fullName", fullName);
         request.setAttribute("email", email);
         request.setAttribute("phone", phone);
@@ -53,7 +46,6 @@ public class RegisterServlet extends HttpServlet {
         try {
             userService.register(fullName, email, phone, password, confirmPassword);
 
-            // Success -> Redirect to login page with success notification
             HttpSession session = request.getSession(true);
             session.setAttribute("successMessage", "Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.");
             response.sendRedirect(request.getContextPath() + "/login");
@@ -63,5 +55,3 @@ public class RegisterServlet extends HttpServlet {
         }
     }
 }
-
-

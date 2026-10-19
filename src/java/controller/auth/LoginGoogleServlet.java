@@ -15,9 +15,6 @@ import service.IUserService;
 import service.impl.UserServiceImpl;
 import util.GoogleOAuthUtil;
 
-/**
- * Controller handling Google OAuth 2.0 Sign-In and Registration.
- */
 @WebServlet(name = "LoginGoogleServlet", urlPatterns = {"/login-google"})
 public class LoginGoogleServlet extends HttpServlet {
 
@@ -30,7 +27,6 @@ public class LoginGoogleServlet extends HttpServlet {
 
         HttpSession session = request.getSession(true);
 
-        // Check if user cancelled Google consent
         String error = request.getParameter("error");
         if (error != null) {
             session.setAttribute("errorMessage", "Đăng nhập Google bị hủy hoặc gặp lỗi: " + error);
@@ -38,7 +34,6 @@ public class LoginGoogleServlet extends HttpServlet {
             return;
         }
 
-        // If already logged in, redirect to home page or admin
         if (session.getAttribute("user") != null) {
             User loggedUser = (User) session.getAttribute("user");
             if ("ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
@@ -51,32 +46,23 @@ public class LoginGoogleServlet extends HttpServlet {
 
         String code = request.getParameter("code");
 
-        // Step 1: If no authorization code, redirect user to Google consent page
         if (code == null || code.trim().isEmpty()) {
-            // Check if Client ID and Secret are configured
             if (!GoogleOAuthUtil.isConfigured()) {
-                session.setAttribute("errorMessage", 
-                        "Tính năng đăng nhập Google chưa được cấu hình Client ID & Secret từ Google Cloud! "
-                        + "<br><a href=\"" + request.getContextPath() + "/login-google?demo=1\" class=\"alert-link fw-bold text-decoration-underline mt-1 d-inline-block\">"
-                        + "<i class=\"bi bi-play-circle-fill me-1\"></i>Bấm vào đây để Đăng nhập thử nghiệm (Demo Google Login)</a>");
+                session.setAttribute("errorMessage", "Tính năng đăng nhập Google chưa được cấu hình Client ID & Secret từ Google Cloud!");
                 response.sendRedirect(request.getContextPath() + "/login");
                 return;
             }
 
-            // Redirect user to Google OAuth consent screen
             response.sendRedirect(GoogleOAuthUtil.getGoogleLoginUrl());
             return;
         }
 
-        // Step 2: Google redirected back with authorization code -> Exchange for token & userinfo
         try {
             String accessToken = GoogleOAuthUtil.getToken(code);
             GoogleAccount googleUser = GoogleOAuthUtil.getUserInfo(accessToken);
 
-            // Step 3 & 4: Process login or auto-register via Service
             User user = userService.processGoogleLogin(googleUser);
 
-            // Step 5: Login successful -> Save to session
             session.setAttribute("user", user);
             if (googleUser.getPicture() != null && !googleUser.getPicture().trim().isEmpty()) {
                 session.setAttribute("avatarUrl", googleUser.getPicture());
@@ -86,7 +72,6 @@ public class LoginGoogleServlet extends HttpServlet {
 
             session.setAttribute("successMessage", "Đăng nhập Google thành công! Xin chào " + user.getFullName() + ".");
 
-            // Kiểm tra và cảnh báo nếu người dùng chưa cập nhật số điện thoại
             if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
                 session.setAttribute("warningMessage", 
                     "Tài khoản của bạn đăng ký qua Google hiện chưa có Số điện thoại! "
@@ -94,7 +79,7 @@ public class LoginGoogleServlet extends HttpServlet {
                 session.setAttribute("phoneMissingWarning", true);
             }
 
-            if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+            if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
                 response.sendRedirect(request.getContextPath() + "/admin/dashboard");
             } else {
                 response.sendRedirect(request.getContextPath() + "/home");

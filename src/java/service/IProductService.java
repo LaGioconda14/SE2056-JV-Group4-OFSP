@@ -1,21 +1,48 @@
 package service;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import model.Category;
 import model.Product;
+import model.ProductVariant;
 
 public interface IProductService {
-
+    //lấy list sản phẩm
+    List<ProductVariant> getVariantsByShopId(long shopId);
+    int countProductsByShopId(long shopId);
+    int countVariantsByShopId(long shopId);
+    int countVariantsByStatusTab(long shopId, String statusTab);
+    //lấy danh mục
+    List<Category> getAllCategories();
+    //Lấy chứng nhận
+    List<String> getAllCertifications();
+    // Bổ sung lấy danh sách nhiệt độ bảo quản
+    List<String> getAllStorageTemps();
+    // unit
+    List<String> getAllUnits();
+    //insert sản phẩm
+    // Hàm thêm sản phẩm mới (có xử lý validation nghiệp vụ tại tầng Service)
+    long insertFullProduct(long shopId, String name, int categoryId, String origin, 
+                           String storageTemp, String certification, String description,
+                           String sku, String variantName, String unit, BigDecimal price, 
+                           BigDecimal originalPrice, int stockQuantity, int lowStockThreshold,
+                           boolean isActive, String coverImageUrl, List<String> detailImages, String batchCode) throws IllegalArgumentException;
+    
+    boolean softDeleteVariant(long variantId, long shopId);
+    // Lấy thông tin biến thể sản phẩm theo ID để sửa
+    ProductVariant getVariantById(long variantId);
+    //sửa
+    public boolean updateFullProduct(long variantId, String name, int categoryId, String origin, 
+                                     String storageTemp, String certification, String description, 
+                                     String sku, String variantName, String unit, BigDecimal price, 
+                                     BigDecimal originalPrice, int stockQuantity, boolean isActive, 
+                                     String coverImageUrl);
+    
     /**
      * Lấy danh sách sản phẩm nổi bật hiển thị trên trang chủ.
      */
     List<Product> getHomeProducts();
-
-    /**
-     * Lấy toàn bộ danh mục sản phẩm kèm số lượng sản phẩm.
-     */
-    List<Category> getAllCategories();
-
     /**
      * Lấy danh sách các tab danh mục hiển thị trên trang chủ.
      */
@@ -25,33 +52,29 @@ public interface IProductService {
      * Lấy danh sách danh mục theo cấu trúc phân cấp đa tầng (cha - con).
      */
     List<Category> getHierarchyCategories();
+    
+    // Thêm các phương thức cho tính năng Browse by Category
+    List<Product> getProductsByCategorySlug(String categorySlug);
+    
+    // Các phương thức cho View Product Details
+    Product getProductById(int productId);
+    List<ProductVariant> getVariantsByProductId(long productId);
+    List<String> getImagesByProductId(long productId);
+    
+    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr);
 
-    /**
-     * Đếm tổng số lượng sản phẩm theo các tiêu chí tìm kiếm và bộ lọc.
-     */
-    int countCatalogProducts(String keyword, String[] categories, Double minPrice, Double maxPrice, 
-                             Integer rating, String availability, String origin, String tag);
-
-    /**
-     * Lấy danh sách sản phẩm theo bộ lọc tìm kiếm, phân trang và sắp xếp.
-     */
-    List<Product> getCatalogProducts(String keyword, String[] categories, Double minPrice, Double maxPrice, 
-                                     Integer rating, String availability, String origin, String tag, 
-                                     String sortBy, int page, int pageSize);
-
-    /**
-     * Lấy chi tiết sản phẩm theo ID.
-     */
-    Product getProductById(long productId);
-
-    /**
-     * Lấy danh sách sản phẩm liên quan gợi ý theo ID sản phẩm hiện tại.
-     */
-    List<Product> getRelatedProducts(long currentProductId, int limit);
-
-    /**
-     * Tìm kiếm và lọc sản phẩm theo các tiêu chí tìm kiếm nhanh.
-     */
-    List<Product> searchByFilter(String txtSearch, String categoryId, Double minPrice, Double maxPrice, Integer rating);
+    // Advanced Catalog methods
+    List<Category> getAllCategoriesWithCount();
+    Map<String, Integer> getOriginsWithCount();
+    int countInStockProducts();
+    BigDecimal[] getMinMaxProductPrices();
+    List<Product> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
+                                            BigDecimal minPrice, BigDecimal maxPrice,
+                                            Double minRating, List<String> origins,
+                                            Boolean inStockOnly, String sortBy,
+                                            int page, int pageSize);
+    int countFilteredCatalogProducts(String keyword, List<String> categoryParams,
+                                    BigDecimal minPrice, BigDecimal maxPrice,
+                                    Double minRating, List<String> origins,
+                                    Boolean inStockOnly);
 }
-

@@ -73,6 +73,21 @@
             <span class="badge bg-success rounded-pill badge-xs">Chuẩn</span>
         </button>
 
+        <c:if test="${user.role == 'DRIVER' or sessionScope.user.role == 'DRIVER' or user.role == 'driver'}">
+            <hr class="my-2 border-secondary-subtle">
+            <a href="${pageContext.request.contextPath}/shipper/deliveries" class="sidebar-nav-item text-warning-emphasis fw-bold">
+                <span><i class="bi bi-truck text-warning"></i> Cổng Giao Vận Tài Xế</span>
+                <i class="bi bi-box-arrow-up-right small"></i>
+            </a>
+        </c:if>
+        <c:if test="${user.role == 'SHOP_OWNER' or sessionScope.user.role == 'SHOP_OWNER' or user.role == 'shop_owner'}">
+            <hr class="my-2 border-secondary-subtle">
+            <a href="${pageContext.request.contextPath}/shop/orders" class="sidebar-nav-item text-success fw-bold">
+                <span><i class="bi bi-shop text-success"></i> Quản Lý Gian Hàng</span>
+                <i class="bi bi-box-arrow-up-right small"></i>
+            </a>
+        </c:if>
+
         <hr class="my-2 border-secondary-subtle">
 
         <a href="${pageContext.request.contextPath}/logout" class="sidebar-nav-item logout-link">

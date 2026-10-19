@@ -1,28 +1,13 @@
 <%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<!-- Top Announcement Bar -->
-<div class="top-announcement">
-    <div class="container d-flex justify-content-between align-items-center">
-        <div>
-            <i class="bi bi-truck me-1"></i> Giao hàng miễn phí trong ngày cho đơn từ 200.000₫ | <strong>Cam kết 100% Nông Trại Sạch</strong>
-        </div>
-        <div class="announcement-hotline">
-            <span><i class="bi bi-telephone-fill me-1"></i> Hotline: 1900 6868</span>
-            <span>VND (₫)</span>
-            <span>Tiếng Việt</span>
-        </div>
-    </div>
-</div>
-
-<!-- Main Navbar -->
 <nav class="navbar-main">
     <div class="container navbar-main-inner">
         <a href="${pageContext.request.contextPath}/home.jsp" class="brand-link">
             <span class="fs-2">🍎</span>
             <div>
-                <div class="brand-title">FreshFruit</div>
-                <div class="brand-sub">DIRECT FROM ORCHARD</div>
+                <div class="brand-title">Gốc Vườn</div>
+                <div class="brand-sub">NÔNG SẢN TẬN VƯỜN</div>
             </div>
         </a>
 
@@ -46,9 +31,7 @@
             <a href="${pageContext.request.contextPath}/cart" class="nav-cart-btn">
                 <div class="nav-cart-icon-wrap">
                     <i class="bi bi-cart3 nav-cart-icon"></i>
-                    <c:if test="${not empty sessionScope.cartCount and sessionScope.cartCount > 0}">
-                        <span class="nav-cart-badge">${sessionScope.cartCount}</span>
-                    </c:if>
+                    <span class="nav-cart-badge">${sessionScope.cartSize != null ? (sessionScope.cartSize > 99 ? '99+' : sessionScope.cartSize) : 0}</span>
                 </div>
                 <span class="nav-cart-text">Giỏ hàng</span>
             </a>
@@ -70,6 +53,30 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2">
                     <li><h6 class="dropdown-header small text-muted">Tài khoản hội viên</h6></li>
+                    <c:if test="${sessionScope.user.role == 'DRIVER' or sessionScope.user.role == 'driver'}">
+                        <li>
+                            <a class="dropdown-item small text-warning-emphasis fw-bold bg-warning-subtle py-2" href="${pageContext.request.contextPath}/shipper/deliveries">
+                                <i class="bi bi-truck me-2 text-warning"></i>Cổng Giao Vận (Tài Xế)
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    </c:if>
+                    <c:if test="${sessionScope.user.role == 'ADMIN' or sessionScope.user.role == 'STAFF'}">
+                        <li>
+                            <a class="dropdown-item small text-warning-emphasis fw-bold bg-warning-subtle py-2" href="${pageContext.request.contextPath}/shipper/deliveries">
+                                <i class="bi bi-truck me-2 text-warning"></i>Cổng Giao Vận (Demo Driver 9)
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    </c:if>
+                    <c:if test="${sessionScope.user.role == 'SHOP_OWNER' or sessionScope.user.role == 'shop_owner'}">
+                        <li>
+                            <a class="dropdown-item small text-success fw-bold bg-success-subtle py-2" href="${pageContext.request.contextPath}/shop/orders">
+                                <i class="bi bi-shop me-2 text-success"></i>Quản Lý Gian Hàng
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    </c:if>
                     <li><a class="dropdown-item active small" href="${pageContext.request.contextPath}/profile"><i class="bi bi-person me-2"></i>Hồ sơ cá nhân</a></li>
                     <li><a class="dropdown-item small" href="${pageContext.request.contextPath}/change-password"><i class="bi bi-key me-2"></i>Đổi mật khẩu</a></li>
                     <li><hr class="dropdown-divider"></li>
@@ -80,7 +87,6 @@
     </div>
 </nav>
 
-<!-- Sub Navigation -->
 <div class="sub-nav">
     <div class="container sub-nav-inner">
         <div class="sub-nav-links">
@@ -96,4 +102,3 @@
         </div>
     </div>
 </div>
-

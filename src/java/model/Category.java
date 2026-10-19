@@ -1,11 +1,17 @@
 package model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Category {
+/**
+ * Model representing the categories table in database.
+ */
+public class Category implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int categoryId;
-    private Integer parentId;
+    private Integer parentId; // Có thể null trong DB
     private String categoryName;
     private String slug;
     private String description;
@@ -13,47 +19,108 @@ public class Category {
     private String iconClass;
     private int displayOrder;
     private boolean isActive;
-    private int productCount;
     private List<Category> subCategories = new ArrayList<>();
 
-    public Category() {}
-
-    public Category(int categoryId, String categoryName, String slug, int productCount) {
-        this.categoryId = categoryId;
-        this.categoryName = categoryName;
-        this.slug = slug;
-        this.productCount = productCount;
+    // Default Constructor
+    public Category() {
     }
 
-    public int getCategoryId() { return categoryId; }
-    public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
+    // Parameterized Constructor
+    public Category(int categoryId, Integer parentId, String categoryName, String slug, 
+                    String description, String imageUrl, String iconClass, int displayOrder, boolean isActive) {
+        this.categoryId = categoryId;
+        this.parentId = parentId;
+        this.categoryName = categoryName;
+        this.slug = slug;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.iconClass = iconClass;
+        this.displayOrder = displayOrder;
+        this.isActive = isActive;
+    }
 
-    public Integer getParentId() { return parentId; }
-    public void setParentId(Integer parentId) { this.parentId = parentId; }
+    // Getters and Setters
+    public int getCategoryId() {
+        return categoryId;
+    }
 
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
+    }
 
-    public String getSlug() { return slug; }
-    public void setSlug(String slug) { this.slug = slug; }
+    public Integer getParentId() {
+        return parentId;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setParentId(Integer parentId) {
+        this.parentId = parentId;
+    }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getCategoryName() {
+        return categoryName;
+    }
 
-    public String getIconClass() { return iconClass; }
-    public void setIconClass(String iconClass) { this.iconClass = iconClass; }
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
 
-    public int getDisplayOrder() { return displayOrder; }
-    public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
+    public String getSlug() {
+        return slug;
+    }
 
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
+    public void setSlug(String slug) {
+        this.slug = slug;
+    }
 
-    public int getProductCount() { return productCount; }
-    public void setProductCount(int productCount) { this.productCount = productCount; }
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getIconClass() {
+        return iconClass;
+    }
+
+    public void setIconClass(String iconClass) {
+        this.iconClass = iconClass;
+    }
+
+    public int getDisplayOrder() {
+        return displayOrder;
+    }
+
+    public void setDisplayOrder(int displayOrder) {
+        this.displayOrder = displayOrder;
+    }
+
+    public boolean isIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    private int productCount;
+
+    public int getProductCount() {
+        return productCount;
+    }
+
+    public void setProductCount(int productCount) {
+        this.productCount = productCount;
+    }
 
     public List<Category> getSubCategories() { return subCategories; }
     public void setSubCategories(List<Category> subCategories) { this.subCategories = subCategories; }
@@ -64,4 +131,3 @@ public class Category {
         this.subCategories.add(sub);
     }
 }
-

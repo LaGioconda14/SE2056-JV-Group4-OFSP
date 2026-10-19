@@ -47,7 +47,19 @@
                 <div id="ordersContainer">
                     <c:forEach items="${orders}" var="order">
                         <c:set var="statusUpper" value="${order.status.toUpperCase()}" />
-                        <div class="shopee-order-card" data-order-status="${statusUpper}" data-order-id="${order.id}" data-shop-name="${order.shopName}">
+                        <div class="shopee-order-card"
+                             data-order-status="${statusUpper}"
+                             data-order-id="${order.id}"
+                             data-shop-name="${order.shopName}"
+                             data-created-at="${order.createdAt}"
+                             data-recipient-name="${order.shippingAddress != null ? order.shippingAddress.recipientName : user.fullName}"
+                             data-recipient-phone="${order.shippingAddress != null ? order.shippingAddress.recipientPhone : user.phone}"
+                             data-recipient-address="${order.shippingAddress != null ? order.shippingAddress.fullAddress : 'Khu đô thị Vinhomes Central Park, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh'}"
+                             data-goods-amount="${order.totalGoodsAmount}"
+                             data-shipping-fee="${order.totalShippingFee}"
+                             data-discount="${order.platformDiscount}"
+                             data-final-amount="${order.totalAmount}"
+                             data-payment-method="${order.paymentMethod}">
                             <div class="shopee-card-header">
                                 <div class="shopee-shop-info">
                                     <span class="shopee-shop-name">${order.shopName}</span>
@@ -92,7 +104,7 @@
                                 </div>
                             </div>
 
-                            <div class="shopee-items-list">
+                            <div class="shopee-items-list" onclick="showOrderTracking('${order.id}')" title="Bấm vào sản phẩm để xem lộ trình giao hàng">
                                 <c:choose>
                                     <c:when test="${order.hasItems()}">
                                         <c:forEach items="${order.items}" var="item">
@@ -114,7 +126,7 @@
                                             <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop" class="shopee-item-thumb" alt="Trái cây tươi">
                                             <div class="shopee-item-details">
                                                     <div class="shopee-item-title">${order.note}</div>
-                                                    <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn FreshFruit</div>
+                                                    <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn Gốc Vườn</div>
                                                     <div class="shopee-item-qty">x1</div>
                                             </div>
                                             <div class="shopee-item-price">
@@ -123,6 +135,9 @@
                                         </div>
                                     </c:otherwise>
                                 </c:choose>
+                                <div class="track-hint-bar">
+                                    <i class="bi bi-geo-alt-fill text-success"></i> Nhấn vào sản phẩm để xem hành trình & lộ trình giao hàng chi tiết
+                                </div>
                             </div>
 
                             <div class="shopee-summary-row">
@@ -156,8 +171,8 @@
                                             <a href="${pageContext.request.contextPath}/home.jsp" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
-                                            <button type="button" class="btn-shopee-outline" onclick="openReturnModal('${order.id}')">
-                                                Yêu Cầu Trả Hàng/Hoàn Tiền
+                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="openReturnModal('${order.id}', '${order.shopName}', '${order.totalAmount}', '${order.orderId}')">
+                                                <i class="bi bi-arrow-return-left me-1"></i> Yêu Cầu Trả Hàng/Hoàn Tiền
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
@@ -170,8 +185,8 @@
                                             <button type="button" class="btn-shopee-primary" onclick="confirmReceivedOrder('${order.id}')">
                                                 Đã Nhận Hàng
                                             </button>
-                                            <button type="button" class="btn-shopee-outline" onclick="trackDelivery('${order.id}')">
-                                                Tra Cứu Vận Chuyển
+                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
+                                                <i class="bi bi-truck me-1"></i> Tra Cứu Vận Chuyển
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
@@ -181,16 +196,16 @@
                                             <a href="${pageContext.request.contextPath}/home.jsp" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
-                                            <button type="button" class="btn-shopee-outline" onclick="alert('Đơn hàng #${order.id} đã hủy thành công.')">
-                                                Xem Chi Tiết Hủy
+                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
+                                                <i class="bi bi-info-circle me-1"></i> Xem Chi Tiết Hủy
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
                                             </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED'}">
-                                            <button type="button" class="btn-shopee-outline" onclick="alert('Đang xem chi tiết trả hàng đơn #${order.id}')">
-                                                Chi Tiết Trả Hàng
+                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="viewReturnDetail('${order.orderId}')">
+                                                <i class="bi bi-clock-history me-1"></i> Chi Tiết Trả Hàng
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán

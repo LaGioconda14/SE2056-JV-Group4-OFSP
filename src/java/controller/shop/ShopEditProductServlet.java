@@ -1,261 +1,196 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
+ */
+
 package controller.shop;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.math.BigDecimal;
+import java.util.List;
 import model.Category;
 import model.ProductVariant;
 import model.User;
-import service.IShopProductService;
-import service.impl.ShopProductServiceImpl;
+import service.IProductService;
+import service.impl.ProductServiceImpl;
 
-@WebServlet(name = "ShopEditProductServlet", urlPatterns = {
-    "/shop/product/edit", 
-    "/shop/products/edit",
-    "/shop/product/toggle",
-    "/shop/product/delete"
-})
+/**
+ *
+ * @author ADMIN
+ */
+@WebServlet(name="ShopEditProductServlet", urlPatterns={"/shop/product/edit"})
 public class ShopEditProductServlet extends HttpServlet {
+    private final IProductService productService = new ProductServiceImpl();
+    /** 
+     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
+    throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        try (PrintWriter out = response.getWriter()) {
+            /* TODO output your page here. You may use following sample code. */
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet ShopEditProductServlet</title>");  
+            out.println("</head>");
+            out.println("<body>");
+            out.println("<h1>Servlet ShopEditProductServlet at " + request.getContextPath () + "</h1>");
+            out.println("</body>");
+            out.println("</html>");
+        }
+    } 
 
-    private final IShopProductService shopProductService = new ShopProductServiceImpl();
-
+    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+    /** 
+     * Handles the HTTP <code>GET</code> method.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
-        // 1. Kiểm tra đăng nhập
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        // 2. Lấy shopId
-        Long shopId = (Long) session.getAttribute("shopId");
-        if (shopId == null) {
-            shopId = shopProductService.getShopIDByOwnerID(user.getId());
-            if (shopId != null && shopId > 0) {
-                session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
-            }
-        }
-
-        String path = request.getServletPath();
-
-        // 3. Xử lý Toggle Ẩn / Hiện nếu gọi route /toggle
-        if ("/shop/product/toggle".equals(path)) {
-            try {
-                String idParam = request.getParameter("id");
-                if (idParam != null && !idParam.trim().isEmpty()) {
-                    long variantId = Long.parseLong(idParam.trim());
-                    shopProductService.toggleVariantStatus(variantId, shopId);
-                    session.setAttribute("successMessage", "Thay đổi trạng thái kinh doanh của sản phẩm thành công!");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                session.setAttribute("errorMessage", "Lỗi đổi trạng thái: " + e.getMessage());
-            }
-            response.sendRedirect(request.getContextPath() + "/shop/products");
-            return;
-        }
-
-        // 4. Xử lý Xóa nếu gọi route /delete
-        if ("/shop/product/delete".equals(path)) {
-            try {
-                String idParam = request.getParameter("id");
-                if (idParam != null && !idParam.trim().isEmpty()) {
-                    long variantId = Long.parseLong(idParam.trim());
-                    shopProductService.deleteVariant(variantId, shopId);
-                    session.setAttribute("successMessage", "Xóa sản phẩm thành công!");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                session.setAttribute("errorMessage", "Lỗi xóa sản phẩm: " + e.getMessage());
-            }
-            response.sendRedirect(request.getContextPath() + "/shop/products");
-            return;
-        }
-
-        // 5. Hiển thị màn hình chỉnh sửa
         try {
-            String idParam = request.getParameter("id");
-            if (idParam == null || idParam.trim().isEmpty()) {
-                response.sendRedirect(request.getContextPath() + "/shop/products");
-                return;
+            // 1. Bắt linh hoạt mọi loại tên tham số truyền lên từ URL
+            String idStr = request.getParameter("id");
+            if (idStr != null && !idStr.trim().isEmpty()) {
+                long variantId = Long.parseLong(idStr.trim());
+                ProductVariant product = productService.getVariantById(variantId);
+                request.setAttribute("product", product);
             }
 
-            long variantId = Long.parseLong(idParam.trim());
-            ProductVariant product = shopProductService.getVariantDetailForEdit(variantId, shopId);
-
-            if (product == null) {
-                session.setAttribute("errorMessage", "Không tìm thấy thông tin sản phẩm cần sửa!");
-                response.sendRedirect(request.getContextPath() + "/shop/products");
-                return;
-            }
-
-            List<Category> categories = shopProductService.getAllCategories();
-            request.setAttribute("product", product);
+            // 2. Lấy dữ liệu hỗ trợ cho dropdown / datalist
+            List<Category> categories = productService.getAllCategories();
             request.setAttribute("categories", categories);
-
-            request.getRequestDispatcher("/views/shop/shop-product-edit.jsp").forward(request, response);
+            
+            List<String> certifications = productService.getAllCertifications();
+            request.setAttribute("certifications", certifications);
+            
+            List<String> storageTemps = productService.getAllStorageTemps();
+            request.setAttribute("storageTemps", storageTemps);
+            
+            List<String> units = productService.getAllUnits();
+            request.setAttribute("units", units);
+            
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("errorMessage", "Lỗi tải thông tin sản phẩm: " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/shop/products");
         }
-    }
 
+        // 3. Forward đúng sang trang chỉnh sửa JSP
+        request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+    } 
+
+    /** 
+     * Handles the HTTP <code>POST</code> method.
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
+        // 1. Kiểm tra quyền hạn (Phải là chủ shop)
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        Long shopId = (Long) session.getAttribute("shopId");
-        if (shopId == null || shopId <= 0) {
-            shopId = 1L;
-            session.setAttribute("shopId", shopId);
-        }
-
         try {
+            // 2. Lấy tất cả các tham số từ form gửi lên
             String variantIdStr = request.getParameter("variantId");
-            String productIdStr = request.getParameter("productId");
-
-            if (variantIdStr == null || productIdStr == null) {
-                response.sendRedirect(request.getContextPath() + "/shop/products");
-                return;
-            }
-
-            long variantId = Long.parseLong(variantIdStr.trim());
-            long productId = Long.parseLong(productIdStr.trim());
-
             String name = request.getParameter("name");
             String categoryIdStr = request.getParameter("categoryId");
             String origin = request.getParameter("origin");
             String storageTemp = request.getParameter("storageTemp");
-            String[] certsArray = request.getParameterValues("certifications");
+            String certification = request.getParameter("certification");
             String description = request.getParameter("description");
-
-            String unit = request.getParameter("unit");
             String sku = request.getParameter("sku");
-            String originalPriceStr = request.getParameter("originalPrice");
+            String variantName = request.getParameter("variantName");
+            String unit = request.getParameter("unit");
             String priceStr = request.getParameter("price");
+            String originalPriceStr = request.getParameter("originalPrice");
             String stockQuantityStr = request.getParameter("stockQuantity");
-            String lowStockThresholdStr = request.getParameter("lowStockThreshold");
-            String status = request.getParameter("status"); // active / hidden
-            boolean isActive = "active".equalsIgnoreCase(status) || "true".equalsIgnoreCase(status) || "1".equals(status);
+            String isActiveStr = request.getParameter("isActive");
+            String coverImageUrl = request.getParameter("coverImageUrl");
 
-            String coverImage = request.getParameter("coverImage");
-            String imgDetail1 = request.getParameter("imgDetail1");
-            String imgDetail2 = request.getParameter("imgDetail2");
-            String imgDetail3 = request.getParameter("imgDetail3");
-            String imgDetail4 = request.getParameter("imgDetail4");
+            // 3. Ép kiểu dữ liệu an toàn
+            long variantId = Long.parseLong(variantIdStr);
+            int categoryId = (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) ? Integer.parseInt(categoryIdStr) : 0;
+            BigDecimal price = (priceStr != null && !priceStr.trim().isEmpty()) ? new BigDecimal(priceStr) : BigDecimal.ZERO;
+            BigDecimal originalPrice = (originalPriceStr != null && !originalPriceStr.trim().isEmpty()) ? new BigDecimal(originalPriceStr) : price;
+            int stockQuantity = (stockQuantityStr != null && !stockQuantityStr.trim().isEmpty()) ? Integer.parseInt(stockQuantityStr) : 0;
+            boolean isActive = "true".equalsIgnoreCase(isActiveStr) || "on".equalsIgnoreCase(isActiveStr);
 
-            if (name == null || name.trim().isEmpty()) {
-                request.setAttribute("errorMessage", "Tên sản phẩm nông sản không được để trống!");
-                doGet(request, response);
-                return;
-            }
-
-            int categoryId = 1;
-            try {
-                if (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) {
-                    categoryId = Integer.parseInt(categoryIdStr.trim());
-                }
-            } catch (NumberFormatException ignored) {}
-
-            if (origin == null || origin.trim().isEmpty()) {
-                origin = "Đà Lạt, Lâm Đồng";
-            }
-            if (storageTemp == null || storageTemp.trim().isEmpty()) {
-                storageTemp = "Kho lạnh 2°C - 8°C";
-            }
-
-            StringBuilder certSb = new StringBuilder();
-            if (certsArray != null && certsArray.length > 0) {
-                for (String cert : certsArray) {
-                    if (cert != null && !cert.trim().isEmpty()) {
-                        if (certSb.length() > 0) certSb.append(", ");
-                        certSb.append(cert.trim());
-                    }
-                }
-            }
-            String certification = certSb.length() > 0 ? certSb.toString() : "VietGAP";
-
-            BigDecimal originalPrice = new BigDecimal("125000");
-            try {
-                if (originalPriceStr != null && !originalPriceStr.trim().isEmpty()) {
-                    String clean = originalPriceStr.replaceAll("[^0-9.]", "");
-                    if (!clean.isEmpty()) originalPrice = new BigDecimal(clean);
-                }
-            } catch (Exception ignored) {}
-
-            BigDecimal price = new BigDecimal("98000");
-            try {
-                if (priceStr != null && !priceStr.trim().isEmpty()) {
-                    String clean = priceStr.replaceAll("[^0-9.]", "");
-                    if (!clean.isEmpty()) price = new BigDecimal(clean);
-                } else {
-                    price = originalPrice;
-                }
-            } catch (Exception ignored) {}
-
-            int stockQuantity = 100;
-            try {
-                if (stockQuantityStr != null && !stockQuantityStr.trim().isEmpty()) {
-                    stockQuantity = Integer.parseInt(stockQuantityStr.replaceAll("[^0-9]", ""));
-                }
-            } catch (Exception ignored) {}
-
-            int lowStockThreshold = 15;
-            try {
-                if (lowStockThresholdStr != null && !lowStockThresholdStr.trim().isEmpty()) {
-                    lowStockThreshold = Integer.parseInt(lowStockThresholdStr.replaceAll("[^0-9]", ""));
-                }
-            } catch (Exception ignored) {}
-
-            List<String> detailImageUrls = new ArrayList<>();
-            if (imgDetail1 != null && !imgDetail1.trim().isEmpty()) detailImageUrls.add(imgDetail1.trim());
-            if (imgDetail2 != null && !imgDetail2.trim().isEmpty()) detailImageUrls.add(imgDetail2.trim());
-            if (imgDetail3 != null && !imgDetail3.trim().isEmpty()) detailImageUrls.add(imgDetail3.trim());
-            if (imgDetail4 != null && !imgDetail4.trim().isEmpty()) detailImageUrls.add(imgDetail4.trim());
-
-            shopProductService.updateFullProduct(
-                shopId, productId, variantId, name.trim(), categoryId, origin, storageTemp,
-                certification, description, sku, unit, unit, price, originalPrice,
-                stockQuantity, lowStockThreshold, isActive, coverImage, detailImageUrls
+            // 4. Gọi Service thực hiện cập nhật
+            boolean success = productService.updateFullProduct(
+                variantId, name, categoryId, origin, storageTemp, certification, 
+                description, sku, variantName, unit, price, originalPrice, 
+                stockQuantity, isActive, coverImageUrl
             );
 
-            session.setAttribute("successMessage", "Cập nhật sản phẩm nông sản '" + name.trim() + "' thành công!");
-            response.sendRedirect(request.getContextPath() + "/shop/products");
+            if (success) {
+                // Cập nhật thành công -> Chuyển hướng về danh sách sản phẩm kèm thông báo
+                response.sendRedirect(request.getContextPath() + "/shop/products?message=updated_success");
+            } else {
+                // Cập nhật thất bại -> Đẩy lại lỗi và giữ nguyên form
+                request.setAttribute("errorMessage", "Cập nhật thông tin nông sản thất bại. Vui lòng kiểm tra lại dữ liệu!");
+                
+                // Load lại dữ liệu để form không bị rỗng khi render lại
+                ProductVariant product = productService.getVariantById(variantId);
+                request.setAttribute("product", product);
+                request.setAttribute("categories", productService.getAllCategories());
+                request.setAttribute("certifications", productService.getAllCertifications());
+                request.setAttribute("storageTemps", productService.getAllStorageTemps());
+                request.setAttribute("units", productService.getAllUnits());
+                
+                request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
-            session.setAttribute("errorMessage", "Lỗi cập nhật sản phẩm: " + e.getMessage());
-            doGet(request, response);
+            request.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
+            request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
         }
     }
-}
 
+    /** 
+     * Returns a short description of the servlet.
+     * @return a String containing servlet description
+     */
+    @Override
+    public String getServletInfo() {
+        return "Short description";
+    }// </editor-fold>
+
+}
