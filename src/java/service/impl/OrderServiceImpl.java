@@ -358,4 +358,14 @@ public class OrderServiceImpl implements IOrderService {
     public List<Order> getOrdersByCustomerId(long customerId) {
         return orderDAO.getOrdersByCustomerId(customerId);
     }
+
+    @Override
+    public List<SubOrder> getSubOrdersByCustomerId(long customerId) {
+        return orderDAO.getSubOrdersByCustomerId(customerId);
+    }
+
+    @Override
+    public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
+        return orderDAO.cancelOrderByCustomer(customerId, orderIdentifier, cancelReason);
+    }
 }

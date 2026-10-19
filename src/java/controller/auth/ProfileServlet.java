@@ -2,9 +2,13 @@ package controller.auth;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,10 +18,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import model.CustomerAddress;
+import model.Order;
+import model.SubOrder;
 import model.User;
 import service.ICustomerAddressService;
+import service.IOrderService;
 import service.IUserService;
 import service.impl.CustomerAddressServiceImpl;
+import service.impl.OrderServiceImpl;
 import service.impl.UserServiceImpl;
 
 @WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
@@ -30,6 +38,7 @@ public class ProfileServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();
     private final ICustomerAddressService addressService = new CustomerAddressServiceImpl();
+    private final IOrderService orderService = new OrderServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -60,6 +69,15 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("addresses", addresses);
         } catch (Exception ex) {
             request.setAttribute("addresses", Collections.emptyList());
+        }
+
+        try {
+            List<SubOrder> orders = orderService.getSubOrdersByCustomerId(targetUserId);
+            request.setAttribute("orders", orders != null ? orders : Collections.emptyList());
+            request.setAttribute("ordersCount", orders != null ? orders.size() : 0);
+        } catch (Exception ex) {
+            request.setAttribute("orders", Collections.emptyList());
+            request.setAttribute("ordersCount", 0);
         }
 
         if (session != null) {
@@ -116,6 +134,9 @@ public class ProfileServlet extends HttpServlet {
                 break;
             case "deleteAddress":
                 handleDeleteAddress(request, response, session, sessionUser);
+                break;
+            case "cancelOrder":
+                handleCancelOrder(request, response, session, sessionUser);
                 break;
             case "updateProfile":
             default:
@@ -346,5 +367,57 @@ public class ProfileServlet extends HttpServlet {
             session.setAttribute("errorMessage", e.getMessage());
         }
         response.sendRedirect(request.getContextPath() + "/profile");
+    }
+
+    private void handleCancelOrder(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        String orderId = request.getParameter("orderId");
+        String reason = request.getParameter("reason");
+        if (reason == null || reason.trim().isEmpty()) {
+            reason = "Người mua hủy đơn trực tiếp";
+        }
+
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || request.getParameter("ajax") != null
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            if (orderId == null || orderId.trim().isEmpty()) {
+                throw new IllegalArgumentException("Mã đơn hàng không hợp lệ!");
+            }
+
+            boolean ok = orderService.cancelOrderByCustomer(sessionUser.getId(), orderId.trim(), reason.trim());
+            if (ok) {
+                result.put("success", true);
+                result.put("message", "Đã hủy đơn hàng thành công!");
+                if (session != null) {
+                    session.setAttribute("successMessage", "Đã hủy đơn hàng #" + orderId + " thành công!");
+                }
+            } else {
+                result.put("success", false);
+                result.put("message", "Không thể hủy đơn hàng. Vui lòng thử lại!");
+            }
+        } catch (Exception ex) {
+            result.put("success", false);
+            result.put("message", ex.getMessage());
+        }
+
+        if (isAjax) {
+            out.print(new Gson().toJson(result));
+            out.flush();
+        } else {
+            if ((boolean) result.getOrDefault("success", false)) {
+                response.sendRedirect(request.getContextPath() + "/profile#orders");
+            } else {
+                if (session != null) {
+                    session.setAttribute("errorMessage", result.get("message"));
+                }
+                response.sendRedirect(request.getContextPath() + "/profile#orders");
+            }
+        }
     }
 }

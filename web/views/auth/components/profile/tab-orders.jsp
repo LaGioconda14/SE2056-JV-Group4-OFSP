@@ -9,64 +9,67 @@
                 <h3 class="section-heading">Đơn Hàng & Lịch Sử Mua Hàng</h3>
             </div>
             <span class="badge-soft-success">
-                ${not empty orders ? orders.size() : 0} đơn hàng
+                <span id="headerTotalOrdersCount">${not empty orders ? orders.size() : 0}</span> đơn hàng
             </span>
+        </div>
+
+        <div class="order-filter-nav">
+            <button type="button" class="order-filter-btn active" data-filter="all" onclick="filterOrders('all', this)">
+                Tất cả
+            </button>
+            <button type="button" class="order-filter-btn" data-filter="to-pay" onclick="filterOrders('to-pay', this)">
+                Chờ thanh toán<span class="order-tab-count" id="count-topay"></span>
+            </button>
+            <button type="button" class="order-filter-btn" data-filter="to-ship" onclick="filterOrders('to-ship', this)">
+                Vận chuyển<span class="order-tab-count" id="count-toship"></span>
+            </button>
+            <button type="button" class="order-filter-btn" data-filter="shipping" onclick="filterOrders('shipping', this)">
+                Chờ giao hàng<span class="order-tab-count" id="count-shipping"></span>
+            </button>
+            <button type="button" class="order-filter-btn" data-filter="completed" onclick="filterOrders('completed', this)">
+                Hoàn thành<span class="order-tab-count" id="count-completed"></span>
+            </button>
+            <button type="button" class="order-filter-btn" data-filter="cancelled" onclick="filterOrders('cancelled', this)">
+                Đã hủy<span class="order-tab-count" id="count-cancelled"></span>
+            </button>
+            <button type="button" class="order-filter-btn" data-filter="returned" onclick="filterOrders('returned', this)">
+                Trả hàng/Hoàn tiền<span class="order-tab-count" id="count-returned"></span>
+            </button>
+        </div>
+
+        <div class="shopee-search-bar">
+            <i class="bi bi-search"></i>
+            <input type="text" id="orderSearchInput" placeholder="Bạn có thể tìm kiếm theo tên Shop, ID đơn hàng hoặc Tên Sản phẩm" onkeyup="searchOrders(this.value)">
         </div>
 
         <c:choose>
             <c:when test="${not empty orders}">
-                <div class="order-filter-nav">
-                    <button type="button" class="order-filter-btn active" data-filter="all" onclick="filterOrders('all', this)">
-                        <i class="bi bi-grid-fill"></i> Tất cả <span class="badge-pill-count" id="count-all">${orders.size()}</span>
-                    </button>
-                    <button type="button" class="order-filter-btn" data-filter="pending" onclick="filterOrders('pending', this)">
-                        <i class="bi bi-hourglass-split"></i> Chờ xác nhận <span class="badge-pill-count" id="count-pending">0</span>
-                    </button>
-                    <button type="button" class="order-filter-btn" data-filter="processing" onclick="filterOrders('processing', this)">
-                        <i class="bi bi-box-seam"></i> Chờ lấy hàng <span class="badge-pill-count" id="count-processing">0</span>
-                    </button>
-                    <button type="button" class="order-filter-btn" data-filter="shipping" onclick="filterOrders('shipping', this)">
-                        <i class="bi bi-truck"></i> Chờ giao hàng <span class="badge-pill-count" id="count-shipping">0</span>
-                    </button>
-                    <button type="button" class="order-filter-btn" data-filter="delivered" onclick="filterOrders('delivered', this)">
-                        <i class="bi bi-check-circle-fill"></i> Đã giao <span class="badge-pill-count" id="count-delivered">0</span>
-                    </button>
-                    <button type="button" class="order-filter-btn" data-filter="returned" onclick="filterOrders('returned', this)">
-                        <i class="bi bi-arrow-counterclockwise"></i> Trả hàng <span class="badge-pill-count" id="count-returned">0</span>
-                    </button>
-                    <button type="button" class="order-filter-btn" data-filter="cancelled" onclick="filterOrders('cancelled', this)">
-                        <i class="bi bi-x-circle"></i> Đã hủy <span class="badge-pill-count" id="count-cancelled">0</span>
-                    </button>
-                </div>
-
-                <div class="shopee-search-bar">
-                    <i class="bi bi-search"></i>
-                    <input type="text" id="orderSearchInput" placeholder="Bạn có thể tìm kiếm theo tên Shop, ID đơn hàng hoặc Tên Sản phẩm" onkeyup="searchOrders(this.value)">
-                </div>
-
                 <div id="ordersContainer">
                     <c:forEach items="${orders}" var="order">
                         <c:set var="statusUpper" value="${order.status.toUpperCase()}" />
                         <div class="shopee-order-card"
                              data-order-status="${statusUpper}"
+                             data-payment-status="${order.paymentStatus != null ? order.paymentStatus.toUpperCase() : ''}"
+                             data-payment-method="${order.paymentMethod != null ? order.paymentMethod.toUpperCase() : ''}"
                              data-order-id="${order.id}"
                              data-shop-name="${order.shopName}"
                              data-created-at="${order.createdAt}"
+                             data-cancel-reason="${order.cancelReason != null ? order.cancelReason : ''}"
+                             data-delivery-slot="${order.deliverySlot != null ? order.deliverySlot : ''}"
                              data-recipient-name="${order.shippingAddress != null ? order.shippingAddress.recipientName : user.fullName}"
                              data-recipient-phone="${order.shippingAddress != null ? order.shippingAddress.recipientPhone : user.phone}"
-                             data-recipient-address="${order.shippingAddress != null ? order.shippingAddress.fullAddress : 'Khu đô thị Vinhomes Central Park, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh'}"
-                             data-goods-amount="${order.totalGoodsAmount}"
-                             data-shipping-fee="${order.totalShippingFee}"
-                             data-discount="${order.platformDiscount}"
-                             data-final-amount="${order.totalAmount}"
-                             data-payment-method="${order.paymentMethod}">
+                             data-recipient-address="${order.shippingAddress != null ? order.shippingAddress.fullAddress : 'Địa chỉ nhận hàng'}"
+                             data-goods-amount="${order.shopSubtotal != null ? order.shopSubtotal : order.totalGoodsAmount}"
+                             data-shipping-fee="${order.shopShippingFee != null ? order.shopShippingFee : order.totalShippingFee}"
+                             data-discount="${order.shopDiscount != null ? order.shopDiscount : order.platformDiscount}"
+                             data-final-amount="${order.shopTotal != null ? order.shopTotal : order.totalAmount}">
                             <div class="shopee-card-header">
                                 <div class="shopee-shop-info">
                                     <span class="shopee-shop-name">${order.shopName}</span>
                                     <button type="button" class="shopee-btn-chat" onclick="openChatShop('${order.shopName}')">
                                         <i class="bi bi-chat-dots-fill"></i> Chat
                                     </button>
-                                    <a href="${pageContext.request.contextPath}/home.jsp" class="shopee-btn-shop">
+                                    <a href="${pageContext.request.contextPath}/home" class="shopee-btn-shop">
                                         <i class="bi bi-shop"></i> Xem Shop
                                     </a>
                                 </div>
@@ -75,14 +78,9 @@
                                         <c:when test="${statusUpper == 'COMPLETED' or statusUpper == 'DELIVERED'}">
                                             <span class="text-muted small me-1"><i class="bi bi-truck text-success"></i> Giao hàng thành công</span>
                                             <span class="text-muted">|</span>
-                                            <span class="shopee-status-shipping ms-1">ĐÃ GIAO</span>
+                                            <span class="shopee-status-shipping ms-1">HOÀN THÀNH</span>
                                         </c:when>
-                                        <c:when test="${statusUpper == 'PROCESSING' or statusUpper == 'CONFIRMED'}">
-                                            <span class="text-muted small me-1"><i class="bi bi-box-seam text-primary"></i> Đang chuẩn bị hàng</span>
-                                            <span class="text-muted">|</span>
-                                            <span class="shopee-status-shipping ms-1">CHỜ LẤY HÀNG</span>
-                                        </c:when>
-                                        <c:when test="${statusUpper == 'SHIPPING'}">
+                                        <c:when test="${statusUpper == 'SHIPPING' or statusUpper == 'DELIVERING' or statusUpper == 'IN_TRANSIT'}">
                                             <span class="text-muted small me-1"><i class="bi bi-snow text-primary"></i> Đang giao chuỗi lạnh</span>
                                             <span class="text-muted">|</span>
                                             <span class="shopee-status-shipping ms-1">CHỜ GIAO HÀNG</span>
@@ -92,13 +90,18 @@
                                             <span class="text-muted">|</span>
                                             <span class="shopee-status-shipping ms-1">TRẢ HÀNG</span>
                                         </c:when>
-                                        <c:when test="${statusUpper == 'CANCELLED'}">
+                                        <c:when test="${statusUpper == 'CANCELLED' or statusUpper == 'CANCELED'}">
                                             <span class="shopee-status-cancelled ms-1">ĐÃ HỦY</span>
                                         </c:when>
-                                        <c:otherwise>
-                                            <span class="text-muted small me-1"><i class="bi bi-hourglass-split text-warning"></i> Chờ duyệt</span>
+                                        <c:when test="${statusUpper == 'PENDING' or statusUpper == 'UNPAID'}">
+                                            <span class="text-muted small me-1"><i class="bi bi-hourglass-split text-warning"></i> Chờ thanh toán</span>
                                             <span class="text-muted">|</span>
-                                            <span class="shopee-status-shipping ms-1">CHỜ XÁC NHẬN</span>
+                                            <span class="shopee-status-shipping ms-1 text-danger">CHỜ THANH TOÁN</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="text-muted small me-1"><i class="bi bi-box-seam text-primary"></i> Đang chuẩn bị hàng</span>
+                                            <span class="text-muted">|</span>
+                                            <span class="shopee-status-shipping ms-1">VẬN CHUYỂN</span>
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
@@ -168,10 +171,10 @@
                                 <div class="shopee-actions">
                                     <c:choose>
                                         <c:when test="${statusUpper == 'COMPLETED' or statusUpper == 'DELIVERED'}">
-                                            <a href="${pageContext.request.contextPath}/home.jsp" class="btn-shopee-primary">
+                                            <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
-                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="openReturnModal('${order.id}', '${order.shopName}', '${order.totalAmount}', '${order.orderId}')">
+                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="openReturnModal('${order.id}', '${order.shopName}', '${order.totalAmount}', '${order.subOrderId}')">
                                                 <i class="bi bi-arrow-return-left me-1"></i> Yêu Cầu Trả Hàng/Hoàn Tiền
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
@@ -181,7 +184,7 @@
                                                 Đánh Giá
                                             </button>
                                         </c:when>
-                                        <c:when test="${statusUpper == 'SHIPPING'}">
+                                        <c:when test="${statusUpper == 'SHIPPING' or statusUpper == 'DELIVERING' or statusUpper == 'IN_TRANSIT'}">
                                             <button type="button" class="btn-shopee-primary" onclick="confirmReceivedOrder('${order.id}')">
                                                 Đã Nhận Hàng
                                             </button>
@@ -192,8 +195,8 @@
                                                 Liên Hệ Người Bán
                                             </button>
                                         </c:when>
-                                        <c:when test="${statusUpper == 'CANCELLED'}">
-                                            <a href="${pageContext.request.contextPath}/home.jsp" class="btn-shopee-primary">
+                                        <c:when test="${statusUpper == 'CANCELLED' or statusUpper == 'CANCELED'}">
+                                            <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
                                             <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
@@ -204,7 +207,7 @@
                                             </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED'}">
-                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="viewReturnDetail('${order.orderId}')">
+                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="viewReturnDetail('${order.subOrderId}')">
                                                 <i class="bi bi-clock-history me-1"></i> Chi Tiết Trả Hàng
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
@@ -212,8 +215,11 @@
                                             </button>
                                         </c:when>
                                         <c:otherwise>
-                                            <button type="button" class="btn-shopee-outline" onclick="cancelOrder('${order.id}')">
-                                                Hủy Đơn Hàng
+                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
+                                                <i class="bi bi-truck me-1"></i> Tra Cứu Vận Chuyển
+                                            </button>
+                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="cancelOrder('${order.id}')">
+                                                <i class="bi bi-x-circle me-1"></i> Hủy Đơn Hàng
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán

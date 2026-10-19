@@ -9,7 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=20261012_pill_nav">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=20261019_shopee_tabs">
 </head>
 <body>
 
@@ -40,7 +40,10 @@
 
 <%@include file="components/profile/modals.jsp"%>
 
+<script>
+    window.contextPath = '${pageContext.request.contextPath}';
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/assets/js/profile.js?v=20261019"></script>
+<script src="${pageContext.request.contextPath}/assets/js/profile.js?v=20261019_real_tracking"></script>
 </body>
 </html>

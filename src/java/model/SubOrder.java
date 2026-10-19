@@ -197,12 +197,57 @@ public class SubOrder {
         this.cancelledAt = cancelledAt;
     }
 
-    public Timestamp getCreatedAt() {
+    private String shopLogoUrl;
+
+    public String getId() {
+        return (subOrderCode != null && !subOrderCode.isEmpty()) ? subOrderCode : ("SUB-" + subOrderId);
+    }
+
+    public String getShopLogoUrl() {
+        return shopLogoUrl;
+    }
+
+    public void setShopLogoUrl(String shopLogoUrl) {
+        this.shopLogoUrl = shopLogoUrl;
+    }
+
+    public String getTotalAmount() {
+        return String.format("%,d", shopTotal != null ? shopTotal.longValue() : 0).replace(',', '.');
+    }
+
+    public BigDecimal getTotalGoodsAmount() {
+        return shopSubtotal != null ? shopSubtotal : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getTotalShippingFee() {
+        return shopShippingFee != null ? shopShippingFee : BigDecimal.ZERO;
+    }
+
+    public BigDecimal getPlatformDiscount() {
+        return shopDiscount != null ? shopDiscount : BigDecimal.ZERO;
+    }
+
+    public String getCreatedAt() {
+        if (createdAt == null) {
+            return "";
+        }
+        return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(createdAt);
+    }
+
+    public Timestamp getCreatedAtTimestamp() {
         return createdAt;
     }
 
     public void setCreatedAt(Timestamp createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public boolean hasItems() {
+        return items != null && !items.isEmpty();
+    }
+
+    public String getNote() {
+        return deliverySlot != null && !deliverySlot.trim().isEmpty() ? ("Khung giờ giao: " + deliverySlot) : "Đơn hàng nông sản chuỗi lạnh FreshFruit";
     }
 
     public Timestamp getUpdatedAt() {

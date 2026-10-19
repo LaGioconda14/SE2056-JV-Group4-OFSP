@@ -38,6 +38,12 @@ function activateTab(tabTargetId, btnId) {
         history.replaceState(null, null, hashName);
     }
 
+    if (tabTargetId === '#nav-orders') {
+        if (typeof updateOrderCounts === 'function') {
+            updateOrderCounts();
+        }
+    }
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -535,92 +541,176 @@ document.addEventListener('DOMContentLoaded', function() {
     updateOrderCounts();
 });
 
-function updateOrderCounts() {
-    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card, #ordersContainer .order-card');
-    if (!cards || cards.length === 0) return;
+function isOrderToPay(s, payStatus, payMethod) {
+    if (s === 'CANCELLED' || s === 'CANCELED' || s === 'COMPLETED' || s === 'DELIVERED') return false;
+    return s === 'PENDING' || s === 'UNPAID' || (payStatus === 'PENDING' && payMethod !== 'COD');
+}
 
-    let pendingCount = 0;
-    let processingCount = 0;
+function isOrderToShip(s, payStatus, payMethod) {
+    if (s === 'CANCELLED' || s === 'CANCELED' || s === 'COMPLETED' || s === 'DELIVERED') return false;
+    if (isOrderToPay(s, payStatus, payMethod)) return false;
+    return s === 'CONFIRMED' || s === 'PROCESSING' || s === 'PREPARING' || s === 'NEW' || s === 'PACKED' || s === 'READY_TO_SHIP';
+}
+
+function isOrderShipping(s) {
+    return s === 'SHIPPING' || s === 'DELIVERING' || s === 'IN_TRANSIT';
+}
+
+function isOrderCompleted(s) {
+    return s === 'COMPLETED' || s === 'DELIVERED' || s === 'SUCCESS';
+}
+
+function isOrderCancelled(s) {
+    return s === 'CANCELLED' || s === 'CANCELED';
+}
+
+function isOrderReturned(s) {
+    return s === 'RETURNED' || s === 'REFUNDED' || s === 'DISPUTED';
+}
+
+function updateOrderCounts() {
+    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card');
+    
+    let toPayCount = 0;
+    let toShipCount = 0;
     let shippingCount = 0;
-    let deliveredCount = 0;
-    let returnedCount = 0;
+    let completedCount = 0;
     let cancelledCount = 0;
+    let returnedCount = 0;
 
     cards.forEach(card => {
         const s = (card.getAttribute('data-order-status') || '').toUpperCase();
-        if (s === 'PENDING') pendingCount++;
-        if (s === 'PROCESSING' || s === 'CONFIRMED') processingCount++;
-        if (s === 'SHIPPING') shippingCount++;
-        if (s === 'COMPLETED' || s === 'DELIVERED') deliveredCount++;
-        if (s === 'RETURNED' || s === 'REFUNDED' || s === 'DISPUTED') returnedCount++;
-        if (s === 'CANCELLED') cancelledCount++;
+        const payStatus = (card.getAttribute('data-payment-status') || '').toUpperCase();
+        const payMethod = (card.getAttribute('data-payment-method') || '').toUpperCase();
+
+        if (isOrderToPay(s, payStatus, payMethod)) {
+            toPayCount++;
+        } else if (isOrderToShip(s, payStatus, payMethod)) {
+            toShipCount++;
+        } else if (isOrderShipping(s)) {
+            shippingCount++;
+        } else if (isOrderCompleted(s)) {
+            completedCount++;
+        } else if (isOrderCancelled(s)) {
+            cancelledCount++;
+        } else if (isOrderReturned(s)) {
+            returnedCount++;
+        }
     });
 
-    const setBadge = (id, count) => {
+    const setTabCount = (id, count) => {
         const el = document.getElementById(id);
-        if (el) el.textContent = count;
+        if (el) {
+            el.textContent = count > 0 ? ` (${count})` : '';
+        }
     };
 
-    setBadge('count-all', cards.length);
-    setBadge('count-pending', pendingCount);
-    setBadge('count-processing', processingCount);
-    setBadge('count-shipping', shippingCount);
-    setBadge('count-delivered', deliveredCount);
-    setBadge('count-returned', returnedCount);
-    setBadge('count-cancelled', cancelledCount);
+    setTabCount('count-topay', toPayCount);
+    setTabCount('count-toship', toShipCount);
+    setTabCount('count-shipping', shippingCount);
+    setTabCount('count-completed', completedCount);
+    setTabCount('count-cancelled', cancelledCount);
+    setTabCount('count-returned', returnedCount);
+
+    const headerCount = document.getElementById('headerTotalOrdersCount');
+    if (headerCount) {
+        headerCount.textContent = cards.length;
+    }
 }
 
 function filterOrders(filter, btn) {
     document.querySelectorAll('.order-filter-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
-    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card, #ordersContainer .order-card');
+    const searchInput = document.getElementById('orderSearchInput');
+    const kw = searchInput ? (searchInput.value || '').trim().toLowerCase() : '';
+
+    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card');
     let visibleCount = 0;
 
     cards.forEach(card => {
         const s = (card.getAttribute('data-order-status') || '').toUpperCase();
-        let match = false;
+        const payStatus = (card.getAttribute('data-payment-status') || '').toUpperCase();
+        const payMethod = (card.getAttribute('data-payment-method') || '').toUpperCase();
 
+        let tabMatch = false;
         if (filter === 'all') {
-            match = true;
-        } else if (filter === 'pending') {
-            match = (s === 'PENDING');
-        } else if (filter === 'processing') {
-            match = (s === 'PROCESSING' || s === 'CONFIRMED');
+            tabMatch = true;
+        } else if (filter === 'to-pay' || filter === 'pending') {
+            tabMatch = isOrderToPay(s, payStatus, payMethod);
+        } else if (filter === 'to-ship' || filter === 'processing') {
+            tabMatch = isOrderToShip(s, payStatus, payMethod);
         } else if (filter === 'shipping') {
-            match = (s === 'SHIPPING');
-        } else if (filter === 'delivered') {
-            match = (s === 'COMPLETED' || s === 'DELIVERED');
-        } else if (filter === 'returned') {
-            match = (s === 'RETURNED' || s === 'REFUNDED' || s === 'DISPUTED');
+            tabMatch = isOrderShipping(s);
+        } else if (filter === 'completed' || filter === 'delivered') {
+            tabMatch = isOrderCompleted(s);
         } else if (filter === 'cancelled') {
-            match = (s === 'CANCELLED');
+            tabMatch = isOrderCancelled(s);
+        } else if (filter === 'returned') {
+            tabMatch = isOrderReturned(s);
         }
 
-        if (match) {
-            card.style.display = 'block';
-            visibleCount++;
+        if (tabMatch) {
+            const orderId = (card.getAttribute('data-order-id') || '').toLowerCase();
+            const shopName = (card.getAttribute('data-shop-name') || '').toLowerCase();
+            const cardText = card.innerText.toLowerCase();
+
+            if (!kw || orderId.includes(kw) || shopName.includes(kw) || cardText.includes(kw)) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
         } else {
             card.style.display = 'none';
         }
     });
 
-    const emptyBox = document.getElementById('ordersEmptyFilter');
-    if (emptyBox) {
+    const emptyFilterBox = document.getElementById('ordersEmptyFilter');
+    if (emptyFilterBox) {
         if (visibleCount === 0) {
-            emptyBox.classList.remove('d-none');
+            emptyFilterBox.classList.remove('d-none');
         } else {
-            emptyBox.classList.add('d-none');
+            emptyFilterBox.classList.add('d-none');
         }
     }
 }
 
 function searchOrders(keyword) {
     const kw = (keyword || '').trim().toLowerCase();
-    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card, #ordersContainer .order-card');
+    const activeBtn = document.querySelector('.order-filter-btn.active');
+    const currentFilter = activeBtn ? (activeBtn.getAttribute('data-filter') || 'all') : 'all';
+
+    const cards = document.querySelectorAll('#ordersContainer .shopee-order-card');
     let visibleCount = 0;
 
     cards.forEach(card => {
+        const s = (card.getAttribute('data-order-status') || '').toUpperCase();
+        const payStatus = (card.getAttribute('data-payment-status') || '').toUpperCase();
+        const payMethod = (card.getAttribute('data-payment-method') || '').toUpperCase();
+
+        let tabMatch = false;
+        if (currentFilter === 'all') {
+            tabMatch = true;
+        } else if (currentFilter === 'to-pay' || currentFilter === 'pending') {
+            tabMatch = isOrderToPay(s, payStatus, payMethod);
+        } else if (currentFilter === 'to-ship' || currentFilter === 'processing') {
+            tabMatch = isOrderToShip(s, payStatus, payMethod);
+        } else if (currentFilter === 'shipping') {
+            tabMatch = isOrderShipping(s);
+        } else if (currentFilter === 'completed' || currentFilter === 'delivered') {
+            tabMatch = isOrderCompleted(s);
+        } else if (currentFilter === 'cancelled') {
+            tabMatch = isOrderCancelled(s);
+        } else if (currentFilter === 'returned') {
+            tabMatch = isOrderReturned(s);
+        }
+
+        if (!tabMatch) {
+            card.style.display = 'none';
+            return;
+        }
+
         const orderId = (card.getAttribute('data-order-id') || '').toLowerCase();
         const shopName = (card.getAttribute('data-shop-name') || '').toLowerCase();
         const cardText = card.innerText.toLowerCase();
@@ -633,12 +723,12 @@ function searchOrders(keyword) {
         }
     });
 
-    const emptyBox = document.getElementById('ordersEmptyFilter');
-    if (emptyBox) {
+    const emptyFilterBox = document.getElementById('ordersEmptyFilter');
+    if (emptyFilterBox) {
         if (visibleCount === 0) {
-            emptyBox.classList.remove('d-none');
+            emptyFilterBox.classList.remove('d-none');
         } else {
-            emptyBox.classList.add('d-none');
+            emptyFilterBox.classList.add('d-none');
         }
     }
 }
@@ -666,8 +756,16 @@ function trackDelivery(orderId) {
 }
 
 function formatVND(amount) {
-    if (amount === undefined || amount === null || isNaN(amount)) return '0₫';
-    return new Intl.NumberFormat('vi-VN').format(Number(amount)) + '₫';
+    if (amount === undefined || amount === null || amount === '') return '0₫';
+    if (typeof amount === 'string') {
+        const cleaned = amount.replace(/[^\d.-]/g, '');
+        const parsed = parseFloat(cleaned);
+        if (!isNaN(parsed)) {
+            return new Intl.NumberFormat('vi-VN').format(Math.round(parsed)) + '₫';
+        }
+    }
+    const num = Number(amount) || 0;
+    return new Intl.NumberFormat('vi-VN').format(Math.round(num)) + '₫';
 }
 
 function showOrderTracking(orderId) {
@@ -680,19 +778,46 @@ function showOrderTracking(orderId) {
     }
 
     const status = (card.getAttribute('data-order-status') || 'PENDING').toUpperCase();
-    const shopName = card.getAttribute('data-shop-name') || 'Gốc Vườn Official Store';
+    const shopName = card.getAttribute('data-shop-name') || 'Gian hàng nông sản FreshFruit';
+    const createdAt = card.getAttribute('data-created-at') || '';
+    const cancelReason = card.getAttribute('data-cancel-reason') || 'Người mua hủy đơn trực tiếp';
+    const deliverySlot = card.getAttribute('data-delivery-slot') || '';
     const recipientName = card.getAttribute('data-recipient-name') || 'Người nhận';
     const recipientPhone = card.getAttribute('data-recipient-phone') || '0903 *** ***';
     const recipientAddress = card.getAttribute('data-recipient-address') || 'Địa chỉ giao hàng';
     const goodsAmount = card.getAttribute('data-goods-amount') || 0;
-    const shippingFee = card.getAttribute('data-shipping-fee') || 25000;
+    const shippingFee = card.getAttribute('data-shipping-fee') || 0;
     const discount = card.getAttribute('data-discount') || 0;
     const finalAmount = card.getAttribute('data-final-amount') || goodsAmount;
-    const paymentMethod = card.getAttribute('data-payment-method') || 'COD';
+    const paymentMethod = (card.getAttribute('data-payment-method') || 'COD').toUpperCase();
 
-    // 1. Header Order Code
-    const orderCodeEl = document.getElementById('trackOrderCode');
+    // 1. Header Order Code & Date
+    const orderCodeEl = document.getElementById('trackOrderCode') || document.getElementById('trackModalOrderCode');
     if (orderCodeEl) orderCodeEl.textContent = '#' + orderId;
+
+    const orderDateEl = document.getElementById('trackModalOrderDate');
+    if (orderDateEl) orderDateEl.textContent = createdAt ? createdAt : 'Vừa xong';
+
+    // Status Badge in Header
+    const statusBadge = document.getElementById('trackStatusBadge');
+    if (statusBadge) {
+        if (status === 'CANCELLED' || status === 'CANCELED') {
+            statusBadge.textContent = 'ĐÃ HỦY';
+            statusBadge.className = 'badge bg-danger-subtle text-danger px-3 py-1 rounded-pill fw-bold border border-danger-subtle';
+        } else if (status === 'COMPLETED' || status === 'DELIVERED' || status === 'SUCCESS') {
+            statusBadge.textContent = 'GIAO THÀNH CÔNG';
+            statusBadge.className = 'badge bg-success-subtle text-success px-3 py-1 rounded-pill fw-bold border border-success-subtle';
+        } else if (status === 'SHIPPING' || status === 'DELIVERING' || status === 'IN_TRANSIT') {
+            statusBadge.textContent = 'ĐANG GIAO HÀNG';
+            statusBadge.className = 'badge bg-primary-subtle text-primary px-3 py-1 rounded-pill fw-bold border border-primary-subtle';
+        } else if (status === 'CONFIRMED' || status === 'PROCESSING' || status === 'PREPARING' || status === 'NEW' || status === 'PACKED' || status === 'READY_TO_SHIP') {
+            statusBadge.textContent = 'ĐANG CHUẨN BỊ HÀNG';
+            statusBadge.className = 'badge bg-info-subtle text-info px-3 py-1 rounded-pill fw-bold border border-info-subtle';
+        } else {
+            statusBadge.textContent = 'CHỜ THANH TOÁN';
+            statusBadge.className = 'badge bg-warning-subtle text-warning px-3 py-1 rounded-pill fw-bold border border-warning-subtle';
+        }
+    }
 
     // 2. Recipient info
     const recNameEl = document.getElementById('trackRecipientName');
@@ -703,6 +828,11 @@ function showOrderTracking(orderId) {
 
     const recAddrEl = document.getElementById('trackRecipientAddress');
     if (recAddrEl) recAddrEl.textContent = recipientAddress;
+
+    const noteEl = document.getElementById('trackNoteText');
+    if (noteEl) {
+        noteEl.textContent = deliverySlot ? ('Khung giờ giao đã chọn: ' + deliverySlot) : 'Đóng thùng cách nhiệt chuỗi lạnh FreshCold tiêu chuẩn.';
+    }
 
     const destNameEl = document.getElementById('trackMapDestName');
     if (destNameEl) {
@@ -770,10 +900,13 @@ function showOrderTracking(orderId) {
         });
     }
 
-    // 5. Adapt Stepper and GPS Map depending on Status
+    // 5. Adapt Stepper, Times and Cards depending on Status
     const estTimeEl = document.getElementById('trackEstimatedTime');
     const gpsCard = document.getElementById('trackGpsCard');
     const driverCard = document.getElementById('trackDriverCard');
+    const prepCard = document.getElementById('trackPreparingCard');
+    const cancelCard = document.getElementById('trackCancelledCard');
+    const cancelReasonEl = document.getElementById('trackCancelReason');
 
     const step1 = document.getElementById('trackStep1');
     const step2 = document.getElementById('trackStep2');
@@ -788,6 +921,20 @@ function showOrderTracking(orderId) {
     const line4 = document.getElementById('trackLine4');
     const line5 = document.getElementById('trackLine5');
 
+    const time1 = document.getElementById('trackTime1');
+    const time2 = document.getElementById('trackTime2');
+    const time3 = document.getElementById('trackTime3');
+    const time4 = document.getElementById('trackTime4');
+    const time5 = document.getElementById('trackTime5');
+    const time6 = document.getElementById('trackTime6');
+
+    let orderHour = 'Vừa xong';
+    if (createdAt) {
+        const parts = createdAt.trim().split(' ');
+        orderHour = parts.length > 1 ? parts[1] : parts[0];
+    }
+    if (time1) time1.textContent = orderHour;
+
     // Reset all steps
     [step1, step2, step3, step4, step5, step6].forEach(s => {
         if (s) {
@@ -800,7 +947,7 @@ function showOrderTracking(orderId) {
         if (l) l.className = 'stepper-line';
     });
 
-    if (status === 'CANCELLED') {
+    if (status === 'CANCELLED' || status === 'CANCELED') {
         if (estTimeEl) {
             estTimeEl.textContent = 'Đơn hàng đã được hủy';
             estTimeEl.className = 'small fw-semibold text-danger bg-danger-subtle px-3 py-1 rounded-pill border border-danger-subtle';
@@ -813,55 +960,89 @@ function showOrderTracking(orderId) {
             if (c) c.innerHTML = '<i class="bi bi-x-lg"></i>';
             const t = step2.querySelector('.stepper-title');
             if (t) t.textContent = 'Đã hủy đơn';
+            if (time2) time2.textContent = 'Đã hủy';
         }
+        if (time3) time3.textContent = '--:--';
+        if (time4) time4.textContent = '--:--';
+        if (time5) time5.textContent = '--:--';
+        if (time6) time6.textContent = '--:--';
+
         if (gpsCard) gpsCard.style.display = 'none';
         if (driverCard) driverCard.style.display = 'none';
-    } else if (status === 'COMPLETED' || status === 'DELIVERED') {
+        if (prepCard) prepCard.classList.add('d-none');
+        if (cancelCard) {
+            cancelCard.classList.remove('d-none');
+            if (cancelReasonEl) cancelReasonEl.textContent = 'Lý do hủy: ' + (cancelReason || 'Người mua hủy đơn trực tiếp');
+        }
+    } else if (status === 'COMPLETED' || status === 'DELIVERED' || status === 'SUCCESS') {
         if (estTimeEl) {
             estTimeEl.textContent = 'Giao hàng thành công';
             estTimeEl.className = 'small fw-semibold text-success bg-success-subtle px-3 py-1 rounded-pill border border-success-subtle';
         }
         [step1, step2, step3, step4, step5, step6].forEach(s => s && s.classList.add('completed'));
         [line1, line2, line3, line4, line5].forEach(l => l && l.classList.add('completed'));
-        const step6Title = document.getElementById('trackTitle6');
-        if (step6Title) step6Title.textContent = 'Đã nhận quả tươi';
-        const step6Time = document.getElementById('trackTime6');
-        if (step6Time) step6Time.textContent = 'Hoàn tất';
+        if (time2) time2.textContent = 'Đã xác nhận';
+        if (time3) time3.textContent = 'Đã đóng gói';
+        if (time4) time4.textContent = 'Đã bàn giao';
+        if (time5) time5.textContent = 'Đã chuyển hàng';
+        if (time6) time6.textContent = 'Đã nhận quả tươi';
+
         if (gpsCard) gpsCard.style.display = 'none';
         if (driverCard) driverCard.style.display = 'block';
-    } else if (status === 'SHIPPING') {
+        if (prepCard) prepCard.classList.add('d-none');
+        if (cancelCard) cancelCard.classList.add('d-none');
+    } else if (status === 'SHIPPING' || status === 'DELIVERING' || status === 'IN_TRANSIT') {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Dự kiến giao: 11:30 hôm nay';
+            estTimeEl.textContent = 'Đang giao chuỗi lạnh FreshCold';
             estTimeEl.className = 'small fw-semibold text-success bg-success-subtle px-3 py-1 rounded-pill border border-success-subtle';
         }
         [step1, step2, step3, step4].forEach(s => s && s.classList.add('completed'));
         [line1, line2, line3, line4].forEach(l => l && l.classList.add('completed'));
+        if (time2) time2.textContent = 'Đã xác nhận';
+        if (time3) time3.textContent = 'Đã đóng gói';
+        if (time4) time4.textContent = 'Đã lấy hàng';
+        if (time5) time5.textContent = 'Đang giao...';
+        if (time6) time6.textContent = 'Chờ nhận hàng';
+
         if (step5) {
             step5.className = 'stepper-step active';
             const c = step5.querySelector('.stepper-circle');
             if (c) c.classList.add('pulse');
         }
         if (line5) line5.className = 'stepper-line active';
+
         if (gpsCard) gpsCard.style.display = 'block';
         if (driverCard) driverCard.style.display = 'block';
-    } else if (status === 'PROCESSING' || status === 'CONFIRMED') {
+        if (prepCard) prepCard.classList.add('d-none');
+        if (cancelCard) cancelCard.classList.add('d-none');
+    } else if (status === 'CONFIRMED' || status === 'PROCESSING' || status === 'PREPARING' || status === 'NEW' || status === 'PACKED' || status === 'READY_TO_SHIP') {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Nhà vườn đang đóng gói';
+            estTimeEl.textContent = 'Nhà vườn đang chuẩn bị hàng';
             estTimeEl.className = 'small fw-semibold text-primary bg-primary-subtle px-3 py-1 rounded-pill border border-primary-subtle';
         }
         [step1, step2].forEach(s => s && s.classList.add('completed'));
         if (line1) line1.classList.add('completed');
         if (line2) line2.classList.add('completed');
+
+        if (time2) time2.textContent = 'Đã xác nhận';
+        if (time3) time3.textContent = 'Đang xử lý';
+        if (time4) time4.textContent = 'Chờ bàn giao';
+        if (time5) time5.textContent = 'Chưa giao';
+        if (time6) time6.textContent = 'Chờ nhận hàng';
+
         if (step3) {
             step3.className = 'stepper-step active';
             const c = step3.querySelector('.stepper-circle');
             if (c) c.classList.add('pulse');
         }
+
         if (gpsCard) gpsCard.style.display = 'none';
         if (driverCard) driverCard.style.display = 'none';
+        if (prepCard) prepCard.classList.remove('d-none');
+        if (cancelCard) cancelCard.classList.add('d-none');
     } else {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Chờ shop xác nhận';
+            estTimeEl.textContent = 'Chờ xác nhận';
             estTimeEl.className = 'small fw-semibold text-warning bg-warning-subtle px-3 py-1 rounded-pill border border-warning-subtle';
         }
         if (step1) {
@@ -869,8 +1050,16 @@ function showOrderTracking(orderId) {
             const c = step1.querySelector('.stepper-circle');
             if (c) c.classList.add('pulse');
         }
+        if (time2) time2.textContent = 'Chờ shop duyệt';
+        if (time3) time3.textContent = '--:--';
+        if (time4) time4.textContent = '--:--';
+        if (time5) time5.textContent = '--:--';
+        if (time6) time6.textContent = '--:--';
+
         if (gpsCard) gpsCard.style.display = 'none';
         if (driverCard) driverCard.style.display = 'none';
+        if (prepCard) prepCard.classList.remove('d-none');
+        if (cancelCard) cancelCard.classList.add('d-none');
     }
 
     // 6. Launch Bootstrap Modal
@@ -882,8 +1071,134 @@ function showOrderTracking(orderId) {
 }
 
 function cancelOrder(orderId) {
-    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng #' + orderId + '?')) {
-        alert('Đã gửi yêu cầu hủy đơn hàng #' + orderId + ' đến người bán.');
+    openCancelModal(orderId);
+}
+
+function openCancelModal(orderId) {
+    const inputId = document.getElementById('cancelTargetOrderId');
+    const codeEl = document.getElementById('cancelModalOrderCode');
+    const select = document.getElementById('cancelReasonSelect');
+    const custom = document.getElementById('cancelReasonCustom');
+
+    if (inputId) inputId.value = orderId;
+    if (codeEl) codeEl.textContent = '#' + orderId;
+    if (select) select.value = 'Đổi ý, không muốn mua nữa';
+    if (custom) {
+        custom.value = '';
+        custom.classList.add('d-none');
+    }
+
+    const modalEl = document.getElementById('cancelOrderModal');
+    if (modalEl && window.bootstrap && bootstrap.Modal) {
+        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
+        m.show();
+    } else {
+        cancelOrderFallback(orderId);
+    }
+}
+
+function toggleCustomCancelReason(val) {
+    const custom = document.getElementById('cancelReasonCustom');
+    if (!custom) return;
+    if (val === 'OTHER') {
+        custom.classList.remove('d-none');
+        custom.focus();
+    } else {
+        custom.classList.add('d-none');
+    }
+}
+
+async function submitCancelOrder() {
+    const inputId = document.getElementById('cancelTargetOrderId');
+    const orderId = inputId ? inputId.value : '';
+    if (!orderId) {
+        alert('Không tìm thấy mã đơn hàng!');
+        return;
+    }
+
+    const select = document.getElementById('cancelReasonSelect');
+    const custom = document.getElementById('cancelReasonCustom');
+    let reason = select ? select.value : 'Đổi ý, không muốn mua nữa';
+    if (reason === 'OTHER') {
+        reason = custom && custom.value.trim() ? custom.value.trim() : 'Lý do khác';
+    }
+
+    const btn = document.getElementById('btnConfirmCancelOrder');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang hủy...';
+    }
+
+    try {
+        const ctx = window.contextPath || '';
+        const params = new URLSearchParams();
+        params.append('action', 'cancelOrder');
+        params.append('orderId', orderId);
+        params.append('reason', reason);
+        params.append('ajax', 'true');
+
+        const res = await fetch(ctx + '/profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: params.toString()
+        });
+
+        const data = await res.json();
+        if (data && data.success) {
+            const modalEl = document.getElementById('cancelOrderModal');
+            if (modalEl && window.bootstrap && bootstrap.Modal) {
+                const m = bootstrap.Modal.getInstance(modalEl);
+                if (m) m.hide();
+            }
+            alert(data.message || 'Hủy đơn hàng thành công!');
+            // Chuyển sang tab Đã hủy và tải lại trang
+            window.location.href = ctx + '/profile#orders';
+            window.location.reload();
+        } else {
+            alert(data.message || 'Không thể hủy đơn hàng!');
+        }
+    } catch (e) {
+        alert('Có lỗi xảy ra khi hủy đơn hàng: ' + (e.message || e));
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-x-circle me-1"></i> Xác Nhận Hủy Đơn';
+        }
+    }
+}
+
+function cancelOrderFallback(orderId) {
+    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng #' + orderId + ' ngay lập tức?')) {
+        const reason = prompt('Lý do hủy đơn hàng:', 'Đổi ý, không muốn mua nữa') || 'Người mua hủy đơn trực tiếp';
+        const ctx = window.contextPath || '';
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = ctx + '/profile';
+
+        const actInput = document.createElement('input');
+        actInput.type = 'hidden';
+        actInput.name = 'action';
+        actInput.value = 'cancelOrder';
+        form.appendChild(actInput);
+
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'orderId';
+        idInput.value = orderId;
+        form.appendChild(idInput);
+
+        const rInput = document.createElement('input');
+        rInput.type = 'hidden';
+        rInput.name = 'reason';
+        rInput.value = reason;
+        form.appendChild(rInput);
+
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 

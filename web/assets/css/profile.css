@@ -871,76 +871,67 @@ body {
 }
 
 .order-filter-nav {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    display: flex;
     align-items: center;
-    gap: 6px;
     background: #ffffff;
-    padding: 10px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border-bottom: 2px solid #efefef;
     margin-bottom: 1.25rem;
     width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+    gap: 0;
+}
+
+.order-filter-nav::-webkit-scrollbar {
+    display: none;
 }
 
 .order-filter-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 8px 4px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #475569;
+    flex: 1 1 0;
+    min-width: fit-content;
+    padding: 13px 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 14.5px;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.8);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.15s ease, border-color 0.15s ease;
     white-space: nowrap;
     text-decoration: none;
     user-select: none;
-    width: 100%;
     text-align: center;
+    margin-bottom: -2px;
 }
 
 .order-filter-btn:hover {
-    color: #046a38;
-    background: #eafaf1;
-    border-color: #a7f3d0;
+    color: #ee4d2d;
+    background: transparent;
 }
 
 .order-filter-btn.active {
-    color: #ffffff;
-    background: #046a38;
-    border-color: #046a38;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(4, 106, 56, 0.25);
+    color: #ee4d2d;
+    font-weight: 500;
+    background: transparent;
+    border-bottom: 2px solid #ee4d2d;
+    box-shadow: none;
 }
 
-.order-filter-btn .badge-pill-count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 10px;
-    background: #e2e8f0;
-    color: #475569;
-    line-height: 1;
+.order-filter-btn .order-tab-count {
+    color: #ee4d2d;
+    font-size: 14px;
+    font-weight: 400;
+    margin-left: 4px;
 }
 
-.order-filter-btn:hover .badge-pill-count {
-    background: #d1fae5;
-    color: #046a38;
-}
-
-.order-filter-btn.active .badge-pill-count {
-    background: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
+.order-filter-btn.active .order-tab-count {
+    font-weight: 500;
 }
 
 @media (max-width: 991px) {
@@ -948,13 +939,13 @@ body {
         display: flex;
         overflow-x: auto;
         white-space: nowrap;
-        scrollbar-width: thin;
-        padding-bottom: 8px;
+        scrollbar-width: none;
+        padding-bottom: 0;
     }
     .order-filter-btn {
-        flex: 1 0 auto;
-        padding: 8px 12px;
-        min-width: fit-content;
+        flex: 0 0 auto;
+        padding: 12px 14px;
+        font-size: 13.5px;
     }
 }
 

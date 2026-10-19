@@ -135,9 +135,9 @@
                     <div class="text-muted small d-flex align-items-center gap-2 flex-wrap">
                         <span>Mã đơn hàng: <strong id="trackModalOrderCode" class="text-dark">#ORD-98241</strong></span>
                         <span>•</span>
-                        <span>Ngày đặt: <span id="trackModalOrderDate">24/10/2024 (10:15)</span></span>
+                        <span>Ngày đặt: <span id="trackModalOrderDate">--/--/----</span></span>
                         <span>•</span>
-                        <span class="text-success fw-semibold"><i class="bi bi-geo-alt-fill me-1"></i>Giao hỏa tốc chuỗi lạnh FreshCold 2h</span>
+                        <span class="text-success fw-semibold"><i class="bi bi-snow me-1"></i>Chuỗi lạnh FreshCold</span>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -151,49 +151,49 @@
                 </div>
             </div>
 
-                        <div class="modal-body p-4 bg-slate-50">
-                                <div class="tracking-card mb-4">
+            <div class="modal-body p-4 bg-slate-50">
+                <div class="tracking-card mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div class="fw-bold text-dark fs-6 d-flex align-items-center">
                             <i class="bi bi-clock-history text-success me-2 fs-5"></i> Tiến độ giao hàng
                         </div>
                         <div class="small fw-semibold text-success bg-success-subtle px-3 py-1 rounded-pill border border-success-subtle" id="trackEstimatedTime">
-                            Dự kiến giao: 11:30 hôm nay
+                            Chờ shop xác nhận
                         </div>
                     </div>
                     <div class="tracking-stepper" id="trackingStepper">
                         <div class="stepper-step completed" id="trackStep1">
                             <div class="stepper-circle"><i class="bi bi-check-lg"></i></div>
                             <div class="stepper-title">Đặt hàng</div>
-                            <div class="stepper-time" id="trackTime1">10:15</div>
+                            <div class="stepper-time" id="trackTime1">--:--</div>
                         </div>
                         <div class="stepper-line completed" id="trackLine1"></div>
 
-                        <div class="stepper-step completed" id="trackStep2">
+                        <div class="stepper-step" id="trackStep2">
                             <div class="stepper-circle"><i class="bi bi-shop"></i></div>
                             <div class="stepper-title">Shop xác nhận</div>
-                            <div class="stepper-time" id="trackTime2">10:25</div>
+                            <div class="stepper-time" id="trackTime2">Chờ xử lý</div>
                         </div>
-                        <div class="stepper-line completed" id="trackLine2"></div>
+                        <div class="stepper-line" id="trackLine2"></div>
 
-                        <div class="stepper-step completed" id="trackStep3">
+                        <div class="stepper-step" id="trackStep3">
                             <div class="stepper-circle"><i class="bi bi-box-seam"></i></div>
                             <div class="stepper-title">Đóng gói quả tươi</div>
-                            <div class="stepper-time" id="trackTime3">10:35</div>
+                            <div class="stepper-time" id="trackTime3">Chờ xử lý</div>
                         </div>
-                        <div class="stepper-line completed" id="trackLine3"></div>
+                        <div class="stepper-line" id="trackLine3"></div>
 
-                        <div class="stepper-step completed" id="trackStep4">
+                        <div class="stepper-step" id="trackStep4">
                             <div class="stepper-circle"><i class="bi bi-person-badge"></i></div>
                             <div class="stepper-title">Tài xế nhận hàng</div>
-                            <div class="stepper-time" id="trackTime4">10:50</div>
+                            <div class="stepper-time" id="trackTime4">Chưa bàn giao</div>
                         </div>
-                        <div class="stepper-line active" id="trackLine4"></div>
+                        <div class="stepper-line" id="trackLine4"></div>
 
-                        <div class="stepper-step active" id="trackStep5">
-                            <div class="stepper-circle pulse"><i class="bi bi-truck"></i></div>
-                            <div class="stepper-title text-success fw-bold" id="trackTitle5">ĐANG GIAO HÀNG</div>
-                            <div class="stepper-time text-success fw-semibold" id="trackTime5">11:20 (Dự kiến)</div>
+                        <div class="stepper-step" id="trackStep5">
+                            <div class="stepper-circle"><i class="bi bi-truck"></i></div>
+                            <div class="stepper-title" id="trackTitle5">Đang giao hàng</div>
+                            <div class="stepper-time" id="trackTime5">Chờ vận chuyển</div>
                         </div>
                         <div class="stepper-line" id="trackLine5"></div>
 
@@ -206,8 +206,32 @@
                 </div>
 
                 <div class="row g-4">
-                                        <div class="col-lg-7">
-                                                <div class="tracking-card mb-4" id="trackGpsCard">
+                    <div class="col-lg-7">
+                        <div class="tracking-card mb-4 d-none" id="trackPreparingCard">
+                            <div class="p-3 rounded-4 bg-primary-subtle border border-primary-subtle d-flex align-items-start gap-3">
+                                <div class="stat-icon-circle bg-primary text-white fs-4 mt-1"><i class="bi bi-box-seam"></i></div>
+                                <div>
+                                    <h6 class="fw-bold text-primary mb-1">Nhà vườn đang xử lý đóng gói hoa quả</h6>
+                                    <p class="small text-muted mb-0 lh-base">
+                                        Đơn hàng của bạn đang được gian hàng kiểm tra chất lượng, đóng thùng cách nhiệt chuyên dụng. Lộ trình giao hàng trực tiếp (GPS) và thông tin tài xế sẽ hiển thị ngay khi bưu tá chuỗi lạnh tiếp nhận đơn.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tracking-card mb-4 d-none" id="trackCancelledCard">
+                            <div class="p-3 rounded-4 bg-danger-subtle border border-danger-subtle d-flex align-items-start gap-3">
+                                <div class="stat-icon-circle bg-danger text-white fs-4 mt-1"><i class="bi bi-x-circle-fill"></i></div>
+                                <div>
+                                    <h6 class="fw-bold text-danger mb-1">Đơn hàng đã được hủy</h6>
+                                    <p class="small text-muted mb-0 lh-base" id="trackCancelReason">
+                                        Lý do: Người mua hủy đơn trực tiếp.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tracking-card mb-4" id="trackGpsCard">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="fw-bold text-dark d-flex align-items-center">
                                     <i class="bi bi-broadcast text-success me-2"></i> Lộ trình hỏa tốc thời gian thực (GPS Live)
@@ -311,33 +335,33 @@
                         </div>
 
                                                 <div class="tracking-card">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div class="fw-bold text-dark d-flex align-items-center">
-                                    <i class="bi bi-box-seam text-success me-2"></i> Kiện hàng đóng gói riêng biệt (<span id="trackItemCount">1</span> kiện)
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                    <div class="fw-bold text-dark d-flex align-items-center">
+                                        <i class="bi bi-box-seam text-success me-2"></i> Sản phẩm trong kiện hàng (<span id="trackItemCount" class="mx-1">1</span> món)
+                                    </div>
+                                    <span class="badge bg-light text-muted border">Bảo quản chuỗi lạnh FreshCold</span>
                                 </div>
-                                <span class="text-muted small">Bảo quản độc lập theo tiêu chuẩn nông trại</span>
+                                <div id="trackItemsContainer" class="d-flex flex-column gap-3">
+                                </div>
                             </div>
-                            <div id="trackItemsContainer" class="d-flex flex-column gap-3">
-                                                            </div>
                         </div>
-                    </div>
 
-                                        <div class="col-lg-5">
-                                                <div class="tracking-card mb-4">
-                            <div class="fw-bold text-dark mb-3 d-flex align-items-center">
-                                <i class="bi bi-geo-alt-fill text-success me-2"></i> Địa chỉ nhận hàng
+                        <div class="col-lg-5">
+                            <div class="tracking-card mb-4">
+                                <div class="fw-bold text-dark mb-3 d-flex align-items-center">
+                                    <i class="bi bi-geo-alt-fill text-success me-2"></i> Địa chỉ nhận hàng
+                                </div>
+                                <div class="mb-2">
+                                    <strong class="text-dark fs-6" id="trackRecipientName">Người nhận</strong>
+                                    <span class="text-muted small ms-2" id="trackRecipientPhone">0903 *** ***</span>
+                                </div>
+                                <p class="text-secondary small mb-3 lh-base" id="trackRecipientAddress">
+                                    Địa chỉ nhận hàng
+                                </p>
+                                <div class="p-2 rounded-3 bg-light border small text-muted" id="trackNoteBox">
+                                    <i class="bi bi-chat-left-text me-1 text-primary"></i> <strong>Khung giờ / Ghi chú:</strong> <span id="trackNoteText">Giao hàng chuỗi lạnh FreshCold tiêu chuẩn</span>
+                                </div>
                             </div>
-                            <div class="mb-2">
-                                <strong class="text-dark fs-6" id="trackRecipientName">Nguyễn Thu Trang</strong>
-                                <span class="text-muted small ms-2" id="trackRecipientPhone">0912 *** 882</span>
-                            </div>
-                            <p class="text-secondary small mb-3 lh-base" id="trackRecipientAddress">
-                                Căn hộ 14.02, Tháp B2, Tòa Vinhomes Central Park, Phường 22, Quận Bình Thạnh, TP. Hồ Chí Minh
-                            </p>
-                            <div class="p-2 rounded-3 bg-light border small text-muted">
-                                <i class="bi bi-chat-left-text me-1 text-primary"></i> <strong>Ghi chú:</strong> Gọi trước khi lên sảnh 5 phút để xuống nhận hàng.
-                            </div>
-                        </div>
 
                                                 <div class="tracking-card mb-4">
                             <div class="fw-bold text-dark mb-3 d-flex align-items-center">
@@ -549,6 +573,55 @@
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Xác Nhận Hủy Đơn Hàng (Người mua hủy trực tiếp không cần ai duyệt) -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-danger text-white px-4 py-3">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="cancelOrderModalLabel">
+                    <i class="bi bi-x-circle-fill"></i> Xác Nhận Hủy Đơn Hàng
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="cancelTargetOrderId" value="">
+                
+                <div class="d-flex align-items-center gap-3 p-3 bg-danger-subtle rounded-3 mb-3 border border-danger-subtle">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-3"></i>
+                    <div>
+                        <div class="fw-bold text-danger">Hủy đơn hàng <span id="cancelModalOrderCode">#ORD</span></div>
+                        <div class="small text-muted">Đơn hàng sẽ được hủy ngay lập tức mà không cần chờ người bán phê duyệt.</div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small">Vui lòng chọn lý do hủy đơn: <span class="text-danger">*</span></label>
+                    <select id="cancelReasonSelect" class="form-select form-select-sm mb-2" onchange="toggleCustomCancelReason(this.value)">
+                        <option value="Đổi ý, không muốn mua nữa">Đổi ý, không muốn mua nữa</option>
+                        <option value="Muốn thay đổi địa chỉ hoặc số điện thoại nhận hàng">Muốn thay đổi địa chỉ hoặc số điện thoại nhận hàng</option>
+                        <option value="Muốn thay đổi sản phẩm trong giỏ (thêm/bớt mặt hàng)">Muốn thay đổi sản phẩm trong giỏ (thêm/bớt mặt hàng)</option>
+                        <option value="Tìm thấy giá rẻ hơn ở nơi khác">Tìm thấy giá rẻ hơn ở nơi khác</option>
+                        <option value="Thời gian giao hàng dự kiến không phù hợp">Thời gian giao hàng dự kiến không phù hợp</option>
+                        <option value="OTHER">Lý do khác...</option>
+                    </select>
+                    <textarea id="cancelReasonCustom" class="form-control form-control-sm d-none mt-2" rows="2" placeholder="Nhập lý do cụ thể..."></textarea>
+                </div>
+
+                <div class="alert alert-light border py-2 px-3 small mb-0 rounded-3 text-muted">
+                    <i class="bi bi-info-circle me-1 text-primary"></i>
+                    Lưu ý: Sau khi hủy thành công, số lượng tồn kho sản phẩm sẽ được tự động hoàn lại.
+                </div>
+            </div>
+            <div class="modal-footer bg-light px-4 py-3">
+                <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-danger rounded-pill px-4 fw-semibold" id="btnConfirmCancelOrder" onclick="submitCancelOrder()">
+                    <i class="bi bi-x-circle me-1"></i> Xác Nhận Hủy Đơn
+                </button>
             </div>
         </div>
     </div>
