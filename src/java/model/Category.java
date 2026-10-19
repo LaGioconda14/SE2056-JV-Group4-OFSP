@@ -111,6 +111,17 @@ public class Category implements Serializable {
     public void setIsActive(boolean isActive) {
         this.isActive = isActive;
     }
+
+    private int productCount;
+
+    public int getProductCount() {
+        return productCount;
+    }
+
+    public void setProductCount(int productCount) {
+        this.productCount = productCount;
+    }
+
     public List<Category> getSubCategories() { return subCategories; }
     public void setSubCategories(List<Category> subCategories) { this.subCategories = subCategories; }
     public void addSubCategory(Category sub) {

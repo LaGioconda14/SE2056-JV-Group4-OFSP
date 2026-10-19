@@ -4,6 +4,7 @@ import dao.CategoryDAO;
 import dao.ProductDAO;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import model.Category;
 import model.Product;
 import model.ProductVariant;
@@ -194,5 +195,42 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
         return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr);
+    }
+
+    @Override
+    public List<Category> getAllCategoriesWithCount() {
+        return categoryDAO.getAllCategoriesWithCount();
+    }
+
+    @Override
+    public Map<String, Integer> getOriginsWithCount() {
+        return productDAO.getOriginsWithCount();
+    }
+
+    @Override
+    public int countInStockProducts() {
+        return productDAO.countInStockProducts();
+    }
+
+    @Override
+    public BigDecimal[] getMinMaxProductPrices() {
+        return productDAO.getMinMaxProductPrices();
+    }
+
+    @Override
+    public List<Product> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
+                                                    BigDecimal minPrice, BigDecimal maxPrice,
+                                                    Double minRating, List<String> origins,
+                                                    Boolean inStockOnly, String sortBy,
+                                                    int page, int pageSize) {
+        return productDAO.getFilteredCatalogProducts(keyword, categoryParams, minPrice, maxPrice, minRating, origins, inStockOnly, sortBy, page, pageSize);
+    }
+
+    @Override
+    public int countFilteredCatalogProducts(String keyword, List<String> categoryParams,
+                                            BigDecimal minPrice, BigDecimal maxPrice,
+                                            Double minRating, List<String> origins,
+                                            Boolean inStockOnly) {
+        return productDAO.countFilteredCatalogProducts(keyword, categoryParams, minPrice, maxPrice, minRating, origins, inStockOnly);
     }
 }

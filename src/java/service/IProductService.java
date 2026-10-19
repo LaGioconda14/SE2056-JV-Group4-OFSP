@@ -2,6 +2,7 @@ package service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import model.Category;
 import model.Product;
 import model.ProductVariant;
@@ -61,4 +62,19 @@ public interface IProductService {
     List<String> getImagesByProductId(long productId);
     
     List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr);
+
+    // Advanced Catalog methods
+    List<Category> getAllCategoriesWithCount();
+    Map<String, Integer> getOriginsWithCount();
+    int countInStockProducts();
+    BigDecimal[] getMinMaxProductPrices();
+    List<Product> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
+                                            BigDecimal minPrice, BigDecimal maxPrice,
+                                            Double minRating, List<String> origins,
+                                            Boolean inStockOnly, String sortBy,
+                                            int page, int pageSize);
+    int countFilteredCatalogProducts(String keyword, List<String> categoryParams,
+                                    BigDecimal minPrice, BigDecimal maxPrice,
+                                    Double minRating, List<String> origins,
+                                    Boolean inStockOnly);
 }
