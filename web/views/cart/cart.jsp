@@ -213,7 +213,7 @@
                             <span class="material-symbols-outlined text-primary text-[18px] shrink-0 mt-0.5">shopping_bag</span>
                             <div class="flex-1">
                                 <p class="font-bold text-on-surface">Giỏ hàng của bạn</p>
-                                <p class="text-on-surface-variant text-[11px] mt-0.5">Bạn đang có <strong class="text-primary"><c:out value="${cart ne null ? cart.totalQuantity : 0}"/></strong> món trong giỏ hàng.</p>
+                                <p class="text-on-surface-variant text-[11px] mt-0.5">Bạn đang có <strong class="text-primary" id="noti-cart-count"><c:out value="${cart ne null ? cart.variantCount : 0}"/></strong> món trong giỏ hàng.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-3 p-2.5 rounded-xl bg-tertiary-fixed/60 border border-tertiary-fixed text-xs text-on-surface shadow-2xs">
@@ -232,7 +232,7 @@
                 <div class="relative flex items-center justify-center">
                     <span class="material-symbols-outlined text-primary text-[24px]">shopping_cart</span>
                     <span class="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 bg-error text-on-error rounded-full font-label-caps text-[10px] flex items-center justify-center" id="nav-cart-badge">
-                        <c:out value="${cart ne null ? (cart.totalQuantity gt 99 ? '99+' : cart.totalQuantity) : 0}"/>
+                        <c:out value="${cart ne null ? (cart.variantCount gt 99 ? '99+' : cart.variantCount) : 0}"/>
                     </span>
                 </div>
             </a>
@@ -695,7 +695,14 @@
         if (totEl) totEl.innerText = formatVND(grandTotal);
 
         const navBadge = document.getElementById('nav-cart-badge');
-        if (navBadge) navBadge.innerText = totalItemsQty > 99 ? '99+' : totalItemsQty;
+        if (navBadge) {
+            const variantCount = allRows.length;
+            navBadge.innerText = variantCount > 99 ? '99+' : variantCount;
+        }
+        const notiCartCount = document.getElementById('noti-cart-count');
+        if (notiCartCount) {
+            notiCartCount.innerText = allRows.length;
+        }
 
     }
 
@@ -736,10 +743,31 @@
             container.appendChild(input);
         });
 
-        const couponInput = document.getElementById('coupon-input');
         const formCoupon = document.getElementById('checkout-form-coupon');
-        if (couponInput && formCoupon) {
-            formCoupon.value = couponInput.value.trim();
+        if (typeof window.getSelectedVouchers === 'function') {
+            const v = window.getSelectedVouchers();
+            if (v.platform && v.platform.code) {
+                formCoupon.value = v.platform.code;
+            } else {
+                formCoupon.value = '';
+            }
+            if (v.shops) {
+                Object.keys(v.shops).forEach(shopId => {
+                    const sv = v.shops[shopId];
+                    if (sv && sv.code) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'shopCoupon_' + shopId;
+                        input.value = sv.code;
+                        container.appendChild(input);
+                    }
+                });
+            }
+        } else {
+            const couponInput = document.getElementById('coupon-input');
+            if (couponInput && formCoupon) {
+                formCoupon.value = couponInput.value.trim();
+            }
         }
 
         document.getElementById('checkout-form').submit();

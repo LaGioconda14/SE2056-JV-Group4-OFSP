@@ -256,12 +256,12 @@
                 if (discountText) discountText.textContent = '−' + formatVND(voucher.discountAmount);
                 const input = document.getElementById('coupon-input');
                 if (input) input.value = voucher.code;
-            }
 
-            // Sync main input for checkout form
-            const formCoupon = document.getElementById('checkout-form-coupon');
-            if (formCoupon) {
-                formCoupon.value = voucher.code;
+                // Sync main input for checkout form
+                const formCoupon = document.getElementById('checkout-form-coupon');
+                if (formCoupon) {
+                    formCoupon.value = voucher.code;
+                }
             }
 
             closeVoucherModal();
@@ -269,6 +269,13 @@
         } catch (error) {
             status(error.message, true);
         }
+    };
+
+    window.getSelectedVouchers = function () {
+        return {
+            platform: selectedPlatformVoucher,
+            shops: selectedShopVouchers
+        };
     };
 
     window.applyCoupon = function () {

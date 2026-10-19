@@ -71,6 +71,10 @@ public class Cart {
         return total;
     }
 
+    public int getVariantCount() {
+        return items != null ? items.size() : 0;
+    }
+
     public Map<Long, List<CartItem>> getItemsByShop() {
         Map<Long, List<CartItem>> grouped = new LinkedHashMap<>();
         for (CartItem item : items) {

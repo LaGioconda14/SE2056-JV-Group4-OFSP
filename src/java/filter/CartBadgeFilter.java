@@ -14,7 +14,7 @@ import service.ICartService;
 import service.impl.CartServiceImpl;
 
 @WebFilter(filterName = "CartBadgeFilter", urlPatterns = {
-    "", "/home", "/products", "/search", "/detail", "/cart", "/cart/*"
+    "", "/home", "/products", "/search", "/detail", "/cart", "/cart/*", "/checkout", "/order/*", "/profile", "/profile/*"
 })
 public class CartBadgeFilter implements Filter {
 
@@ -30,7 +30,7 @@ public class CartBadgeFilter implements Filter {
         if (user != null) {
             try {
                 session.setAttribute("cartSize",
-                        cartService.getCart((long) user.getId()).getTotalQuantity());
+                        cartService.getCart((long) user.getId()).getVariantCount());
             } catch (RuntimeException ex) {
                 session.setAttribute("cartSize", 0);
             }

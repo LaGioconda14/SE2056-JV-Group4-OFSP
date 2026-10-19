@@ -66,7 +66,7 @@ public class AddToCartServlet extends HttpServlet {
                 return;
             }
             session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
-            int newCartSize = cartService.getCart((long) user.getId()).getTotalQuantity();
+            int newCartSize = cartService.getCart((long) user.getId()).getVariantCount();
             session.setAttribute("cartSize", newCartSize);
             if (isAjax) {
                 response.setContentType("application/json;charset=UTF-8");
