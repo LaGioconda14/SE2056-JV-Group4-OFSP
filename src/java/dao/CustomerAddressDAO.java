@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -114,7 +115,7 @@ public class CustomerAddressDAO extends DBContext {
                              + "       street_address, ward, district, city, is_default, created_at, updated_at) "
                              + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
-            try (PreparedStatement insertPs = conn.prepareStatement(insertSql)) {
+            try (PreparedStatement insertPs = conn.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
                 insertPs.setLong(1, address.getUserId());
                 insertPs.setString(2, address.getRecipientName().trim());
                 insertPs.setString(3, address.getRecipientPhone().trim());
@@ -125,6 +126,13 @@ public class CustomerAddressDAO extends DBContext {
                 insertPs.setBoolean(8, shouldBeDefault);
 
                 int rows = insertPs.executeUpdate();
+                if (rows > 0) {
+                    try (ResultSet rs = insertPs.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            address.setAddressId(rs.getLong(1));
+                        }
+                    }
+                }
                 conn.commit();
                 return rows > 0;
             }

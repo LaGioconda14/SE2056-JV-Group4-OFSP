@@ -118,7 +118,7 @@
                 <div class="relative flex items-center justify-center">
                     <span class="material-symbols-outlined text-[#00652c] text-[22px]">shopping_cart</span>
                     <span class="absolute -top-2 -right-2.5 min-w-[18px] h-4 px-1 bg-red-600 text-white rounded-full font-bold text-[10px] flex items-center justify-center border border-white shadow-xs" id="nav-cart-badge">
-                        <c:out value="${cartSize}"/>
+                        <c:out value="${cartSize gt 99 ? '99+' : cartSize}"/>
                     </span>
                 </div>
             </a>
@@ -328,7 +328,7 @@
                 if (data.success) {
                     if (data.cartSize !== undefined) {
                         const badges = document.querySelectorAll('#nav-cart-badge, #cartBadge');
-                        badges.forEach(b => b.textContent = data.cartSize);
+                        badges.forEach(b => b.textContent = data.cartSize > 99 ? '99+' : data.cartSize);
                         const notiCartCount = document.getElementById('noti-cart-count');
                         if (notiCartCount) notiCartCount.textContent = data.cartSize;
                     }

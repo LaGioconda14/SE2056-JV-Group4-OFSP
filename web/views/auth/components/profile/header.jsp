@@ -31,7 +31,7 @@
             <a href="${pageContext.request.contextPath}/cart" class="nav-cart-btn">
                 <div class="nav-cart-icon-wrap">
                     <i class="bi bi-cart3 nav-cart-icon"></i>
-                    <span class="nav-cart-badge">${sessionScope.cartSize != null ? sessionScope.cartSize : 0}</span>
+                    <span class="nav-cart-badge">${sessionScope.cartSize != null ? (sessionScope.cartSize > 99 ? '99+' : sessionScope.cartSize) : 0}</span>
                 </div>
                 <span class="nav-cart-text">Giỏ hàng</span>
             </a>

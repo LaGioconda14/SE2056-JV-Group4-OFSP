@@ -187,7 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!citySelect) return;
         let list = [];
         try {
-            const res = await fetch('https://provinces.open-api.vn/api/p/');
+            const ctx = window.contextPath || '';
+            const res = await fetch(ctx + '/api/address/provinces');
             if (!res.ok) throw new Error();
             list = await res.json();
         } catch (e) {
@@ -214,7 +215,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!pCode) return;
             try {
-                const res = await fetch('https://provinces.open-api.vn/api/p/' + pCode + '?depth=2');
+                const ctx = window.contextPath || '';
+                const res = await fetch(ctx + '/api/address/districts?provinceCode=' + encodeURIComponent(pCode));
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 districtSelect.innerHTML = '<option value="" selected disabled>Chọn Quận / Huyện</option>';
@@ -242,7 +244,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!dCode) return;
             try {
-                const res = await fetch('https://provinces.open-api.vn/api/d/' + dCode + '?depth=2');
+                const ctx = window.contextPath || '';
+                const res = await fetch(ctx + '/api/address/wards?districtCode=' + encodeURIComponent(dCode));
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 wardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
