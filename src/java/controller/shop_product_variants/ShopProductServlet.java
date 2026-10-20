@@ -1,4 +1,4 @@
-package controller.shop;
+package controller.shop_product_variants;
 
 import java.io.IOException;
 import java.util.List;

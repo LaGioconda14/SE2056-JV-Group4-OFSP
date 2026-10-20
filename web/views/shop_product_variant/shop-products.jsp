@@ -221,7 +221,7 @@
                         <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                             <div>
                                 <div class="flex items-center flex-wrap gap-3">
-                                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">Danh Sách Sản Phẩm Nông Sản</h1>
+                                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">Danh Sách Biến Thể Sản Phẩm Nông Sản</h1>
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-extrabold rounded-full">
                                         <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
                                         ${not empty totalProducts ? totalProducts : 0} SẢN PHẨM / ${not empty totalSkus ? totalSkus : 0} SKUS

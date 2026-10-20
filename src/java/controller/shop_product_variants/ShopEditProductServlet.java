@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
 
-package controller.shop;
+package controller.shop_product_variants;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import model.Category;
 import model.ProductVariant;
+import model.Shop;
 import model.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
@@ -125,6 +126,8 @@ public class ShopEditProductServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
+        
+        Long shopId = (Long) session.getAttribute("shopId");
 
         try {
             // 2. Lấy tất cả các tham số từ form gửi lên
@@ -153,7 +156,7 @@ public class ShopEditProductServlet extends HttpServlet {
             boolean isActive = "true".equalsIgnoreCase(isActiveStr) || "on".equalsIgnoreCase(isActiveStr);
 
             // 4. Gọi Service thực hiện cập nhật
-            boolean success = productService.updateFullProduct(
+            boolean success = productService.updateFullProduct(shopId,
                 variantId, name, categoryId, origin, storageTemp, certification, 
                 description, sku, variantName, unit, price, originalPrice, 
                 stockQuantity, isActive, coverImageUrl
