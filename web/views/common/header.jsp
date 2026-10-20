@@ -255,9 +255,11 @@
         }
     }
 
-    window.showToast = function(message, type = 'success') {
+    // action: bỏ trống = link "Xem giỏ" mặc định; null = không có link; {href, text} = link tuỳ chọn
+    window.showToast = function(message, type = 'success', action) {
         const container = document.getElementById('global-toast-container');
         if (!container) return;
+        const link = action === undefined ? { href: window.contextPath + '/cart', text: 'Xem giỏ' } : action;
         const toast = document.createElement('div');
         const isSuccess = type === 'success';
         toast.className = 'pointer-events-auto flex items-center justify-between gap-3 p-4 rounded-2xl shadow-xl border backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 '
@@ -266,7 +268,7 @@
             + '<span class="material-symbols-outlined text-[22px] ' + (isSuccess ? 'text-emerald-600' : 'text-red-600') + '">' + (isSuccess ? 'check_circle' : 'error') + '</span>'
             + '<span class="text-sm font-semibold">' + message + '</span>'
             + '</div>'
-            + '<a href="' + window.contextPath + '/cart" class="text-xs font-bold underline shrink-0 hover:opacity-80">Xem giỏ</a>';
+            + (link ? '<a href="' + link.href + '" class="text-xs font-bold underline shrink-0 hover:opacity-80">' + link.text + '</a>' : '');
         container.appendChild(toast);
         requestAnimationFrame(() => {
             toast.classList.remove('translate-y-2', 'opacity-0');

@@ -30,6 +30,7 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/home.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/wishlist.css">
         <script src="${pageContext.request.contextPath}/assets/js/home.js" defer></script>
 
     </head>
@@ -163,8 +164,17 @@
                     <c:when test="${not empty listProduct}">
                         <c:forEach var="p" items="${listProduct}">
 
+                            <%-- Trạng thái yêu thích của sản phẩm này với người dùng đang đăng nhập --%>
+                            <c:set var="wished" value="${not empty wishlistIds and wishlistIds.contains(p.id)}" />
+
                             <div class="product-card group">
-                                <div>
+                                <div class="product-card-media">
+                                    <button type="button" class="wishlist-btn ${wished ? 'active' : ''}" data-product-id="${p.id}"
+                                            aria-pressed="${wished}" title="${wished ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}"
+                                            aria-label="Yêu thích sản phẩm ${p.name}">
+                                        <i class="${wished ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                                    </button>
+
                                     <a href="${pageContext.request.contextPath}/detail?id=${p.id}" class="product-thumb">
                                         <img src="${p.image}" alt="${p.name}">
                                     </a>
@@ -275,5 +285,7 @@
         </footer>
 
         <script src="${pageContext.request.contextPath}/assets/js/home.js" defer></script>
+        <%-- Nút trái tim nổi góc dưới bên phải: bấm vào để mở trang danh sách yêu thích --%>
+        <jsp:include page="/views/common/wishlist-fab.jsp" />
     </body>
 </html>

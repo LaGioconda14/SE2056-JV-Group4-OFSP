@@ -8,7 +8,7 @@
         </jsp:include>
 
     Giá trị "active" hợp lệ:
-        overview | profile | products | add | inventory | orders | shipping | coupons | reviews | finance | settings
+        overview | profile | products | add | inventory | orders | shipping | promotions | vouchers | reviews | finance | settings
 
     Dữ liệu lấy từ:
         - sessionScope.shopName / sessionScope.shopObj  (set lúc đăng nhập, cập nhật khi sửa Profile Shop)

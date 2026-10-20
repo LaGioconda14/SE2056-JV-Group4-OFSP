@@ -2,34 +2,6 @@
    Gốc Vườn Seller Center - Shop Order Detail Stylesheet
    ======================================================== */
 
-body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-/* Sidebar navigation links */
-.sidebar-link {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: #475569;
-    transition: all 0.2s ease;
-}
-
-.sidebar-link:hover {
-    background-color: #f8fafc;
-    color: #15803d;
-}
-
-.sidebar-link.active {
-    background-color: #f0fdf4;
-    color: #15803d;
-    font-weight: 700;
-}
-
 /* 5-Step Order Progress Stepper line */
 .stepper-line {
     height: 2px;

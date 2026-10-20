@@ -4,192 +4,19 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Chỉnh Sửa Nông Sản - Kênh Người Bán</title>
+        <jsp:include page="/views/shop/layout/head.jsp" />
 
-        <!-- Google Fonts & Font Awesome 6 -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
     </head>
-    <body class="bg-[#f1f5f9] text-slate-800 font-['Plus_Jakarta_Sans',sans-serif] min-h-screen flex m-0">
+    <body class="bg-[#f8fafc] text-[#0f172a]">
 
-        <!-- ========================================================
-             1. SIDEBAR NAVIGATION (KÊNH NGƯỜI BÁN) - CỐ ĐỊNH BÊN TRÁI
-             ======================================================== -->
-        <aside class="w-64 shrink-0 bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col justify-between z-30 overflow-y-auto shadow-xs">
-            <div>
-                <!-- Shop Brand Header -->
-                <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs mx-3 mt-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-emerald-500 shadow-xs">
-                            <c:choose>
-                                <c:when test="${not empty shopLogo}">
-                                    <img src="${shopLogo}" alt="Shop Avatar" class="w-full h-full object-cover">
-                                </c:when>
-                                <c:otherwise>
-                                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" alt="Default Avatar" class="w-full h-full object-cover">
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-extrabold text-slate-900 leading-tight">${sessionScope.shopName}</h4>
-                            <p class="text-[10px] font-bold text-emerald-700 tracking-wider mt-0.5">SELLER CENTER</p>
-                        </div>
-                    </div>
-                    <div>
-                        <span class="px-2 py-0.5 text-[10px] font-black text-emerald-800 bg-emerald-100 rounded-md tracking-wider">
-                            PRO
-                        </span>
-                    </div>
-                </div>
+        <jsp:include page="/views/shop/layout/sidebar.jsp">
+            <jsp:param name="active" value="products" />
+        </jsp:include>
+        <jsp:include page="/views/shop/layout/header.jsp" />
 
-                <!-- Sidebar Navigation Groups -->
-                <nav class="space-y-1.5 px-3 mt-4">
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 font-extrabold">TỔNG QUAN</div>
-                    <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-chart-pie text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Tổng quan Shop</span>
-                        </span>
-                    </a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">SẢN PHẨM & KHO</div>
-                    <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-seedling text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Tất cả sản phẩm</span>
-                        </span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/shop/product/add" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-circle-plus text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Thêm mới nông sản</span>
-                        </span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/shop/inventory" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-warehouse text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Kho & Cảnh báo tồn</span>
-                        </span>
-                        <span class="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold rounded-full">${not empty lowStockCount ? lowStockCount : 3}</span>
-                    </a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">ĐƠN HÀNG</div>
-                    <a href="${pageContext.request.contextPath}/shop/orders" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-receipt text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Đơn hàng con</span>
-                        </span>
-                        <span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-full">8</span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/shop/shipping" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-truck-ramp-box text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Đóng gói & Vận đơn</span>
-                        </span>
-                    </a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">TIẾP THỊ & KHÁCH</div>
-                    <a href="${pageContext.request.contextPath}/shop/coupons" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-tags text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Mã giảm giá Shop</span>
-                        </span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/shop/reviews" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-star-half-stroke text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Đánh giá từ khách</span>
-                        </span>
-                    </a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">HỆ THỐNG</div>
-                    <a href="${pageContext.request.contextPath}/shop/finance" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-wallet text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Doanh thu & Rút tiền</span>
-                        </span>
-                    </a>
-                    <a href="${pageContext.request.contextPath}/shop/settings" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-sliders text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Cài đặt Shop</span>
-                        </span>
-                    </a>
-                </nav>
-            </div>
-
-            <div class="p-3 border-t border-slate-100 space-y-1">
-                <a href="${pageContext.request.contextPath}/home" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:text-emerald-700 font-semibold text-xs transition-all">
-                    <i class="fa-solid fa-store text-xs w-4 text-center"></i>
-                    <span>Xem trang mua sắm</span>
-                </a>
-                <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs transition-all">
-                    <i class="fa-solid fa-power-off text-xs w-4 text-center"></i>
-                    <span>Đăng xuất</span>
-                </a>
-            </div>
-        </aside>
-
-        <!-- ========================================================
-             2 & 3. KHUNG BÊN PHẢI (HEADER + MAIN CONTENT)
-             ======================================================== -->
-        <div class="flex-1 min-w-0 flex flex-col">
-
-            <!-- TOP HEADER NAVBAR -->
-            <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
-                <div class="relative w-96">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <form action="${pageContext.request.contextPath}/shop/products" method="GET">
-                        <input type="text" name="keyword" value="${param.keyword}" placeholder="Tìm nhanh theo SKU, tên nông sản..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                    </form>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Đang nhận đơn</span>
-                    </div>
-
-                    <button class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all" type="button" title="Tin nhắn">
-                        <i class="fa-regular fa-comment-dots text-sm"></i>
-                    </button>
-
-                    <button class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 relative transition-all" type="button" title="Thông báo">
-                        <i class="fa-regular fa-bell text-sm"></i>
-                        <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">5</span>
-                    </button>
-
-                    <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
-                        <div class="text-right hidden sm:block">
-                            <span class="text-xs font-black text-slate-900 block leading-tight">
-                                ${not empty sessionScope.user.fullName ? sessionScope.user.fullName : 'Trần Hoàng Anh'}
-                            </span>
-                            <span class="text-[10px] text-slate-400 font-medium block leading-tight">${sessionScope.email}</span>
-                        </div>
-                        <div class="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden">
-                            <c:choose>
-                                <c:when test="${not empty sessionScope.user.avatarUrl}">
-                                    <img src="${sessionScope.user.avatarUrl}" alt="Avatar" class="w-full h-full object-cover">
-                                </c:when>
-                                <c:otherwise>
-                                    <span class="text-xs font-extrabold">THA</span>
-                                </c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- MAIN CONTENT -->
-            <main class="p-6 flex-1 overflow-y-auto">
-                <div class="max-w-7xl mx-auto space-y-6">
+        <main class="shop-main-wrapper">
+            <div class="shop-content-container">
 
                     <!-- Error Notification Alert -->
                     <c:if test="${not empty errorMessage}">
@@ -506,9 +333,8 @@
                         </div>
                     </form>
 
-                </div>
-            </main>
-        </div>
+            </div>
+        </main>
 
     </body>
 </html>

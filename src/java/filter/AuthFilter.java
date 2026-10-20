@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 
-@WebFilter(filterName = "AuthFilter", urlPatterns = {"/change-password", "/profile", "/cart", "/cart/*"})
+@WebFilter(filterName = "AuthFilter", urlPatterns = {"/change-password", "/profile", "/cart", "/cart/*", "/wishlist"})
 public class AuthFilter implements Filter {
 
     @Override
