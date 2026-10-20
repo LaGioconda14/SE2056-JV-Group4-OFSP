@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.SubOrder;
+import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
 import service.impl.OrderFulfillmentServiceImpl;
 
@@ -48,6 +49,12 @@ public class ShopOrderDetailServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/shop/orders?error=order_not_found");
             return;
         }
+
+        int shopSubOrdersCount = fulfillmentService.countSubOrdersByShop(shopId, (SubOrderStatus) null);
+        if (session != null) {
+            session.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
+        }
+        request.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
 
         request.setAttribute("subOrder", subOrder);
         request.setAttribute("activeMenu", "orders");
@@ -96,7 +103,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
 
             boolean ok = fulfillmentService.cancelSubOrder(code, reason, currentUserId);
             if (ok) {
-                response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=CANCELLED&cancelled=1");
+                response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + SubOrderStatus.CANCELLED.name() + "&cancelled=1");
             } else {
                 response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&error=cancel_failed");
             }
@@ -104,22 +111,25 @@ public class ShopOrderDetailServlet extends HttpServlet {
         }
 
         if ("confirm".equals(action)) {
-            fulfillmentService.updateSubOrderStatus(code, "PACKING");
-            response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=PACKING&success=1");
+            fulfillmentService.updateSubOrderStatus(code, SubOrderStatus.PACKING);
+            response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + SubOrderStatus.PACKING.name() + "&success=1");
             return;
         }
 
         if ("ready_to_ship".equals(action)) {
-            fulfillmentService.updateSubOrderStatus(code, "SHIPPING");
-            response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=SHIPPING&success=1");
+            fulfillmentService.updateSubOrderStatus(code, SubOrderStatus.SHIPPING);
+            response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + SubOrderStatus.SHIPPING.name() + "&success=1");
             return;
         }
 
         String newStatus = request.getParameter("newStatus");
         if (newStatus != null && !newStatus.trim().isEmpty()) {
-            fulfillmentService.updateSubOrderStatus(code, newStatus);
-            response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + newStatus + "&success=1");
-            return;
+            SubOrderStatus statusEnum = SubOrderStatus.from(newStatus);
+            if (statusEnum != null) {
+                fulfillmentService.updateSubOrderStatus(code, statusEnum);
+                response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + statusEnum.name() + "&success=1");
+                return;
+            }
         }
 
         response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code);

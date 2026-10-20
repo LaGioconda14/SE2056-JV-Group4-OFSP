@@ -3,8 +3,8 @@ package model;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
+import enums.ApprovalStatus;
+import enums.AvailabilityStatus;
 
 /**
  * Model representing Driver Partner Profile, KYC & Vehicle Equipment,
@@ -55,35 +55,37 @@ public class DriverProfile implements Serializable {
     private int activeOrderCount;
 
     public DriverProfile() {
-        this.approvalStatus = "PENDING";
-        this.availabilityStatus = "OFFLINE";
+        this.approvalStatus = ApprovalStatus.PENDING.name();
+        this.availabilityStatus = AvailabilityStatus.OFFLINE.name();
         this.rating = BigDecimal.valueOf(5.0);
         this.maxCapacityOrders = 5;
     }
 
     // Helper status checks
     public boolean isApproved() {
-        return "APPROVED".equalsIgnoreCase(approvalStatus);
+        return ApprovalStatus.APPROVED.name().equalsIgnoreCase(approvalStatus);
     }
 
     public boolean isPending() {
-        return "PENDING".equalsIgnoreCase(approvalStatus);
+        return ApprovalStatus.PENDING.name().equalsIgnoreCase(approvalStatus);
     }
 
     public boolean isNeedsRevision() {
-        return "NEEDS_REVISION".equalsIgnoreCase(approvalStatus) || "REJECTED".equalsIgnoreCase(approvalStatus);
+        return ApprovalStatus.NEEDS_REVISION.name().equalsIgnoreCase(approvalStatus)
+                || ApprovalStatus.REJECTED.name().equalsIgnoreCase(approvalStatus);
     }
 
     public boolean isAvailable() {
-        return "AVAILABLE".equalsIgnoreCase(availabilityStatus);
+        return AvailabilityStatus.AVAILABLE.name().equalsIgnoreCase(availabilityStatus);
     }
 
     public boolean isOnline() {
-        return "AVAILABLE".equalsIgnoreCase(availabilityStatus) || "BUSY".equalsIgnoreCase(availabilityStatus);
+        return AvailabilityStatus.AVAILABLE.name().equalsIgnoreCase(availabilityStatus)
+                || AvailabilityStatus.BUSY.name().equalsIgnoreCase(availabilityStatus);
     }
 
     public void setOnline(boolean online) {
-        this.availabilityStatus = online ? "AVAILABLE" : "OFFLINE";
+        this.availabilityStatus = online ? AvailabilityStatus.AVAILABLE.name() : AvailabilityStatus.OFFLINE.name();
     }
 
     public boolean isGpsFresh() {
@@ -100,9 +102,9 @@ public class DriverProfile implements Serializable {
     }
 
     public String getApprovalBadgeClass() {
-        if ("APPROVED".equalsIgnoreCase(approvalStatus)) {
+        if (ApprovalStatus.APPROVED.name().equalsIgnoreCase(approvalStatus)) {
             return "bg-success-subtle text-success border border-success-subtle";
-        } else if ("PENDING".equalsIgnoreCase(approvalStatus)) {
+        } else if (ApprovalStatus.PENDING.name().equalsIgnoreCase(approvalStatus)) {
             return "bg-warning-subtle text-warning border border-warning-subtle";
         } else {
             return "bg-danger-subtle text-danger border border-danger-subtle";
@@ -110,13 +112,13 @@ public class DriverProfile implements Serializable {
     }
 
     public String getApprovalStatusLabel() {
-        if ("APPROVED".equalsIgnoreCase(approvalStatus)) {
+        if (ApprovalStatus.APPROVED.name().equalsIgnoreCase(approvalStatus)) {
             return "Đã duyệt & Sẵn sàng hoạt động";
-        } else if ("PENDING".equalsIgnoreCase(approvalStatus)) {
+        } else if (ApprovalStatus.PENDING.name().equalsIgnoreCase(approvalStatus)) {
             return "Đang chờ Admin duyệt";
-        } else if ("NEEDS_REVISION".equalsIgnoreCase(approvalStatus)) {
+        } else if (ApprovalStatus.NEEDS_REVISION.name().equalsIgnoreCase(approvalStatus)) {
             return "Cần bổ sung hồ sơ";
-        } else if ("REJECTED".equalsIgnoreCase(approvalStatus)) {
+        } else if (ApprovalStatus.REJECTED.name().equalsIgnoreCase(approvalStatus)) {
             return "Hồ sơ bị từ chối";
         }
         return approvalStatus;
@@ -268,12 +270,28 @@ public class DriverProfile implements Serializable {
         this.approvalStatus = approvalStatus;
     }
 
+    public ApprovalStatus getApprovalStatusEnum() {
+        if (approvalStatus == null) return null; try { return ApprovalStatus.valueOf(approvalStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
+    }
+
+    public void setApprovalStatus(ApprovalStatus status) {
+        this.approvalStatus = status != null ? status.name() : ApprovalStatus.PENDING.name();
+    }
+
     public String getAvailabilityStatus() {
         return availabilityStatus;
     }
 
     public void setAvailabilityStatus(String availabilityStatus) {
         this.availabilityStatus = availabilityStatus;
+    }
+
+    public AvailabilityStatus getAvailabilityStatusEnum() {
+        if (availabilityStatus == null) return null; try { return AvailabilityStatus.valueOf(availabilityStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
+    }
+
+    public void setAvailabilityStatus(AvailabilityStatus status) {
+        this.availabilityStatus = status != null ? status.name() : AvailabilityStatus.OFFLINE.name();
     }
 
     public Long getReviewedBy() {
