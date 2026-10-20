@@ -5,22 +5,31 @@
 <html lang="vi">
     <head>
         <title>Quản Lý Kho & Nông Sản - Kênh Người Bán</title>
-        <jsp:include page="/views/shop/layout/head.jsp" />
 
-        <!-- Custom CSS matching mockup -->
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-products.css">
-    </head>
-    <body class="bg-[#f8fafc] text-[#0f172a]">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+        <script src="https://cdn.tailwindcss.com"></script>
+
+            </head>
+    <body class="bg-[#f1f5f9] text-slate-800 font-['Plus_Jakarta_Sans',sans-serif] min-h-screen flex m-0">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-            <jsp:param name="active" value="products" />
+            <jsp:param name="activeMenu" value="products" />
         </jsp:include>
-        <jsp:include page="/views/shop/layout/header.jsp" />
 
-        <main class="shop-main-wrapper">
-            <div class="shop-content-container">
+        <div class="flex-1 min-w-0 flex flex-col">
 
-                    <!-- Success Notification Alert -->
+            <jsp:include page="/views/shop/layout/header.jsp">
+                <jsp:param name="searchAction" value="${pageContext.request.contextPath}/shop/products" />
+                <jsp:param name="searchPlaceholder" value="Tìm nhanh theo SKU, tên nông sản..." />
+            </jsp:include>
+
+            <main class="p-6 flex-1 overflow-y-auto">
+                <div class="max-w-7xl mx-auto space-y-6">
+
                     <c:if test="${not empty sessionScope.successMessage}">
                         <div class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs">
                             <div class="flex items-center gap-3">
@@ -34,7 +43,6 @@
                         <c:remove var="successMessage" scope="session"/>
                     </c:if>
 
-                    <!-- Breadcrumb & Header Title -->
                     <div class="flex flex-col gap-3">
                         <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold">
                             <span>Kênh Người Bán</span>
@@ -58,7 +66,6 @@
                                 </p>
                             </div>
 
-                            <!-- Action buttons -->
                             <div class="flex items-center flex-wrap gap-2.5">
                                 <button type="button" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs transition-all" onclick="alert('Đang xuất dữ liệu danh sách nông sản ra file Excel (.xlsx)...');">
                                     <i class="fa-solid fa-file-excel text-emerald-600"></i>
@@ -76,37 +83,32 @@
                         </div>
                     </div>
 
-                    <!-- STATUS TABS -->
                     <div class="flex items-center gap-2 overflow-x-auto pb-2 text-xs">
-                        <!-- Tab: Tất cả -->
+                        
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=all" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${empty statusTab || statusTab == 'all' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Tất cả</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] ${empty statusTab || statusTab == 'all' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabAllCount ? tabAllCount : 0}</span>
                         </a>
 
-                        <!-- Tab: Đang mở bán -->
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=active" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'active' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Đang mở bán</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] ${statusTab == 'active' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabActiveCount ? tabActiveCount : 0}</span>
                         </a>
 
-                        <!-- Tab: Chờ duyệt VietGAP -->
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=vietgap" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'vietgap' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Chờ duyệt VietGAP</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] bg-orange-100 text-orange-700">${not empty tabVietgapCount ? tabVietgapCount : 0}</span>
                         </a>
 
-                        <!-- Tab: Hết hàng / Tạm ẩn -->
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=hidden" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'hidden' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Hết hàng / Tạm ẩn</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] bg-rose-100 text-rose-700">${not empty tabHiddenCount ? tabHiddenCount : 0}</span>
                         </a>
 
-                        <!-- Tab: Vi phạm / Cảnh báo -->
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=warning" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'warning' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Vi phạm / Cảnh báo</span>
@@ -114,7 +116,6 @@
                         </a>
                     </div>
 
-                    <!-- SEARCH & FILTER TOOLBAR -->
                     <form action="${pageContext.request.contextPath}/shop/products" method="GET" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
                         <input type="hidden" name="statusTab" value="${statusTab}">
 
@@ -186,7 +187,6 @@
                         </div>
                     </form>
 
-                    <!-- DATA TABLE -->
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
@@ -207,12 +207,11 @@
                                         <c:when test="${not empty listVariants}">
                                             <c:forEach var="v" items="${listVariants}">
                                                 <tr class="hover:bg-slate-50/80 transition-colors">
-                                                    <!-- Checkbox -->
+                                                    
                                                     <td class="text-center py-4 px-4">
                                                         <input type="checkbox" name="variantIds" value="${v.variantId}" class="variant-row-checkbox w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                                                     </td>
 
-                                                    <!-- SẢN PHẨM & PHÂN LOẠI -->
                                                     <td class="py-4 px-4">
                                                         <div class="flex items-center gap-3.5">
                                                             <img src="${v.image}" alt="${v.productName}" class="w-12 h-12 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0" onerror="this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=120&h=120&fit=crop';">
@@ -230,7 +229,6 @@
                                                         </div>
                                                     </td>
 
-                                                    <!-- QUY CÁCH ĐÓNG GÓI -->
                                                     <td class="py-4 px-4">
                                                         <div class="flex flex-col items-start gap-1.5">
                                                             <span class="font-bold text-slate-800">
@@ -251,7 +249,6 @@
                                                                     </c:otherwise>
                                                                 </c:choose>
 
-                                                                <!-- HUY HIỆU HIỂN THỊ TRẠNG THÁI IS_ACTIVE -->
                                                                 <c:choose>
                                                                     <c:when test="${v.isActive}">
                                                                         <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black flex items-center gap-1">
@@ -268,7 +265,6 @@
                                                         </div>
                                                     </td>
 
-                                                    <!-- GIÁ BÁN LẺ -->
                                                     <td class="py-4 px-4">
                                                         <div class="flex flex-col">
                                                             <span class="font-black text-sm text-emerald-800">
@@ -289,7 +285,6 @@
                                                         </div>
                                                     </td>
 
-                                                    <!-- TỒN KHO THỰC TẾ -->
                                                     <td class="py-4 px-4">
                                                         <div class="flex flex-col space-y-1.5">
                                                             <div class="flex items-center justify-between gap-2">
@@ -320,7 +315,6 @@
                                                         </div>
                                                     </td>
 
-                                                    <!-- CHỨNG NHẬN / THAO TÁC -->
                                                     <td class="py-4 px-4 text-right">
                                                         <div class="flex items-center justify-end gap-2.5">
                                                             <c:choose>
@@ -375,7 +369,6 @@
                             </table>
                         </div>
 
-                        <!-- Pagination Footer -->
                         <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
                                 <span>Hiển thị</span>
@@ -412,7 +405,6 @@
             </div>
         </main>
 
-        <!-- Checkbox selection helper script -->
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const selectAll = document.getElementById('selectAllCheckbox');
@@ -422,6 +414,25 @@
                     selectAll.addEventListener('change', function () {
                         rowCheckboxes.forEach(cb => cb.checked = selectAll.checked);
                     });
+                }
+            });
+
+            function toggleShopUserDropdown(event) {
+                if (event) event.stopPropagation();
+                const menu = document.getElementById('shopUserDropdownMenu');
+                const arrow = document.getElementById('shopUserDropdownArrow');
+                if (!menu) return;
+                menu.classList.toggle('hidden');
+                if (arrow) arrow.classList.toggle('rotate-180');
+            }
+
+            document.addEventListener('click', function(e) {
+                const container = document.getElementById('shopUserDropdownContainer');
+                const menu = document.getElementById('shopUserDropdownMenu');
+                const arrow = document.getElementById('shopUserDropdownArrow');
+                if (container && menu && !container.contains(e.target)) {
+                    menu.classList.add('hidden');
+                    if (arrow) arrow.classList.remove('rotate-180');
                 }
             });
         </script>

@@ -6,32 +6,36 @@
 <html lang="vi">
     <head>
         <title>Quản Lý Đơn Hàng Con - Gốc Vườn Seller Center</title>
-        <jsp:include page="/views/shop/layout/head.jsp" />
 
-        <!-- Custom External Stylesheet & Script -->
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+        <script src="https://cdn.tailwindcss.com"></script>
+
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-orders.css">
         <script src="${pageContext.request.contextPath}/assets/js/shop-orders.js"></script>
     </head>
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-            <jsp:param name="active" value="orders" />
-        </jsp:include>
-        <jsp:include page="/views/shop/layout/header.jsp">
-            <jsp:param name="searchAction" value="/shop/orders" />
+            <jsp:param name="activeMenu" value="orders" />
         </jsp:include>
 
-        <main class="shop-main-wrapper">
-            <div class="shop-content-container">
+        <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
-                <!-- Header & Search Bar -->
+            <jsp:include page="/views/shop/layout/header.jsp" />
+
+            <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-5">
+
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Danh Sách Đơn Hàng Con (Shop Orders)</h1>
                         <p class="text-xs text-slate-500 mt-1">Theo dõi, xác nhận và đóng gói nông sản xuất xưởng cho khách hàng</p>
                     </div>
 
-                    <!-- Search Form -->
                     <form method="GET" action="${pageContext.request.contextPath}/shop/orders" class="flex items-center gap-2 self-start md:self-center">
                         <input type="hidden" name="status" value="${currentTab}">
                         <div class="relative">
@@ -50,7 +54,6 @@
                     </form>
                 </div>
 
-                <!-- Status Filter Tabs with Counts -->
                 <div class="flex items-center gap-1 overflow-x-auto pb-1 border-b border-slate-200 text-xs font-bold">
                     <a href="?status=ALL${not empty keyword ? '&keyword=' += keyword : ''}" 
                        class="px-3.5 py-2.5 border-b-2 transition flex items-center gap-2 ${currentTab eq 'ALL' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'}">
@@ -77,6 +80,11 @@
                         <span>Đã giao thành công</span>
                         <span class="px-1.5 py-0.5 rounded-full text-[10px] ${currentTab eq 'DELIVERED' ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-600'}">${countDelivered}</span>
                     </a>
+                    <a href="?status=FAILED${not empty keyword ? '&keyword=' += keyword : ''}" 
+                       class="px-3.5 py-2.5 border-b-2 transition flex items-center gap-2 ${currentTab eq 'FAILED' or currentTab eq 'RETURNED' ? 'border-rose-600 text-rose-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                        <span>Giao thất bại</span>
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] ${currentTab eq 'FAILED' or currentTab eq 'RETURNED' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'}">${countFailed}</span>
+                    </a>
                     <a href="?status=CANCELLED${not empty keyword ? '&keyword=' += keyword : ''}" 
                        class="px-3.5 py-2.5 border-b-2 transition flex items-center gap-2 ${currentTab eq 'CANCELLED' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'}">
                         <span>Đã hủy</span>
@@ -84,7 +92,6 @@
                     </a>
                 </div>
 
-                <!-- Orders Table Card -->
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">
@@ -154,6 +161,11 @@
                                                                 Đã giao thành công
                                                             </span>
                                                         </c:when>
+                                                        <c:when test="${o.status eq 'RETURNED' or o.status eq 'FAILED'}">
+                                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center gap-1">
+                                                                <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Giao thất bại
+                                                            </span>
+                                                        </c:when>
                                                         <c:when test="${o.status eq 'CANCELLED'}">
                                                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                                                 Đã hủy
@@ -189,7 +201,13 @@
                     </div>
                 </div>
 
+<<<<<<< HEAD
             </div>
         </main>
+=======
+            </main>
+        </div>
+
+>>>>>>> origin/dev
     </body>
 </html>

@@ -1,28 +1,23 @@
 package dao;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.Order;
 import model.OrderItem;
 import model.ShippingAddress;
 import model.SubOrder;
+import enums.SubOrderStatus;
 import util.DBContext;
 
 public class OrderFulfillmentDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(OrderFulfillmentDAO.class.getName());
 
-    /**
-     * Get SubOrder with Order and Shipping Address details by SubOrder Code or ID
-     */
     public SubOrder getSubOrderDetails(String subOrderCode) {
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
@@ -31,13 +26,15 @@ public class OrderFulfillmentDAO extends DBContext {
                 + "       o.order_code, o.payment_status, o.payment_method, o.created_at AS order_created_at, "
                 + "       u.full_name AS customer_name, u.phone AS customer_phone, "
                 + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city, "
-                + "       d.tracking_number, d.delivery_status "
+                + "       d.tracking_number, d.delivery_status, d.failure_reason, d.proof_image_url, d.delivered_at, "
+                + "       u_driver.full_name AS driver_name, u_driver.phone AS driver_phone "
                 + "FROM sub_orders so "
                 + "JOIN orders o ON so.order_id = o.order_id "
                 + "LEFT JOIN shops s ON so.shop_id = s.shop_id "
                 + "LEFT JOIN users u ON o.customer_id = u.user_id "
                 + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
                 + "LEFT JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                + "LEFT JOIN users u_driver ON d.driver_id = u_driver.user_id "
                 + "WHERE so.sub_order_code = ?";
 
         Connection conn = getConnection();
@@ -69,16 +66,19 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setCreatedAt(rs.getTimestamp("created_at"));
                     so.setUpdatedAt(rs.getTimestamp("updated_at"));
 
-                    String tracking = rs.getString("tracking_number");
-                    if (tracking != null && !tracking.trim().isEmpty()) {
-                        so.setTrackingNumber(tracking);
-                    }
+                    so.setTrackingNumber(rs.getString("tracking_number"));
+                    so.setDeliveryStatus(rs.getString("delivery_status"));
+                    so.setFailureReason(rs.getString("failure_reason"));
+                    so.setProofImageUrl(rs.getString("proof_image_url"));
+                    so.setDeliveredAt(rs.getTimestamp("delivered_at"));
+                    so.setDriverName(rs.getString("driver_name"));
+                    so.setDriverPhone(rs.getString("driver_phone"));
 
                     // Shipping Address
                     ShippingAddress addr = new ShippingAddress();
                     addr.setOrderId(rs.getLong("order_id"));
-                    addr.setRecipientName(rs.getString("recipient_name") != null ? rs.getString("recipient_name") : rs.getString("customer_name"));
-                    addr.setRecipientPhone(rs.getString("recipient_phone") != null ? rs.getString("recipient_phone") : rs.getString("customer_phone"));
+                    addr.setRecipientName(rs.getString("recipient_name"));
+                    addr.setRecipientPhone(rs.getString("recipient_phone"));
                     addr.setStreetAddress(rs.getString("street_address"));
                     addr.setWard(rs.getString("ward"));
                     addr.setDistrict(rs.getString("district"));
@@ -95,9 +95,6 @@ public class OrderFulfillmentDAO extends DBContext {
         return null;
     }
 
-    /**
-     * Get Order Items for a SubOrder with full product details, stock, images, and QC inspection data
-     */
     public List<OrderItem> getOrderItemsBySubOrderId(long subOrderId) {
         List<OrderItem> list = new ArrayList<>();
         String sql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
@@ -137,12 +134,7 @@ public class OrderFulfillmentDAO extends DBContext {
                     item.setOrigin(rs.getString("origin"));
                     item.setCertification(rs.getString("certification"));
                     item.setStorageTemp(rs.getString("storage_temp"));
-
-                    String img = rs.getString("image_url");
-                    if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=200&h=200&fit=crop";
-                    }
-                    item.setImageUrl(img);
+                    item.setImageUrl(rs.getString("image_url"));
 
                     list.add(item);
                 }
@@ -153,10 +145,8 @@ public class OrderFulfillmentDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Update SubOrder Status
-     */
-    public boolean updateSubOrderStatus(String subOrderCode, String newStatus) {
+    public boolean updateSubOrderStatus(String subOrderCode, SubOrderStatus newStatus) {
+        if (newStatus == null) return false;
         String sql = "UPDATE sub_orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_code = ?";
         Connection conn = getConnection();
         if (conn == null) {
@@ -164,12 +154,12 @@ public class OrderFulfillmentDAO extends DBContext {
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, newStatus);
+            ps.setString(1, newStatus.name());
             ps.setString(2, subOrderCode);
             int updated = ps.executeUpdate();
             if (updated > 0) {
                 // Synchronize parent order status
-                if ("SHIPPING".equalsIgnoreCase(newStatus) || "READY".equalsIgnoreCase(newStatus)) {
+                if (newStatus == SubOrderStatus.SHIPPING) {
                     String syncShipping = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_code = ?";
                     try (PreparedStatement psSync = conn.prepareStatement(syncShipping)) {
@@ -188,11 +178,11 @@ public class OrderFulfillmentDAO extends DBContext {
                             }
                         }
                     }
-                } else if ("DELIVERED".equalsIgnoreCase(newStatus)) {
+                } else if (newStatus == SubOrderStatus.DELIVERED) {
                     String syncDelivered = "UPDATE o SET o.order_status = 'COMPLETED', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
                             + "WHERE so.sub_order_code = ? "
-                            + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> 'DELIVERED')";
+                            + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> '" + SubOrderStatus.DELIVERED.name() + "')";
                     try (PreparedStatement psSync = conn.prepareStatement(syncDelivered)) {
                         psSync.setString(1, subOrderCode);
                         psSync.executeUpdate();
@@ -207,10 +197,7 @@ public class OrderFulfillmentDAO extends DBContext {
         }
     }
 
-    /**
-     * Get list of SubOrders by Shop, Status, and optional Keyword Search
-     */
-    public List<SubOrder> getSubOrdersByShop(long shopId, String status, String keyword) {
+    public List<SubOrder> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
         List<SubOrder> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
             "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
@@ -226,7 +213,7 @@ public class OrderFulfillmentDAO extends DBContext {
         if (shopId > 0) {
             sql.append(" AND so.shop_id = ? ");
         }
-        if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
+        if (status != null) {
             sql.append(" AND so.status = ? ");
         }
         if (keyword != null && !keyword.trim().isEmpty()) {
@@ -242,8 +229,8 @@ public class OrderFulfillmentDAO extends DBContext {
             if (shopId > 0) {
                 ps.setLong(paramIndex++, shopId);
             }
-            if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
-                ps.setString(paramIndex++, status);
+            if (status != null) {
+                ps.setString(paramIndex++, status.name());
             }
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String kw = "%" + keyword.trim() + "%";
@@ -289,39 +276,27 @@ public class OrderFulfillmentDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Backward-compatible overload without keyword
-     */
-    public List<SubOrder> getSubOrdersByShop(long shopId, String status) {
-        return getSubOrdersByShop(shopId, status, null);
-    }
+    public int countSubOrdersByShop(long shopId, SubOrderStatus status) {
+        boolean isAll = (status == null);
 
-    /**
-     * Count SubOrders by Shop and Status
-     */
-    public int countSubOrdersByShop(long shopId, String status) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS total FROM sub_orders WHERE 1=1 ");
-        if (shopId > 0) {
-            sql.append(" AND shop_id = ? ");
-        }
-        if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
-            sql.append(" AND status = ? ");
-        }
+        String sql = isAll
+                ? "SELECT COUNT(*) FROM sub_orders WHERE shop_id = ?"
+                : "SELECT COUNT(*) FROM sub_orders WHERE shop_id = ? AND status = ?";
 
         Connection conn = getConnection();
-        if (conn == null) return 0;
+        if (conn == null) {
+            return 0;
+        }
 
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            int paramIndex = 1;
-            if (shopId > 0) {
-                ps.setLong(paramIndex++, shopId);
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            if (!isAll) {
+                ps.setString(2, status.name());
             }
-            if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) {
-                ps.setString(paramIndex++, status);
-            }
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt("total");
+                    return rs.getInt(1);
                 }
             }
         } catch (SQLException ex) {
@@ -330,12 +305,13 @@ public class OrderFulfillmentDAO extends DBContext {
         return 0;
     }
 
-    /**
-     * Get the latest active SubOrder code for a shop
-     */
     public String getFirstSubOrderCode(long shopId) {
         String sql = "SELECT TOP 1 sub_order_code FROM sub_orders WHERE shop_id = ? "
-                + "ORDER BY CASE WHEN status = 'NEW' THEN 1 WHEN status = 'PACKING' THEN 2 WHEN status = 'SHIPPING' THEN 3 ELSE 4 END ASC, sub_order_id DESC";
+                + "ORDER BY CASE "
+                + "  WHEN status = '" + SubOrderStatus.NEW.name() + "' THEN 1 "
+                + "  WHEN status = '" + SubOrderStatus.PACKING.name() + "' THEN 2 "
+                + "  WHEN status = '" + SubOrderStatus.SHIPPING.name() + "' THEN 3 "
+                + "  ELSE 4 END ASC, sub_order_id DESC";
         Connection conn = getConnection();
         if (conn == null) return null;
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -351,12 +327,8 @@ public class OrderFulfillmentDAO extends DBContext {
         return null;
     }
 
-    /**
-     * Cancel SubOrder with a reason (Out of stock or Fruit not qualified)
-     * Matches the Activity Diagram: Fresh fruit available & qualified? No -> Cancel Sub-order (status='CANCELLED')
-     */
     public boolean cancelSubOrder(String subOrderCode, String cancelReason, Long cancelledBy) {
-        String sql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, cancelled_by = ?, "
+        String sql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name() + "', cancel_reason = ?, cancelled_by = ?, "
                 + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE sub_order_code = ?";
         Connection conn = getConnection();
@@ -372,14 +344,14 @@ public class OrderFulfillmentDAO extends DBContext {
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 // Synchronize parent order status if all sub_orders are CANCELLED
-                String syncSql = "UPDATE o SET o.order_status = 'CANCELLED', o.updated_at = CURRENT_TIMESTAMP "
+                String syncSql = "UPDATE o SET o.order_status = '" + SubOrderStatus.CANCELLED.name() + "', o.updated_at = CURRENT_TIMESTAMP "
                         + "FROM orders o "
                         + "JOIN sub_orders so ON o.order_id = so.order_id "
                         + "WHERE so.sub_order_code = ? "
                         + "  AND NOT EXISTS ( "
                         + "      SELECT 1 FROM sub_orders other "
                         + "      WHERE other.order_id = o.order_id "
-                        + "        AND other.status <> 'CANCELLED' "
+                        + "        AND other.status <> '" + SubOrderStatus.CANCELLED.name() + "' "
                         + "  )";
                 try (PreparedStatement psSync = conn.prepareStatement(syncSql)) {
                     psSync.setString(1, subOrderCode);
@@ -394,9 +366,6 @@ public class OrderFulfillmentDAO extends DBContext {
         }
     }
 
-    /**
-     * Check if a sub-order is owned by a specific shop
-     */
     public boolean isSubOrderOwnedByShop(long subOrderId, long shopId) {
         String sql = "SELECT 1 FROM sub_orders WHERE sub_order_id = ? AND shop_id = ?";
         Connection conn = getConnection();

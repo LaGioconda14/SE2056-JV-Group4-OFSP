@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.SubOrder;
+import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
 import service.impl.OrderFulfillmentServiceImpl;
 
@@ -41,23 +42,31 @@ public class ShopOrdersServlet extends HttpServlet {
             }
         }
 
-        List<SubOrder> list = fulfillmentService.getSubOrdersByShop(shopId, statusTab, keyword);
+        SubOrderStatus tabStatus = SubOrderStatus.from(statusTab);
+        List<SubOrder> list = fulfillmentService.getSubOrdersByShop(shopId, tabStatus, keyword);
 
-        int countAll = fulfillmentService.countSubOrdersByShop(shopId, "ALL");
-        int countNew = fulfillmentService.countSubOrdersByShop(shopId, "NEW");
-        int countPacking = fulfillmentService.countSubOrdersByShop(shopId, "PACKING");
-        int countShipping = fulfillmentService.countSubOrdersByShop(shopId, "SHIPPING");
-        int countDelivered = fulfillmentService.countSubOrdersByShop(shopId, "DELIVERED");
-        int countCancelled = fulfillmentService.countSubOrdersByShop(shopId, "CANCELLED");
+        int countAll = fulfillmentService.countSubOrdersByShop(shopId, null);
+        int countNew = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.NEW);
+        int countPacking = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.PACKING);
+        int countShipping = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.SHIPPING);
+        int countDelivered = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.DELIVERED);
+        int countFailed = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.FAILED);
+        int countCancelled = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.CANCELLED);
+
+        if (session != null) {
+            session.setAttribute("shopSubOrdersCount", countAll);
+        }
 
         request.setAttribute("orderList", list);
         request.setAttribute("currentTab", statusTab.toUpperCase());
         request.setAttribute("keyword", keyword != null ? keyword : "");
         request.setAttribute("countAll", countAll);
+        request.setAttribute("shopSubOrdersCount", countAll);
         request.setAttribute("countNew", countNew);
         request.setAttribute("countPacking", countPacking);
         request.setAttribute("countShipping", countShipping);
         request.setAttribute("countDelivered", countDelivered);
+        request.setAttribute("countFailed", countFailed);
         request.setAttribute("countCancelled", countCancelled);
         request.setAttribute("activeMenu", "orders");
 

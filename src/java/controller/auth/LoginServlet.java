@@ -11,7 +11,9 @@ import jakarta.servlet.http.HttpSession;
 import model.User;
 import model.Shop;
 import dao.ShopDAO;
+import service.IOrderFulfillmentService;
 import service.IUserService;
+import service.impl.OrderFulfillmentServiceImpl;
 import service.impl.UserServiceImpl;
 
 @WebServlet(name = "LoginServlet", urlPatterns = {"/login"})
@@ -138,7 +140,12 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("shopName", shop.getShopName());
                 session.setAttribute("shopLogo", shop.getLogoUrl());
                 session.setAttribute("shopObj", shop);
+                session.setAttribute("shop", shop);
                 session.setAttribute("shopStatus", shop.getStatus());
+
+                IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
+                int countAll = fulfillmentService.countSubOrdersByShop(shop.getShopId(), null);
+                session.setAttribute("shopSubOrdersCount", countAll);
             }
         } catch (Exception e) {
             e.printStackTrace();

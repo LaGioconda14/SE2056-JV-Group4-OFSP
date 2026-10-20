@@ -1,11 +1,12 @@
 package dao;
 
-import util.DBContext;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import model.Review;
 import model.Shop;
 import util.DBContext;
 
@@ -40,31 +41,10 @@ public class ShopDAO extends DBContext {
         String sql = "SELECT * FROM shops WHERE owner_id = ?";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setLong(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    Shop shop = new Shop();
-                    shop.setShopId(rs.getLong("shop_id"));
-                    shop.setOwnerId(rs.getLong("owner_id"));
-                    shop.setShopName(rs.getString("shop_name"));
-                    shop.setSlug(rs.getString("slug"));
-                    shop.setBusinessType(rs.getString("business_type"));
-                    shop.setDescription(rs.getString("description"));
-                    shop.setLogoUrl(rs.getString("logo_url"));
-                    shop.setBannerUrl(rs.getString("banner_url"));
-                    shop.setPhone(rs.getString("phone"));
-                    shop.setAddress(rs.getString("address"));
-                    shop.setProvince(rs.getString("province"));
-                    shop.setCertificationName(rs.getString("certification_name"));
-                    shop.setCommissionRate(rs.getBigDecimal("commission_rate"));
-                    shop.setRating(rs.getBigDecimal("rating"));
-                    shop.setTotalSalesAmount(rs.getBigDecimal("total_sales_amount"));
-                    shop.setTotalOrdersCount(rs.getInt("total_orders_count"));
-                    shop.setStatus(rs.getString("status"));
-                    shop.setCreatedAt(rs.getTimestamp("created_at"));
-                    shop.setUpdatedAt(rs.getTimestamp("updated_at"));
-                    return shop;
+                    return mapResultSetToShop(rs);
                 }
             }
         } catch (Exception e) {
@@ -111,6 +91,23 @@ public class ShopDAO extends DBContext {
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    /**
+     * Lấy shop đầu tiên đang hoạt động trong hệ thống
+     */
+    public Shop getFirstActiveShop() {
+        String sql = "SELECT TOP 1 * FROM shops WHERE status = 'ACTIVE' ORDER BY shop_id ASC";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return mapResultSetToShop(rs);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -189,8 +186,8 @@ public class ShopDAO extends DBContext {
         return total;
     }
 
-    public java.math.BigDecimal getTotalInventoryValueByShopId(long shopId) {
-        java.math.BigDecimal totalValue = java.math.BigDecimal.ZERO;
+    public BigDecimal getTotalInventoryValueByShopId(long shopId) {
+        BigDecimal totalValue = BigDecimal.ZERO;
         String sql = "SELECT SUM(pv.price * pv.stock_quantity) "
                 + "FROM shops s "
                 + "JOIN products p ON s.shop_id = p.shop_id "
@@ -201,7 +198,7 @@ public class ShopDAO extends DBContext {
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    java.math.BigDecimal val = rs.getBigDecimal(1);
+                    BigDecimal val = rs.getBigDecimal(1);
                     if (val != null) {
                         totalValue = val;
                     }
@@ -349,4 +346,43 @@ public class ShopDAO extends DBContext {
         }
         return false;
     }
+    public List<Review> getReviewsByShopId(long shopId) {
+        List<Review> list = new ArrayList<>();
+        String sql = "SELECT r.review_id, r.order_item_id, r.customer_id, r.shop_id, r.rating, "
+                + "r.comment, r.reply_comment, r.status, r.created_at, "
+                + "u.full_name, u.avatar_url "
+                + "FROM reviews r "
+                + "LEFT JOIN users u ON r.customer_id = u.user_id "
+                + "WHERE r.shop_id = ? "
+                + "ORDER BY r.created_at DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Review rev = new Review();
+                    rev.setReviewId(rs.getLong("review_id"));
+                    rev.setOrderItemId(rs.getObject("order_item_id") != null ? rs.getLong("order_item_id") : null);
+                    rev.setCustomerId(rs.getLong("customer_id"));
+                    rev.setShopId(rs.getLong("shop_id"));
+                    rev.setRating(rs.getInt("rating"));
+                    rev.setComment(rs.getString("comment"));
+                    rev.setReplyComment(rs.getString("reply_comment"));
+                    rev.setStatus(rs.getString("status"));
+                    rev.setCreatedAt(rs.getTimestamp("created_at"));
+
+                    String name = rs.getString("full_name");
+                    rev.setCustomerName(name != null && !name.trim().isEmpty() ? name : "Khách hàng");
+                    String avatar = rs.getString("avatar_url");
+                    rev.setCustomerAvatar(avatar != null && !avatar.trim().isEmpty() ? avatar : "https://ui-avatars.com/api/?name=" + (name != null ? name.replace(" ", "+") : "User") + "&background=10b981&color=fff");
+                    list.add(rev);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    
 }

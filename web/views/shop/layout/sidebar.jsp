@@ -115,36 +115,42 @@
                 </span>
             </a>
 
-            <!-- Group: TÀI CHÍNH & THIẾT LẬP -->
-            <div class="shop-sidebar-group-title">TÀI CHÍNH & THIẾT LẬP</div>
-            <a href="${ctx}/shop/finance" class="shop-sidebar-link ${param.active == 'finance' ? 'active' : ''}">
+
+            <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">HỆ THỐNG</div>
+            <a href="${pageContext.request.contextPath}/shop/finance" 
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'finance' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
                 <span class="flex items-center gap-3">
-                    <i class="fa-regular fa-credit-card text-slate-400 text-sm w-4 text-center"></i>
+                    <i class="fa-solid fa-wallet ${curMenu eq 'finance' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
                     <span>Doanh thu & Rút tiền</span>
                 </span>
             </a>
-            <a href="${ctx}/shop/settings" class="shop-sidebar-link ${param.active == 'settings' ? 'active' : ''}">
+            <a href="${pageContext.request.contextPath}/shop/settings" 
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'settings' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
                 <span class="flex items-center gap-3">
-                    <i class="fa-solid fa-gear text-slate-400 text-sm w-4 text-center"></i>
+                    <i class="fa-solid fa-sliders ${curMenu eq 'settings' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
                     <span>Cài đặt Shop</span>
                 </span>
             </a>
         </nav>
     </div>
 
-    <!-- Sidebar Footer Links -->
-    <div class="pt-4 border-t border-slate-100 space-y-1">
-        <a href="${ctx}/home" class="shop-sidebar-link text-slate-600 hover:text-emerald-700">
-            <span class="flex items-center gap-3">
-                <i class="fa-solid fa-store text-xs w-4 text-center"></i>
-                <span>Xem trang mua sắm</span>
-            </span>
+
+    <div class="p-3 border-t border-slate-200 space-y-1">
+        <a href="${pageContext.request.contextPath}/store?id=${sessionScope.shopId != null ? sessionScope.shopId : (sessionScope.shop != null ? sessionScope.shop.shopId : 1)}" 
+           target="_blank" 
+           class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:text-emerald-700 font-semibold text-xs transition-all">
+            <i class="fa-solid fa-store text-xs w-4 text-center"></i>
+            <span>Xem gian hàng của tôi</span>
         </a>
-        <a href="${ctx}/logout" class="shop-sidebar-link text-red-600 hover:bg-red-50 hover:text-red-700">
-            <span class="flex items-center gap-3">
-                <i class="fa-solid fa-arrow-right-from-bracket text-xs w-4 text-center"></i>
-                <span>Đăng xuất</span>
-            </span>
+        <a href="${pageContext.request.contextPath}/home" 
+           class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:text-emerald-700 font-semibold text-xs transition-all">
+            <i class="fa-solid fa-bag-shopping text-xs w-4 text-center"></i>
+            <span>Về trang mua sắm</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/logout" 
+           class="flex items-center gap-3 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs transition-all">
+            <i class="fa-solid fa-power-off text-xs w-4 text-center"></i>
+            <span>Đăng xuất</span>
         </a>
     </div>
 </aside>

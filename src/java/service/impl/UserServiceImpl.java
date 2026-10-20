@@ -2,8 +2,6 @@ package service.impl;
 
 import dao.UserDAO;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import model.GoogleAccount;
 import model.User;
 import service.IUserService;
@@ -15,7 +13,6 @@ import util.PasswordUtil;
  */
 public class UserServiceImpl implements IUserService {
 
-    private static final Logger LOGGER = Logger.getLogger(UserServiceImpl.class.getName());
     private final UserDAO userDAO;
 
     public UserServiceImpl() {
@@ -71,11 +68,15 @@ public class UserServiceImpl implements IUserService {
             throw new Exception("Định dạng Email không hợp lệ (Ví dụ: user@example.com)!");
         }
 
-        // 4. Validation - Phone format
+        // 4. Validation - Phone format & uniqueness
         if (!phone.isEmpty()) {
+            phone = phone.replaceAll("[\\s.-]", "");
             String phoneRegex = "^(0[3|5|7|8|9])[0-9]{8}$";
             if (!phone.matches(phoneRegex)) {
                 throw new Exception("Số điện thoại không hợp lệ (cần 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)!");
+            }
+            if (userDAO.isPhoneExists(phone, 0)) {
+                throw new Exception("Số điện thoại này đã được đăng ký cho tài khoản khác. Vui lòng kiểm tra lại!");
             }
         }
 

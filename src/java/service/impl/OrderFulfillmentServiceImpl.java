@@ -3,6 +3,7 @@ package service.impl;
 import dao.OrderFulfillmentDAO;
 import java.util.List;
 import model.SubOrder;
+import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
 
 public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
@@ -31,11 +32,11 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
     }
 
     @Override
-    public boolean updateSubOrderStatus(String subOrderCode, String newStatus) {
-        if (subOrderCode == null || subOrderCode.trim().isEmpty() || newStatus == null || newStatus.trim().isEmpty()) {
+    public boolean updateSubOrderStatus(String subOrderCode, SubOrderStatus newStatus) {
+        if (subOrderCode == null || subOrderCode.trim().isEmpty() || newStatus == null) {
             return false;
         }
-        return fulfillmentDAO.updateSubOrderStatus(subOrderCode.trim(), newStatus.trim());
+        return fulfillmentDAO.updateSubOrderStatus(subOrderCode.trim(), newStatus);
     }
 
     @Override
@@ -44,13 +45,12 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
     }
 
     @Override
-    public List<SubOrder> getSubOrdersByShop(long shopId, String status, String keyword) {
+    public List<SubOrder> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
         return fulfillmentDAO.getSubOrdersByShop(shopId, status, keyword);
     }
 
     @Override
-    public int countSubOrdersByShop(long shopId, String status) {
+    public int countSubOrdersByShop(long shopId, SubOrderStatus status) {
         return fulfillmentDAO.countSubOrdersByShop(shopId, status);
     }
 }
-

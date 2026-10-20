@@ -213,7 +213,7 @@
                                 <div>
                                     <h6 class="fw-bold text-primary mb-1">Nhà vườn đang xử lý đóng gói hoa quả</h6>
                                     <p class="small text-muted mb-0 lh-base">
-                                        Đơn hàng của bạn đang được gian hàng kiểm tra chất lượng, đóng thùng cách nhiệt chuyên dụng. Lộ trình giao hàng trực tiếp (GPS) và thông tin tài xế sẽ hiển thị ngay khi bưu tá chuỗi lạnh tiếp nhận đơn.
+                                        Đơn hàng của bạn đang được gian hàng kiểm tra chất lượng, đóng thùng cách nhiệt chuyên dụng. Thông tin tài xế và lộ trình giao hàng sẽ hiển thị ngay khi bưu tá tiếp nhận đơn.
                                     </p>
                                 </div>
                             </div>
@@ -231,101 +231,24 @@
                             </div>
                         </div>
 
-                        <div class="tracking-card mb-4" id="trackGpsCard">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <div class="fw-bold text-dark d-flex align-items-center">
-                                    <i class="bi bi-broadcast text-success me-2"></i> Lộ trình hỏa tốc thời gian thực (GPS Live)
-                                </div>
-                                <span class="badge bg-light text-muted border rounded-pill">
-                                    <i class="bi bi-arrow-clockwise me-1"></i> Cập nhật 1m trước
-                                </span>
-                            </div>
-
-                                                        <div class="gps-map-container mb-3 position-relative rounded-4 overflow-hidden border">
-                                <svg class="w-100 h-100 position-absolute inset-0" xmlns="http://www.w3.org/2000/svg" style="background: #edf7f1;">
-                                    <defs>
-                                        <pattern id="gridPattern" width="28" height="28" patternUnits="userSpaceOnUse">
-                                            <path d="M 28 0 L 0 0 0 28" fill="none" stroke="#d5e8dc" stroke-width="1"/>
-                                        </pattern>
-                                        <linearGradient id="routeGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                                            <stop offset="0%" stop-color="#10b981" />
-                                            <stop offset="100%" stop-color="#047857" />
-                                        </linearGradient>
-                                    </defs>
-                                    <rect width="100%" height="100%" fill="url(#gridPattern)" />
-                                                                        <path d="M -30 200 Q 140 160 260 210 T 650 140" fill="none" stroke="#c7dffc" stroke-width="26" stroke-linecap="round"/>
-                                                                        <path d="M 40 280 L 580 40" fill="none" stroke="#ffffff" stroke-width="14"/>
-                                    <path d="M 120 20 L 420 300" fill="none" stroke="#ffffff" stroke-width="12"/>
-                                    <path d="M 0 100 L 600 120" fill="none" stroke="#ffffff" stroke-width="10"/>
-                                                                        <path d="M 50 230 Q 180 180 290 150 T 540 65" fill="none" stroke="url(#routeGradient)" stroke-width="8" stroke-dasharray="12 6" stroke-linecap="round"/>
-                                </svg>
-
-                                                                <div class="map-node map-node-origin" style="left: 7%; top: 72%;">
-                                    <div class="map-pin-circle bg-success text-white shadow"><i class="bi bi-shop"></i></div>
-                                    <span class="map-pin-tag" id="trackMapShopName">Nông Trại Hữu Cơ Mộc Châu</span>
-                                </div>
-
-                                                                <div class="map-waypoint" style="left: 48%; top: 52%;">
-                                    <span class="badge bg-white text-secondary border shadow-xs">Đường Nguyễn Hữu Cảnh</span>
-                                </div>
-
-                                                                <div class="map-node map-node-driver pulse-driver" style="left: 48%; top: 35%;">
-                                    <div class="driver-bubble bg-amber-600 text-white shadow fw-bold">
-                                        <i class="bi bi-truck me-1"></i> <span id="trackMapDriverTag">Tài xế Trần Văn Nam (Cách 1.5 km)</span>
-                                    </div>
-                                    <div class="map-pin-driver bg-amber-500 text-white shadow"><i class="bi bi-cursor-fill"></i></div>
-                                </div>
-
-                                                                <div class="map-node map-node-dest" style="left: 82%; top: 16%;">
-                                    <div class="map-pin-circle bg-emerald-700 text-white shadow"><i class="bi bi-geo-alt-fill"></i></div>
-                                    <span class="map-pin-tag text-emerald-800 fw-bold" id="trackMapDestName">Vinhomes Central Park</span>
-                                </div>
-                            </div>
-
-                                                        <div class="row g-2">
-                                <div class="col-sm-6">
-                                    <div class="p-3 rounded-3 bg-white border d-flex align-items-center gap-3 h-100">
-                                        <div class="stat-icon-circle bg-primary-subtle text-primary">
-                                            <i class="bi bi-cursor-fill fs-5"></i>
-                                        </div>
-                                        <div>
-                                            <div class="text-muted small">Khoảng cách & Thời gian</div>
-                                            <div class="fw-bold text-dark small" id="trackDistanceText">Còn cách 1.5 km (Khoảng 8 phút nữa sẽ đến)</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="p-3 rounded-3 bg-white border d-flex align-items-center gap-3 h-100">
-                                        <div class="stat-icon-circle bg-info-subtle text-info">
-                                            <i class="bi bi-thermometer-snow fs-5"></i>
-                                        </div>
-                                        <div>
-                                            <div class="text-muted small">Nhiệt độ thùng bảo quản</div>
-                                            <div class="fw-bold text-dark small">9.2°C — Đạt chuẩn tươi ngon chuẩn tại vườn</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                                                 <div class="tracking-card mb-4" id="trackDriverCard">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                                 <div class="d-flex align-items-center gap-3">
                                     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" class="driver-avatar rounded-circle border shadow-xs" alt="Tài xế">
                                     <div>
                                         <div class="d-flex align-items-center gap-2">
-                                            <h6 class="fw-bold text-dark mb-0" id="trackDriverName">Trần Văn Nam</h6>
-                                            <span class="badge bg-success-subtle text-success small">Tài xế chuyên dụng</span>
+                                            <h6 class="fw-bold text-dark mb-0" id="trackDriverName">Tài xế chuỗi lạnh Gốc Vườn</h6>
+                                            <span class="badge bg-success-subtle text-success small" id="trackDriverBadge">Tài xế chuyên dụng</span>
                                         </div>
-                                        <div class="text-muted small">Đội ngũ giao vận nội bộ Gốc Vườn Express</div>
-                                        <div class="text-muted small mt-1">
-                                            Biển số: <strong class="text-dark">59-P1 084.21</strong> • <span class="text-warning">★ 4.9</span> (340 cuốc giao xuất sắc)
+                                        <div class="text-muted small" id="trackDriverSubtitle">Đội ngũ giao vận nội bộ Gốc Vườn Express</div>
+                                        <div class="text-muted small mt-1" id="trackDriverInfoRow">
+                                            Xe chuyên dụng bảo quản lạnh • <span class="text-warning">★ 5.0</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <a href="tel:0903778899" class="btn btn-success fw-semibold px-3 py-2 rounded-3 shadow-xs">
-                                        <i class="bi bi-telephone-fill me-1"></i> Gọi tài xế (0903 *** 112)
+                                    <a href="#" id="trackDriverCallBtn" class="btn btn-success fw-semibold px-3 py-2 rounded-3 shadow-xs" style="display: none;">
+                                        <i class="bi bi-telephone-fill me-1"></i> <span id="trackDriverCallText">Gọi tài xế</span>
                                     </a>
                                     <button type="button" class="btn btn-outline-secondary px-3 py-2 rounded-3" onclick="alert('Đang kết nối khung chat trực tiếp với tài xế giao hàng...')">
                                         <i class="bi bi-chat-dots-fill"></i>
@@ -610,11 +533,6 @@
                         <option value="OTHER">Lý do khác...</option>
                     </select>
                     <textarea id="cancelReasonCustom" class="form-control form-control-sm d-none mt-2" rows="2" placeholder="Nhập lý do cụ thể..."></textarea>
-                </div>
-
-                <div class="alert alert-light border py-2 px-3 small mb-0 rounded-3 text-muted">
-                    <i class="bi bi-info-circle me-1 text-primary"></i>
-                    Lưu ý: Sau khi hủy thành công, số lượng tồn kho sản phẩm sẽ được tự động hoàn lại.
                 </div>
             </div>
             <div class="modal-footer bg-light px-4 py-3">

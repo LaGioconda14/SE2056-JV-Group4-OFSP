@@ -5,6 +5,9 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
+import enums.DeliveryStatus;
+import enums.PaymentStatus;
+import enums.PaymentMethod;
 
 public class Delivery {
 
@@ -15,7 +18,7 @@ public class Delivery {
     private String driverName;
     private String driverPhone;
     private String trackingNumber;
-    private String deliveryStatus = "ASSIGNING"; // ASSIGNING, DELIVERING, DELIVERED, FAILED
+    private String deliveryStatus = DeliveryStatus.ASSIGNING.name(); // ASSIGNING, DELIVERING, DELIVERED, FAILED
     private String proofImageUrl;
     private String failureReason;
     private Timestamp assignedAt;
@@ -40,8 +43,8 @@ public class Delivery {
 
     // Financial Info
     private BigDecimal shopTotal = BigDecimal.ZERO;
-    private String paymentMethod = "COD";
-    private String paymentStatus = "PENDING";
+    private String paymentMethod = PaymentMethod.COD.name();
+    private String paymentStatus = PaymentStatus.PENDING.name();
 
     // Products in package
     private List<OrderItem> items = new ArrayList<>();
@@ -111,6 +114,19 @@ public class Delivery {
 
     public void setDeliveryStatus(String deliveryStatus) {
         this.deliveryStatus = deliveryStatus;
+    }
+
+    public DeliveryStatus getDeliveryStatusEnum() {
+        if (deliveryStatus == null) return DeliveryStatus.ASSIGNING;
+        try {
+            return DeliveryStatus.valueOf(deliveryStatus.trim().toUpperCase());
+        } catch (Exception e) {
+            return DeliveryStatus.ASSIGNING;
+        }
+    }
+
+    public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus != null ? deliveryStatus.name() : DeliveryStatus.ASSIGNING.name();
     }
 
     public String getProofImageUrl() {
@@ -257,12 +273,38 @@ public class Delivery {
         this.paymentMethod = paymentMethod;
     }
 
+    public PaymentMethod getPaymentMethodEnum() {
+        if (paymentMethod == null) return PaymentMethod.COD;
+        try {
+            return PaymentMethod.valueOf(paymentMethod.trim().toUpperCase());
+        } catch (Exception e) {
+            return PaymentMethod.COD;
+        }
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod != null ? paymentMethod.name() : PaymentMethod.COD.name();
+    }
+
     public String getPaymentStatus() {
         return paymentStatus;
     }
 
     public void setPaymentStatus(String paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+
+    public PaymentStatus getPaymentStatusEnum() {
+        if (paymentStatus == null) return PaymentStatus.PENDING;
+        try {
+            return PaymentStatus.valueOf(paymentStatus.trim().toUpperCase());
+        } catch (Exception e) {
+            return PaymentStatus.PENDING;
+        }
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus != null ? paymentStatus.name() : PaymentStatus.PENDING.name();
     }
 
     public List<OrderItem> getItems() {

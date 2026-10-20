@@ -1,5 +1,7 @@
 package controller.shop;
 
+import dao.ProductDAO;
+import dao.ShopDAO;
 import java.io.IOException;
 import java.util.List;
 import jakarta.servlet.ServletException;
@@ -7,91 +9,112 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import model.Category;
 import model.Product;
 import model.Review;
 import model.Shop;
-import service.IShopProductService;
-import service.impl.ShopProductServiceImpl;
+import model.User;
 
-@WebServlet(name = "ShopStorefrontServlet", urlPatterns = {"/shop/storefront", "/store", "/shop/view", "/shop/home", "/shop-detail"})
+@WebServlet(name = "ShopStorefrontServlet", urlPatterns = {"/store", "/shop/storefront", "/shop/detail", "/shop-detail"})
 public class ShopStorefrontServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
 
-    private final IShopProductService shopProductService = new ShopProductServiceImpl();
+    private final ShopDAO shopDAO = new ShopDAO();
+    private final ProductDAO productDAO = new ProductDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
-        // 1. Lấy shopId hoặc slug từ parameter
-        String idParam = request.getParameter("id");
-        String slugParam = request.getParameter("slug");
+        String idStr = request.getParameter("id");
+        String slug = request.getParameter("slug");
 
-        long shopId = 1L; // Mặc định shop 1 (Nông Trại Hữu Cơ Mộc Châu)
-        if (idParam != null && !idParam.trim().isEmpty()) {
+        Long shopId = null;
+        if (idStr != null && !idStr.trim().isEmpty()) {
             try {
-                shopId = Long.parseLong(idParam.trim());
-            } catch (NumberFormatException ignored) {}
-        }
-
-        // 2. Lấy thông tin Shop qua Service
-        Shop shop = null;
-        if (slugParam != null && !slugParam.trim().isEmpty()) {
-            shop = shopProductService.getShopBySlug(slugParam.trim());
-        }
-        if (shop == null) {
-            shop = shopProductService.getShopById(shopId);
-        }
-        if (shop == null) {
-            shop = shopProductService.getShopById(1L);
-        }
-
-        long activeShopId = shop != null ? shop.getShopId() : 1L;
-
-        // 3. Lọc theo Danh mục
-        String catParam = request.getParameter("cat");
-        Integer categoryId = null;
-        if (catParam != null && !catParam.trim().isEmpty()) {
-            try {
-                categoryId = Integer.parseInt(catParam.trim());
-            } catch (NumberFormatException ignored) {}
-        }
-
-        // 4. Sắp xếp sản phẩm
-        String sortParam = request.getParameter("sort");
-        if (sortParam == null || sortParam.trim().isEmpty()) {
-            sortParam = "featured";
-        }
-
-        // 5. Query dữ liệu từ Database qua Service
-        List<Product> products = shopProductService.getProductsByShopId(activeShopId, categoryId, sortParam);
-        List<Category> categories = shopProductService.getCategoriesWithCountByShopId(activeShopId);
-        List<Review> reviews = shopProductService.getReviewsByShopId(activeShopId);
-
-        // Tính tổng số lượng sản phẩm của shop
-        int totalProductsCount = 0;
-        if (categories != null && !categories.isEmpty()) {
-            for (Category c : categories) {
-                totalProductsCount += c.getProductCount();
+                shopId = Long.parseLong(idStr.trim());
+            } catch (NumberFormatException ignored) {
             }
         }
-        if (totalProductsCount == 0 && products != null) {
-            totalProductsCount = products.size();
+
+        Shop shop = null;
+        if (slug != null && !slug.trim().isEmpty()) {
+            shop = shopDAO.getShopBySlug(slug.trim());
+        }
+        if (shop == null && shopId != null) {
+            shop = shopDAO.getShopById(shopId);
         }
 
-        // 6. Truyền attributes ra Request Scope
+        // If not specified, try to find user's own shop or default active shop
+        if (shop == null && (idStr == null || idStr.trim().isEmpty()) && (slug == null || slug.trim().isEmpty())) {
+            HttpSession session = request.getSession(false);
+            if (session != null && session.getAttribute("user") != null) {
+                User user = (User) session.getAttribute("user");
+                shop = shopDAO.getShopByOwnerId(user.getId());
+            }
+            if (shop == null) {
+                shop = shopDAO.getFirstActiveShop();
+            }
+        }
+
+        if (shop == null) {
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
+        }
+
+        String catIdStr = request.getParameter("catId");
+        String keyword = request.getParameter("keyword");
+        String sort = request.getParameter("sort");
+
+        Integer selectedCatId = null;
+        if (catIdStr != null && !catIdStr.trim().isEmpty()) {
+            try {
+                selectedCatId = Integer.parseInt(catIdStr.trim());
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        List<Product> products = productDAO.getProductsByShop(shop.getShopId(), selectedCatId, keyword, sort);
+        List<Category> categories = productDAO.getCategoriesByShopId(shop.getShopId());
+        List<Review> reviews = shopDAO.getReviewsByShopId(shop.getShopId());
+        int totalProductsCount = shopDAO.getTotalProductsCountByShopId(shop.getShopId());
+
+        String shopJoinedTime = "Từ khi thành lập";
+        if (shop.getCreatedAt() != null) {
+            long diffMillis = System.currentTimeMillis() - shop.getCreatedAt().getTime();
+            long days = diffMillis / (1000 * 60 * 60 * 24);
+            if (days < 30) {
+                shopJoinedTime = Math.max(1, days) + " ngày trước";
+            } else if (days < 365) {
+                shopJoinedTime = (days / 30) + " tháng trước";
+            } else {
+                shopJoinedTime = (days / 365) + " năm trước";
+            }
+        }
+
+        boolean isOwner = false;
+        HttpSession session = request.getSession(false);
+        if (session != null && session.getAttribute("user") != null) {
+            User user = (User) session.getAttribute("user");
+            if (user != null && user.getId() == shop.getOwnerId()) {
+                isOwner = true;
+            }
+        }
+
         request.setAttribute("shop", shop);
         request.setAttribute("products", products);
         request.setAttribute("categories", categories);
-        request.setAttribute("totalProductsCount", totalProductsCount);
-        request.setAttribute("selectedCatId", categoryId);
-        request.setAttribute("selectedSort", sortParam);
         request.setAttribute("reviews", reviews);
+        request.setAttribute("totalProductsCount", totalProductsCount);
+        request.setAttribute("shopJoinedTime", shopJoinedTime);
+        request.setAttribute("selectedCatId", selectedCatId);
+        request.setAttribute("selectedSort", sort);
+        request.setAttribute("searchKeyword", keyword);
+        request.setAttribute("isOwner", isOwner);
 
-        // 7. Forward sang trang giao diện
         request.getRequestDispatcher("/views/shop/shop-storefront.jsp").forward(request, response);
     }
 
@@ -101,4 +124,3 @@ public class ShopStorefrontServlet extends HttpServlet {
         doGet(request, response);
     }
 }
-

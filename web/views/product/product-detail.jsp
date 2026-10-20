@@ -379,14 +379,18 @@
                             <!-- Cột Trái Shop: Avatar sạch (bỏ viền đỏ & nhãn Shopee Mall), Tên, Trạng thái & Nút Bấm -->
                             <div class="lg:col-span-5 flex items-center gap-4 sm:gap-5 border-b lg:border-b-0 lg:border-r border-gray-100 pb-6 lg:pb-0 lg:pr-8">
                                 <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border border-gray-200 bg-gray-50 shadow-sm shrink-0">
-                                    <img src="${not empty shop.logoUrl ? shop.logoUrl : 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=150'}" 
-                                         alt="${shop.shopName}" class="w-full h-full object-cover">
+                                    <a href="${pageContext.request.contextPath}/store?id=${shop.shopId}">
+                                        <img src="${not empty shop.logoUrl ? shop.logoUrl : 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=150'}" 
+                                             alt="${shop.shopName}" class="w-full h-full object-cover hover:opacity-90 transition">
+                                    </a>
                                 </div>
 
                                 <div class="space-y-2">
                                     <div>
                                         <h3 class="font-extrabold text-base sm:text-lg text-gray-900 uppercase tracking-tight">
-                                            ${not empty shop.shopName ? shop.shopName : 'GỐC VƯỜN'}
+                                            <a href="${pageContext.request.contextPath}/store?id=${shop.shopId}" class="hover:text-[#00652c] transition">
+                                                ${not empty shop.shopName ? shop.shopName : 'GỐC VƯỜN'}
+                                            </a>
                                         </h3>
                                         <div class="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
                                             <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
@@ -399,7 +403,7 @@
                                         <button type="button" onclick="openChatModal()" class="px-3.5 py-1.5 rounded-xl border border-emerald-600 text-[#00652c] bg-emerald-50/70 hover:bg-emerald-100 font-bold text-xs flex items-center gap-1.5 transition">
                                             <i class="fa-regular fa-comment-dots"></i> Chat Ngay
                                         </button>
-                                        <a href="${pageContext.request.contextPath}/products" class="px-3.5 py-1.5 rounded-xl border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-bold text-xs flex items-center gap-1.5 transition">
+                                        <a href="${pageContext.request.contextPath}/store?id=${shop.shopId}" class="px-3.5 py-1.5 rounded-xl border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-bold text-xs flex items-center gap-1.5 transition">
                                             <i class="fa-solid fa-store text-gray-500"></i> Xem Cửa Hàng
                                         </a>
                                     </div>

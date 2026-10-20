@@ -1905,81 +1905,66 @@ public class ProductDAO extends DBContext {
 
         return p;
     }
-    
-    public List<Product> getProductsByShopId(long shopId, Integer categoryId, String sort) {
+public List<Product> getProductsByShop(long shopId, Integer categoryId, String keyword, String sortBy) {
         List<Product> list = new ArrayList<>();
-        StringBuilder query = new StringBuilder(
-                "SELECT p.product_id, p.name, p.category_id, c.category_name, p.origin, p.certification, "
-                + "(SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id AND is_thumbnail = 1) AS image_url, "
-                + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
-                + "(SELECT TOP 1 weight_kg FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS weight_kg, "
-                + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit "
-                + "FROM products p "
-                + "LEFT JOIN categories c ON p.category_id = c.category_id "
-                + "WHERE p.shop_id = ? AND p.is_active = 1 "
-        );
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
+           .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
+           .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
+           .append("(SELECT MIN(original_price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS original_price, ")
+           .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
+           .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock ")
+           .append("FROM products p ")
+           .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
+           .append("OUTER APPLY (")
+           .append("    SELECT TOP 1 image_url FROM product_images ")
+           .append("    WHERE product_id = p.product_id ")
+           .append("    ORDER BY is_thumbnail DESC, display_order ASC")
+           .append(") pi ")
+           .append("OUTER APPLY (")
+           .append("    SELECT TOP 1 variant_id FROM product_variants ")
+           .append("    WHERE product_id = p.product_id AND is_active = 1 AND stock_quantity > 0 ")
+           .append("    ORDER BY price ASC")
+           .append(") dv ")
+           .append("WHERE p.is_active = 1 AND p.shop_id = ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(shopId);
 
         if (categoryId != null && categoryId > 0) {
-            query.append("AND p.category_id = ? ");
+            sql.append(" AND p.category_id = ? ");
+            params.add(categoryId);
         }
 
-        if ("price_asc".equalsIgnoreCase(sort)) {
-            query.append("ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) ASC");
-        } else if ("price_desc".equalsIgnoreCase(sort)) {
-            query.append("ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) DESC");
-        } else if ("newest".equalsIgnoreCase(sort)) {
-            query.append("ORDER BY p.product_id DESC");
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ? OR c.category_name LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        if ("price_asc".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) ASC, p.product_id DESC");
+        } else if ("price_desc".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) DESC, p.product_id DESC");
+        } else if ("newest".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY p.product_id DESC");
+        } else if ("rating".equalsIgnoreCase(sortBy)) {
+            sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
         } else {
-            // featured
-            query.append("ORDER BY p.product_id ASC");
+            sql.append(" ORDER BY p.is_featured DESC, p.product_id ASC");
         }
 
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query.toString())) {
-            ps.setLong(1, shopId);
-            if (categoryId != null && categoryId > 0) {
-                ps.setInt(2, categoryId);
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
             }
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    long id = rs.getLong("product_id");
-                    String name = rs.getString("name");
-                    int catId = rs.getInt("category_id");
-                    String categoryName = rs.getString("category_name");
-                    if (categoryName == null) categoryName = "Trái Cây Tươi";
-
-                    String image = rs.getString("image_url");
-                    if (image == null || image.isEmpty()) {
-                        image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
-                    }
-
-                    BigDecimal price = rs.getBigDecimal("price");
-                    if (price == null) {
-                        price = new BigDecimal("120000");
-                    }
-                    BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
-                    int discountPercent = 20;
-
-                    Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 128);
-                    p.setCategoryId(catId);
-                    
-                    String origin = rs.getString("origin");
-                    p.setOrigin(origin != null ? origin : "Mộc Châu Highlands");
-
-                    String cert = rs.getString("certification");
-                    p.setCertification(cert != null ? cert : "VietGAP");
-                    p.setTag(cert != null && cert.toLowerCase().contains("organic") ? "Organic" : "VietGAP");
-
-                    String unit = rs.getString("unit");
-                    BigDecimal weight = rs.getBigDecimal("weight_kg");
-                    if (weight != null && unit != null) {
-                        p.setUnit(weight.stripTrailingZeros().toPlainString() + " " + unit + " • Chuẩn Vườn");
-                    } else if (unit != null) {
-                        p.setUnit("1 " + unit + " • Chuẩn Vườn");
-                    } else {
-                        p.setUnit("Hộp 500g • Chuẩn Vườn");
-                    }
-
+                    Product p = mapProductFromCatalogResultSet(rs);
+                    p.setShopId(shopId);
                     list.add(p);
                 }
             }
@@ -1989,17 +1974,14 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Lấy danh mục các sản phẩm của shop cùng với số lượng sản phẩm của từng danh mục
-     */
-    public List<Category> getCategoriesWithCountByShopId(long shopId) {
+    public List<Category> getCategoriesByShopId(long shopId) {
         List<Category> list = new ArrayList<>();
-        String sql = "SELECT c.category_id, c.category_name, c.slug, COUNT(p.product_id) AS product_count "
-                   + "FROM products p "
-                   + "JOIN categories c ON p.category_id = c.category_id "
-                   + "WHERE p.shop_id = ? AND p.is_active = 1 "
-                   + "GROUP BY c.category_id, c.category_name, c.slug "
-                   + "ORDER BY product_count DESC";
+        String sql = "SELECT c.category_id, c.category_name, c.slug, c.icon_class, COUNT(p.product_id) AS product_count "
+                + "FROM categories c "
+                + "JOIN products p ON c.category_id = p.category_id "
+                + "WHERE p.shop_id = ? AND p.is_active = 1 "
+                + "GROUP BY c.category_id, c.category_name, c.slug, c.icon_class "
+                + "ORDER BY product_count DESC, c.category_name ASC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, shopId);
@@ -2009,6 +1991,7 @@ public class ProductDAO extends DBContext {
                     cat.setCategoryId(rs.getInt("category_id"));
                     cat.setCategoryName(rs.getString("category_name"));
                     cat.setSlug(rs.getString("slug"));
+                    cat.setIconClass(rs.getString("icon_class"));
                     cat.setProductCount(rs.getInt("product_count"));
                     list.add(cat);
                 }

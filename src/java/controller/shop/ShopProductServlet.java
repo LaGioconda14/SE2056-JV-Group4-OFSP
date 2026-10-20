@@ -12,7 +12,9 @@ import model.User;
 import model.Shop;
 import model.ProductVariant;
 import dao.ShopDAO;
+import service.IOrderFulfillmentService;
 import service.IProductService;
+import service.impl.OrderFulfillmentServiceImpl;
 import service.impl.ProductServiceImpl;
 
 @WebServlet(name = "ShopProductServlet", urlPatterns = {"/shop/products"})
@@ -20,6 +22,7 @@ public class ShopProductServlet extends HttpServlet {
 
     private final ShopDAO shopDAO = new ShopDAO();
     private final IProductService productService = new ProductServiceImpl();
+    private final IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -83,6 +86,13 @@ public class ShopProductServlet extends HttpServlet {
             request.setAttribute("tabVietgapCount", tabVietgapCount);
             request.setAttribute("tabHiddenCount", tabHiddenCount);
             request.setAttribute("tabWarningCount", tabWarningCount);
+
+            int shopSubOrdersCount = fulfillmentService.countSubOrdersByShop(shopId, null);
+            session.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
+            request.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
+
+            int lowStockCount = shopDAO.getLowStockCountByShopId(shopId);
+            request.setAttribute("lowStockCount", lowStockCount);
         }
 
         // 5. Forward sang trang JSP

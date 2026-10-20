@@ -4,6 +4,10 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import enums.SubOrderStatus;
+import enums.DeliveryStatus;
+import enums.PaymentStatus;
+import enums.PaymentMethod;
 
 public class SubOrder {
 
@@ -16,7 +20,7 @@ public class SubOrder {
     private BigDecimal shopShippingFee = BigDecimal.ZERO;
     private BigDecimal shopDiscount = BigDecimal.ZERO;
     private BigDecimal shopTotal = BigDecimal.ZERO;
-    private String status = "NEW";
+    private String status = SubOrderStatus.NEW.name();
     private String cancelReason;
     private Long cancelledBy;
     private Timestamp cancelledAt;
@@ -25,14 +29,81 @@ public class SubOrder {
 
     private String subOrderCode;
     private String orderCode;
-    private String paymentMethod = "COD";
-    private String paymentStatus = "PENDING";
+    private String paymentMethod = PaymentMethod.COD.name();
+    private String paymentStatus = PaymentStatus.PENDING.name();
     private String trackingNumber;
-    private String carrierName = "FreshFruit Cold-Chain";
+    private String carrierName;
+    private String driverName;
+    private String driverPhone;
+    private String deliveryStatus;
+    private String failureReason;
+    private String proofImageUrl;
+    private Timestamp deliveredAt;
     private ShippingAddress shippingAddress;
     private List<OrderItem> items = new ArrayList<>();
     private Integer shopCouponId;
     private String shopCouponCode;
+
+    public String getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(String deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
+    public DeliveryStatus getDeliveryStatusEnum() {
+        if (deliveryStatus == null) return null;
+        try {
+            return DeliveryStatus.valueOf(deliveryStatus.trim().toUpperCase());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus != null ? deliveryStatus.name() : null;
+    }
+
+    public String getFailureReason() {
+        return failureReason;
+    }
+
+    public void setFailureReason(String failureReason) {
+        this.failureReason = failureReason;
+    }
+
+    public String getProofImageUrl() {
+        return proofImageUrl;
+    }
+
+    public void setProofImageUrl(String proofImageUrl) {
+        this.proofImageUrl = proofImageUrl;
+    }
+
+    public Timestamp getDeliveredAt() {
+        return deliveredAt;
+    }
+
+    public void setDeliveredAt(Timestamp deliveredAt) {
+        this.deliveredAt = deliveredAt;
+    }
+
+    public String getDriverName() {
+        return driverName;
+    }
+
+    public void setDriverName(String driverName) {
+        this.driverName = driverName;
+    }
+
+    public String getDriverPhone() {
+        return driverPhone;
+    }
+
+    public void setDriverPhone(String driverPhone) {
+        this.driverPhone = driverPhone;
+    }
 
     public SubOrder() {
     }
@@ -61,12 +132,38 @@ public class SubOrder {
         this.paymentMethod = paymentMethod;
     }
 
+    public PaymentMethod getPaymentMethodEnum() {
+        if (paymentMethod == null) return PaymentMethod.COD;
+        try {
+            return PaymentMethod.valueOf(paymentMethod.trim().toUpperCase());
+        } catch (Exception e) {
+            return PaymentMethod.COD;
+        }
+    }
+
+    public void setPaymentMethod(PaymentMethod method) {
+        this.paymentMethod = method != null ? method.name() : PaymentMethod.COD.name();
+    }
+
     public String getPaymentStatus() {
         return paymentStatus;
     }
 
     public void setPaymentStatus(String paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+
+    public PaymentStatus getPaymentStatusEnum() {
+        if (paymentStatus == null) return PaymentStatus.PENDING;
+        try {
+            return PaymentStatus.valueOf(paymentStatus.trim().toUpperCase());
+        } catch (Exception e) {
+            return PaymentStatus.PENDING;
+        }
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus != null ? paymentStatus.name() : PaymentStatus.PENDING.name();
     }
 
     public String getTrackingNumber() {
@@ -173,6 +270,14 @@ public class SubOrder {
         this.status = status;
     }
 
+    public SubOrderStatus getStatusEnum() {
+        return SubOrderStatus.from(status);
+    }
+
+    public void setStatus(SubOrderStatus status) {
+        this.status = status != null ? status.name() : SubOrderStatus.NEW.name();
+    }
+
     public String getCancelReason() {
         return cancelReason;
     }
@@ -227,7 +332,11 @@ public class SubOrder {
         return shopDiscount != null ? shopDiscount : BigDecimal.ZERO;
     }
 
-    public String getCreatedAt() {
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getCreatedAtFormatted() {
         if (createdAt == null) {
             return "";
         }

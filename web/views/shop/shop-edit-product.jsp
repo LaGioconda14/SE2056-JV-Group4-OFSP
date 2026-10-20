@@ -7,18 +7,27 @@
         <title>Chỉnh Sửa Nông Sản - Kênh Người Bán</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
 
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+        <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-            <jsp:param name="active" value="products" />
+        <jsp:param name="activeMenu" value="products" />
         </jsp:include>
-        <jsp:include page="/views/shop/layout/header.jsp" />
 
-        <main class="shop-main-wrapper">
-            <div class="shop-content-container">
+        <div class="flex-1 min-w-0 flex flex-col">
 
-                    <!-- Error Notification Alert -->
+            <jsp:include page="/views/shop/layout/header.jsp" />
+
+            <main class="p-6 flex-1 overflow-y-auto">
+                <div class="max-w-7xl mx-auto space-y-6">
+
                     <c:if test="${not empty errorMessage}">
                         <div class="bg-rose-50 border border-rose-300 text-rose-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs">
                             <div class="flex items-center gap-3">
@@ -31,7 +40,6 @@
                         </div>
                     </c:if>
 
-                    <!-- Breadcrumb & Header Title -->
                     <div class="flex flex-col gap-3">
                         <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold">
                             <span>Kênh Người Bán</span>
@@ -58,12 +66,10 @@
                         </div>
                     </div>
 
-                    <!-- FORM CONTAINER CARD -->
                     <form action="${pageContext.request.contextPath}/shop/product/edit" method="POST" class="bg-white p-8 rounded-2xl border border-slate-200 shadow-2xs space-y-8">
-                        <!-- Hidden Variant ID -->
-                        <input type="hidden" name="variantId" value="${product.variantId}">
                         
-                        <!-- Section 1: Thông tin chung -->
+                        <input type="hidden" name="variantId" value="${product.variantId}">
+
                         <div class="space-y-4">
                             <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
                                 <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">1</span>
@@ -121,7 +127,6 @@
                             </div>
                         </div>
 
-                        <!-- Section 2: Quy cách đóng gói & Giá bán (SKU) -->
                         <div class="space-y-4 pt-4">
                             <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
                                 <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">2</span>
@@ -161,7 +166,6 @@
                             </div>
                         </div>
 
-                        <!-- Section 3: Hình ảnh nông sản (5 Ô Upload đầy đủ) -->
                         <div class="space-y-4 pt-4">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                                 <div class="flex items-center gap-2">
@@ -171,10 +175,8 @@
                                 <span class="text-xs text-slate-400 font-semibold">Ô 1 là Ảnh chính diện | Hỗ trợ kéo thả hoặc dán URL</span>
                             </div>
 
-                            <!-- Grid 5 Ô Upload Image -->
                             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
 
-                                <!-- Ô 1: Ảnh chính diện -->
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-emerald-700 uppercase tracking-wider">
                                         Ảnh chính diện <span class="text-rose-500">*</span>
@@ -200,7 +202,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Ô 2: Góc nghiêng -->
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-sky-700 uppercase tracking-wider">Góc nghiêng</label>
                                     <div id="drop-zone-1" onclick="triggerInput(1)" ondragover="handleDragOver(event, 1)" ondragleave="handleDragLeave(1)" ondrop="handleDrop(event, 1)"
@@ -222,7 +223,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Ô 3: Góc cận cảnh -->
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-amber-700 uppercase tracking-wider">Góc cận cảnh</label>
                                     <div id="drop-zone-2" onclick="triggerInput(2)" ondragover="handleDragOver(event, 2)" ondragleave="handleDragLeave(2)" ondrop="handleDrop(event, 2)"
@@ -244,7 +244,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Ô 4: Góc chi tiết -->
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-purple-700 uppercase tracking-wider">Góc chi tiết</label>
                                     <div id="drop-zone-3" onclick="triggerInput(3)" ondragover="handleDragOver(event, 3)" ondragleave="handleDragLeave(3)" ondrop="handleDrop(event, 3)"
@@ -266,7 +265,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Ô 5: Góc toàn cảnh -->
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-rose-700 uppercase tracking-wider">Góc toàn cảnh</label>
                                     <div id="drop-zone-4" onclick="triggerInput(4)" ondragover="handleDragOver(event, 4)" ondragleave="handleDragLeave(4)" ondrop="handleDrop(event, 4)"
@@ -296,7 +294,6 @@
                             </div>
                         </div>
 
-                        <!-- JavaScript Xử Lý Preview -->
                         <script>
                             function triggerInput(index) {
                                 document.getElementById('input-url-' + index).focus();
@@ -321,7 +318,6 @@
                             }
                         </script>
 
-                        <!-- Form Actions -->
                         <div class="pt-6 border-t border-slate-200 flex items-center justify-end gap-3">
                             <a href="${pageContext.request.contextPath}/shop/products" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all">
                                 Hủy bỏ

@@ -1,17 +1,14 @@
 package dao;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.DriverProfile;
-import model.User;
 import util.DBContext;
 
 public class DriverDAO extends DBContext {
@@ -222,6 +219,24 @@ public class DriverDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error in fallback driver selection", ex);
+        }
+
+        // Secondary Fallback: query active users with role DRIVER directly
+        String userDriverSql = "SELECT TOP 1 u.user_id FROM users u "
+                + "JOIN user_roles ur ON u.user_id = ur.user_id "
+                + "WHERE ur.role_id = 4 AND u.status = 'ACTIVE' "
+                + "ORDER BY CASE WHEN u.user_id = 9 THEN 0 ELSE 1 END, u.user_id ASC";
+        Connection conn4 = getConnection();
+        if (conn4 != null) {
+            try (conn4; PreparedStatement psUd = conn4.prepareStatement(userDriverSql)) {
+                try (ResultSet rsUd = psUd.executeQuery()) {
+                    if (rsUd.next()) {
+                        return rsUd.getLong("user_id");
+                    }
+                }
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error in user driver fallback", ex);
+            }
         }
 
         return null;

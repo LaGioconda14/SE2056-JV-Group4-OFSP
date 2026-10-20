@@ -5,12 +5,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Delivery;
+import enums.DeliveryStatus;
+import enums.SubOrderStatus;
+import enums.PaymentStatus;
 import model.OrderItem;
 import util.DBContext;
 
@@ -125,7 +127,7 @@ public class DeliveryDAO extends DBContext {
      * Driver confirms package pickup at the Shop (Confirm Package Pickup -> status='DELIVERING')
      */
     public boolean confirmPickup(long deliveryId, long driverId) {
-        String updateDel = "UPDATE deliveries SET delivery_status = 'DELIVERING' WHERE delivery_id = ? AND driver_id = ?";
+        String updateDel = "UPDATE deliveries SET delivery_status = '" + DeliveryStatus.DELIVERING.name() + "' WHERE delivery_id = ? AND driver_id = ?";
         Connection conn = getConnection();
         if (conn == null) return false;
 
@@ -135,7 +137,7 @@ public class DeliveryDAO extends DBContext {
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 // Update sub_order and order to SHIPPING
-                String syncSubOrder = "UPDATE so SET so.status = 'SHIPPING', so.updated_at = CURRENT_TIMESTAMP "
+                String syncSubOrder = "UPDATE so SET so.status = '" + SubOrderStatus.SHIPPING.name() + "', so.updated_at = CURRENT_TIMESTAMP "
                     + "FROM sub_orders so JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
                     + "WHERE d.delivery_id = ?";
                 try (PreparedStatement psSub = conn.prepareStatement(syncSubOrder)) {
@@ -164,7 +166,7 @@ public class DeliveryDAO extends DBContext {
      * Driver completes delivery successfully, collects cash if COD, and uploads PoD
      */
     public boolean completeDelivery(long deliveryId, long driverId, String proofImageUrl) {
-        String updateDel = "UPDATE deliveries SET delivery_status = 'DELIVERED', proof_image_url = ?, delivered_at = CURRENT_TIMESTAMP "
+        String updateDel = "UPDATE deliveries SET delivery_status = '" + DeliveryStatus.DELIVERED.name() + "', proof_image_url = ?, delivered_at = CURRENT_TIMESTAMP "
             + "WHERE delivery_id = ? AND driver_id = ?";
         Connection conn = getConnection();
         if (conn == null) return false;
@@ -176,7 +178,7 @@ public class DeliveryDAO extends DBContext {
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 // Update sub_orders to DELIVERED
-                String syncSub = "UPDATE so SET so.status = 'DELIVERED', so.updated_at = CURRENT_TIMESTAMP "
+                String syncSub = "UPDATE so SET so.status = '" + SubOrderStatus.DELIVERED.name() + "', so.updated_at = CURRENT_TIMESTAMP "
                     + "FROM sub_orders so JOIN deliveries d ON so.sub_order_id = d.sub_order_id WHERE d.delivery_id = ?";
                 try (PreparedStatement psSub = conn.prepareStatement(syncSub)) {
                     psSub.setLong(1, deliveryId);
@@ -196,14 +198,14 @@ public class DeliveryDAO extends DBContext {
                     + "JOIN sub_orders so ON o.order_id = so.order_id "
                     + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
                     + "WHERE d.delivery_id = ? "
-                    + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> 'DELIVERED')";
+                    + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> '" + SubOrderStatus.DELIVERED.name() + "')";
                 try (PreparedStatement psOrd = conn.prepareStatement(syncOrd)) {
                     psOrd.setLong(1, deliveryId);
                     psOrd.executeUpdate();
                 }
 
                 // If payment method is COD, mark payment as PAID
-                String syncPayment = "UPDATE o SET o.payment_status = 'PAID' "
+                String syncPayment = "UPDATE o SET o.payment_status = '" + PaymentStatus.PAID.name() + "' "
                     + "FROM orders o "
                     + "JOIN sub_orders so ON o.order_id = so.order_id "
                     + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
@@ -225,7 +227,7 @@ public class DeliveryDAO extends DBContext {
      * Triggers Return and Refund flow
      */
     public boolean recordFailedDelivery(long deliveryId, long driverId, String failureReason) {
-        String updateDel = "UPDATE deliveries SET delivery_status = 'FAILED', failure_reason = ?, delivered_at = CURRENT_TIMESTAMP "
+        String updateDel = "UPDATE deliveries SET delivery_status = '" + DeliveryStatus.FAILED.name() + "', failure_reason = ?, delivered_at = CURRENT_TIMESTAMP "
             + "WHERE delivery_id = ? AND driver_id = ?";
         Connection conn = getConnection();
         if (conn == null) return false;
@@ -237,7 +239,7 @@ public class DeliveryDAO extends DBContext {
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 // Update sub_order to RETURNED with cancel_reason
-                String syncSub = "UPDATE so SET so.status = 'RETURNED', so.cancel_reason = ?, so.updated_at = CURRENT_TIMESTAMP "
+                String syncSub = "UPDATE so SET so.status = '" + SubOrderStatus.RETURNED.name() + "', so.cancel_reason = ?, so.updated_at = CURRENT_TIMESTAMP "
                     + "FROM sub_orders so JOIN deliveries d ON so.sub_order_id = d.sub_order_id WHERE d.delivery_id = ?";
                 try (PreparedStatement psSub = conn.prepareStatement(syncSub)) {
                     psSub.setNString(1, failureReason);
