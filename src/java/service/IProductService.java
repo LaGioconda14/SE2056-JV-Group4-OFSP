@@ -7,7 +7,7 @@ import model.Product;
 import model.ProductVariant;
 
 public interface IProductService {
-    //lấy list sản phẩm
+    //lấy danh sách sản phẩm theo shopID
     List<ProductVariant> getVariantsByShopId(long shopId);
     int countProductsByShopId(long shopId);
     int countVariantsByShopId(long shopId);
@@ -32,7 +32,7 @@ public interface IProductService {
     // Lấy thông tin biến thể sản phẩm theo ID để sửa
     ProductVariant getVariantById(long variantId);
     //sửa
-    public boolean updateFullProduct(long variantId, String name, int categoryId, String origin, 
+    public boolean updateFullProduct(long shopId,long variantId, String name, int categoryId, String origin, 
                                      String storageTemp, String certification, String description, 
                                      String sku, String variantName, String unit, BigDecimal price, 
                                      BigDecimal originalPrice, int stockQuantity, boolean isActive, 
@@ -45,7 +45,7 @@ public interface IProductService {
     /**
      * Lấy danh sách các tab danh mục hiển thị trên trang chủ.
      */
-    List<Category> getHomeFeaturedTabs();
+    List<Product> getHomeFeaturedTabs();
 
     /**
      * Lấy danh sách danh mục theo cấu trúc phân cấp đa tầng (cha - con).
@@ -60,5 +60,6 @@ public interface IProductService {
     List<ProductVariant> getVariantsByProductId(long productId);
     List<String> getImagesByProductId(long productId);
     
-    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr);
+    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin);
 }

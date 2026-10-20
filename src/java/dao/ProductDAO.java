@@ -393,6 +393,7 @@ public class ProductDAO extends DBContext {
     }
 
     // 7. Thêm mới đầy đủ sản phẩm, biến thể, hình ảnh và lô hàng
+    // 7. Thêm mới đầy đủ sản phẩm, biến thể và hình ảnh
     public long insertFullProduct(long shopId, String name, int categoryId, String origin,
             String storageTemp, String certification, String description,
             String sku, String variantName, String unit, BigDecimal price,
@@ -406,8 +407,6 @@ public class ProductDAO extends DBContext {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
         String sqlImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) "
                 + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
-        String sqlBatch = "INSERT INTO product_batches (batch_code, variant_id, farm_source, harvest_date, expiry_date, initial_quantity, current_quantity, import_cost, freshness_score, harvest_time_label, freshness_note, batch_type, pending_packing_text, status, created_at, updated_at) "
-                + "VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATEADD(day, 7, CURRENT_TIMESTAMP), ?, ?, ?, 98, N'05:30 Sáng nay', N'Độ tươi 98% (Vừa hái sáng nay)', N'Hái sáng', N'0 Đơn chờ đóng gói', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -509,20 +508,6 @@ public class ProductDAO extends DBContext {
                 }
             }
 
-            // 5. Insert batch
-            String batchCode = "LH-" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyMMdd")) + "-" + (char) ('A' + (productId % 26));
-            try (PreparedStatement ps = conn.prepareStatement(sqlBatch)) {
-                ps.setString(1, batchCode);
-                ps.setLong(2, variantId);
-                ps.setString(3, origin != null && !origin.trim().isEmpty() ? origin.trim() : "Vườn Đà Lạt");
-                ps.setInt(4, stockQuantity);
-                ps.setInt(5, stockQuantity);
-                ps.setBigDecimal(6, originalPrice != null ? originalPrice.multiply(new BigDecimal("0.65")) : BigDecimal.ZERO);
-                ps.executeUpdate();
-            } catch (Exception batchEx) {
-                batchEx.printStackTrace();
-            }
-
             conn.commit();
             return productId;
         } catch (Exception e) {
@@ -604,13 +589,17 @@ public class ProductDAO extends DBContext {
     // =========================================================================
     // 8. CẬP NHẬT ĐẦY ĐỦ THÔNG TIN SẢN PHẨM, BIẾN THỂ VÀ ẢNH BÌA
     // =========================================================================
-    public boolean updateFullProduct(long variantId, String name, int categoryId, String origin,
+    public boolean updateFullProduct(long shopId, long variantId, String name, int categoryId, String origin,
             String storageTemp, String certification, String description,
             String sku, String variantName, String unit, BigDecimal price,
             BigDecimal originalPrice, int stockQuantity, boolean isActive,
             String coverImageUrl) {
 
-        String sqlGetProductId = "SELECT product_id FROM product_variants WHERE variant_id = ?";
+        // Bổ sung JOIN sang bảng products để khóa chặt quyền sở hữu theo shopId
+        String sqlGetProductId = "SELECT pv.product_id FROM product_variants pv "
+                + "JOIN products p ON pv.product_id = p.product_id "
+                + "WHERE pv.variant_id = ? AND p.shop_id = ?";
+
         String sqlUpdateProduct = "UPDATE products SET name = ?, category_id = ?, origin = ?, storage_temp = ?, certification = ?, description = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
         String sqlUpdateVariant = "UPDATE product_variants SET sku = ?, variant_name = ?, unit = ?, price = ?, original_price = ?, stock_quantity = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE variant_id = ?";
         String sqlCheckImage = "SELECT image_id FROM product_images WHERE product_id = ? AND is_thumbnail = 1";
@@ -621,9 +610,10 @@ public class ProductDAO extends DBContext {
             conn.setAutoCommit(false);
             long productId = -1;
 
-            // 1. Lấy product_id tương ứng với variantId đang sửa
+            // 1. Kiểm tra quyền sở hữu và lấy product_id (Chống IDOR tuyệt đối)
             try (PreparedStatement ps = conn.prepareStatement(sqlGetProductId)) {
                 ps.setLong(1, variantId);
+                ps.setLong(2, shopId);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
                         productId = rs.getLong("product_id");
@@ -631,6 +621,7 @@ public class ProductDAO extends DBContext {
                 }
             }
 
+            // Nếu variant_id không tồn tại HOẶC không thuộc về shopId này -> Đá văng luôn
             if (productId == -1) {
                 conn.rollback();
                 return false;
@@ -747,34 +738,6 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
-    public List<Category> getHomeFeaturedTabs() {
-        List<Category> list = new ArrayList<>();
-        String query = "SELECT category_id, category_name, slug "
-                + "FROM categories "
-                + "WHERE slug IN ('trai-cay-nhap-khau', 'trai-cay-viet-nam', 'trai-cay-cat-san', 'trai-cay-thung', 'trai-cay-dong-thung', 'trai-cay-mua-he', 'trai-cay-co-san') "
-                + "ORDER BY CASE slug "
-                + "    WHEN 'trai-cay-nhap-khau' THEN 1 "
-                + "    WHEN 'trai-cay-viet-nam' THEN 2 "
-                + "    WHEN 'trai-cay-cat-san' THEN 3 "
-                + "    WHEN 'trai-cay-thung' THEN 4 "
-                + "    WHEN 'trai-cay-dong-thung' THEN 4 "
-                + "    WHEN 'trai-cay-mua-he' THEN 5 "
-                + "    WHEN 'trai-cay-co-san' THEN 6 "
-                + "END";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Category c = new Category();
-                c.setCategoryId(rs.getInt("category_id"));
-                c.setCategoryName(rs.getString("category_name"));
-                c.setSlug(rs.getString("slug"));
-                list.add(c);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
     public List<Category> getHierarchyCategories() {
         List<Category> list = new ArrayList<>();
         String queryParents = "SELECT category_id, category_name, slug, image_url, display_order "
@@ -829,6 +792,7 @@ public class ProductDAO extends DBContext {
         String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
                 + "p.origin, p.certification, pi.image_url, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
+                + "(SELECT MIN(original_price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS original_price, " // <-- Đã thêm đoạn này vào SQL
                 + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
                 + "(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock "
                 + "FROM products p "
@@ -864,8 +828,20 @@ public class ProductDAO extends DBContext {
                     price = new BigDecimal("100000");
                 }
 
-                BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
-                int discountPercent = 20;
+                // Lấy đúng nguyên bản giá gốc từ DB, nếu null thì gán bằng giá bán luôn
+                BigDecimal oldPrice = rs.getBigDecimal("original_price");
+                if (oldPrice == null) {
+                    oldPrice = price;
+                }
+
+                // Không nhân phần trăm hay gán cứng 20% nữa, để bằng 0 hoặc tự tính
+                int discountPercent = 0;
+                if (oldPrice.compareTo(price) > 0) {
+                    BigDecimal discountAmount = oldPrice.subtract(price);
+                    discountPercent = discountAmount.multiply(new BigDecimal("100"))
+                            .divide(oldPrice, 0, java.math.RoundingMode.HALF_UP)
+                            .intValue();
+                }
 
                 Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 32);
                 p.setCategoryId(catId);
@@ -1088,14 +1064,23 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin) {
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
                 .append("p.origin, p.certification, pi.image_url, ")
                 .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
                 .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
-                .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock ")
+                .append("(SELECT COALESCE(SUM(stock_quantity), 0) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
+                .append("(SELECT AVG(CAST(r.rating AS DECIMAL(5,2))) FROM reviews r ")
+                .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append("JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
+                .append("(SELECT COUNT(*) FROM reviews r ")
+                .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append("JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
                 .append("FROM products p ")
                 .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
                 .append("OUTER APPLY ( ")
@@ -1142,6 +1127,29 @@ public class ProductDAO extends DBContext {
             }
         }
 
+        if (ratingStr != null && !ratingStr.trim().isEmpty()) {
+            try {
+                BigDecimal minRating = new BigDecimal(ratingStr.trim());
+                sql.append(" AND (SELECT AVG(CAST(r.rating AS DECIMAL(5,2))) FROM reviews r ")
+                        .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                        .append("JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                        .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') >= ? ");
+                params.add(minRating);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (availability != null && availability.equals("in_stock")) {
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
+        } else if (availability != null && availability.equals("out_of_stock")) {
+            sql.append(" AND NOT EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
+        }
+
+        if (origin != null && !origin.trim().isEmpty()) {
+            sql.append(" AND p.origin LIKE ? ");
+            params.add("%" + origin.trim() + "%");
+        }
+
         sql.append(" ORDER BY p.product_id DESC");
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -1170,8 +1178,8 @@ public class ProductDAO extends DBContext {
                     p.setPrice(price);
                     p.setOldPrice(price.multiply(new BigDecimal("1.25")));
                     p.setDiscountPercent(20);
-                    p.setRating(4.9);
-                    p.setReviewsCount(15);
+                    p.setRating(rs.getDouble("avg_rating"));
+                    p.setReviewsCount(rs.getInt("reviews_count"));
 
                     p.setOrigin(rs.getString("origin"));
                     p.setCertification(rs.getString("certification"));
@@ -1183,6 +1191,82 @@ public class ProductDAO extends DBContext {
 
                     list.add(p);
                 }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // Ví dụ hàm lấy thông tin biến thể để đưa lên form sửa
+    public ProductVariant getVariantForEdit(long variantId, long shopId) {
+        String sql = "SELECT pv.*, p.shop_id FROM product_variants pv "
+                + "JOIN products p ON pv.product_id = p.product_id "
+                + "Where pv.variant_id = ? AND p.shop_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, variantId);
+            ps.setLong(2, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    // Đổ dữ liệu vào đối tượng ProductVariant/Product như bình thường của ông
+                    ProductVariant variant = new ProductVariant();
+                    // ... set các thuộc tính ...
+                    return variant;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null; // Nếu không phải chủ shop hoặc ID không tồn tại -> Trả về null
+    }
+
+    public List<Product> getHomeFeaturedTabs() {
+        List<Product> list = new ArrayList<>();
+        // Câu lệnh SQL tối ưu: Lấy thông tin sản phẩm, danh mục, ảnh đại diện thumbnail, 
+        // và giá bán/giá gốc nhỏ nhất từ các biến thể đang hoạt động (is_active = 1)
+        String query = "SELECT p.product_id, p.name, p.origin, c.category_name, "
+                + "(SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id AND is_thumbnail = 1) AS image_url, "
+                + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
+                + "(SELECT MIN(original_price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS original_price "
+                + "FROM products p "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                + "WHERE p.is_active = 1 "
+                + "ORDER BY p.product_id DESC"; // Lấy danh sách sản phẩm mới nhất hoặc nổi bật
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                long id = rs.getLong("product_id");
+                String name = rs.getString("name");
+                String origin = rs.getString("origin");
+                String categoryName = rs.getString("category_name");
+                if (categoryName == null) {
+                    categoryName = "Trái Cây Tươi";
+                }
+
+                String image = rs.getString("image_url");
+                if (image == null || image.isEmpty()) {
+                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf"; // Ảnh mặc định dự phòng
+                }
+
+                BigDecimal price = rs.getBigDecimal("price");
+                if (price == null) {
+                    price = BigDecimal.ZERO;
+                }
+
+                // Lấy đúng giá gốc từ DB, nếu không có thì gán bằng giá bán
+                BigDecimal oldPrice = rs.getBigDecimal("original_price");
+                if (oldPrice == null) {
+                    oldPrice = price;
+                }
+
+                int discountPercent = 0; // Không tính giảm giá ảo, để mặc định hoặc tự tính nếu cần
+
+                // Khởi tạo đối tượng Product khớp với Constructor của ông
+                Product product = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 18);
+                product.setOrigin(origin); // Gắn thêm xuất xứ nếu model có thuộc tính này
+
+                list.add(product);
             }
         } catch (Exception e) {
             e.printStackTrace();

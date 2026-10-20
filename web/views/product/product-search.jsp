@@ -11,16 +11,33 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <!-- Google Fonts Inter -->
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        <!-- Custom Search CSS -->
-        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/search-products.css">
         <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
-        <!-- Custom Search JS (Tailwind config) -->
-        <script src="${pageContext.request.contextPath}/assets/js/search-products.js"></script>
+        <style>
+            body { font-family: 'Inter', sans-serif; }
+            .home-search-input { width: 100%; padding: .6rem 2.8rem .6rem 1rem; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: .75rem; font-size: .875rem; outline: none; transition: all .2s; }
+            .home-search-input:focus { background: #fff; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.15); }
+            .home-search-btn { position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); width: 2rem; height: 2rem; background: #10b981; color: white; border-radius: .5rem; display: flex; align-items: center; justify-content: center; }
+            .home-nav-item { padding: .75rem 1rem; display: inline-flex; align-items: center; gap: .5rem; color: #e5e7eb; transition: color .2s; }
+            .home-nav-item:hover, .home-nav-item.active { color: white; font-weight: 600; }
+            @media (max-width: 767px) { .home-search-mobile { display: block; margin-top: .75rem; } }
+            .product-card { background: white; border-radius: 1.25rem; border: 1px solid #f3f4f6; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; height: 100%; transition: all .3s ease; }
+            .product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0,0,0,.08); border-color: #a7f3d0; }
+            .product-thumb { position: relative; display: block; width: 100%; height: 180px; border-radius: .85rem; overflow: hidden; margin-bottom: .75rem; background: #f9fafb; }
+            .product-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+            .product-card:hover .product-thumb img { transform: scale(1.08); }
+            .product-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: .75rem; border-top: 1px solid #f3f4f6; margin-top: auto; }
+            .product-price { font-size: 1.1rem; font-weight: 800; color: #059669; }
+            .product-old-price { font-size: .75rem; color: #9ca3af; text-decoration: line-through; margin-left: .35rem; }
+            .btn-add-cart { width: 2.5rem; height: 2.5rem; background: #ecfdf5; color: #059669; border-radius: .75rem; display: flex; align-items: center; justify-content: center; transition: all .2s; flex-shrink: 0; }
+            .btn-add-cart:hover { background: #059669; color: white; }
+        </style>
     </head>
     <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
 
+
+        <c:set var="currentUser" value="${not empty sessionScope.account ? sessionScope.account : sessionScope.user}" />
 
         <!-- Header -->
         <header class="sticky top-0 z-40 bg-white shadow-md transition-all">
@@ -46,9 +63,8 @@
                     <!-- Thanh Search -->
                     <div class="flex-1 max-w-lg mx-4 hidden md:block">
                         <form action="${pageContext.request.contextPath}/search" method="GET" class="relative">
-                            <input type="text" name="query" value="${txtSearch}" placeholder="Tìm kiếm hoa quả tươi sạch, táo, cam..." 
-                                   class="w-full bg-gray-100 hover:bg-gray-200/65 focus:bg-white border border-transparent focus:border-emerald-500 rounded-2xl py-2.5 pl-4 pr-12 text-sm text-gray-800 focus:outline-none transition shadow-inner">
-                            <button type="submit" class="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition flex items-center justify-center shadow-sm">
+                            <input type="text" name="query" value="${txtSearch}" placeholder="Tìm kiếm hoa quả tươi sạch, táo, cam..." class="home-search-input">
+                            <button type="submit" class="home-search-btn" title="Tìm kiếm">
                                 <i class="fa-solid fa-magnifying-glass text-xs"></i>
                             </button>
                         </form>
@@ -57,7 +73,7 @@
                     <!-- User Actions -->
                     <div class="flex items-center gap-4">
                         <c:choose>
-                            <c:when test="${empty sessionScope.account}">
+                            <c:when test="${empty sessionScope.account and empty sessionScope.user}">
                                 <div class="flex items-center gap-2">
                                     <a href="${pageContext.request.contextPath}/login" class="text-sm font-semibold text-gray-700 hover:text-emerald-600 transition">Đăng nhập</a>
                                     <span class="text-gray-300">/</span>
@@ -66,12 +82,12 @@
                             </c:when>
                             <c:otherwise>
                                 <div class="flex items-center gap-3 cursor-pointer group">
-                                    <img src="${not empty sessionScope.account.avatar ? sessionScope.account.avatar : 'https://via.placeholder.com/40'}" 
+                                    <img src="${not empty currentUser.avatar ? currentUser.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}" 
                                          alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow-sm">
                                     <div class="hidden md:block text-left">
                                         <span class="block text-xs text-gray-500">Xin chào,</span>
                                         <span class="text-sm font-bold text-gray-800 group-hover:text-emerald-600 transition">
-                                            ${sessionScope.account.fullName}
+                                            ${not empty currentUser.fullName ? currentUser.fullName : currentUser.username}
                                         </span>
                                     </div>
                                     <a href="${pageContext.request.contextPath}/logout" class="text-xs text-red-500 hover:underline ml-2" title="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></a>
@@ -87,29 +103,28 @@
                         </a>
                     </div>
                 </div>
+                    <div class="home-search-mobile md:hidden">
+                        <form action="${pageContext.request.contextPath}/search" method="GET" class="relative">
+                            <input type="text" name="query" value="${txtSearch}" placeholder="Tìm kiếm hoa quả tươi sạch, táo, cam..." class="home-search-input" aria-label="Tìm kiếm sản phẩm">
+                            <button type="submit" class="home-search-btn" title="Tìm kiếm" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass text-xs" aria-hidden="true"></i></button>
+                        </form>
+                    </div>
             </div>
         </header>
 
-        <!-- Navigation Menu -->
-        <div class="bg-emerald-900 text-white hidden md:block">
+        <!-- Navigation đồng bộ với trang chủ -->
+        <nav class="bg-emerald-900 text-white hidden md:block">
             <div class="max-w-7xl mx-auto px-4 flex items-center justify-between text-sm font-medium">
                 <div class="flex items-center space-x-1">
-                    <a href="${pageContext.request.contextPath}/home" class="px-4 py-3 hover:bg-emerald-800 transition flex items-center gap-2">
+                    <a href="${pageContext.request.contextPath}/home" class="home-nav-item">
                         <i class="fa-solid fa-house"></i> Trang chủ
                     </a>
-                    <a href="${pageContext.request.contextPath}/home#categories" class="px-4 py-3 hover:bg-emerald-800 transition flex items-center gap-1.5">Danh mục <i class="fa-solid fa-chevron-down text-xs"></i></a>
-                    <a href="${pageContext.request.contextPath}/home#featured" class="px-4 py-3 hover:bg-emerald-800 transition flex items-center gap-1.5">Sản phẩm nổi bật</a>
-                    <a href="${pageContext.request.contextPath}/home#deals" class="px-4 py-3 hover:bg-emerald-800 transition flex items-center gap-1.5 text-amber-300 font-semibold"><i class="fa-solid fa-bolt"></i> Siêu ưu đãi</a>
-                    <a href="#about" class="px-4 py-3 hover:bg-emerald-800 transition">Về chúng tôi</a>
-                    <a href="#reviews" class="px-4 py-3 hover:bg-emerald-800 transition">Đánh giá</a>
-                </div>
-                <div>
-                    <a href="${pageContext.request.contextPath}/home#deals" class="bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold px-4 py-1.5 rounded-lg text-xs shadow-sm transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-tag"></i> Săn Voucher Giảm Đến 50%
-                    </a>
+                    <a href="${pageContext.request.contextPath}/store" class="home-nav-item"><i class="fa-solid fa-store text-xs"></i> Gian hàng nông trại</a>
+                    <a href="${pageContext.request.contextPath}/home#featured" class="home-nav-item">Sản phẩm nổi bật</a>
+                    <a href="${pageContext.request.contextPath}/home#about" class="home-nav-item">Về chúng tôi</a>
                 </div>
             </div>
-        </div>
+        </nav>
 
         <!-- Main Content Section: Search Results & Filter Sidebar -->
         <main class="max-w-7xl mx-auto px-4 py-8">
@@ -150,21 +165,35 @@
                 <span class="text-gray-400 font-bold">-</span>
                 <input type="number" name="maxPrice" value="${maxPrice}" placeholder="đ ĐẾN" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
             </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-sm">ÁP DỤNG BỘ LỌC</button>
         </div>
 
         <!-- Đánh Giá -->
         <div class="border-t border-gray-100 pt-5">
-            <h3 class="font-bold text-sm mb-3 text-gray-800">Đánh Giá</h3>
-            <div class="space-y-2.5 text-xs">
-                <a href="${pageContext.request.contextPath}/search?query=${txtSearch}&rating=5" class="flex items-center gap-1.5 text-amber-400 hover:underline">
-                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> <span class="text-gray-600 font-medium ml-1">5 sao</span>
-                </a>
-                <a href="${pageContext.request.contextPath}/search?query=${txtSearch}&rating=4" class="flex items-center gap-1.5 text-amber-400 hover:underline">
-                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star text-gray-300"></i> <span class="text-gray-600 font-medium ml-1">4 sao trở lên</span>
-                </a>
-            </div>
+            <label for="ratingFilter" class="font-bold text-sm mb-3 text-gray-800 block">Đánh giá từ</label>
+            <select id="ratingFilter" name="rating" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="" ${empty selectedRating ? 'selected' : ''}>Tất cả đánh giá</option>
+                <option value="4" ${selectedRating == '4' ? 'selected' : ''}>4 sao trở lên</option>
+                <option value="5" ${selectedRating == '5' ? 'selected' : ''}>5 sao</option>
+            </select>
         </div>
+
+        <!-- Tình trạng hàng -->
+        <div class="border-t border-gray-100 pt-5">
+            <label for="availabilityFilter" class="font-bold text-sm mb-3 text-gray-800 block">Tình trạng hàng</label>
+            <select id="availabilityFilter" name="availability" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
+                <option value="" ${empty selectedAvailability ? 'selected' : ''}>Tất cả</option>
+                <option value="in_stock" ${selectedAvailability == 'in_stock' ? 'selected' : ''}>Còn hàng</option>
+                <option value="out_of_stock" ${selectedAvailability == 'out_of_stock' ? 'selected' : ''}>Hết hàng</option>
+            </select>
+        </div>
+
+        <!-- Xuất xứ -->
+        <div class="border-t border-gray-100 pt-5">
+            <label for="originFilter" class="font-bold text-sm mb-3 text-gray-800 block">Xuất xứ</label>
+            <input id="originFilter" type="text" name="origin" value="${selectedOrigin}" placeholder="Ví dụ: Đà Lạt, Mỹ, Nhật Bản" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl transition shadow-sm">ÁP DỤNG BỘ LỌC</button>
     </form>
 </aside>
 
@@ -214,31 +243,30 @@
                     </c:if>
 
                     <!-- Lưới sản phẩm chuẩn chỉnh, bo góc mềm mại và bắt mắt -->
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
     <c:choose>
         <c:when test="${not empty listProduct}">
             <c:forEach var="p" items="${listProduct}">
-                <div class="bg-white rounded-3xl border border-gray-100 p-4 flex flex-col justify-between shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all duration-300 group">
+                <div class="product-card group">
                     <div>
                         <!-- Khung ảnh sản phẩm có hiệu ứng phóng to và nhãn giảm giá -->
-                        <div class="relative w-full h-48 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 mb-3.5 block">
-                            <a href="${pageContext.request.contextPath}/detail?id=${p.id}" class="block w-full h-full">
-                                <img src="${not empty p.image ? p.image : 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop'}" 
+                        <a href="${pageContext.request.contextPath}/detail?id=${p.id}" class="product-thumb">
+                                <img src="${not empty p.image ? p.image : 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=600&h=600&fit=crop'}" loading="lazy"
                                      alt="${p.name}" 
-                                     onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop';"
-                                     class="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500">
-                            </a>
+                                     onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=600&h=600&fit=crop';">
                             <c:if test="${p.discountPercent > 0}">
                                 <span class="absolute top-3 left-3 bg-rose-500 text-white font-extrabold text-[10px] px-2.5 py-1 rounded-full shadow-md">
                                     -${p.discountPercent}%
                                 </span>
                             </c:if>
-                        </div>
+                        </a>
 
                         <!-- Tên danh mục -->
+                        <div class="flex items-center gap-2 mb-1">
                         <span class="text-[11px] font-extrabold text-emerald-600 uppercase tracking-wider">
                             ${not empty p.categoryName ? p.categoryName : 'Trái Cây Tươi'}
                         </span>
+                        </div>
 
                         <!-- Tên sản phẩm giới hạn 2 dòng -->
                         <h3 class="font-bold text-sm text-gray-900 mt-1 mb-2 line-clamp-2 h-10 leading-snug">
@@ -249,20 +277,25 @@
 
                         <!-- Đánh giá sao -->
                         <div class="flex items-center gap-1 text-xs text-amber-400 mb-3">
-                            <i class="fa-solid fa-star"></i>
-                            <span class="font-bold text-gray-700">${not empty p.rating ? p.rating : '4.9'}</span>
-                            <span class="text-gray-400 text-[11px]">(15)</span>
+                            <c:choose>
+                                <c:when test="${p.reviewsCount > 0}">
+                                    <i class="fa-solid fa-star"></i>
+                                    <span class="font-bold text-gray-700"><fmt:formatNumber value="${p.rating}" maxFractionDigits="1" /></span>
+                                    <span class="text-gray-400 text-[11px]">(${p.reviewsCount} đánh giá)</span>
+                                </c:when>
+                                <c:otherwise><span class="text-gray-400 text-[11px]">Chưa có đánh giá</span></c:otherwise>
+                            </c:choose>
                         </div>
                     </div>
 
                     <!-- Phần giá và nút thêm giỏ hàng ở đáy card -->
-                    <div class="pt-3 border-t border-gray-100 flex items-center justify-between mt-auto">
+                    <div class="product-card-footer">
                         <div>
-                            <span class="text-emerald-600 font-extrabold text-base">
+                            <span class="product-price">
                                 <fmt:formatNumber value="${p.price}" pattern="#,###" />đ
                             </span>
                             <c:if test="${p.oldPrice gt p.price}">
-                                <span class="text-gray-400 text-xs line-through block font-medium">
+                                <span class="product-old-price block">
                                     <fmt:formatNumber value="${p.oldPrice}" pattern="#,###" />đ
                                 </span>
                             </c:if>
@@ -270,7 +303,7 @@
                         
                         <form action="${pageContext.request.contextPath}/add-to-cart" method="GET">
                             <input type="hidden" name="productId" value="${p.id}" />
-                            <button type="submit" class="w-10 h-10 bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white rounded-2xl flex items-center justify-center transition-all shadow-xs" title="Thêm vào giỏ hàng">
+                            <button type="submit" class="btn-add-cart" title="Thêm vào giỏ hàng">
                                 <i class="fa-solid fa-cart-plus text-sm"></i>
                             </button>
                         </form>

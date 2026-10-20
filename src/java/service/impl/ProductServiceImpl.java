@@ -3,7 +3,7 @@ package service.impl;
 import dao.CategoryDAO;
 import dao.ProductDAO;
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.*;
 import model.Category;
 import model.Product;
 import model.ProductVariant;
@@ -14,7 +14,7 @@ public class ProductServiceImpl implements IProductService {
     private final ProductDAO productDAO = new ProductDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
 
-    @Override
+    @Override//lấy danh sách sản phẩm theo shopID 
     public List<ProductVariant> getVariantsByShopId(long shopId) {
         return productDAO.getVariantsByShopId(shopId);
     }
@@ -124,7 +124,7 @@ public class ProductServiceImpl implements IProductService {
     }
     
     @Override
-    public boolean updateFullProduct(long variantId, String name, int categoryId, String origin, 
+    public boolean updateFullProduct(long shopId,long variantId, String name, int categoryId, String origin, 
                                      String storageTemp, String certification, String description, 
                                      String sku, String variantName, String unit, BigDecimal price, 
                                      BigDecimal originalPrice, int stockQuantity, boolean isActive, 
@@ -148,11 +148,7 @@ public class ProductServiceImpl implements IProductService {
         }
 
         // 2. Gọi DAO thực thi sau khi đã qua cửa kiểm duyệt
-        return productDAO.updateFullProduct(variantId, name.trim(), categoryId, origin, 
-                                            storageTemp, certification, description, 
-                                            sku, variantName, unit.trim(), price, 
-                                            originalPrice != null ? originalPrice : price, 
-                                            stockQuantity, isActive, coverImageUrl);
+        return productDAO.updateFullProduct(shopId, variantId, name, categoryId, origin, storageTemp, certification, description, sku, variantName, unit, price, originalPrice, stockQuantity, isActive, coverImageUrl);
     }
 
     @Override
@@ -161,7 +157,7 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<Category> getHomeFeaturedTabs() {
+    public List<Product> getHomeFeaturedTabs() {
         return productDAO.getHomeFeaturedTabs();
     }
 
@@ -192,7 +188,8 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
-        return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr);
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin) {
+        return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, ratingStr, availability, origin);
     }
 }
