@@ -18,7 +18,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import model.CustomerAddress;
-import model.Order;
 import model.SubOrder;
 import model.User;
 import service.ICustomerAddressService;

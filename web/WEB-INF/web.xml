@@ -90,6 +90,18 @@
         <url-pattern>/profile</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>ShopStorefrontServlet</servlet-name>
+        <servlet-class>controller.shop.ShopStorefrontServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopStorefrontServlet</servlet-name>
+        <url-pattern>/store</url-pattern>
+        <url-pattern>/shop/storefront</url-pattern>
+        <url-pattern>/shop/detail</url-pattern>
+        <url-pattern>/shop-detail</url-pattern>
+    </servlet-mapping>
+
     <!-- Session Configuration (30 minutes) -->
     <session-config>
         <session-timeout>30</session-timeout>

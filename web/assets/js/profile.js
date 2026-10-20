@@ -1,4 +1,4 @@
-function activateTab(tabTargetId, btnId) {
+﻿function activateTab(tabTargetId, btnId) {
     if (!tabTargetId) return;
 
     document.querySelectorAll('#profileSidebarTab .sidebar-nav-item').forEach(b => {
@@ -935,12 +935,28 @@ function showOrderTracking(orderId) {
     }
     if (time1) time1.textContent = orderHour;
 
-    // Reset all steps
-    [step1, step2, step3, step4, step5, step6].forEach(s => {
-        if (s) {
-            s.className = 'stepper-step';
-            const c = s.querySelector('.stepper-circle');
-            if (c) c.classList.remove('pulse');
+    // Reset all steps to initial pristine state
+    const defaultSteps = [
+        { el: step1, icon: 'bi-check-lg', title: '\u0110\u1eb7t h\u00e0ng', time: orderHour },
+        { el: step2, icon: 'bi-shop', title: 'Shop x\u00e1c nh\u1eadn', time: 'Ch\u1edd x\u1eed l\u00fd' },
+        { el: step3, icon: 'bi-box-seam', title: '\u0110\u00f3ng g\u00f3i qu\u1ea3 t\u01b0\u01a1i', time: 'Ch\u1edd x\u1eed l\u00fd' },
+        { el: step4, icon: 'bi-person-badge', title: 'T\u00e0i x\u1ebf nh\u1eadn h\u00e0ng', time: 'Ch\u01b0a b\u00e0n giao' },
+        { el: step5, icon: 'bi-truck', title: '\u0110ang giao h\u00e0ng', time: 'Ch\u1edd v\u1eadn chuy\u1ec3n' },
+        { el: step6, icon: 'bi-house-check', title: '\u0110\u00e3 giao h\u00e0ng', time: 'Ch\u1edd ho\u00e0n t\u1ea5t' }
+    ];
+
+    defaultSteps.forEach(def => {
+        if (def.el) {
+            def.el.className = 'stepper-step';
+            const c = def.el.querySelector('.stepper-circle');
+            if (c) {
+                c.className = 'stepper-circle';
+                c.innerHTML = '<i class="bi ' + def.icon + '"></i>';
+            }
+            const t = def.el.querySelector('.stepper-title');
+            if (t) t.textContent = def.title;
+            const timeEl = def.el.querySelector('.stepper-time');
+            if (timeEl) timeEl.textContent = def.time;
         }
     });
     [line1, line2, line3, line4, line5].forEach(l => {
@@ -949,7 +965,7 @@ function showOrderTracking(orderId) {
 
     if (status === 'CANCELLED' || status === 'CANCELED') {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Đơn hàng đã được hủy';
+            estTimeEl.textContent = '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c h\u1ee7y';
             estTimeEl.className = 'small fw-semibold text-danger bg-danger-subtle px-3 py-1 rounded-pill border border-danger-subtle';
         }
         if (step1) step1.classList.add('completed');
@@ -959,8 +975,8 @@ function showOrderTracking(orderId) {
             const c = step2.querySelector('.stepper-circle');
             if (c) c.innerHTML = '<i class="bi bi-x-lg"></i>';
             const t = step2.querySelector('.stepper-title');
-            if (t) t.textContent = 'Đã hủy đơn';
-            if (time2) time2.textContent = 'Đã hủy';
+            if (t) t.textContent = '\u0110\u00e3 h\u1ee7y \u0111\u01a1n';
+            if (time2) time2.textContent = '\u0110\u00e3 h\u1ee7y';
         }
         if (time3) time3.textContent = '--:--';
         if (time4) time4.textContent = '--:--';
@@ -972,20 +988,48 @@ function showOrderTracking(orderId) {
         if (prepCard) prepCard.classList.add('d-none');
         if (cancelCard) {
             cancelCard.classList.remove('d-none');
-            if (cancelReasonEl) cancelReasonEl.textContent = 'Lý do hủy: ' + (cancelReason || 'Người mua hủy đơn trực tiếp');
+            if (cancelReasonEl) cancelReasonEl.textContent = 'L\u00fd do h\u1ee7y: ' + (cancelReason || 'Ng\u01b0\u1eddi mua h\u1ee7y \u0111\u01a1n tr\u1ef1c ti\u1ebfp');
+        }
+    } else if (status === 'FAILED' || status === 'RETURNED' || status === 'DELIVERY_FAILED') {
+        if (estTimeEl) {
+            estTimeEl.textContent = 'Giao h\u00e0ng kh\u00f4ng th\u00e0nh c\u00f4ng / Ho\u00e0n h\u00e0ng';
+            estTimeEl.className = 'small fw-semibold text-danger bg-danger-subtle px-3 py-1 rounded-pill border border-danger-subtle';
+        }
+        [step1, step2, step3, step4, step5].forEach(s => s && s.classList.add('completed'));
+        [line1, line2, line3, line4, line5].forEach(l => l && l.classList.add('completed'));
+        if (time2) time2.textContent = '\u0110\u00e3 x\u00e1c nh\u1eadn';
+        if (time3) time3.textContent = '\u0110\u00e3 \u0111\u00f3ng g\u00f3i';
+        if (time4) time4.textContent = '\u0110\u00e3 b\u00e0n giao';
+        if (time5) time5.textContent = '\u0110\u00e3 chuy\u1ec3n h\u00e0ng';
+        if (time6) time6.textContent = 'Giao th\u1ea5t b\u1ea1i';
+
+        if (step6) {
+            step6.className = 'stepper-step cancelled';
+            const c = step6.querySelector('.stepper-circle');
+            if (c) c.innerHTML = '<i class="bi bi-x-lg"></i>';
+            const t = step6.querySelector('.stepper-title');
+            if (t) t.textContent = 'Giao th\u1ea5t b\u1ea1i';
+        }
+
+        if (gpsCard) gpsCard.style.display = 'none';
+        if (driverCard) driverCard.style.display = 'block';
+        if (prepCard) prepCard.classList.add('d-none');
+        if (cancelCard) {
+            cancelCard.classList.remove('d-none');
+            if (cancelReasonEl) cancelReasonEl.textContent = 'L\u00fd do giao th\u1ea5t b\u1ea1i: ' + (cancelReason || 'Kh\u00e1ch t\u1eeb ch\u1ed1i nh\u1eadn hoa qu\u1ea3 t\u01b0\u01a1i ho\u1eb7c giao kh\u00f4ng th\u00e0nh c\u00f4ng');
         }
     } else if (status === 'COMPLETED' || status === 'DELIVERED' || status === 'SUCCESS') {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Giao hàng thành công';
+            estTimeEl.textContent = 'Giao h\u00e0ng th\u00e0nh c\u00f4ng';
             estTimeEl.className = 'small fw-semibold text-success bg-success-subtle px-3 py-1 rounded-pill border border-success-subtle';
         }
         [step1, step2, step3, step4, step5, step6].forEach(s => s && s.classList.add('completed'));
         [line1, line2, line3, line4, line5].forEach(l => l && l.classList.add('completed'));
-        if (time2) time2.textContent = 'Đã xác nhận';
-        if (time3) time3.textContent = 'Đã đóng gói';
-        if (time4) time4.textContent = 'Đã bàn giao';
-        if (time5) time5.textContent = 'Đã chuyển hàng';
-        if (time6) time6.textContent = 'Đã nhận quả tươi';
+        if (time2) time2.textContent = '\u0110\u00e3 x\u00e1c nh\u1eadn';
+        if (time3) time3.textContent = '\u0110\u00e3 \u0111\u00f3ng g\u00f3i';
+        if (time4) time4.textContent = '\u0110\u00e3 b\u00e0n giao';
+        if (time5) time5.textContent = '\u0110\u00e3 chuy\u1ec3n h\u00e0ng';
+        if (time6) time6.textContent = '\u0110\u00e3 nh\u1eadn qu\u1ea3 t\u01b0\u01a1i';
 
         if (gpsCard) gpsCard.style.display = 'none';
         if (driverCard) driverCard.style.display = 'block';
@@ -993,16 +1037,16 @@ function showOrderTracking(orderId) {
         if (cancelCard) cancelCard.classList.add('d-none');
     } else if (status === 'SHIPPING' || status === 'DELIVERING' || status === 'IN_TRANSIT') {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Đang giao chuỗi lạnh FreshCold';
+            estTimeEl.textContent = '\u0110ang giao chu\u1ed7i l\u1ea1nh FreshCold';
             estTimeEl.className = 'small fw-semibold text-success bg-success-subtle px-3 py-1 rounded-pill border border-success-subtle';
         }
         [step1, step2, step3, step4].forEach(s => s && s.classList.add('completed'));
         [line1, line2, line3, line4].forEach(l => l && l.classList.add('completed'));
-        if (time2) time2.textContent = 'Đã xác nhận';
-        if (time3) time3.textContent = 'Đã đóng gói';
-        if (time4) time4.textContent = 'Đã lấy hàng';
-        if (time5) time5.textContent = 'Đang giao...';
-        if (time6) time6.textContent = 'Chờ nhận hàng';
+        if (time2) time2.textContent = '\u0110\u00e3 x\u00e1c nh\u1eadn';
+        if (time3) time3.textContent = '\u0110\u00e3 \u0111\u00f3ng g\u00f3i';
+        if (time4) time4.textContent = '\u0110\u00e3 l\u1ea5y h\u00e0ng';
+        if (time5) time5.textContent = '\u0110ang giao...';
+        if (time6) time6.textContent = 'Ch\u1edd nh\u1eadn h\u00e0ng';
 
         if (step5) {
             step5.className = 'stepper-step active';
@@ -1011,24 +1055,67 @@ function showOrderTracking(orderId) {
         }
         if (line5) line5.className = 'stepper-line active';
 
-        if (gpsCard) gpsCard.style.display = 'block';
+        if (gpsCard) gpsCard.style.display = 'none';
         if (driverCard) driverCard.style.display = 'block';
         if (prepCard) prepCard.classList.add('d-none');
         if (cancelCard) cancelCard.classList.add('d-none');
-    } else if (status === 'CONFIRMED' || status === 'PROCESSING' || status === 'PREPARING' || status === 'NEW' || status === 'PACKED' || status === 'READY_TO_SHIP') {
+    } else if (status === 'NEW') {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Nhà vườn đang chuẩn bị hàng';
+            estTimeEl.textContent = '\u0110ang ch\u1edd shop x\u00e1c nh\u1eadn \u0111\u01a1n';
+            estTimeEl.className = 'small fw-semibold text-warning bg-warning-subtle px-3 py-1 rounded-pill border border-warning-subtle';
+        }
+        if (step1) step1.classList.add('completed');
+        if (line1) line1.className = 'stepper-line active';
+
+        if (step2) {
+            step2.className = 'stepper-step active';
+            const c = step2.querySelector('.stepper-circle');
+            if (c) {
+                c.className = 'stepper-circle pulse';
+                c.innerHTML = '<i class="bi bi-shop"></i>';
+            }
+            const t = step2.querySelector('.stepper-title');
+            if (t) t.textContent = 'Shop x\u00e1c nh\u1eadn';
+        }
+
+        if (step6) {
+            const c6 = step6.querySelector('.stepper-circle');
+            if (c6) c6.innerHTML = '<i class="bi bi-house-check"></i>';
+            const t6 = step6.querySelector('.stepper-title');
+            if (t6) t6.textContent = '\u0110\u00e3 giao h\u00e0ng';
+        }
+
+        if (time2) time2.textContent = 'Ch\u1edd shop duy\u1ec7t';
+        if (time3) time3.textContent = 'Ch\u1edd \u0111\u00f3ng g\u00f3i';
+        if (time4) time4.textContent = 'Ch\u01b0a b\u00e0n giao';
+        if (time5) time5.textContent = 'Ch\u01b0a giao';
+        if (time6) time6.textContent = 'Ch\u1edd ho\u00e0n t\u1ea5t';
+
+        if (gpsCard) gpsCard.style.display = 'none';
+        if (driverCard) driverCard.style.display = 'none';
+        if (prepCard) prepCard.classList.add('d-none');
+        if (cancelCard) cancelCard.classList.add('d-none');
+    } else if (status === 'PACKING' || status === 'CONFIRMED' || status === 'PROCESSING' || status === 'PREPARING' || status === 'PACKED' || status === 'READY_TO_SHIP') {
+        if (estTimeEl) {
+            estTimeEl.textContent = 'Nh\u00e0 v\u01b0\u1eddn \u0111ang \u0111\u00f3ng g\u00f3i qu\u1ea3 t\u01b0\u01a1i';
             estTimeEl.className = 'small fw-semibold text-primary bg-primary-subtle px-3 py-1 rounded-pill border border-primary-subtle';
         }
         [step1, step2].forEach(s => s && s.classList.add('completed'));
         if (line1) line1.classList.add('completed');
-        if (line2) line2.classList.add('completed');
+        if (line2) line2.className = 'stepper-line active';
 
-        if (time2) time2.textContent = 'Đã xác nhận';
-        if (time3) time3.textContent = 'Đang xử lý';
-        if (time4) time4.textContent = 'Chờ bàn giao';
-        if (time5) time5.textContent = 'Chưa giao';
-        if (time6) time6.textContent = 'Chờ nhận hàng';
+        if (step2) {
+            const c = step2.querySelector('.stepper-circle');
+            if (c) c.innerHTML = '<i class="bi bi-shop"></i>';
+            const t = step2.querySelector('.stepper-title');
+            if (t) t.textContent = 'Shop x\u00e1c nh\u1eadn';
+        }
+
+        if (time2) time2.textContent = '\u0110\u00e3 duy\u1ec7t';
+        if (time3) time3.textContent = '\u0110ang \u0111\u00f3ng g\u00f3i';
+        if (time4) time4.textContent = 'Ch\u1edd b\u00e0n giao';
+        if (time5) time5.textContent = 'Ch\u01b0a giao';
+        if (time6) time6.textContent = 'Ch\u1edd nh\u1eadn h\u00e0ng';
 
         if (step3) {
             step3.className = 'stepper-step active';
@@ -1042,7 +1129,7 @@ function showOrderTracking(orderId) {
         if (cancelCard) cancelCard.classList.add('d-none');
     } else {
         if (estTimeEl) {
-            estTimeEl.textContent = 'Chờ xác nhận';
+            estTimeEl.textContent = 'Ch\u1edd x\u00e1c nh\u1eadn';
             estTimeEl.className = 'small fw-semibold text-warning bg-warning-subtle px-3 py-1 rounded-pill border border-warning-subtle';
         }
         if (step1) {
@@ -1050,7 +1137,13 @@ function showOrderTracking(orderId) {
             const c = step1.querySelector('.stepper-circle');
             if (c) c.classList.add('pulse');
         }
-        if (time2) time2.textContent = 'Chờ shop duyệt';
+        if (step2) {
+            const c = step2.querySelector('.stepper-circle');
+            if (c) c.innerHTML = '<i class="bi bi-shop"></i>';
+            const t = step2.querySelector('.stepper-title');
+            if (t) t.textContent = 'Shop x\u00e1c nh\u1eadn';
+        }
+        if (time2) time2.textContent = 'Ch\u1edd shop duy\u1ec7t';
         if (time3) time3.textContent = '--:--';
         if (time4) time4.textContent = '--:--';
         if (time5) time5.textContent = '--:--';
@@ -1061,7 +1154,6 @@ function showOrderTracking(orderId) {
         if (prepCard) prepCard.classList.remove('d-none');
         if (cancelCard) cancelCard.classList.add('d-none');
     }
-
     // 6. Launch Bootstrap Modal
     const modalEl = document.getElementById('orderTrackingModal');
     if (modalEl && window.bootstrap && bootstrap.Modal) {

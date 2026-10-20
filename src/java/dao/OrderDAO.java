@@ -318,7 +318,7 @@ public class OrderDAO extends DBContext {
                 ps.setBigDecimal(7, order.getFinalAmount());
                 ps.setString(8, order.getPaymentStatus() != null ? order.getPaymentStatus() : "PENDING");
                 ps.setString(9, paymentMethod != null && !paymentMethod.trim().isEmpty() ? paymentMethod : "COD");
-                ps.setString(10, order.getOrderStatus() != null ? order.getOrderStatus() : "CONFIRMED");
+                ps.setString(10, order.getOrderStatus() != null ? order.getOrderStatus() : "PROCESSING");
 
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -852,11 +852,14 @@ public class OrderDAO extends DBContext {
                    + "       so.status AS sub_order_status, so.cancel_reason, so.cancelled_by, so.cancelled_at, "
                    + "       so.created_at, so.updated_at, "
                    + "       o.payment_method, o.payment_status, o.platform_discount, "
-                   + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city "
+                   + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city, "
+                   + "       drv.full_name AS driver_name, drv.phone AS driver_phone "
                    + "FROM sub_orders so "
                    + "JOIN orders o ON so.order_id = o.order_id "
                    + "JOIN shops sh ON so.shop_id = sh.shop_id "
                    + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
+                   + "LEFT JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                   + "LEFT JOIN users drv ON d.driver_id = drv.user_id "
                    + "WHERE o.customer_id = ? "
                    + "ORDER BY so.created_at DESC, so.sub_order_id DESC";
 
@@ -891,6 +894,8 @@ public class OrderDAO extends DBContext {
                     so.setUpdatedAt(rs.getTimestamp("updated_at"));
                     so.setPaymentMethod(rs.getString("payment_method"));
                     so.setPaymentStatus(rs.getString("payment_status"));
+                    so.setDriverName(rs.getString("driver_name"));
+                    so.setDriverPhone(rs.getString("driver_phone"));
 
                     if (rs.getString("recipient_name") != null) {
                         ShippingAddress addr = new ShippingAddress(

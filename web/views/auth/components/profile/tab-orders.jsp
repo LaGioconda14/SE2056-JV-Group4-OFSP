@@ -62,7 +62,9 @@
                              data-goods-amount="${order.shopSubtotal != null ? order.shopSubtotal : order.totalGoodsAmount}"
                              data-shipping-fee="${order.shopShippingFee != null ? order.shopShippingFee : order.totalShippingFee}"
                              data-discount="${order.shopDiscount != null ? order.shopDiscount : order.platformDiscount}"
-                             data-final-amount="${order.shopTotal != null ? order.shopTotal : order.totalAmount}">
+                             data-final-amount="${order.shopTotal != null ? order.shopTotal : order.totalAmount}"
+                             data-driver-name="${order.driverName != null ? order.driverName : ''}"
+                             data-driver-phone="${order.driverPhone != null ? order.driverPhone : ''}">
                             <div class="shopee-card-header">
                                 <div class="shopee-shop-info">
                                     <span class="shopee-shop-name">${order.shopName}</span>
@@ -97,6 +99,16 @@
                                             <span class="text-muted small me-1"><i class="bi bi-hourglass-split text-warning"></i> Chờ thanh toán</span>
                                             <span class="text-muted">|</span>
                                             <span class="shopee-status-shipping ms-1 text-danger">CHỜ THANH TOÁN</span>
+                                        </c:when>
+                                        <c:when test="${statusUpper == 'NEW'}">
+                                            <span class="text-muted small me-1"><i class="bi bi-clock-history text-warning"></i> Chờ shop xác nhận</span>
+                                            <span class="text-muted">|</span>
+                                            <span class="shopee-status-shipping ms-1 text-warning">CHỜ XÁC NHẬN</span>
+                                        </c:when>
+                                        <c:when test="${statusUpper == 'PACKING'}">
+                                            <span class="text-muted small me-1"><i class="bi bi-box-seam text-primary"></i> Đang đóng gói quả tươi</span>
+                                            <span class="text-muted">|</span>
+                                            <span class="shopee-status-shipping ms-1">ĐANG ĐÓNG GÓI</span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="text-muted small me-1"><i class="bi bi-box-seam text-primary"></i> Đang chuẩn bị hàng</span>
