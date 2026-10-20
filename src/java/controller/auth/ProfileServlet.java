@@ -72,7 +72,7 @@ public class ProfileServlet extends HttpServlet {
         }
 
         try {
-            List<Order> orders = orderService.getOrdersByCustomerId(targetUserId);
+            List<SubOrder> orders = orderService.getSubOrdersByCustomerId(targetUserId);
             request.setAttribute("orders", orders != null ? orders : Collections.emptyList());
             request.setAttribute("ordersCount", orders != null ? orders.size() : 0);
         } catch (Exception ex) {

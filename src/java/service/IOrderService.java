@@ -8,6 +8,7 @@ import model.Coupon;
 import model.CustomerAddress;
 import model.Order;
 import model.ShippingAddress;
+import model.SubOrder;
 
 public interface IOrderService {
 
@@ -39,4 +40,8 @@ public interface IOrderService {
     List<Coupon> getAvailableShopCoupons(long shopId);
 
     List<Order> getOrdersByCustomerId(long customerId);
+
+    List<SubOrder> getSubOrdersByCustomerId(long customerId);
+
+    boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception;
 }
