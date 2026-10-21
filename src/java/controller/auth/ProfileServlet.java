@@ -27,12 +27,8 @@ import service.impl.CustomerAddressServiceImpl;
 import service.impl.OrderServiceImpl;
 import service.impl.UserServiceImpl;
 
-@WebServlet(name = "ProfileServlet", urlPatterns = {"/profile"})
-@MultipartConfig(
-    fileSizeThreshold = 1024 * 1024 * 1,
-    maxFileSize = 1024 * 1024 * 5,
-    maxRequestSize = 1024 * 1024 * 10
-)
+@WebServlet(name = "ProfileServlet", urlPatterns = { "/profile" })
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 1, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 10)
 public class ProfileServlet extends HttpServlet {
 
     private final IUserService userService = new UserServiceImpl();
@@ -42,7 +38,7 @@ public class ProfileServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -98,7 +94,7 @@ public class ProfileServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -162,7 +158,8 @@ public class ProfileServlet extends HttpServlet {
             }
 
             if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".webp")) {
-                session.setAttribute("errorMessage", "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
+                session.setAttribute("errorMessage",
+                        "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
                 response.sendRedirect(request.getContextPath() + "/profile");
                 return;
             }
@@ -283,89 +280,101 @@ public class ProfileServlet extends HttpServlet {
 
     private void handleUpdateProfile(HttpServletRequest request, HttpServletResponse response,
             HttpSession session, User sessionUser) throws IOException {
-        String fullName = request.getParameter("fullName");
-        String phone = request.getParameter("phone");
-        String gender = request.getParameter("gender");
-        String birthDateStr = request.getParameter("birthDate");
-        String deleteAvatar = request.getParameter("deleteAvatar");
-
-        User currentUser = userService.getUserById(sessionUser.getId());
-        if (currentUser == null) {
-            currentUser = sessionUser;
-        }
-
-        // Xử lý avatar nếu người dùng thay đổi khi ấn Lưu
-        if ("true".equalsIgnoreCase(deleteAvatar)) {
-            try {
-                userService.updateAvatar(sessionUser.getId(), null);
-            } catch (Exception ex) {
-                // Tiếp tục xử lý cập nhật profile
-            }
-        } else {
-            try {
-                Part filePart = request.getPart("avatarFile");
-                if (filePart != null && filePart.getSize() > 0) {
-                    String submittedFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-                    String ext = "";
-                    int dotIndex = submittedFileName.lastIndexOf('.');
-                    if (dotIndex > 0) {
-                        ext = submittedFileName.substring(dotIndex).toLowerCase();
-                    }
-
-                    if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".webp")) {
-                        session.setAttribute("errorMessage", "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
-                        response.sendRedirect(request.getContextPath() + "/profile");
-                        return;
-                    }
-
-                    if (filePart.getSize() > 2 * 1024 * 1024) {
-                        session.setAttribute("errorMessage", "Kích thước ảnh tối đa là 2MB!");
-                        response.sendRedirect(request.getContextPath() + "/profile");
-                        return;
-                    }
-
-                    String newFileName = "avatar_" + sessionUser.getId() + "_" + System.currentTimeMillis() + ext;
-                    String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/avatars");
-                    File uploadDir = new File(uploadDirRealPath);
-                    if (!uploadDir.exists()) {
-                        uploadDir.mkdirs();
-                    }
-
-                    String savedFilePath = uploadDirRealPath + File.separator + newFileName;
-                    filePart.write(savedFilePath);
-
-                    String avatarUrl = "assets/images/avatars/" + newFileName;
-                    userService.updateAvatar(sessionUser.getId(), avatarUrl);
-                }
-            } catch (Exception ex) {
-                // Tiếp tục nếu không có part upload
-            }
-        }
-
-        String phoneToUpdate = (phone != null && !phone.trim().isEmpty()) ? phone.trim() : null;
-        if (phoneToUpdate != null && phoneToUpdate.contains("*")) {
-            phoneToUpdate = currentUser.getPhone();
-        }
-
-        java.sql.Date birthDateToUpdate = currentUser.getBirthDate();
-        if (birthDateStr != null && !birthDateStr.trim().isEmpty() && !birthDateStr.contains("*")) {
-            try {
-                birthDateToUpdate = java.sql.Date.valueOf(birthDateStr.trim());
-            } catch (IllegalArgumentException e) {
-            }
-        }
-
         try {
-            userService.updateProfile(sessionUser.getId(), fullName, phoneToUpdate, gender, birthDateToUpdate);
-            User refreshedUser = userService.getUserById(sessionUser.getId());
-            if (refreshedUser != null) {
-                session.setAttribute("user", refreshedUser);
+            User currentUser = userService.getUserById(sessionUser.getId());
+            if (currentUser == null) {
+                currentUser = sessionUser;
             }
+
+            processAvatar(request, sessionUser);
+
+            String fullName = request.getParameter("fullName");
+            String gender = request.getParameter("gender");
+            String phone = resolvePhone(request.getParameter("phone"), currentUser.getPhone());
+            java.sql.Date birthDate = parseBirthDate(request.getParameter("birthDate"), currentUser.getBirthDate());
+
+            userService.updateProfile(sessionUser.getId(), fullName, phone, gender, birthDate);
+            refreshUserSession(session, sessionUser.getId());
+
             session.setAttribute("successMessage", "Lưu thay đổi hồ sơ cá nhân thành công!");
+        } catch (IllegalArgumentException e) {
+            session.setAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             session.setAttribute("errorMessage", e.getMessage());
         }
+
         response.sendRedirect(request.getContextPath() + "/profile");
+    }
+
+    private void processAvatar(HttpServletRequest request, User sessionUser) {
+        String deleteAvatar = request.getParameter("deleteAvatar");
+
+        if ("true".equalsIgnoreCase(deleteAvatar)) {
+            try {
+                userService.updateAvatar(sessionUser.getId(), null);
+            } catch (Exception ignored) {
+            }
+            return;
+        }
+
+        try {
+            Part filePart = request.getPart("avatarFile");
+            if (filePart == null || filePart.getSize() == 0) {
+                return;
+            }
+
+            if (filePart.getSize() > 2 * 1024 * 1024) {
+                throw new IllegalArgumentException("Kích thước ảnh tối đa là 2MB!");
+            }
+
+            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+            String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.')).toLowerCase() : "";
+            if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png") && !ext.equals(".webp")) {
+                throw new IllegalArgumentException(
+                        "Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.");
+            }
+
+            String newFileName = "avatar_" + sessionUser.getId() + "_" + System.currentTimeMillis() + ext;
+            String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/avatars");
+            File uploadDir = new File(uploadDirRealPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            filePart.write(uploadDirRealPath + File.separator + newFileName);
+            userService.updateAvatar(sessionUser.getId(), "assets/images/avatars/" + newFileName);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String resolvePhone(String inputPhone, String currentPhone) {
+        if (inputPhone == null || inputPhone.trim().isEmpty()) {
+            return null;
+        }
+        return inputPhone.contains("*") ? currentPhone : inputPhone.trim();
+    }
+
+    private java.sql.Date parseBirthDate(String dateStr, java.sql.Date currentBirthDate) {
+        if (dateStr == null || dateStr.trim().isEmpty() || dateStr.contains("*")) {
+            return currentBirthDate;
+        }
+        try {
+            return java.sql.Date.valueOf(dateStr.trim());
+        } catch (IllegalArgumentException e) {
+            return currentBirthDate;
+        }
+    }
+
+    private void refreshUserSession(HttpSession session, int userId) {
+        if (session == null) {
+            return;
+        }
+        User updatedUser = userService.getUserById(userId);
+        if (updatedUser != null) {
+            session.setAttribute("user", updatedUser);
+        }
     }
 
     private void handleCancelOrder(HttpServletRequest request, HttpServletResponse response,
@@ -376,14 +385,7 @@ public class ProfileServlet extends HttpServlet {
             reason = "Người mua hủy đơn trực tiếp";
         }
 
-        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
-                || request.getParameter("ajax") != null
-                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
-
-        response.setContentType("application/json;charset=UTF-8");
-        PrintWriter out = response.getWriter();
         Map<String, Object> result = new HashMap<>();
-
         try {
             if (orderId == null || orderId.trim().isEmpty()) {
                 throw new IllegalArgumentException("Mã đơn hàng không hợp lệ!");
@@ -393,30 +395,37 @@ public class ProfileServlet extends HttpServlet {
             if (ok) {
                 result.put("success", true);
                 result.put("message", "Đã hủy đơn hàng thành công!");
-                if (session != null) {
-                    session.setAttribute("successMessage", "Đã hủy đơn hàng #" + orderId + " thành công!");
-                }
+                setSessionFlash(session, "successMessage", "Đã hủy đơn hàng #" + orderId.trim() + " thành công!");
             } else {
                 result.put("success", false);
                 result.put("message", "Không thể hủy đơn hàng. Vui lòng thử lại!");
+                setSessionFlash(session, "errorMessage", (String) result.get("message"));
             }
         } catch (Exception ex) {
             result.put("success", false);
             result.put("message", ex.getMessage());
+            setSessionFlash(session, "errorMessage", ex.getMessage());
         }
 
-        if (isAjax) {
-            out.print(new Gson().toJson(result));
-            out.flush();
+        if (isAjaxRequest(request)) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().print(new Gson().toJson(result));
         } else {
-            if ((boolean) result.getOrDefault("success", false)) {
-                response.sendRedirect(request.getContextPath() + "/profile#orders");
-            } else {
-                if (session != null) {
-                    session.setAttribute("errorMessage", result.get("message"));
-                }
-                response.sendRedirect(request.getContextPath() + "/profile#orders");
-            }
+            response.sendRedirect(request.getContextPath() + "/profile#orders");
+        }
+    }
+
+    private boolean isAjaxRequest(HttpServletRequest request) {
+        String requestedWith = request.getHeader("X-Requested-With");
+        String acceptHeader = request.getHeader("Accept");
+        return "XMLHttpRequest".equalsIgnoreCase(requestedWith)
+                || request.getParameter("ajax") != null
+                || (acceptHeader != null && acceptHeader.contains("application/json"));
+    }
+
+    private void setSessionFlash(HttpSession session, String key, String message) {
+        if (session != null) {
+            session.setAttribute(key, message);
         }
     }
 }

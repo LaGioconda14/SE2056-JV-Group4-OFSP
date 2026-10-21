@@ -27,7 +27,9 @@ public class OrderFulfillmentDAO extends DBContext {
                 + "       u.full_name AS customer_name, u.phone AS customer_phone, "
                 + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city, "
                 + "       d.tracking_number, d.delivery_status, d.failure_reason, d.proof_image_url, d.delivered_at, "
-                + "       u_driver.full_name AS driver_name, u_driver.phone AS driver_phone "
+                + "       d.driver_id, "
+                + "       u_driver.full_name AS driver_name, u_driver.phone AS driver_phone, u_driver.avatar_url AS driver_avatar, "
+                + "       dp.vehicle_plate AS driver_vehicle_plate, dp.vehicle_type AS driver_vehicle_type "
                 + "FROM sub_orders so "
                 + "JOIN orders o ON so.order_id = o.order_id "
                 + "LEFT JOIN shops s ON so.shop_id = s.shop_id "
@@ -35,6 +37,7 @@ public class OrderFulfillmentDAO extends DBContext {
                 + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
                 + "LEFT JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
                 + "LEFT JOIN users u_driver ON d.driver_id = u_driver.user_id "
+                + "LEFT JOIN driver_profiles dp ON dp.user_id = d.driver_id "
                 + "WHERE so.sub_order_code = ?";
 
         Connection conn = getConnection();

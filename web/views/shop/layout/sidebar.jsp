@@ -77,9 +77,9 @@
                 <span class="badge-counter-red">${sbLowStock}</span>
             </a>
 
-            <!-- Group: ĐƠN HÀNG -->
-            <div class="shop-sidebar-group-title">ĐƠN HÀNG</div>
-            <a href="${ctx}/shop/orders" class="shop-sidebar-link ${param.active == 'orders' ? 'active' : ''}">
+            <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">ĐƠN HÀNG & GIAO VẬN</div>
+            <a href="${pageContext.request.contextPath}/shop/orders" 
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'orders' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
                 <span class="flex items-center gap-3">
                     <i class="fa-solid fa-receipt text-slate-400 text-sm w-4 text-center"></i>
                     <span>Đơn hàng con</span>
@@ -92,6 +92,14 @@
                     <i class="fa-solid fa-truck-fast text-slate-400 text-sm w-4 text-center"></i>
                     <span>Đóng gói & Vận đơn</span>
                 </span>
+            </a>
+            <a href="${pageContext.request.contextPath}/shop/shippers" 
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'shippers' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
+                <span class="flex items-center gap-3">
+                    <i class="fa-solid fa-truck-fast ${curMenu eq 'shippers' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
+                    <span>Nhân viên giao hàng</span>
+                </span>
+                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">Shop</span>
             </a>
 
             <!-- Group: TIẾP THỊ & KHÁCH HÀNG -->

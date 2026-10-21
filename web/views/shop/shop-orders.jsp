@@ -28,7 +28,7 @@
 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Danh Sách Đơn Hàng Con (Shop Orders)</h1>
+                        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Danh Sách Đơn Hàng Con</h1>
                         <p class="text-xs text-slate-500 mt-1">Theo dõi, xác nhận và đóng gói nông sản xuất xưởng cho khách hàng</p>
                     </div>
 

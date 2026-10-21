@@ -62,31 +62,25 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             driverProfile.setApprovalStatus("APPROVED");
         }
 
-        String statusFilter = request.getParameter("status");
-        if (statusFilter == null || statusFilter.trim().isEmpty()) {
-            statusFilter = "all";
+        List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId, "all", null);
+
+        int activeOrderCount = 0;
+        if (deliveries != null) {
+            for (Delivery d : deliveries) {
+                if (d.getDeliveryStatus() != null) {
+                    String st = d.getDeliveryStatus().toUpperCase();
+                    if ("ASSIGNING".equals(st) || "ASSIGNED".equals(st) || "DELIVERING".equals(st) || "IN_TRANSIT".equals(st) || "PICKED_UP".equals(st)) {
+                        activeOrderCount++;
+                    }
+                }
+            }
         }
 
-        String keyword = request.getParameter("keyword");
-
-        List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId, statusFilter, keyword);
-
-        int countAll = deliveryService.countDeliveries(driverId, "all");
-        int countPickup = deliveryService.countDeliveries(driverId, "pickup");
-        int countDelivering = deliveryService.countDeliveries(driverId, "delivering");
-        int countCompleted = deliveryService.countDeliveries(driverId, "completed");
-        int countFailed = deliveryService.countDeliveries(driverId, "failed");
         BigDecimal totalCod = deliveryService.getTotalCodCollected(driverId);
 
         request.setAttribute("deliveries", deliveries);
         request.setAttribute("driverProfile", driverProfile);
-        request.setAttribute("currentStatus", statusFilter);
-        request.setAttribute("keyword", keyword);
-        request.setAttribute("countAll", countAll);
-        request.setAttribute("countPickup", countPickup);
-        request.setAttribute("countDelivering", countDelivering);
-        request.setAttribute("countCompleted", countCompleted);
-        request.setAttribute("countFailed", countFailed);
+        request.setAttribute("activeOrderCount", activeOrderCount);
         request.setAttribute("totalCod", totalCod);
 
         request.getRequestDispatcher("/views/shipper/deliveries.jsp").forward(request, response);
@@ -134,7 +128,7 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             } else {
                 session.setAttribute("errorMessage", "Không thể xác nhận lấy hàng. Vui lòng thử lại!");
             }
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries?status=delivering");
+            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
             return;
         }
 
@@ -146,7 +140,7 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             } else {
                 session.setAttribute("errorMessage", "Không thể hoàn tất giao hàng. Vui lòng thử lại!");
             }
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries?status=completed");
+            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
             return;
         }
 
@@ -158,11 +152,10 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             } else {
                 session.setAttribute("errorMessage", "Không thể ghi nhận sự cố. Vui lòng thử lại!");
             }
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries?status=failed");
+            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
             return;
         }
 
         response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
     }
 }
-
