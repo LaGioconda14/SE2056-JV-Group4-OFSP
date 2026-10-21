@@ -8,7 +8,7 @@ import enums.AvailabilityStatus;
 
 /**
  * Model representing Driver Partner Profile, KYC & Vehicle Equipment,
- * Working State, Approval Lifecycle, and real-time GPS location.
+ * Working State, Approval Lifecycle, Real-time GPS location, and Shop affiliation.
  */
 public class DriverProfile implements Serializable {
 
@@ -17,6 +17,8 @@ public class DriverProfile implements Serializable {
     // Primary keys & User linkage
     private long driverId;
     private long userId;
+    private Long shopId;
+    private String shopName;
     private String fullName;
     private String email;
     private String phone;
@@ -55,8 +57,8 @@ public class DriverProfile implements Serializable {
     private int activeOrderCount;
 
     public DriverProfile() {
-        this.approvalStatus = ApprovalStatus.PENDING.name();
-        this.availabilityStatus = AvailabilityStatus.OFFLINE.name();
+        this.approvalStatus = ApprovalStatus.APPROVED.name();
+        this.availabilityStatus = AvailabilityStatus.AVAILABLE.name();
         this.rating = BigDecimal.valueOf(5.0);
         this.maxCapacityOrders = 5;
     }
@@ -77,6 +79,14 @@ public class DriverProfile implements Serializable {
 
     public boolean isAvailable() {
         return AvailabilityStatus.AVAILABLE.name().equalsIgnoreCase(availabilityStatus);
+    }
+
+    public boolean isBusy() {
+        return AvailabilityStatus.BUSY.name().equalsIgnoreCase(availabilityStatus);
+    }
+
+    public boolean isOffline() {
+        return AvailabilityStatus.OFFLINE.name().equalsIgnoreCase(availabilityStatus);
     }
 
     public boolean isOnline() {
@@ -122,6 +132,26 @@ public class DriverProfile implements Serializable {
             return "Hồ sơ bị từ chối";
         }
         return approvalStatus;
+    }
+
+    public String getAvailabilityBadgeClass() {
+        if (isAvailable()) {
+            return "bg-emerald-100 text-emerald-800 border-emerald-200";
+        } else if (isBusy()) {
+            return "bg-blue-100 text-blue-800 border-blue-200";
+        } else {
+            return "bg-slate-100 text-slate-600 border-slate-200";
+        }
+    }
+
+    public String getAvailabilityLabel() {
+        if (isAvailable()) {
+            return "Sẵn sàng nhận đơn";
+        } else if (isBusy()) {
+            return "Đang đi giao hàng";
+        } else {
+            return "Tạm nghỉ / Offline";
+        }
     }
 
     // Backwards compatibility getters
@@ -172,6 +202,22 @@ public class DriverProfile implements Serializable {
 
     public void setUserId(long userId) {
         this.userId = userId;
+    }
+
+    public Long getShopId() {
+        return shopId;
+    }
+
+    public void setShopId(Long shopId) {
+        this.shopId = shopId;
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
     }
 
     public String getFullName() {
@@ -271,7 +317,8 @@ public class DriverProfile implements Serializable {
     }
 
     public ApprovalStatus getApprovalStatusEnum() {
-        if (approvalStatus == null) return null; try { return ApprovalStatus.valueOf(approvalStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
+        if (approvalStatus == null) return null;
+        try { return ApprovalStatus.valueOf(approvalStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
     }
 
     public void setApprovalStatus(ApprovalStatus status) {
@@ -287,7 +334,8 @@ public class DriverProfile implements Serializable {
     }
 
     public AvailabilityStatus getAvailabilityStatusEnum() {
-        if (availabilityStatus == null) return null; try { return AvailabilityStatus.valueOf(availabilityStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
+        if (availabilityStatus == null) return null;
+        try { return AvailabilityStatus.valueOf(availabilityStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
     }
 
     public void setAvailabilityStatus(AvailabilityStatus status) {

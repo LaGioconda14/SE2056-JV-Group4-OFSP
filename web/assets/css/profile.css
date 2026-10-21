@@ -960,37 +960,6 @@ body {
     gap: 0.5rem;
 }
 
-.shopee-search-bar {
-    position: relative;
-    margin-bottom: 1.25rem;
-}
-
-.shopee-search-bar i {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    font-size: 15px;
-}
-
-.shopee-search-bar input {
-    width: 100%;
-    padding: 11px 16px 11px 40px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 13.5px;
-    background: #f8fafc;
-    transition: all 0.2s ease;
-}
-
-.shopee-search-bar input:focus {
-    background: #ffffff;
-    border-color: #046a38;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(4, 106, 56, 0.15);
-}
-
 .shopee-order-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
@@ -1263,28 +1232,6 @@ body {
 
 .shopee-items-list:hover {
     background-color: #f8fafc;
-}
-
-.track-hint-bar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #046a38;
-    background-color: #f0fdf4;
-    border: 1px dashed #86efac;
-    border-radius: 6px;
-    padding: 6px 12px;
-    margin-top: 8px;
-    transition: all 0.2s ease;
-}
-
-.shopee-items-list:hover .track-hint-bar {
-    background-color: #dcfce7;
-    border-color: #22c55e;
-    color: #03542c;
-    box-shadow: 0 1px 4px rgba(4, 106, 56, 0.1);
 }
 
 .bg-slate-50 {

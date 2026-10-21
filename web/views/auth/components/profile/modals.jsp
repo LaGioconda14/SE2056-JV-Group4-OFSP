@@ -374,7 +374,7 @@
                                     <span>Nguồn gốc xuất xứ minh bạch từ từng nhà vườn uy tín</span>
                                 </div>
                             </div>
-                            <a href="${pageContext.request.contextPath}/home.jsp" class="small text-success text-decoration-none fw-semibold d-inline-flex align-items-center">
+                            <a href="${pageContext.request.contextPath}/home" class="small text-success text-decoration-none fw-semibold d-inline-flex align-items-center">
                                 Tìm hiểu chi tiết chính sách hoàn tiền 100% <i class="bi bi-arrow-right ms-1"></i>
                             </a>
                         </div>
