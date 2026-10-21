@@ -181,24 +181,24 @@
                     </div>
                 </div>
 
-                <!-- Card 3: Hòa Giải Tranh Chấp -->
+                <!-- Card 3: Đơn Hàng & Giao Vận -->
                 <div class="action-card card-navy">
                     <div>
                         <div class="action-card-header">
                             <span class="action-tag-pill action-tag-navy">
-                                <i class="bi bi-scale"></i> HÒA GIẢI TRANH CHẤP
+                                <i class="bi bi-box-seam"></i> ĐƠN HÀNG & GIAO VẬN
                             </span>
-                            <span class="badge-counter badge-counter-navy">${stats.openDisputesCount} Yêu Cầu</span>
+                            <span class="badge-counter badge-counter-navy">${stats.totalOrdersCount} Đơn</span>
                         </div>
-                        <h3 class="action-card-title">${stats.openDisputesCount} Khiếu nại chất lượng cần hòa giải</h3>
-                        <p class="action-card-desc">Tranh chấp giữa Khách hàng và Nhà vườn về hoa quả dập nát, lên men trong khâu vận chuyển hàng tươi.</p>
+                        <h3 class="action-card-title">Giám sát chuỗi giao nhận nông sản toàn sàn</h3>
+                        <p class="action-card-desc">Kiểm soát tiến độ xử lý đơn hàng, điều phối vận chuyển chuỗi lạnh bảo quản hoa quả tươi.</p>
                     </div>
                     <div class="action-card-footer">
                         <span class="text-muted" style="font-size: 0.72rem;">
-                            Tạm giữ ví: <strong class="text-dark">${stats.totalEscrowFormatted}</strong>
+                            Tổng doanh số: <strong class="text-dark">${stats.totalGmvFormatted}</strong>
                         </span>
-                        <a href="${pageContext.request.contextPath}/admin/disputes" class="btn-action-pill btn-action-navy">
-                            Xử lý tranh chấp (${stats.openDisputesCount}) →
+                        <a href="${pageContext.request.contextPath}/admin/orders" class="btn-action-pill btn-action-navy">
+                            Quản lý đơn hàng →
                         </a>
                     </div>
                 </div>

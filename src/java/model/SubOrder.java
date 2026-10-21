@@ -33,8 +33,12 @@ public class SubOrder {
     private String paymentStatus = PaymentStatus.PENDING.name();
     private String trackingNumber;
     private String carrierName;
+    private Long driverId;
     private String driverName;
     private String driverPhone;
+    private String driverVehiclePlate;
+    private String driverVehicleType;
+    private String driverAvatarUrl;
     private String deliveryStatus;
     private String failureReason;
     private String proofImageUrl;
@@ -389,5 +393,37 @@ public class SubOrder {
 
     public void setShopCouponCode(String shopCouponCode) {
         this.shopCouponCode = shopCouponCode;
+    }
+
+    public Long getDriverId() {
+        return driverId;
+    }
+
+    public void setDriverId(Long driverId) {
+        this.driverId = driverId;
+    }
+
+    public String getDriverVehiclePlate() {
+        return driverVehiclePlate;
+    }
+
+    public void setDriverVehiclePlate(String driverVehiclePlate) {
+        this.driverVehiclePlate = driverVehiclePlate;
+    }
+
+    public String getDriverVehicleType() {
+        return driverVehicleType;
+    }
+
+    public void setDriverVehicleType(String driverVehicleType) {
+        this.driverVehicleType = driverVehicleType;
+    }
+
+    public String getDriverAvatarUrl() {
+        return driverAvatarUrl;
+    }
+
+    public void setDriverAvatarUrl(String driverAvatarUrl) {
+        this.driverAvatarUrl = driverAvatarUrl;
     }
 }

@@ -55,12 +55,6 @@
                 </a>
             </li>
             <li>
-                <a href="${pageContext.request.contextPath}/admin/disputes" class="sidebar-nav-link ${param.activePage == 'disputes' ? 'active' : ''}">
-                    <i class="bi bi-scale"></i>
-                    <span data-i18n="nav_disputes">Khiếu Nại & Hoàn Tiền</span>
-                </a>
-            </li>
-            <li>
                 <a href="${pageContext.request.contextPath}/admin/vouchers" class="sidebar-nav-link ${param.activePage == 'vouchers' ? 'active' : ''}">
                     <i class="bi bi-ticket-perforated"></i>
                     <span data-i18n="nav_vouchers">Mã Giảm Giá Sàn</span>

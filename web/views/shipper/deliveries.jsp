@@ -73,9 +73,18 @@
                 <div>
                     <div class="d-flex align-items-center gap-2">
                         <h4 class="fw-bold mb-0 text-dark">${not empty driverProfile.fullName ? driverProfile.fullName : sessionScope.user.fullName}</h4>
-                        <span class="badge bg-success-subtle text-success small fw-semibold">
-                            <i class="bi bi-patch-check-fill me-1"></i> Tài xế Gốc Vườn Express
-                        </span>
+                        <c:choose>
+                            <c:when test="${not empty driverProfile.shopName}">
+                                <span class="badge bg-success text-white small fw-semibold shadow-xs">
+                                    <i class="bi bi-shop me-1"></i> Đội ngũ: ${driverProfile.shopName}
+                                </span>
+                            </c:when>
+                            <c:otherwise>
+                                <span class="badge bg-success-subtle text-success small fw-semibold">
+                                    <i class="bi bi-patch-check-fill me-1"></i> Tài xế Gốc Vườn Express
+                                </span>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                     <div class="text-muted small mt-1">
                         <i class="bi bi-telephone me-1"></i> SĐT: <strong class="text-dark">${not empty sessionScope.user.phone ? sessionScope.user.phone : driverProfile.phone}</strong> 
@@ -90,7 +99,7 @@
                             <i class="bi bi-geo-alt-fill text-danger me-1"></i> Khu vực: <strong>${not empty driverProfile.operatingCity ? driverProfile.operatingCity : 'Toàn hệ thống'}</strong>
                         </span>
                         <span class="badge bg-light text-primary border border-primary-subtle">
-                            <i class="bi bi-box-seam me-1"></i> Đang phụ trách: <strong>${countPickup + countDelivering} đơn</strong>
+                            <i class="bi bi-box-seam me-1"></i> Đang phụ trách: <strong>${activeOrderCount != null ? activeOrderCount : 0} đơn</strong>
                         </span>
                     </div>
                 </div>
@@ -106,36 +115,6 @@
         </div>
     </div>
 
-
-    <!-- Filter Nav Tabs & Search Bar -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-        <div class="shipper-tabs-nav mb-0">
-            <a href="${pageContext.request.contextPath}/shipper/deliveries?status=all" class="shipper-tab-btn ${currentStatus == 'all' ? 'active' : ''}">
-                <i class="bi bi-grid-fill"></i> Tất Cả <span class="badge ms-1">${countAll}</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/shipper/deliveries?status=pickup" class="shipper-tab-btn ${currentStatus == 'pickup' ? 'active' : ''}">
-                <i class="bi bi-box-seam"></i> Chờ Lấy Hàng <span class="badge ms-1">${countPickup}</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/shipper/deliveries?status=delivering" class="shipper-tab-btn ${currentStatus == 'delivering' ? 'active' : ''}">
-                <i class="bi bi-truck"></i> Đang Giao <span class="badge ms-1">${countDelivering}</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/shipper/deliveries?status=completed" class="shipper-tab-btn ${currentStatus == 'completed' ? 'active' : ''}">
-                <i class="bi bi-check2-circle"></i> Đã Giao <span class="badge ms-1">${countCompleted}</span>
-            </a>
-            <a href="${pageContext.request.contextPath}/shipper/deliveries?status=failed" class="shipper-tab-btn ${currentStatus == 'failed' ? 'active' : ''}">
-                <i class="bi bi-x-circle"></i> Thất Bại / Trả Lại <span class="badge ms-1">${countFailed}</span>
-            </a>
-        </div>
-
-        <form method="get" action="${pageContext.request.contextPath}/shipper/deliveries" class="d-flex gap-2">
-            <input type="hidden" name="status" value="${currentStatus}">
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                <input type="text" name="keyword" class="form-control border-start-0" placeholder="Tìm mã vận đơn, tên khách, SĐT..." value="${keyword}">
-                <button class="btn btn-outline-success" type="submit">Tìm</button>
-            </div>
-        </form>
-    </div>
 
     <!-- Deliveries List -->
     <c:choose>

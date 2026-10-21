@@ -37,11 +37,6 @@
             </button>
         </div>
 
-        <div class="shopee-search-bar">
-            <i class="bi bi-search"></i>
-            <input type="text" id="orderSearchInput" placeholder="Bạn có thể tìm kiếm theo tên Shop, ID đơn hàng hoặc Tên Sản phẩm" onkeyup="searchOrders(this.value)">
-        </div>
-
         <c:choose>
             <c:when test="${not empty orders}">
                 <div id="ordersContainer">
@@ -71,7 +66,7 @@
                                     <button type="button" class="shopee-btn-chat" onclick="openChatShop('${order.shopName}')">
                                         <i class="bi bi-chat-dots-fill"></i> Chat
                                     </button>
-                                    <a href="${pageContext.request.contextPath}/home" class="shopee-btn-shop">
+                                    <a href="${pageContext.request.contextPath}/store?id=${order.shopId}" class="shopee-btn-shop">
                                         <i class="bi bi-shop"></i> Xem Shop
                                     </a>
                                 </div>
@@ -123,7 +118,7 @@
                                 <c:choose>
                                     <c:when test="${order.hasItems()}">
                                         <c:forEach items="${order.items}" var="item">
-                                            <div class="shopee-item-row" data-product-name="${item.productName}">
+                                            <div class="shopee-item-row">
                                                 <img src="${item.imageUrl}" class="shopee-item-thumb" alt="${item.productName}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
                                                 <div class="shopee-item-details">
                                                     <div class="shopee-item-title">${item.productName}</div>
@@ -137,7 +132,7 @@
                                         </c:forEach>
                                     </c:when>
                                     <c:otherwise>
-                                        <div class="shopee-item-row" data-product-name="${order.note}">
+                                        <div class="shopee-item-row">
                                             <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop" class="shopee-item-thumb" alt="Trái cây tươi">
                                             <div class="shopee-item-details">
                                                     <div class="shopee-item-title">${order.note}</div>
@@ -150,9 +145,6 @@
                                         </div>
                                     </c:otherwise>
                                 </c:choose>
-                                <div class="track-hint-bar">
-                                    <i class="bi bi-geo-alt-fill text-success"></i> Nhấn vào sản phẩm để xem hành trình & lộ trình giao hàng chi tiết
-                                </div>
                             </div>
 
                             <div class="shopee-summary-row">
@@ -259,7 +251,7 @@
                     </div>
                     <h5 class="fw-bold text-dark">Chưa có đơn hàng nào</h5>
                     <p class="text-muted small mb-4">Bạn chưa thực hiện đơn đặt hàng trái cây nào trên hệ thống.</p>
-                    <a href="${pageContext.request.contextPath}/home.jsp" class="btn btn-fresh-green px-4 py-2">
+                    <a href="${pageContext.request.contextPath}/home" class="btn btn-fresh-green px-4 py-2">
                         <i class="bi bi-basket2 me-1"></i> Khám phá nông sản ngay
                     </a>
                 </div>
