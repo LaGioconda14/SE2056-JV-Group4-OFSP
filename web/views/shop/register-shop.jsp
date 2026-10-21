@@ -59,6 +59,17 @@
             </div>
         </c:if>
 
+        <c:if test="${not empty rejectedRequest}">
+            <div class="rs-alert-error mb-4" style="align-items:flex-start">
+                <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+                <span>
+                    <b>Hồ sơ đăng ký trước đó đã bị từ chối.</b>
+                    <c:if test="${not empty rejectedRequest.reason}">Lý do: <c:out value="${rejectedRequest.reason}"/>.</c:if>
+                    Bạn có thể chỉnh sửa thông tin và gửi lại hồ sơ bên dưới.
+                </span>
+            </div>
+        </c:if>
+
         <!-- FORM -->
         <form action="${ctx}/register-shop" method="POST" enctype="multipart/form-data" id="multiStepForm" novalidate>
             <div class="rs-card p-6 md:p-10">

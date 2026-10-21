@@ -117,17 +117,15 @@
 
 
             <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">HỆ THỐNG</div>
-            <a href="${pageContext.request.contextPath}/shop/finance" 
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'finance' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
+            <a href="${ctx}/shop/finance" class="shop-sidebar-link ${param.active == 'finance' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
-                    <i class="fa-solid fa-wallet ${curMenu eq 'finance' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
+                    <i class="fa-solid fa-wallet text-slate-400 text-sm w-4 text-center"></i>
                     <span>Doanh thu & Rút tiền</span>
                 </span>
             </a>
-            <a href="${pageContext.request.contextPath}/shop/settings" 
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'settings' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
+            <a href="${ctx}/shop/settings" class="shop-sidebar-link ${param.active == 'settings' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
-                    <i class="fa-solid fa-sliders ${curMenu eq 'settings' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
+                    <i class="fa-solid fa-sliders text-slate-400 text-sm w-4 text-center"></i>
                     <span>Cài đặt Shop</span>
                 </span>
             </a>

@@ -13,4 +13,9 @@ public class ShopRequestServiceImpl implements IShopRequestService {
         // Có thể bổ sung validate dữ liệu ở đây nếu cần
         return shopRequestDAO.insertShopRequest(request);
     }
+
+    @Override
+    public ShopRequest getLatestRequestByUserId(int userId) {
+        return shopRequestDAO.getLatestRequestByUserId(userId);
+    }
 }

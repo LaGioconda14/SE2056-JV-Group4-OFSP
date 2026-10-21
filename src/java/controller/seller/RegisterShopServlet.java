@@ -12,9 +12,16 @@ import model.User;
 import service.IShopRequestService;
 import service.impl.ShopRequestServiceImpl;
 import util.CloudinaryUtil;
+import util.SellerSessionUtil;
 
 import java.io.IOException;
 
+/**
+ * Form đăng ký trở thành người bán (seller).
+ *  - Chỉ tài khoản CUSTOMER mới đăng ký được; tài khoản vẫn là CUSTOMER trong lúc chờ admin duyệt.
+ *  - Đã có hồ sơ đang chờ / đã duyệt thì chuyển sang /seller/status, không cho nộp trùng.
+ *  - Hồ sơ bị từ chối thì được sửa và gửi lại.
+ */
 @WebServlet(name = "RegisterShopServlet", urlPatterns = {"/register-shop"})
 @MultipartConfig(
         fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
@@ -23,19 +30,58 @@ import java.io.IOException;
 )
 public class RegisterShopServlet extends HttpServlet {
 
-    private IShopRequestService shopRequestService = new ShopRequestServiceImpl();
+    private final IShopRequestService shopRequestService = new ShopRequestServiceImpl();
+
+    private User getCurrentUser(HttpServletRequest request) {
+        HttpSession session = request.getSession();
+        User currentUser = (User) session.getAttribute("account");
+        if (currentUser == null) {
+            currentUser = (User) session.getAttribute("user"); // key dự phòng
+        }
+        return currentUser;
+    }
+
+    /**
+     * Kiểm tra user có được đăng ký bán hàng không.
+     *
+     * @return true nếu đã chuyển hướng đi nơi khác (không cho hiện / nhận form)
+     */
+    private boolean redirectIfNotAllowed(User user, HttpServletRequest request,
+            HttpServletResponse response, boolean exposeRejectedRequest) throws IOException {
+        String ctx = request.getContextPath();
+        String role = (user.getRole() == null) ? "CUSTOMER" : user.getRole().toUpperCase();
+
+        if ("SHOP_OWNER".equals(role)) {
+            response.sendRedirect(ctx + "/seller/enter");
+            return true;
+        }
+        if (!"CUSTOMER".equals(role)) {
+            response.sendRedirect(ctx + "/home");
+            return true;
+        }
+
+        ShopRequest latest = shopRequestService.getLatestRequestByUserId(user.getId());
+        if (latest != null) {
+            if (SellerSessionUtil.isPending(latest.getStatus()) || SellerSessionUtil.isApproved(latest.getStatus())) {
+                response.sendRedirect(ctx + "/seller/status");
+                return true;
+            }
+            if (exposeRejectedRequest && SellerSessionUtil.isRejected(latest.getStatus())) {
+                request.setAttribute("rejectedRequest", latest);
+            }
+        }
+        return false;
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        User currentUser = (User) session.getAttribute("account");
-        if (currentUser == null) {
-            currentUser = (User) session.getAttribute("user"); // Thử check cả key "user" dự phòng
-        }
-
+        User currentUser = getCurrentUser(request);
         if (currentUser == null) {
             response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        if (redirectIfNotAllowed(currentUser, request, response, true)) {
             return;
         }
 
@@ -48,15 +94,14 @@ public class RegisterShopServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         try {
-            // 1. Lấy thông tin user hiện tại từ Session (Kiểm tra cả "account" và "user")
-            HttpSession session = request.getSession();
-            User currentUser = (User) session.getAttribute("account");
-            if (currentUser == null) {
-                currentUser = (User) session.getAttribute("user");
-            }
-
+            // 1. Lấy thông tin user hiện tại từ Session
+            User currentUser = getCurrentUser(request);
             if (currentUser == null) {
                 response.sendRedirect(request.getContextPath() + "/login");
+                return;
+            }
+            // Chặn nộp trùng khi đã có hồ sơ chờ duyệt / đã duyệt
+            if (redirectIfNotAllowed(currentUser, request, response, false)) {
                 return;
             }
 
@@ -78,13 +123,13 @@ public class RegisterShopServlet extends HttpServlet {
             String bankAccountNumber = request.getParameter("bankAccountNumber");
             String bankAccountHolder = request.getParameter("bankAccountHolder");
 
-            // 3. Xử lý Upload các file Ảnh lên Cloudinary trực tiếp
+            // 3. Upload các file ảnh lên Cloudinary
             String idFrontUrl = CloudinaryUtil.uploadImage(request.getPart("idCardFront"), "shop_requests/cccd");
-            String idBackUrl  = CloudinaryUtil.uploadImage(request.getPart("idCardBack"), "shop_requests/cccd");
-            String logoUrl    = CloudinaryUtil.uploadImage(request.getPart("shopLogo"), "shop_requests/logos");
-            String bannerUrl  = CloudinaryUtil.uploadImage(request.getPart("shopBanner"), "shop_requests/banners");
+            String idBackUrl = CloudinaryUtil.uploadImage(request.getPart("idCardBack"), "shop_requests/cccd");
+            String logoUrl = CloudinaryUtil.uploadImage(request.getPart("shopLogo"), "shop_requests/logos");
+            String bannerUrl = CloudinaryUtil.uploadImage(request.getPart("shopBanner"), "shop_requests/banners");
 
-            // 4. Tạo đối tượng ShopRequest và gán URL ảnh nhận được từ Cloudinary
+            // 4. Tạo ShopRequest
             ShopRequest shopReq = new ShopRequest();
             shopReq.setUserId(currentUser.getId());
             shopReq.setShopName(shopName);
@@ -107,19 +152,19 @@ public class RegisterShopServlet extends HttpServlet {
             shopReq.setShopLogoUrl(logoUrl);
             shopReq.setShopBannerUrl(bannerUrl);
 
-            // 5. Lưu vào Database thông qua Service
+            // 5. Lưu vào Database (status = PENDING). Tài khoản vẫn là CUSTOMER cho tới khi admin duyệt.
             boolean isSuccess = shopRequestService.submitShopRequest(shopReq);
 
             if (isSuccess) {
-                request.setAttribute("message", "Gửi yêu cầu đăng ký gian hàng thành công! Vui lòng chờ Admin phê duyệt.");
-                request.getRequestDispatcher("/views/shop/register-success.jsp").forward(request, response);
+                // Redirect (PRG) để F5 không gửi lại hồ sơ
+                response.sendRedirect(request.getContextPath() + "/seller/status?submitted=1");
             } else {
                 request.setAttribute("errorMessage", "Đã xảy ra lỗi khi lưu vào cơ sở dữ liệu. Vui lòng thử lại!");
                 request.getRequestDispatcher("/views/shop/register-shop.jsp").forward(request, response);
             }
 
         } catch (Exception e) {
-            e.printStackTrace(); // In lỗi chi tiết ra console Tomcat nếu có sự cố
+            e.printStackTrace();
             request.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
             request.getRequestDispatcher("/views/shop/register-shop.jsp").forward(request, response);
         }

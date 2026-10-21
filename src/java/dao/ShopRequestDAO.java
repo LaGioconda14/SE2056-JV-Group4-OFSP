@@ -56,9 +56,14 @@ public class ShopRequestDAO extends DBContext {
         return false;
     }
     
+ /** Hồ sơ đăng ký bán hàng mới nhất của user (null nếu chưa từng đăng ký). */
+ public ShopRequest getLatestRequestByUserId(int userId) {
+    return getShopRequestByUserId(userId);
+ }
+
  public ShopRequest getShopRequestByUserId(int userId) {
     ShopRequest shop = null;
-    String sql = "SELECT * FROM [dbo].[shop_requests] WHERE [user_id] = ?";
+    String sql = "SELECT TOP 1 * FROM [dbo].[shop_requests] WHERE [user_id] = ? ORDER BY [request_id] DESC";
     
     try (Connection conn = this.getConnection();
          PreparedStatement st = conn.prepareStatement(sql)) {
@@ -94,6 +99,9 @@ public class ShopRequestDAO extends DBContext {
             shop.setBankAccountNumber(rs.getString("bank_account_number"));
             shop.setBankAccountHolder(rs.getString("bank_account_holder"));
             shop.setStatus(rs.getString("status"));
+            shop.setReason(rs.getString("reason"));
+            shop.setReviewedAt(rs.getTimestamp("reviewed_at"));
+            shop.setCreatedAt(rs.getTimestamp("created_at"));
         }
         rs.close(); // Đóng kết quả truy vấn
         

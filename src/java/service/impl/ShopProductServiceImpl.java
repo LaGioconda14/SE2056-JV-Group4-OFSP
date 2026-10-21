@@ -1,7 +1,6 @@
 package service.impl;
 
 import dao.ProductDAO;
-import dao.ReviewDAO;
 import dao.ShopDAO;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -19,12 +18,10 @@ public class ShopProductServiceImpl implements IShopProductService {
     private static final Logger LOGGER = Logger.getLogger(ShopProductServiceImpl.class.getName());
     private final ProductDAO productDAO;
     private final ShopDAO shopDAO;
-    private final ReviewDAO reviewDAO;
 
     public ShopProductServiceImpl() {
         this.productDAO = new ProductDAO();
         this.shopDAO = new ShopDAO();
-        this.reviewDAO = new ReviewDAO();
     }
 
     @Override
@@ -285,16 +282,17 @@ public class ShopProductServiceImpl implements IShopProductService {
 
     @Override
     public List<Product> getProductsByShopId(long shopId, Integer categoryId, String sort) {
-        return productDAO.getProductsByShopId(shopId, categoryId, sort);
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
     public List<Category> getCategoriesWithCountByShopId(long shopId) {
-        return productDAO.getCategoriesWithCountByShopId(shopId);
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
     public List<Review> getReviewsByShopId(long shopId) {
-        return reviewDAO.getReviewsByShopId(shopId);
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
+
 }
