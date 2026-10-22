@@ -192,4 +192,11 @@ public class ProductServiceImpl implements IProductService {
             String ratingStr, String availability, String origin) {
         return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, ratingStr, availability, origin);
     }
+
+    @Override
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin, String sortBy) {
+        return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr,
+                ratingStr, availability, origin, sortBy);
+    }
 }

@@ -45,9 +45,13 @@ public class ProductServlet extends HttpServlet {
         String rating = request.getParameter("rating");
         String availability = request.getParameter("availability");
         String origin = request.getParameter("origin");
+        String sortBy = request.getParameter("sortBy");
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "default";
+        }
 
         List<Product> listProduct = productService.searchAndFilterProducts(
-                keyword, categorySlug, minPrice, maxPrice, rating, availability, origin);
+                keyword, categorySlug, minPrice, maxPrice, rating, availability, origin, sortBy);
         
         // 3. Lấy toàn bộ danh mục từ CategoryDAO (thông qua Service) để đổ ra sidebar bên trái
         List<Category> categories = productService.getAllCategories();
@@ -62,6 +66,7 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("selectedRating", rating);
         request.setAttribute("selectedAvailability", availability);
         request.setAttribute("origin", origin);
+        request.setAttribute("sortBy", sortBy);
         
         // 5. Chuyển hướng tới giao diện productlist-by-category.jsp
         request.getRequestDispatcher("/views/product/productlist-by-category.jsp").forward(request, response);

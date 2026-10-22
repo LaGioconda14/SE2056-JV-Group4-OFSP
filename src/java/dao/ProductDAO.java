@@ -1072,6 +1072,11 @@ public class ProductDAO extends DBContext {
 
     public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
                                                  String ratingStr, String availability, String origin) {
+        return searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, ratingStr, availability, origin, "default");
+    }
+
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+                                                 String ratingStr, String availability, String origin, String sortBy) {
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
@@ -1088,7 +1093,10 @@ public class ProductDAO extends DBContext {
                 .append("(SELECT COUNT(*) FROM reviews r ")
                 .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
                 .append("JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
-                .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
+                .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count, ")
+                .append("(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi ")
+                .append("JOIN product_variants soldv ON soldv.variant_id = oi.variant_id ")
+                .append("WHERE soldv.product_id = p.product_id) AS popularity_count ")
                 .append("FROM products p ")
                 .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
                 .append("OUTER APPLY ( ")
@@ -1113,6 +1121,8 @@ public class ProductDAO extends DBContext {
                 sql.append(" AND p.category_id = ? ");
                 params.add(catId);
             } catch (NumberFormatException ignored) {
+                sql.append(" AND c.slug = ? ");
+                params.add(categoryId.trim());
             }
         }
 
@@ -1161,7 +1171,21 @@ public class ProductDAO extends DBContext {
             params.add("%" + origin.trim() + "%");
         }
 
-        sql.append(" ORDER BY p.product_id DESC");
+        String orderBy;
+        if ("newest".equals(sortBy)) {
+            orderBy = "p.created_at DESC, p.product_id DESC";
+        } else if ("popular".equals(sortBy)) {
+            orderBy = "popularity_count DESC, p.product_id DESC";
+        } else if ("price_asc".equals(sortBy)) {
+            orderBy = "price ASC, p.product_id DESC";
+        } else if ("price_desc".equals(sortBy)) {
+            orderBy = "price DESC, p.product_id DESC";
+        } else if ("rating_desc".equals(sortBy)) {
+            orderBy = "avg_rating DESC, reviews_count DESC, p.product_id DESC";
+        } else {
+            orderBy = "p.is_featured DESC, p.product_id DESC";
+        }
+        sql.append(" ORDER BY ").append(orderBy);
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {

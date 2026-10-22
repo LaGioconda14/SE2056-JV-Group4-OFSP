@@ -62,4 +62,6 @@ public interface IProductService {
     
     List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin);
+    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin, String sortBy);
 }

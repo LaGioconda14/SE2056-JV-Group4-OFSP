@@ -264,6 +264,7 @@
                             <c:if test="${not empty selectedCategory}">
                                 <input type="hidden" name="category" value="${selectedCategory}">
                             </c:if>
+                            <input type="hidden" name="sortBy" value="${sortBy}">
                             <h3 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
                                 <i class="fa-solid fa-filter text-emerald-600"></i> Bộ lọc tìm kiếm
                             </h3>
@@ -323,6 +324,25 @@
                             <i class="fa-solid fa-seedling"></i>
                         </div>
                     </div>
+
+                    <form action="${pageContext.request.contextPath}/products" method="GET" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 mb-5">
+                        <input type="hidden" name="category" value="${selectedCategory}">
+                        <input type="hidden" name="keyword" value="${keyword}">
+                        <input type="hidden" name="minPrice" value="${minPrice}">
+                        <input type="hidden" name="maxPrice" value="${maxPrice}">
+                        <input type="hidden" name="rating" value="${selectedRating}">
+                        <input type="hidden" name="availability" value="${selectedAvailability}">
+                        <input type="hidden" name="origin" value="${origin}">
+                        <label for="productSort" class="text-sm font-semibold text-gray-700">Sắp xếp sản phẩm</label>
+                        <select id="productSort" name="sortBy" onchange="this.form.submit()" class="w-full sm:w-64 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:border-emerald-500">
+                            <option value="default" ${sortBy == 'default' ? 'selected' : ''}>Mặc định</option>
+                            <option value="newest" ${sortBy == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                            <option value="popular" ${sortBy == 'popular' ? 'selected' : ''}>Phổ biến nhất</option>
+                            <option value="price_asc" ${sortBy == 'price_asc' ? 'selected' : ''}>Giá: thấp đến cao</option>
+                            <option value="price_desc" ${sortBy == 'price_desc' ? 'selected' : ''}>Giá: cao đến thấp</option>
+                            <option value="rating_desc" ${sortBy == 'rating_desc' ? 'selected' : ''}>Đánh giá cao nhất</option>
+                        </select>
+                    </form>
 
                     <!-- Hiển thị danh sách sản phẩm -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
