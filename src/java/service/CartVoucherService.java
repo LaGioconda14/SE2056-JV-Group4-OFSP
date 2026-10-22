@@ -17,8 +17,7 @@ import model.VoucherCoupon;
 public class CartVoucherService {
 
     private static final BigDecimal ZERO = new BigDecimal("0.00");
-    private static final BigDecimal SHIPPING_FEE = new BigDecimal("25000.00");
-    private static final BigDecimal FREE_SHIPPING_MINIMUM = new BigDecimal("200000.00");
+    private static final BigDecimal SHIPPING_FEE = ZERO;
     private final CartVoucherDAO voucherDAO;
 
     public CartVoucherService() {
@@ -100,8 +99,7 @@ public class CartVoucherService {
             List<VoucherCoupon> coupons) {
         List<CartVoucher> vouchers = new ArrayList<>();
         BigDecimal total = shopSubtotals.values().stream().reduce(ZERO, BigDecimal::add);
-        BigDecimal shippingFee = total.signum() == 0 || total.compareTo(FREE_SHIPPING_MINIMUM) >= 0
-                ? ZERO : SHIPPING_FEE;
+        BigDecimal shippingFee = total.signum() == 0 ? ZERO : SHIPPING_FEE;
         Map<Long, BigDecimal> shopShipping = allocateShipping(shopSubtotals, total, shippingFee);
         for (VoucherCoupon coupon : coupons) {
             vouchers.add(evaluateVoucher(coupon, shopSubtotals, total, shippingFee, shopShipping));

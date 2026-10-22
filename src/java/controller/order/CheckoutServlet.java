@@ -112,6 +112,11 @@ public class CheckoutServlet extends HttpServlet {
             shopCouponCodes = new LinkedHashMap<>(shopCouponCodes);
         }
 
+        // A cart submission is the complete voucher selection, not a partial update.
+        if ("true".equalsIgnoreCase(request.getParameter("replaceShopCoupons"))) {
+            shopCouponCodes.clear();
+        }
+
         // Kiểm tra xóa voucher của shop: ?removeShopCoupon=<shopId>
         String removeShopCouponParam = request.getParameter("removeShopCoupon");
         if (removeShopCouponParam != null && !removeShopCouponParam.trim().isEmpty()) {
