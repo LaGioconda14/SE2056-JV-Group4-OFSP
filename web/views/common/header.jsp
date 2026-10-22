@@ -283,15 +283,20 @@
         }
     });
 
-    // Intercept Add to Cart form submissions for smooth instant notification & badge update
-    document.addEventListener('submit', function(e) {
+    // Chỉ đăng ký một handler và nhường form đã có AJAX riêng xử lý để tránh gửi hai POST.
+    if (!window.__cartAddSubmitBound) {
+        window.__cartAddSubmitBound = true;
+        document.addEventListener('submit', function(e) {
         const form = e.target;
         if (form && form.action && form.action.includes('/cart/add')) {
+            if (e.defaultPrevented) return;
             const submitter = e.submitter;
             if (submitter && submitter.value === 'buyNow') {
                 return; // allow normal Buy Now submission to /checkout
             }
             e.preventDefault();
+            if (form.dataset.cartSubmitting === 'true') return;
+            form.dataset.cartSubmitting = 'true';
             const formData = new FormData(form);
             const params = new URLSearchParams();
             for (const [key, value] of formData.entries()) {
@@ -319,6 +324,7 @@
                 return res.json();
             })
             .then(data => {
+                form.dataset.cartSubmitting = 'false';
                 if (submitBtn) submitBtn.disabled = false;
                 if (!data) return;
                 if (data.redirect) {
@@ -343,9 +349,11 @@
                 }
             })
             .catch(err => {
+                form.dataset.cartSubmitting = 'false';
                 if (submitBtn) submitBtn.disabled = false;
-                form.submit(); // fallback
+                window.showToast('Không thể xác nhận kết quả thêm giỏ hàng. Vui lòng tải lại trang để kiểm tra.', 'error');
             });
         }
-    });
+        });
+    }
 </script>
