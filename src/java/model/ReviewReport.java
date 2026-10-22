@@ -9,6 +9,9 @@ public class ReviewReport {
     public long reporterId;
     public String reason;
     public String reviewComment;
+    public Integer reviewRating;
+    public String reviewStatus;
+    public String reviewerName;
     public String shopName;
     public String reporterName;
     public String status;

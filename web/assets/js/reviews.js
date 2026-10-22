@@ -431,6 +431,83 @@
                 pages(0);
             }
         }
+        // FE10_MODERATION_PRODUCT_SHOP_FIX_UI: render reports for both review types.
+        // FE10_BRANDED_CONFIRM_START: a single accessible dialog for destructive actions.
+        function confirmDecision( {title, message, confirmText, destructive = false}) {
+            return new Promise(resolve => {
+                const previousFocus = document.activeElement;
+                const previousOverflow = document.body.style.overflow;
+                const backdrop = node('div', 'fe10-confirm-backdrop');
+                const dialog = node('section', 'fe10-confirm-dialog');
+                dialog.setAttribute('role', 'alertdialog');
+                dialog.setAttribute('aria-modal', 'true');
+                dialog.setAttribute('aria-labelledby', 'fe10-confirm-title');
+                dialog.setAttribute('aria-describedby', 'fe10-confirm-description');
+
+                const header = node('div', 'fe10-confirm-header');
+                const symbol = node('span', 'fe10-confirm-symbol' + (destructive ? ' danger' : ''), destructive ? '!' : '✓');
+                symbol.setAttribute('aria-hidden', 'true');
+                const closeButton = node('button', 'fe10-confirm-close', '×');
+                closeButton.type = 'button';
+                closeButton.setAttribute('aria-label', 'Đóng hộp thoại');
+                append(header, [symbol, closeButton]);
+                const eyebrow = node('div', 'fe10-confirm-eyebrow', 'GỐC VƯỜN · XÁC NHẬN THAO TÁC');
+                const heading = node('h2', 'fe10-confirm-title', title);
+                heading.id = 'fe10-confirm-title';
+                const description = node('p', 'fe10-confirm-description', message);
+                description.id = 'fe10-confirm-description';
+                const footer = node('div', 'fe10-confirm-actions');
+                const cancel = node('button', 'fe10-confirm-btn cancel', 'Hủy bỏ');
+                const accept = node('button', 'fe10-confirm-btn accept' + (destructive ? ' danger' : ''), confirmText || 'Xác nhận');
+                cancel.type = 'button';
+                accept.type = 'button';
+                append(footer, [cancel, accept]);
+                append(dialog, [header, eyebrow, heading, description, footer]);
+                backdrop.appendChild(dialog);
+
+                let finished = false;
+                function finish(confirmed) {
+                    if (finished)
+                        return;
+                    finished = true;
+                    document.removeEventListener('keydown', handleKey, true);
+                    backdrop.remove();
+                    document.body.style.overflow = previousOverflow;
+                    if (previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function')
+                        previousFocus.focus();
+                    resolve(confirmed);
+                }
+                function handleKey(e) {
+                    if (e.key === 'Escape') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        finish(false);
+                    } else if (e.key === 'Tab') {
+                        const controls = [closeButton, cancel, accept];
+                        const first = controls[0], last = controls[controls.length - 1];
+                        if (e.shiftKey && document.activeElement === first) {
+                            e.preventDefault();
+                            last.focus();
+                        } else if (!e.shiftKey && document.activeElement === last) {
+                            e.preventDefault();
+                            first.focus();
+                        }
+                    }
+                }
+                cancel.addEventListener('click', () => finish(false));
+                closeButton.addEventListener('click', () => finish(false));
+                accept.addEventListener('click', () => finish(true));
+                backdrop.addEventListener('click', e => {
+                    if (e.target === backdrop)
+                        finish(false);
+                });
+                document.body.appendChild(backdrop);
+                document.body.style.overflow = 'hidden';
+                document.addEventListener('keydown', handleKey, true);
+                cancel.focus();
+            });
+        }
+        // FE10_BRANDED_CONFIRM_END
         function renderReports(items) {
             if (!body)
                 return;
@@ -440,22 +517,86 @@
                 pages(0);
                 return;
             }
+            const statusLabels = {
+                APPROVED: 'Đang hiển thị',
+                HIDDEN: 'Đang ẩn',
+                REMOVED: 'Đã gỡ',
+                DELETED: 'Đã xóa'
+            };
             items.forEach(r => {
-                const row = node('article', 'rv-report'), inside = node('div', 'rv-report-body'), actions = node('div', 'rv-report-actions');
+                const shopReport = r.reviewType === 'SHOP';
+                const row = node('article', 'rv-report');
+                const inside = node('div', 'rv-report-body');
+                const actions = node('div', 'rv-report-actions');
                 row.appendChild(inside);
                 row.appendChild(actions);
-                append(inside, [node('div', 'rv-tagline', 'Báo cáo #' + r.reportId + ' · ' + (r.reviewType === 'SHOP' ? 'Cửa hàng' : 'Sản phẩm')),
-                    node('h3', '', r.shopName || 'Đánh giá ' + r.reviewId), node('p', 'rv-copy', r.reviewComment || 'Không có nội dung đánh giá'),
-                    node('span', 'rv-pill orange', '⚑ ' + r.reason), node('div', 'rv-meta', 'Người báo cáo: ' + (r.reporterName || '') + ' · ' + stamp(r.createdAt))]);
-                [['✓ Giữ đánh giá', 'REJECT', 'secondary'], ['✓ Duyệt hiện', 'APPROVE', 'ghost'], ['◌ Ẩn đánh giá', 'HIDE', 'secondary'], ['✕ Gỡ đánh giá', 'REMOVE', 'danger']].forEach(([label, action, variant]) => actions.appendChild(button(label, variant, () => moderate(r, action))));
+                const category = shopReport ? 'Cửa hàng' : 'Sản phẩm';
+                const currentStatus = statusLabels[r.reviewStatus] || 'Không tìm thấy đánh giá';
+                const score = r.reviewRating == null ? '' : ' · ' + r.reviewRating + '/5 sao';
+                append(inside, [
+                    node('div', 'rv-tagline', 'Báo cáo #' + r.reportId + ' · ' + category + ' · Review #' + r.reviewId),
+                    node('h3', '', (shopReport ? 'Đánh giá gian hàng' : 'Đánh giá sản phẩm') + ' · ' + (r.shopName || 'Không xác định')),
+                    node('div', 'rv-meta', 'Người đánh giá: ' + (r.reviewerName || 'Không xác định') + score + ' · ' + currentStatus),
+                    node('p', 'rv-copy', r.reviewComment || 'Không có nội dung đánh giá'),
+                    node('span', 'rv-pill orange', '⚑ ' + r.reason),
+                    node('div', 'rv-meta', 'Người báo cáo: ' + (r.reporterName || 'Không xác định') + ' · ' + stamp(r.createdAt))
+                ]);
+                // Images for product reports are retrieved with the existing admin-authorized endpoint.
+                if (!shopReport && r.reviewStatus && !['DELETED', 'REMOVED'].includes(r.reviewStatus))
+                    photos(inside, r.reviewId);
+
+                const reviewAvailable = !!r.reviewStatus && !['DELETED', 'REMOVED'].includes(r.reviewStatus);
+                // A deleted/removed review cannot be brought back by moderation.
+                const choices = reviewAvailable
+                        ? [['✓ Bác bỏ báo cáo', 'REJECT', 'secondary'],
+                            ['✓ Duyệt hiển thị', 'APPROVE', 'ghost'],
+                            ['◌ Ẩn đánh giá', 'HIDE', 'secondary'],
+                            ['✕ Gỡ đánh giá', 'REMOVE', 'danger']]
+                        : [['✓ Bác bỏ báo cáo', 'REJECT', 'secondary']];
+                choices.forEach(([label, action, variant]) => {
+                    actions.appendChild(button(label, variant, () => moderate(r, action)));
+                });
                 body.appendChild(row);
             });
             pages(items.length);
         }
+
         async function moderate(record, action) {
-            const msg = {'REJECT': 'Bác bỏ báo cáo này và giữ nguyên đánh giá?', 'APPROVE': 'Hiển thị lại đánh giá này?', 'HIDE': 'Ẩn đánh giá này khỏi trang công khai?', 'REMOVE': 'Gỡ đánh giá này khỏi trang công khai?'};
-            if (!window.confirm(msg[action]))
+            // FE10_CONFIRM_ALL_ADMIN_ACTIONS: show Goc Vuon popup for every admin decision.
+            const options = {
+                REJECT: {
+                    title: 'Giữ lại đánh giá này?',
+                    message: 'Báo cáo này sẽ bị bác bỏ. Đánh giá vẫn giữ nguyên trạng thái hiện tại và tiếp tục hiển thị nếu đang được công khai.',
+                    confirmText: 'Giữ đánh giá',
+                    destructive: false
+                },
+                APPROVE: {
+                    title: 'Duyệt hiển thị đánh giá?',
+                    message: 'Đánh giá sẽ được chuyển sang trạng thái đã duyệt và hiển thị trên trang công khai.',
+                    confirmText: 'Duyệt hiển thị',
+                    destructive: false
+                },
+                HIDE: {
+                    title: 'Ẩn đánh giá này?',
+                    message: 'Đánh giá sẽ không còn xuất hiện công khai. Bạn có thể xét duyệt hiển thị lại sau.',
+                    confirmText: 'Ẩn đánh giá',
+                    destructive: false
+                },
+                REMOVE: {
+                    title: 'Gỡ đánh giá này?',
+                    message: 'Đánh giá sẽ bị gỡ khỏi trang công khai. Hãy chắc chắn nội dung vi phạm quy định trước khi xác nhận.',
+                    confirmText: 'Gỡ đánh giá',
+                    destructive: true
+                }
+            };
+            const choice = options[action];
+            if (!choice) {
+                flash('Hành động kiểm duyệt không hợp lệ.', false);
                 return;
+            }
+            const confirmed = await confirmDecision(choice);
+            if (!confirmed)
+                return; // Cancel, X, outside click or Esc: no API request.
             try {
                 await post('/admin/review-reports', {reportId: record.reportId, action});
                 flash('Đã xử lý báo cáo thành công.', true);
@@ -557,7 +698,12 @@
                     } else if (action === 'edit') {
                         payload = {...payload, reviewId: form.dataset.reviewId, rating: chosenRating, comment};
                     } else if (action === 'delete') {
-                        if (!window.confirm('Bạn chắc chắn muốn xóa đánh giá này?')) {
+                        if (!(await confirmDecision({
+                            title: 'Xóa đánh giá của bạn?',
+                            message: 'Đánh giá sẽ bị xóa khỏi danh sách công khai. Thao tác này không thể hoàn tác trong giao diện.',
+                            confirmText: 'Xóa đánh giá',
+                            destructive: true
+                        }))) {
                             if (submit)
                                 submit.disabled = false;
                             return;

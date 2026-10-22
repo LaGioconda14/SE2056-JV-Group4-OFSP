@@ -406,17 +406,21 @@ public class ReviewDAO extends DBContext {
         }
     }
 
+    // FE10_MODERATION_PRODUCT_ONLY: SHOP_OWNER can report PRODUCT reviews.
+    // The group schema has dbo.reviews and dbo.review_reports, but no dbo.shop_reviews.
     public List<ReviewReport> listReports(int limit, int offset) throws SQLException {
         String sql = "SELECT rr.report_id, rr.review_type, rr.review_id, rr.reporter_id, "
                 + "rr.reason, rr.status, rr.moderation_action, rr.reviewed_by, "
                 + "rr.created_at, rr.reviewed_at, "
-                + "r.comment AS review_comment, s.shop_name AS shop_name, "
-                + "u.full_name AS reporter_name "
+                + "r.comment AS review_comment, r.rating AS review_rating, "
+                + "r.status AS review_status, s.shop_name AS shop_name, "
+                + "reporter.full_name AS reporter_name, reviewer.full_name AS reviewer_name "
                 + "FROM dbo.review_reports rr "
-                + "JOIN dbo.users u ON u.user_id=rr.reporter_id "
-                + "JOIN dbo.reviews r ON rr.review_type='PRODUCT' AND r.review_id=rr.review_id "
-                + "JOIN dbo.shops s ON s.shop_id=r.shop_id "
-                + "WHERE rr.status='PENDING' "
+                + "INNER JOIN dbo.reviews r ON r.review_id=rr.review_id "
+                + "INNER JOIN dbo.shops s ON s.shop_id=r.shop_id "
+                + "INNER JOIN dbo.users reporter ON reporter.user_id=rr.reporter_id "
+                + "INNER JOIN dbo.users reviewer ON reviewer.user_id=r.customer_id "
+                + "WHERE rr.status='PENDING' AND rr.review_type='PRODUCT' "
                 + "ORDER BY rr.created_at, rr.report_id "
                 + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
         List<ReviewReport> out = new ArrayList<>();
@@ -433,6 +437,10 @@ public class ReviewDAO extends DBContext {
                     rr.reason = rs.getString("reason");
                     rr.status = rs.getString("status");
                     rr.reviewComment = rs.getString("review_comment");
+                    int score = rs.getInt("review_rating");
+                    rr.reviewRating = rs.wasNull() ? null : score;
+                    rr.reviewStatus = rs.getString("review_status");
+                    rr.reviewerName = rs.getString("reviewer_name");
                     rr.shopName = rs.getString("shop_name");
                     rr.reporterName = rs.getString("reporter_name");
                     rr.moderationAction = rs.getString("moderation_action");
@@ -444,7 +452,6 @@ public class ReviewDAO extends DBContext {
             }
         }
         return out;
-
     }
 
     public boolean moderate(long reportId, long adminId, String action) throws SQLException {
