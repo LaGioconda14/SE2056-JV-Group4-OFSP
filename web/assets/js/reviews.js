@@ -1,6 +1,101 @@
 /* OFSP FE-10 • Vanilla JS • secure DOM rendering; no additional JS dependency. */
 (function () {
     'use strict';
+    // FE10_PRODUCT_DETAIL_INTEGRATION_START
+    (function mountProductDetailReviews() {
+        const loader = document.currentScript;
+        if (!loader || loader.dataset.fe10ProductDetail !== 'true')
+            return;
+
+        const productId = String(loader.dataset.productId || '').trim();
+        const contextPath = loader.dataset.ctx || '';
+        const container = document.getElementById('tab-content-reviews');
+        if (!/^[1-9][0-9]*$/.test(productId) || !container)
+            return;
+        if (container.querySelector('[data-fe10-widget]'))
+            return;
+
+        const cssPath = contextPath + '/assets/css/reviews.css';
+        if (!Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                .some(link => link.getAttribute('href') === cssPath)) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = cssPath;
+            document.head.appendChild(link);
+        }
+
+        const root = document.createElement('div');
+        root.className = 'rv-root rv-app rv-embed';
+        root.dataset.fe10Widget = 'true';
+        root.dataset.fe10ProductDetail = 'true';
+        root.dataset.ctx = contextPath;
+        root.dataset.mode = 'widget';
+        root.dataset.type = 'PRODUCT';
+        root.dataset.targetId = productId;
+        root.style.minHeight = '0';
+        // All markup below is static. Product data is never inserted as HTML.
+        root.innerHTML = [
+            '<div class="rv-container">',
+            '<section class="rv-surface">',
+            '<div class="rv-surface-header">',
+            '<div><h2>Đánh giá xác thực từ người mua</h2>',
+            '<p class="rv-sub">Bình luận từ khách hàng đã mua sản phẩm này</p></div>',
+            '<span class="rv-pill green">✓ Người mua xác thực</span>',
+            '</div>',
+            '<div class="rv-rating-panel">',
+            '<div class="rv-rating-panel-top"><div>',
+            '<span class="rv-section-tag">TỔNG QUAN ĐÁNH GIÁ</span>',
+            '<h3>Chất lượng từ trải nghiệm thực tế</h3>',
+            '</div></div>',
+            '<div class="rv-rating-layout" data-score></div>',
+            '</div>',
+            '<div class="rv-toolbar" data-rating-filter></div>',
+            '<div class="rv-card-list" data-list></div>',
+            '<div class="rv-pagination">',
+            '<button class="rv-btn secondary" type="button" data-prev>← Trước</button>',
+            '<span data-page>Trang 1</span>',
+            '<button class="rv-btn secondary" type="button" data-next>Sau →</button>',
+            '</div>',
+            '<div class="rv-toolbar" style="border-top:1px solid #edf2ee">',
+            '<span class="rv-mini-note">Chỉ sản phẩm thuộc đơn đã giao mới được đánh giá.</span>',
+            '<a class="rv-btn" data-review-center-link>★ Viết đánh giá</a>',
+            '</div>',
+            '</section>',
+            '<div class="rv-message" data-message role="status" aria-live="polite"></div>',
+            '</div>'
+        ].join('');
+        root.querySelector('[data-review-center-link]').href = contextPath + '/review-center';
+
+        // Replace demo-only cards only inside the Product review tab.
+        // No Product controllers, forms, pricing, or other tabs are touched.
+        container.replaceChildren(root);
+        const tabButton = document.getElementById('tab-btn-reviews');
+        if (tabButton)
+            tabButton.textContent = 'Đánh Giá Sản Phẩm (đang tải)';
+        const topLink = document.querySelector('a[href="#tab-reviews"]');
+        if (topLink)
+            topLink.textContent = 'Đang tải đánh giá xác thực…';
+    })();
+
+    function updateProductDetailSummary(root, summary) {
+        if (root.dataset.fe10ProductDetail !== 'true')
+            return;
+        const count = Number(summary && summary.total || 0);
+        const average = Number(summary && summary.average || 0);
+        const tabButton = document.getElementById('tab-btn-reviews');
+        if (tabButton)
+            tabButton.textContent = 'Đánh Giá Sản Phẩm (' + count + ')';
+        const topLink = document.querySelector('a[href="#tab-reviews"]');
+        if (topLink) {
+            topLink.textContent = count + ' đánh giá xác thực';
+            const starsContainer = topLink.previousElementSibling && topLink.previousElementSibling.previousElementSibling;
+            const avg = starsContainer && starsContainer.querySelector('span.font-extrabold');
+            if (avg)
+                avg.textContent = (count ? average.toFixed(1) : '—') + ' / 5.0';
+        }
+    }
+    // FE10_PRODUCT_DETAIL_INTEGRATION_END
+
     document.querySelectorAll('.rv-app').forEach(start);
 
     function start(root) {
@@ -182,21 +277,32 @@
             }
             return row;
         }
+        // FE10_IMAGES_IN_REVIEWS_COLUMN: display image URLs returned by ReviewImageServlet.
         async function photos(target, reviewId) {
             try {
-                const d = await api('/reviews/images?reviewId=' + encodeURIComponent(reviewId));
-                if (!d.imageIds || !d.imageIds.length || !target.isConnected)
+                const data = await api('/reviews/images?reviewId=' + encodeURIComponent(reviewId));
+                const urls = Array.isArray(data.imageUrls) ? data.imageUrls : [];
+                if (!urls.length || !target.isConnected)
                     return;
                 const gallery = node('div', 'rv-review-images');
-                d.imageIds.forEach(id => {
-                    const image = node('img', '');
-                    image.src = url('/reviews/images?imageId=' + id);
-                    image.alt = 'Ảnh từ người mua';
-                    image.loading = 'lazy';
-                    gallery.appendChild(image);
-                });
-                target.appendChild(gallery);
-            } catch (e) { /* image list optional */
+                for (const imageUrl of urls) {
+                    if (typeof imageUrl !== 'string' || !imageUrl.startsWith(ctx + '/reviews/images?'))
+                        continue;
+                    const img = node('img', '');
+                    img.src = imageUrl;
+                    img.alt = 'Ảnh đánh giá từ khách hàng';
+                    img.loading = 'lazy';
+                    gallery.appendChild(img);
+                }
+                if (!gallery.childElementCount)
+                    return;
+                const actions = target.querySelector('.rv-actions');
+                if (actions)
+                    target.insertBefore(gallery, actions);
+                else
+                    target.appendChild(gallery);
+            } catch (error) {
+                // No images yet, or the review is not visible to this user.
             }
         }
         function renderReviews(records, mine, shop) {
@@ -315,6 +421,8 @@
                     state.records = d.reviews || [];
                     state.score = d.rating;
                     renderScore(d.rating);
+                    if (mode === 'widget')
+                        updateProductDetailSummary(root, d.rating);
                     renderReviews(state.filter ? state.records.filter(r => r.rating === state.filter) : state.records, false, false);
                 }
             } catch (e) {
@@ -388,7 +496,7 @@
                 rate.hidden = !['create', 'edit'].includes(action);
             const file = $('[data-file-box]');
             if (file)
-                file.hidden = action !== 'create' || (data.type || state.type) !== 'PRODUCT';
+                file.hidden = !['create', 'edit'].includes(action) || (data.type || state.type) !== 'PRODUCT';
             const submit = $('[data-submit]');
             if (submit)
                 submit.textContent = ({create: 'Gửi đánh giá', edit: 'Lưu thay đổi', delete: 'Xác nhận xóa', report: 'Gửi báo cáo', reply: 'Gửi phản hồi'})[action];
@@ -460,29 +568,59 @@
                     } else if (action === 'report') {
                         payload = {...payload, reviewId: form.dataset.reviewId, reason: comment};
                     }
+                    // FE10_PHOTO_EDIT_AND_DUPLICATE_GUARD
+                    // Validate photo selections before creating/updating a review.
+                    const imageInput = $('[data-image-input]');
+                    const photos = (type === 'PRODUCT' && ['create', 'edit'].includes(action) && imageInput)
+                            ? Array.from(imageInput.files || []) : [];
+                    if (photos.length > 3)
+                        throw new Error('Chỉ được chọn tối đa 3 ảnh.');
+                    for (const photo of photos) {
+                        if (!['image/jpeg', 'image/png'].includes(photo.type))
+                            throw new Error('Chỉ chấp nhận ảnh JPG hoặc PNG.');
+                        if (!photo.size || photo.size > 3 * 1024 * 1024)
+                            throw new Error('Mỗi ảnh phải lớn hơn 0 byte và không vượt quá 3MB.');
+                    }
+                    if (action === 'edit' && photos.length) {
+                        const existing = await api('/reviews/images?reviewId=' + encodeURIComponent(form.dataset.reviewId));
+                        const oldCount = Array.isArray(existing.imageIds) ? existing.imageIds.length : 0;
+                        if (oldCount + photos.length > 3)
+                            throw new Error('Đánh giá đã có ' + oldCount + ' ảnh. Tổng số ảnh không được vượt quá 3.');
+                    }
+                    if (action === 'create') {
+                        const eligibility = await api('/reviews/eligible?type=' + encodeURIComponent(type)
+                                + '&purchaseRef=' + encodeURIComponent(form.dataset.purchaseRef));
+                        if (!eligibility.eligible)
+                            throw new Error('Đơn này chưa đủ điều kiện hoặc đã có đánh giá. Nếu đã đánh giá, mở tab “Đã đánh giá”, chọn “Sửa đánh giá” để thêm ảnh.');
+                    }
+
                     const result = await post('/reviews', payload);
-                    if (action === 'create' && type === 'PRODUCT') {
-                        const input = $('[data-image-input]');
-                        if (input?.files?.length) {
-                            const photos = Array.from(input.files);
-                            if (photos.length > 3)
-                                throw new Error('Đã gửi đánh giá, nhưng chỉ được chọn tối đa 3 ảnh.');
-                            const errors = [];
-                            for (const photo of photos) {
-                                try {
-                                    await post('/reviews/images', {reviewId: result.reviewId}, photo); } catch (e) {
-                                    errors.push(photo.name + ': ' + e.message);
-                                }
+                    const savedReviewId = action === 'create' ? result.reviewId : form.dataset.reviewId;
+                    const imageErrors = [];
+                    if (photos.length) {
+                        for (const photo of photos) {
+                            try {
+                                await post('/reviews/images', {reviewId: savedReviewId}, photo);
+                            } catch (photoError) {
+                                imageErrors.push(photo.name + ': ' + photoError.message);
                             }
-                            if (errors.length)
-                                throw new Error('Đánh giá đã lưu, nhưng một số ảnh không tải lên được:\n' + errors.join('\n'));
                         }
                     }
+                    // A successful review POST must not be retried just because an image failed.
                     close();
                     await refresh();
-                    flash('Thao tác đã được lưu thành công.', true);
+                    if (imageErrors.length)
+                        flash('Đánh giá đã được lưu, nhưng một số ảnh chưa tải lên được: ' + imageErrors.join('; ') + '. Vào Đã đánh giá → Sửa đánh giá để thử lại.', false);
+                    else
+                        flash('Thao tác đã được lưu thành công.', true);
                 } catch (err) {
-                    flash(err.message, false);
+                    if (action === 'create' && /Purchased and delivered item required|review already exists|Đơn này chưa đủ điều kiện/i.test(err.message)) {
+                        close();
+                        await refresh();
+                        flash('Không thể tạo đánh giá mới: đơn hàng chưa đủ điều kiện hoặc đã có đánh giá. Nếu muốn bổ sung ảnh, vào “Đã đánh giá” → “Sửa đánh giá”.', false);
+                    } else {
+                        flash(err.message, false);
+                    }
                 } finally {
                     if (submit)
                         submit.disabled = false;
@@ -493,3 +631,90 @@
         refresh();
     }
 })();
+
+/* FE-10: Xem ảnh đánh giá phóng to */
+(function () {
+    "use strict";
+
+    let lightbox = null;
+    let previousOverflow = "";
+
+    function closeReviewImage() {
+        if (!lightbox)
+            return;
+
+        lightbox.remove();
+        lightbox = null;
+        document.body.style.overflow = previousOverflow;
+    }
+
+    function openReviewImage(src, alt) {
+        if (!src)
+            return;
+
+        closeReviewImage();
+
+        previousOverflow = document.body.style.overflow;
+
+        lightbox = document.createElement("div");
+        lightbox.className = "fe10-lightbox";
+        lightbox.setAttribute("role", "dialog");
+        lightbox.setAttribute("aria-modal", "true");
+        lightbox.setAttribute("aria-label", "Xem ảnh đánh giá");
+
+        const image = document.createElement("img");
+        image.src = src;
+        image.alt = alt || "Ảnh đánh giá sản phẩm";
+        image.className = "fe10-lightbox-image";
+
+        const closeButton = document.createElement("button");
+        closeButton.type = "button";
+        closeButton.className = "fe10-lightbox-close";
+        closeButton.textContent = "×";
+        closeButton.setAttribute("aria-label", "Đóng ảnh");
+
+        closeButton.addEventListener("click", closeReviewImage);
+
+        lightbox.addEventListener("click", function (event) {
+            if (event.target === lightbox) {
+                closeReviewImage();
+            }
+        });
+
+        lightbox.appendChild(image);
+        lightbox.appendChild(closeButton);
+
+        document.body.appendChild(lightbox);
+        document.body.style.overflow = "hidden";
+
+        closeButton.focus();
+    }
+
+    // Bắt sự kiện ảnh, kể cả ảnh được tải động từ API.
+    document.addEventListener("click", function (event) {
+        if (!(event.target instanceof Element))
+            return;
+
+        const image = event.target.closest(
+                ".rv-review-images img"
+                );
+
+        if (!image)
+            return;
+
+        event.preventDefault();
+
+        openReviewImage(
+                image.currentSrc || image.src,
+                image.alt
+                );
+    });
+
+    // Nhấn ESC để đóng ảnh.
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && lightbox) {
+            closeReviewImage();
+        }
+    });
+})();
+

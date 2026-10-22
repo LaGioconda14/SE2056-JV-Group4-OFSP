@@ -1294,5 +1294,6 @@
                 }
             });
         </script>
+        <script src="${pageContext.request.contextPath}/assets/js/reviews.js" data-fe10-product-detail="true" data-product-id="${product.id}" data-ctx="${pageContext.request.contextPath}"></script>
     </body>
 </html>

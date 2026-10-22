@@ -506,70 +506,91 @@ public class ReviewDAO extends DBContext {
         }
     }
 
-    public long addProductImage(long reviewId, long customerId, String storageName, String mime) throws SQLException {
-        String sql = "INSERT dbo.review_images(review_id,storage_name,mime_type) OUTPUT INSERTED.image_id "
-                + "SELECT review_id,?,? FROM dbo.reviews "
-                + "WHERE review_id=? AND customer_id=? AND status NOT IN('DELETED','REMOVED') "
-                + "AND (SELECT COUNT(*) FROM dbo.review_images WITH(UPDLOCK,HOLDLOCK) WHERE review_id=?) < 3";
-        try (Connection c = connection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setString(1, storageName);
-            ps.setString(2, mime);
-            ps.setLong(3, reviewId);
-            ps.setLong(4, customerId);
-            ps.setLong(5, reviewId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    throw new IllegalArgumentException("Only the review owner can upload up to three images");
+    // FE10_IMAGES_IN_REVIEWS_COLUMN: filenames are stored as JSON in reviews.image_urls.
+    private static final com.google.gson.Gson IMAGE_JSON = new com.google.gson.Gson();
+
+    private static List<String> parseImageNames(String json) {
+        List<String> names = new ArrayList<>();
+        if (json == null || json.trim().isEmpty()) return names;
+        String[] loaded;
+        try {
+            loaded = IMAGE_JSON.fromJson(json, String[].class);
+        } catch (com.google.gson.JsonSyntaxException ex) {
+            throw new IllegalStateException("Invalid image_urls JSON in dbo.reviews", ex);
+        }
+        if (loaded == null) return names;
+        for (String name : loaded) {
+            if (name == null || !name.matches("[0-9a-fA-F-]{36}\\.(jpg|png)")) {
+                throw new IllegalStateException("Invalid filename in dbo.reviews.image_urls");
+            }
+            names.add(name);
+        }
+        if (names.size() > 3) throw new IllegalStateException("Too many images in review image_urls");
+        return names;
+    }
+
+    /** Returns the zero-based index of a saved image, or throws when not allowed. */
+    public int appendProductImage(long reviewId, long customerId, String filename) throws SQLException {
+        if (filename == null || !filename.matches("[0-9a-fA-F-]{36}\\.(jpg|png)")) {
+            throw new IllegalArgumentException("Invalid image filename");
+        }
+        try (Connection c = connection()) {
+            c.setAutoCommit(false);
+            try {
+                List<String> names;
+                String sql = "SELECT image_urls FROM dbo.reviews WITH(UPDLOCK, HOLDLOCK) "
+                        + "WHERE review_id=? AND customer_id=? AND status NOT IN('DELETED','REMOVED')";
+                try (PreparedStatement ps = c.prepareStatement(sql)) {
+                    ps.setLong(1, reviewId);
+                    ps.setLong(2, customerId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new SecurityException("Review not found or you cannot upload images to it");
+                        }
+                        names = parseImageNames(rs.getString("image_urls"));
+                    }
                 }
-                return rs.getLong(1);
+                if (names.size() >= 3) {
+                    throw new IllegalArgumentException("Review already has 3 images");
+                }
+                names.add(filename);
+                try (PreparedStatement ps = c.prepareStatement(
+                        "UPDATE dbo.reviews SET image_urls=?,updated_at=SYSUTCDATETIME() "
+                        + "WHERE review_id=? AND customer_id=?")) {
+                    ps.setString(1, IMAGE_JSON.toJson(names));
+                    ps.setLong(2, reviewId);
+                    ps.setLong(3, customerId);
+                    if (ps.executeUpdate() != 1) {
+                        throw new IllegalArgumentException("Review no longer exists");
+                    }
+                }
+                c.commit();
+                return names.size() - 1;
+            } catch (SQLException | RuntimeException ex) {
+                c.rollback();
+                throw ex;
             }
         }
     }
 
-    public ImageInfo findImage(long imageId, long viewerId, boolean admin) throws SQLException {
-        String sql = "SELECT i.image_id,i.review_id,i.storage_name,i.mime_type,r.customer_id,r.status "
-                + "FROM dbo.review_images i JOIN dbo.reviews r ON r.review_id=i.review_id WHERE i.image_id=?";
+    /** Null means not visible to the viewer. Public APPROVED reviews are visible. */
+    public List<String> getProductImages(long reviewId, long viewerId, boolean admin) throws SQLException {
+        String sql = "SELECT image_urls,customer_id,status FROM dbo.reviews WHERE review_id=?";
         try (Connection c = connection(); PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setLong(1, imageId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    return null;
-                }
-                long owner = rs.getLong("customer_id");
-                String status = rs.getString("status");
-                if ("DELETED".equals(status) || "REMOVED".equals(status)) {
-                    return null;
-                }
-                if (!("APPROVED".equals(status) || admin || (viewerId == owner && viewerId > 0))) {
-                    return null;
-                }
-                ImageInfo info = new ImageInfo();
-                info.imageId = rs.getLong("image_id");
-                info.storageName = rs.getString("storage_name");
-                info.mimeType = rs.getString("mime_type");
-                return info;
-            }
-        }
-    }
-
-    public List<Long> imageIds(long reviewId) throws SQLException {
-        List<Long> ids = new ArrayList<>();
-        try (Connection c = connection(); PreparedStatement ps = c.prepareStatement(
-                "SELECT image_id FROM dbo.review_images WHERE review_id=? ORDER BY image_id")) {
             ps.setLong(1, reviewId);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    ids.add(rs.getLong(1));
+                if (!rs.next()) return null;
+                String status = rs.getString("status");
+                long authorId = rs.getLong("customer_id");
+                if ("DELETED".equals(status) || "REMOVED".equals(status)) return null;
+                if (!("APPROVED".equals(status) || admin || (viewerId > 0 && viewerId == authorId))) {
+                    return null;
                 }
+                return parseImageNames(rs.getString("image_urls"));
             }
         }
-        return ids;
     }
 
-    /**
-     * Customer-facing list: purchases are derived from completed deliveries in
-     * SQL Server.
-     */
     public List<model.ReviewPurchase> listPurchases(String type, long customerId) throws SQLException {
         List<model.ReviewPurchase> out = new ArrayList<>();
         String sql;
@@ -672,12 +693,4 @@ public class ReviewDAO extends DBContext {
             ps.setLong(3, ownerId);
             return ps.executeUpdate() == 1;
         }
-    }
-
-    public static class ImageInfo {
-
-        public long imageId;
-        public String storageName;
-        public String mimeType;
-    }
-}
+    }}
