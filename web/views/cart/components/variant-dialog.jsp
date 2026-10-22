@@ -1,3 +1,4 @@
+<%@page pageEncoding="UTF-8"%>
 <dialog id="variant-dialog-${item.cartItemID}" data-variant-dialog data-item-id="${item.cartItemID}" aria-labelledby="variant-title-${item.cartItemID}" class="w-[min(520px,calc(100%-24px))] rounded-2xl border border-outline-variant/40 p-0 shadow-2xl backdrop:bg-black/40">
     <form method="post" action="<c:out value='${changeVariantUrl}'/>" class="p-5">
         <input type="hidden" name="cartItemId" value="${item.cartItemID}"><c:if test="${not empty sessionScope.cartCsrfToken}"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"></c:if>

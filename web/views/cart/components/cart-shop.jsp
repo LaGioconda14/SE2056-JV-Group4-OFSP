@@ -1,3 +1,4 @@
+<%@page pageEncoding="UTF-8"%>
 <section class="overflow-hidden rounded-2xl border border-outline-variant/25 bg-surface-container-lowest shadow-sm" data-shop-group="${shopEntry.key}">
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 px-5 py-4">
         <label class="flex items-center gap-3 cursor-pointer">

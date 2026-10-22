@@ -1,3 +1,4 @@
+<%@page pageEncoding="UTF-8"%>
 <div class="sticky bottom-0 z-30 overflow-hidden rounded-2xl border border-outline-variant/30 bg-surface-container-lowest/95 shadow-[0_-10px_35px_rgba(15,23,42,0.14)] backdrop-blur-xl">
     <div class="flex flex-wrap items-center justify-end gap-3 border-b border-outline-variant/20 px-5 py-3">
         <span class="material-symbols-outlined text-[19px] text-tertiary">confirmation_number</span><strong class="text-sm">Voucher Gốc Vườn (Sàn)</strong>

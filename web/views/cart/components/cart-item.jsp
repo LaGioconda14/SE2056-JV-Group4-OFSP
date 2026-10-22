@@ -1,3 +1,4 @@
+<%@page pageEncoding="UTF-8"%>
 <div class="grid grid-cols-1 gap-4 border-b border-outline-variant/15 px-5 py-5 transition hover:bg-surface-container-low/30 lg:grid-cols-[minmax(0,1fr)_140px_180px_150px_72px] lg:items-center"
      id="cart-item-${item.cartItemID}" data-cart-row data-item-id="${item.cartItemID}" data-shop-id="${shopEntry.key}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" data-unit-price="${item.variant.price}">
     <div class="flex min-w-0 items-start gap-3">

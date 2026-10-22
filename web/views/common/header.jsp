@@ -117,7 +117,7 @@
             <a href="<c:out value='${cartUrl}'/>" class="flex items-center gap-2.5 py-1.5 px-3.5 rounded-full border border-[#00652c]/30 bg-[#00652c]/5 hover:bg-[#00652c]/10 transition-colors" data-path="cart" title="Giỏ hàng">
                 <div class="relative flex items-center justify-center">
                     <span class="material-symbols-outlined text-[#00652c] text-[22px]">shopping_cart</span>
-                    <span class="absolute -top-2 -right-2.5 min-w-[18px] h-4 px-1 bg-red-600 text-white rounded-full font-bold text-[10px] flex items-center justify-center border border-white shadow-xs" id="nav-cart-badge">
+                    <span class="${cartSize gt 0 ? 'flex' : 'hidden'} absolute -top-2 -right-2.5 min-w-[18px] h-4 px-1 bg-red-600 text-white rounded-full font-bold text-[10px] items-center justify-center border border-white shadow-xs" id="nav-cart-badge">
                         <c:out value="${cartSize gt 99 ? '99+' : cartSize}"/>
                     </span>
                 </div>
@@ -328,7 +328,11 @@
                 if (data.success) {
                     if (data.cartSize !== undefined) {
                         const badges = document.querySelectorAll('#nav-cart-badge, #cartBadge');
-                        badges.forEach(b => b.textContent = data.cartSize > 99 ? '99+' : data.cartSize);
+                        badges.forEach(b => {
+                            b.textContent = data.cartSize > 99 ? '99+' : data.cartSize;
+                            b.classList.toggle('hidden', data.cartSize <= 0);
+                            b.classList.toggle('flex', data.cartSize > 0);
+                        });
                         const notiCartCount = document.getElementById('noti-cart-count');
                         if (notiCartCount) notiCartCount.textContent = data.cartSize;
                     }

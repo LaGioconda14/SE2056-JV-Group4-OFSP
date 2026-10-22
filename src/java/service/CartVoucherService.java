@@ -3,7 +3,6 @@ package service;
 import dao.CartVoucherDAO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -28,24 +27,19 @@ public class CartVoucherService {
         this.voucherDAO = voucherDAO;
     }
 
-    public List<CartVoucher> findEligible(long customerId, String[] itemIds, String[] quantities)
-            throws SQLException {
-        return findVouchers(customerId, itemIds, quantities);
-    }
-
     public List<CartVoucher> findVouchers(long customerId, String[] itemIds, String[] quantities,
-            String scope, Long shopId) throws SQLException {
+            String scope, Long shopId) {
         if (customerId <= 0) {
             throw new IllegalArgumentException("Invalid customer");
         }
         Map<Long, Integer> selection = parseSelection(itemIds, quantities);
         Map<Long, BigDecimal> subtotals = selection.isEmpty() ? Collections.emptyMap()
                 : shopSubtotals(selection, voucherDAO.findCartItems(customerId));
-        return evaluateVouchers(subtotals, voucherDAO.findActiveCoupons(customerId, scope, shopId));
+        return evaluateVouchers(subtotals, voucherDAO.findActiveCoupons(scope, shopId));
     }
 
     public List<CartVoucher> findVouchers(long customerId, String[] itemIds, String[] quantities)
-            throws SQLException {
+            {
         return findVouchers(customerId, itemIds, quantities, null, null);
     }
 
@@ -90,11 +84,6 @@ public class CartVoucherService {
         return subtotals;
     }
 
-    public static List<CartVoucher> eligibleVouchers(Map<Long, BigDecimal> shopSubtotals,
-            List<VoucherCoupon> coupons) {
-        return evaluateVouchers(shopSubtotals, coupons);
-    }
-
     public static List<CartVoucher> evaluateVouchers(Map<Long, BigDecimal> shopSubtotals,
             List<VoucherCoupon> coupons) {
         List<CartVoucher> vouchers = new ArrayList<>();
@@ -137,7 +126,9 @@ public class CartVoucherService {
             return ineligible(coupon, "Mã giảm giá không hỗ trợ giỏ hàng này.");
         }
         BigDecimal amount;
-        if ("FIXED_AMOUNT".equals(coupon.discountType())) {
+        if ("FREESHIP".equals(coupon.discountType())) {
+            amount = base;
+        } else if ("FIXED_AMOUNT".equals(coupon.discountType())) {
             amount = coupon.discountValue();
         } else if ("PERCENTAGE".equals(coupon.discountType())) {
             amount = base.multiply(coupon.discountValue()).movePointLeft(2);

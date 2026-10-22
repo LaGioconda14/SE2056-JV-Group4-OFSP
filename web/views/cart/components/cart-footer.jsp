@@ -1,3 +1,4 @@
+<%@page pageEncoding="UTF-8"%>
 <footer class="w-full mt-space-xl border-t border-primary/10 bg-[#f2f7f2] text-on-surface-variant">
     <div class="max-w-[1360px] mx-auto px-margin-sm lg:px-margin">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 py-10">

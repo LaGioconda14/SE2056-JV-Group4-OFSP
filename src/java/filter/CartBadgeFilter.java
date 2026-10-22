@@ -9,6 +9,8 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.User;
 import service.ICartService;
 import service.impl.CartServiceImpl;
@@ -18,6 +20,7 @@ import service.impl.CartServiceImpl;
 })
 public class CartBadgeFilter implements Filter {
 
+    private static final Logger LOGGER = Logger.getLogger(CartBadgeFilter.class.getName());
     private final ICartService cartService = new CartServiceImpl();
 
     @Override
@@ -27,12 +30,15 @@ public class CartBadgeFilter implements Filter {
         HttpSession session = httpRequest.getSession(false);
         User user = session != null ? (User) session.getAttribute("user") : null;
 
-        if (user != null) {
+        if (user != null && user.isActive()) {
             try {
-                session.setAttribute("cartSize",
-                        cartService.getCart((long) user.getId()).getVariantCount());
+                // Badge chỉ đếm dòng hiện có, không được tạo cart hoặc reconcile dữ liệu ngoài trang /cart.
+                session.setAttribute("cartSize", cartService.getCartItemCount((long) user.getId()));
             } catch (RuntimeException ex) {
-                session.setAttribute("cartSize", 0);
+                LOGGER.log(Level.WARNING, "Cannot load cart badge", ex);
+                if (session.getAttribute("cartSize") == null) {
+                    session.setAttribute("cartSize", 0);
+                }
             }
         } else if (session != null) {
             session.removeAttribute("cartSize");
