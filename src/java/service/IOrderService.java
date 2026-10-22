@@ -12,7 +12,7 @@ import model.SubOrder;
 
 public interface IOrderService {
 
-    List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds) throws Exception;
+    List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds);
 
     Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode);
 

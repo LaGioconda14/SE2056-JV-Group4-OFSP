@@ -117,7 +117,7 @@
             <a href="<c:out value='${cartUrl}'/>" class="flex items-center gap-2.5 py-1.5 px-3.5 rounded-full border border-[#00652c]/30 bg-[#00652c]/5 hover:bg-[#00652c]/10 transition-colors" data-path="cart" title="Giỏ hàng">
                 <div class="relative flex items-center justify-center">
                     <span class="material-symbols-outlined text-[#00652c] text-[22px]">shopping_cart</span>
-                    <span class="absolute -top-2 -right-2.5 min-w-[18px] h-4 px-1 bg-red-600 text-white rounded-full font-bold text-[10px] flex items-center justify-center border border-white shadow-xs" id="nav-cart-badge">
+                    <span class="${cartSize gt 0 ? 'flex' : 'hidden'} absolute -top-2 -right-2.5 min-w-[18px] h-4 px-1 bg-red-600 text-white rounded-full font-bold text-[10px] items-center justify-center border border-white shadow-xs" id="nav-cart-badge">
                         <c:out value="${cartSize gt 99 ? '99+' : cartSize}"/>
                     </span>
                 </div>
@@ -283,15 +283,20 @@
         }
     });
 
-    // Intercept Add to Cart form submissions for smooth instant notification & badge update
-    document.addEventListener('submit', function(e) {
+    // Chỉ đăng ký một handler và nhường form đã có AJAX riêng xử lý để tránh gửi hai POST.
+    if (!window.__cartAddSubmitBound) {
+        window.__cartAddSubmitBound = true;
+        document.addEventListener('submit', function(e) {
         const form = e.target;
         if (form && form.action && form.action.includes('/cart/add')) {
+            if (e.defaultPrevented) return;
             const submitter = e.submitter;
             if (submitter && submitter.value === 'buyNow') {
                 return; // allow normal Buy Now submission to /checkout
             }
             e.preventDefault();
+            if (form.dataset.cartSubmitting === 'true') return;
+            form.dataset.cartSubmitting = 'true';
             const formData = new FormData(form);
             const params = new URLSearchParams();
             for (const [key, value] of formData.entries()) {
@@ -319,6 +324,7 @@
                 return res.json();
             })
             .then(data => {
+                form.dataset.cartSubmitting = 'false';
                 if (submitBtn) submitBtn.disabled = false;
                 if (!data) return;
                 if (data.redirect) {
@@ -328,7 +334,11 @@
                 if (data.success) {
                     if (data.cartSize !== undefined) {
                         const badges = document.querySelectorAll('#nav-cart-badge, #cartBadge');
-                        badges.forEach(b => b.textContent = data.cartSize > 99 ? '99+' : data.cartSize);
+                        badges.forEach(b => {
+                            b.textContent = data.cartSize > 99 ? '99+' : data.cartSize;
+                            b.classList.toggle('hidden', data.cartSize <= 0);
+                            b.classList.toggle('flex', data.cartSize > 0);
+                        });
                         const notiCartCount = document.getElementById('noti-cart-count');
                         if (notiCartCount) notiCartCount.textContent = data.cartSize;
                     }
@@ -339,9 +349,11 @@
                 }
             })
             .catch(err => {
+                form.dataset.cartSubmitting = 'false';
                 if (submitBtn) submitBtn.disabled = false;
-                form.submit(); // fallback
+                window.showToast('Không thể xác nhận kết quả thêm giỏ hàng. Vui lòng tải lại trang để kiểm tra.', 'error');
             });
         }
-    });
+        });
+    }
 </script>

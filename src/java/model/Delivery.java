@@ -117,12 +117,8 @@ public class Delivery {
     }
 
     public DeliveryStatus getDeliveryStatusEnum() {
-        if (deliveryStatus == null) return DeliveryStatus.ASSIGNING;
-        try {
-            return DeliveryStatus.valueOf(deliveryStatus.trim().toUpperCase());
-        } catch (Exception e) {
-            return DeliveryStatus.ASSIGNING;
-        }
+        DeliveryStatus status = DeliveryStatus.from(deliveryStatus);
+        return status != null ? status : DeliveryStatus.ASSIGNING;
     }
 
     public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
@@ -274,12 +270,8 @@ public class Delivery {
     }
 
     public PaymentMethod getPaymentMethodEnum() {
-        if (paymentMethod == null) return PaymentMethod.COD;
-        try {
-            return PaymentMethod.valueOf(paymentMethod.trim().toUpperCase());
-        } catch (Exception e) {
-            return PaymentMethod.COD;
-        }
+        PaymentMethod method = PaymentMethod.from(paymentMethod);
+        return method != null ? method : PaymentMethod.COD;
     }
 
     public void setPaymentMethod(PaymentMethod paymentMethod) {
@@ -295,12 +287,8 @@ public class Delivery {
     }
 
     public PaymentStatus getPaymentStatusEnum() {
-        if (paymentStatus == null) return PaymentStatus.PENDING;
-        try {
-            return PaymentStatus.valueOf(paymentStatus.trim().toUpperCase());
-        } catch (Exception e) {
-            return PaymentStatus.PENDING;
-        }
+        PaymentStatus status = PaymentStatus.from(paymentStatus);
+        return status != null ? status : PaymentStatus.PENDING;
     }
 
     public void setPaymentStatus(PaymentStatus paymentStatus) {

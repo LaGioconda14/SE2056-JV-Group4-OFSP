@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -53,10 +52,10 @@ public class CartVouchersServlet extends HttpServlet {
         }
         String scope = request.getParameter("scope");
         String shopIdParam = request.getParameter("shopId");
-        Long shopId = (shopIdParam != null && shopIdParam.matches("^[0-9]+$")) ? Long.parseLong(shopIdParam) : null;
 
         String json;
         try {
+            Long shopId = parseShopId(shopIdParam);
             List<CartVoucher> vouchers;
             if (scope != null || shopId != null) {
                 vouchers = voucherService.findVouchers(user.getId(),
@@ -70,12 +69,27 @@ public class CartVouchersServlet extends HttpServlet {
         } catch (IllegalArgumentException ex) {
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, "Sản phẩm hoặc số lượng trong giỏ hàng không hợp lệ!");
             return;
-        } catch (SQLException | RuntimeException ex) {
-            LOGGER.severe("Cart voucher lookup failed");
+        } catch (RuntimeException ex) {
+            LOGGER.log(java.util.logging.Level.SEVERE, "Cart voucher lookup failed", ex);
             writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Không thể tải mã giảm giá. Vui lòng thử lại sau!");
             return;
         }
         response.getWriter().write(json);
+    }
+
+    private Long parseShopId(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            long shopId = Long.parseLong(value.trim());
+            if (shopId <= 0) {
+                throw new IllegalArgumentException("Invalid shop ID");
+            }
+            return shopId;
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Invalid shop ID", ex);
+        }
     }
 
     private void writeError(HttpServletResponse response, int status, String message) throws IOException {

@@ -6,7 +6,6 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     initQuickPriceFilter();
-    initCartAddAjax();
     initViewSwitcher();
 });
 
@@ -38,65 +37,7 @@ function initQuickPriceFilter() {
 }
 
 /**
- * 2. AJAX Add to Cart
- */
-function initCartAddAjax() {
-    const addForms = document.querySelectorAll('.form-add-cart');
-    addForms.forEach(form => {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const btn = form.querySelector('.btn-card-add');
-            if (btn) {
-                btn.disabled = true;
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-[10px]"></i>';
-
-                const formData = new FormData(form);
-                const url = form.action;
-
-                fetch(url, {
-                    method: 'POST',
-                    body: new URLSearchParams(formData),
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(res => {
-                    if (res.ok) {
-                        return res.text();
-                    }
-                    throw new Error('Network response was not ok');
-                })
-                .then(() => {
-                    // Cập nhật badge giỏ hàng trên header
-                    const cartBadges = document.querySelectorAll('#header-cart-badge, .cart-count-badge');
-                    cartBadges.forEach(b => {
-                        let cnt = parseInt(b.textContent.trim()) || 0;
-                        b.textContent = cnt + 1;
-                        b.classList.remove('hidden');
-                    });
-
-                    if (window.showToast) {
-                        window.showToast('Đã thêm sản phẩm vào giỏ hàng thành công!', 'success');
-                    }
-                })
-                .catch(() => {
-                    // Fallback submit form thông thường nếu ajax bị chặn
-                    form.submit();
-                })
-                .finally(() => {
-                    setTimeout(() => {
-                        btn.disabled = false;
-                        btn.innerHTML = originalHtml;
-                    }, 400);
-                });
-            }
-        });
-    });
-}
-
-/**
- * 4. Grid / List View Switcher
+ * 2. Grid / List View Switcher
  */
 function initViewSwitcher() {
     const gridBtn = document.getElementById('gridViewBtn');

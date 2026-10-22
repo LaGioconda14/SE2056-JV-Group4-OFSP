@@ -43,7 +43,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds) throws Exception {
+    public List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
         }

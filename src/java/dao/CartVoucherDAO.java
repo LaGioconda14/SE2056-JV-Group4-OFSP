@@ -1,5 +1,7 @@
 package dao;
 
+import exception.CartErrorCode;
+import exception.CartException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,13 +10,17 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.VoucherCartItem;
 import model.VoucherCoupon;
 import util.DBContext;
 
 public class CartVoucherDAO extends DBContext {
 
-    public Map<Long, VoucherCartItem> findCartItems(long customerId) throws SQLException {
+    private static final Logger LOGGER = Logger.getLogger(CartVoucherDAO.class.getName());
+
+    public Map<Long, VoucherCartItem> findCartItems(long customerId) {
         String sql = "SELECT ci.cart_item_id, p.shop_id, pv.price, pv.stock_quantity, "
                 + "pv.is_active AS variant_active, p.is_active AS product_active, s.status AS shop_status "
                 + "FROM carts c INNER JOIN cart_items ci ON ci.cart_id = c.cart_id "
@@ -35,11 +41,13 @@ public class CartVoucherDAO extends DBContext {
                             && "ACTIVE".equalsIgnoreCase(result.getString("shop_status"))));
                 }
             }
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
         }
         return items;
     }
 
-    public List<VoucherCoupon> findActiveCoupons(long customerId, String scope, Long shopId) throws SQLException {
+    public List<VoucherCoupon> findActiveCoupons(String scope, Long shopId) {
         StringBuilder sql = new StringBuilder("SELECT c.coupon_id, c.code, c.shop_id, s.shop_name, ")
                 .append("c.discount_type, c.discount_value, c.min_order_value, ")
                 .append("c.max_discount_amount, c.end_date, ")
@@ -81,16 +89,10 @@ public class CartVoucherDAO extends DBContext {
                             true, 1, 0));
                 }
             }
+        } catch (SQLException ex) {
+            throw databaseFailure(ex);
         }
         return coupons;
-    }
-
-    public List<VoucherCoupon> findActiveCoupons(long customerId) throws SQLException {
-        return findActiveCoupons(customerId, null, null);
-    }
-
-    public List<VoucherCoupon> findActiveCoupons() throws SQLException {
-        return findActiveCoupons(0, null, null);
     }
 
     private Connection requireConnection() throws SQLException {
@@ -99,5 +101,11 @@ public class CartVoucherDAO extends DBContext {
             throw new SQLException("Voucher lookup unavailable");
         }
         return connection;
+    }
+
+    private CartException databaseFailure(SQLException cause) {
+        LOGGER.log(Level.SEVERE, "Cart voucher database operation failed", cause);
+        return new CartException(CartErrorCode.DATABASE_FAILURE,
+                "Không thể tải mã giảm giá. Vui lòng thử lại sau!", cause);
     }
 }
