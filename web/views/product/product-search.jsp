@@ -120,6 +120,7 @@
                         <i class="fa-solid fa-house"></i> Trang chủ
                     </a>
                     <a href="${pageContext.request.contextPath}/store" class="home-nav-item"><i class="fa-solid fa-store text-xs"></i> Gian hàng nông trại</a>
+                    <a href="${pageContext.request.contextPath}/products" class="home-nav-item"><i class="fa-solid fa-layer-group text-xs"></i> Tất cả sản phẩm</a>
                     <a href="${pageContext.request.contextPath}/home#featured" class="home-nav-item">Sản phẩm nổi bật</a>
                     <a href="${pageContext.request.contextPath}/home#about" class="home-nav-item">Về chúng tôi</a>
                 </div>

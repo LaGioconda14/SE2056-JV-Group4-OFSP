@@ -8,6 +8,10 @@ package controller.product;
 import dao.ProductDAO;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -51,6 +55,22 @@ public class DetailServlet extends HttpServlet {
                 if (product != null) {
                     System.out.println(">>> [DEBUG DETAIL] Đã tìm thấy sản phẩm: " + product.getName());
                     request.setAttribute("product", product);
+                    request.setAttribute("variants", product.getVariants());
+
+                    List<Map<String, String>> imageList = new ArrayList<>();
+                    for (String imageUrl : product.getImages()) {
+                        if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                            Map<String, String> image = new LinkedHashMap<>();
+                            image.put("imageUrl", imageUrl);
+                            imageList.add(image);
+                        }
+                    }
+                    if (imageList.isEmpty()) {
+                        Map<String, String> image = new LinkedHashMap<>();
+                        image.put("imageUrl", product.getImage());
+                        imageList.add(image);
+                    }
+                    request.setAttribute("imageList", imageList);
                     
                     // 3. Forward dữ liệu sang trang detail.jsp đã tạo
                     request.getRequestDispatcher("/views/product/product-detail.jsp").forward(request, response);

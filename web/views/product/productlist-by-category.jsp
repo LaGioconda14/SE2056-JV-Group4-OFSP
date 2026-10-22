@@ -221,6 +221,9 @@
                     <a href="${pageContext.request.contextPath}/store" class="home-nav-item">
                         <i class="fa-solid fa-store text-xs"></i> Gian hàng nông trại
                     </a>
+                    <a href="${pageContext.request.contextPath}/products" class="home-nav-item">
+                        <i class="fa-solid fa-layer-group text-xs"></i> Tất cả sản phẩm
+                    </a>
                     <a href="${pageContext.request.contextPath}/products" class="home-nav-item active">
                         <i class="fa-solid fa-layer-group text-xs"></i> Danh mục nông sản
                     </a>
@@ -256,6 +259,51 @@
                                 </li>
                             </c:forEach>
                         </ul>
+
+                        <form action="${pageContext.request.contextPath}/products" method="GET" class="mt-6 border-t border-gray-100 pt-5 space-y-4">
+                            <c:if test="${not empty selectedCategory}">
+                                <input type="hidden" name="category" value="${selectedCategory}">
+                            </c:if>
+                            <h3 class="font-extrabold text-gray-900 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-filter text-emerald-600"></i> Bộ lọc tìm kiếm
+                            </h3>
+                            <div>
+                                <label for="productKeyword" class="block text-xs font-bold text-gray-700 mb-1.5">Tên sản phẩm</label>
+                                <input id="productKeyword" type="search" name="keyword" value="${keyword}" placeholder="Nhập tên hoặc xuất xứ" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1.5">Khoảng giá (VNĐ)</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" name="minPrice" min="0" value="${minPrice}" placeholder="Từ" class="w-full min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                                    <span class="text-gray-400">–</span>
+                                    <input type="number" name="maxPrice" min="0" value="${maxPrice}" placeholder="Đến" class="w-full min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label for="productRating" class="block text-xs font-bold text-gray-700 mb-1.5">Đánh giá từ</label>
+                                <select id="productRating" name="rating" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                                    <option value="" ${empty selectedRating ? 'selected' : ''}>Tất cả đánh giá</option>
+                                    <option value="4" ${selectedRating == '4' ? 'selected' : ''}>4 sao trở lên</option>
+                                    <option value="5" ${selectedRating == '5' ? 'selected' : ''}>5 sao</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="productAvailability" class="block text-xs font-bold text-gray-700 mb-1.5">Tình trạng hàng</label>
+                                <select id="productAvailability" name="availability" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                                    <option value="" ${empty selectedAvailability ? 'selected' : ''}>Tất cả</option>
+                                    <option value="in_stock" ${selectedAvailability == 'in_stock' ? 'selected' : ''}>Còn hàng</option>
+                                    <option value="out_of_stock" ${selectedAvailability == 'out_of_stock' ? 'selected' : ''}>Hết hàng</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="productOrigin" class="block text-xs font-bold text-gray-700 mb-1.5">Xuất xứ</label>
+                                <input id="productOrigin" type="text" name="origin" value="${origin}" placeholder="Ví dụ: Đà Lạt, Mỹ" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <button type="submit" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs py-2.5 rounded-xl transition">
+                                Áp dụng bộ lọc
+                            </button>
+                            <a href="${pageContext.request.contextPath}/products${not empty selectedCategory ? '?category=' : ''}${not empty selectedCategory ? selectedCategory : ''}" class="block text-center text-xs font-semibold text-gray-500 hover:text-emerald-700">Xóa bộ lọc</a>
+                        </form>
                     </div>
                 </aside>
 

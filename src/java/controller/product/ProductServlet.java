@@ -39,15 +39,15 @@ public class ProductServlet extends HttpServlet {
         
         // 1. Lấy tham số category slug từ URL khi người dùng bấm vào danh mục
         String categorySlug = request.getParameter("category");
-        
-        List<Product> listProduct;
-        
-        // 2. Nếu có chọn danh mục cụ thể -> lọc theo slug, ngược lại lấy toàn bộ sản phẩm
-        if (categorySlug != null && !categorySlug.trim().isEmpty()) {
-            listProduct = productService.getProductsByCategorySlug(categorySlug);
-        } else {
-            listProduct = productService.getHomeProducts(); // Hoặc hàm lấy tất cả sản phẩm của ông
-        }
+        String keyword = request.getParameter("keyword");
+        String minPrice = request.getParameter("minPrice");
+        String maxPrice = request.getParameter("maxPrice");
+        String rating = request.getParameter("rating");
+        String availability = request.getParameter("availability");
+        String origin = request.getParameter("origin");
+
+        List<Product> listProduct = productService.searchAndFilterProducts(
+                keyword, categorySlug, minPrice, maxPrice, rating, availability, origin);
         
         // 3. Lấy toàn bộ danh mục từ CategoryDAO (thông qua Service) để đổ ra sidebar bên trái
         List<Category> categories = productService.getAllCategories();
@@ -56,6 +56,12 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("listProduct", listProduct);
         request.setAttribute("categories", categories);
         request.setAttribute("selectedCategory", categorySlug);
+        request.setAttribute("keyword", keyword);
+        request.setAttribute("minPrice", minPrice);
+        request.setAttribute("maxPrice", maxPrice);
+        request.setAttribute("selectedRating", rating);
+        request.setAttribute("selectedAvailability", availability);
+        request.setAttribute("origin", origin);
         
         // 5. Chuyển hướng tới giao diện productlist-by-category.jsp
         request.getRequestDispatcher("/views/product/productlist-by-category.jsp").forward(request, response);

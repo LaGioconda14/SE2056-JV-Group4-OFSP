@@ -217,6 +217,8 @@ public class ProductDAO extends DBContext {
                 sql.append(" AND p.category_id = ? ");
                 params.add(catId);
             } catch (NumberFormatException ignored) {
+                sql.append(" AND c.slug = ? ");
+                params.add(categoryId.trim());
             }
         }
 
@@ -1004,11 +1006,14 @@ public class ProductDAO extends DBContext {
     // 2. Lấy danh sách biến thể (variants) khớp chuẩn model ProductVariant
     public List<ProductVariant> getVariantsByProductId(long productId) {
         List<ProductVariant> list = new ArrayList<>();
-        String sql = "SELECT pv.*, p.product_name, p.origin, c.category_name, p.certification, p.storage_temp, p.description "
-                + "FROM Product_variants pv "
-                + "JOIN Products p ON pv.product_id = p.product_id "
+        String sql = "SELECT pv.*, p.name AS product_name, p.origin, c.category_name, p.certification, p.storage_temp, p.description, pi.image_url "
+                + "FROM product_variants pv "
+                + "JOIN products p ON pv.product_id = p.product_id "
                 + "LEFT JOIN Categories c ON p.category_id = c.category_id "
-                + "WHERE pv.product_id = ? AND pv.is_active = 1";
+                + "OUTER APPLY (SELECT TOP 1 image_url FROM product_images "
+                + "WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC) pi "
+                + "WHERE pv.product_id = ? AND pv.is_active = 1 "
+                + "ORDER BY pv.price ASC, pv.variant_id ASC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -1045,7 +1050,8 @@ public class ProductDAO extends DBContext {
     // 3. Lấy danh sách ảnh chi tiết của sản phẩm (List<String>)
     public List<String> getImagesByProductId(long productId) {
         List<String> list = new ArrayList<>();
-        String sql = "SELECT image_url FROM Product_images WHERE product_id = ? ORDER BY display_order ASC";
+        String sql = "SELECT image_url FROM product_images WHERE product_id = ? "
+                + "ORDER BY is_thumbnail DESC, display_order ASC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -1065,12 +1071,14 @@ public class ProductDAO extends DBContext {
     }
 
     public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
-            String ratingStr, String availability, String origin) {
+                                                 String ratingStr, String availability, String origin) {
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
                 .append("p.origin, p.certification, pi.image_url, ")
-                .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
+                // Lấy giá bán và giá gốc của CÙNG biến thể có giá rẻ nhất (ORDER BY price ASC)
+                .append("(SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS price, ")
+                .append("(SELECT TOP 1 original_price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS original_price, ")
                 .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
                 .append("(SELECT COALESCE(SUM(stock_quantity), 0) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
                 .append("(SELECT AVG(CAST(r.rating AS DECIMAL(5,2))) FROM reviews r ")
@@ -1108,11 +1116,11 @@ public class ProductDAO extends DBContext {
             }
         }
 
-        // 3. Lọc theo khoảng giá (dựa vào giá nhỏ nhất của biến thể sản phẩm)
+        // 3. Lọc theo khoảng giá (dựa vào giá của biến thể nhỏ nhất)
         if (minPriceStr != null && !minPriceStr.trim().isEmpty()) {
             try {
                 BigDecimal minPrice = new BigDecimal(minPriceStr.trim());
-                sql.append(" AND (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) >= ? ");
+                sql.append(" AND (SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) >= ? ");
                 params.add(minPrice);
             } catch (Exception ignored) {
             }
@@ -1121,12 +1129,13 @@ public class ProductDAO extends DBContext {
         if (maxPriceStr != null && !maxPriceStr.trim().isEmpty()) {
             try {
                 BigDecimal maxPrice = new BigDecimal(maxPriceStr.trim());
-                sql.append(" AND (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) <= ? ");
+                sql.append(" AND (SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) <= ? ");
                 params.add(maxPrice);
             } catch (Exception ignored) {
             }
         }
 
+        // 4. Lọc theo Đánh giá (Rating)
         if (ratingStr != null && !ratingStr.trim().isEmpty()) {
             try {
                 BigDecimal minRating = new BigDecimal(ratingStr.trim());
@@ -1139,12 +1148,14 @@ public class ProductDAO extends DBContext {
             }
         }
 
+        // 5. Lọc theo Tình trạng kho (Availability)
         if (availability != null && availability.equals("in_stock")) {
             sql.append(" AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
         } else if (availability != null && availability.equals("out_of_stock")) {
             sql.append(" AND NOT EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
         }
 
+        // 6. Lọc theo Xuất xứ
         if (origin != null && !origin.trim().isEmpty()) {
             sql.append(" AND p.origin LIKE ? ");
             params.add("%" + origin.trim() + "%");
@@ -1173,11 +1184,27 @@ public class ProductDAO extends DBContext {
 
                     BigDecimal price = rs.getBigDecimal("price");
                     if (price == null) {
-                        price = new BigDecimal("100000");
+                        price = BigDecimal.ZERO;
                     }
                     p.setPrice(price);
-                    p.setOldPrice(price.multiply(new BigDecimal("1.25")));
-                    p.setDiscountPercent(20);
+
+                    // Đọc đúng giá gốc từ DB
+                    BigDecimal oldPrice = rs.getBigDecimal("original_price");
+                    if (oldPrice == null || oldPrice.compareTo(price) < 0) {
+                        oldPrice = price; // Nếu giá gốc rỗng hoặc nhỏ hơn giá bán thì mặc định bằng giá bán
+                    }
+                    p.setOldPrice(oldPrice);
+
+                    // Tính % giảm giá thực tế
+                    int discountPercent = 0;
+                    if (oldPrice.compareTo(price) > 0) {
+                        BigDecimal discountAmount = oldPrice.subtract(price);
+                        discountPercent = discountAmount.multiply(new BigDecimal("100"))
+                                .divide(oldPrice, 0, java.math.RoundingMode.HALF_UP)
+                                .intValue();
+                    }
+                    p.setDiscountPercent(discountPercent);
+
                     p.setRating(rs.getDouble("avg_rating"));
                     p.setReviewsCount(rs.getInt("reviews_count"));
 
