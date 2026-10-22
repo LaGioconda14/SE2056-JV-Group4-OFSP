@@ -6,13 +6,13 @@ public enum PaymentMethod {
     VNPAY,
     MOMO;
 
-    public static PaymentMethod from(String val) {
-        if (val == null || val.trim().isEmpty()) {
+    public static PaymentMethod from(String value) {
+        if (value == null || value.isBlank()) {
             return null;
         }
         try {
-            return PaymentMethod.valueOf(val.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
+            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
             return null;
         }
     }
