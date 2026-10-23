@@ -93,7 +93,7 @@ public class ShopAddProductServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop_product/shop-add-product.jsp").forward(request, response);
     }
 
     /**
@@ -165,19 +165,19 @@ public class ShopAddProductServlet extends HttpServlet {
             } else {
                 request.setAttribute("errorMessage", "Thêm sản phẩm thất bại, vui lòng kiểm tra lại thông tin!");
                 reloadFormData(request);
-                request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/shop_product/shop-add-product.jsp").forward(request, response);
             }
 
         } catch (IllegalArgumentException e) {
             // Bắt lỗi do Service validate ném ra (VD: trùng SKU, giá <= 0, trống tên...)
             request.setAttribute("errorMessage", e.getMessage());
             reloadFormData(request);
-            request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop_product/shop-add-product.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
             reloadFormData(request);
-            request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop_product/shop-add-product.jsp").forward(request, response);
         }
     }
     // Hàm phụ trợ nạp lại dữ liệu cho form khi forward báo lỗi

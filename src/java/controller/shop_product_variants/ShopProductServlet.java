@@ -86,7 +86,7 @@ public class ShopProductServlet extends HttpServlet {
         }
 
         // 5. Forward sang trang JSP
-        request.getRequestDispatcher("/views/shop/shop-products.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop_product/shop-products.jsp").forward(request, response);
     }
 
     @Override

@@ -17,20 +17,20 @@ import util.DBContext;
 
 public class ProductDAO extends DBContext {
 
-    // 1. Lấy danh sách sản phẩm/biến thể theo shopId
+    // 1. Lấy một dòng tổng hợp cho mỗi sản phẩm của shop
     public List<ProductVariant> getVariantsByShopId(long shopId) {
         List<ProductVariant> list = new ArrayList<>();
         String sql = "SELECT "
-                + "    COALESCE(pv.variant_id, 0) AS variant_id, "
+                + "    COALESCE(MIN(pv.variant_id), 0) AS variant_id, "
                 + "    p.product_id, "
-                + "    COALESCE(pv.sku, 'CHUA-CO-SKU') AS sku, "
-                + "    COALESCE(pv.variant_name, N'Chưa phân loại') AS variant_name, "
-                + "    COALESCE(pv.price, 0) AS price, "
-                + "    COALESCE(pv.original_price, 0) AS original_price, "
-                + "    COALESCE(pv.stock_quantity, 0) AS stock_quantity, "
-                + "    COALESCE(pv.unit, 'kg') AS unit, "
+                + "    '' AS sku, "
+                + "    '' AS variant_name, "
+                + "    COALESCE(MIN(pv.price), 0) AS price, "
+                + "    COALESCE(MAX(pv.price), 0) AS original_price, "
+                + "    COALESCE(SUM(pv.stock_quantity), 0) AS stock_quantity, "
+                + "    COALESCE(MAX(pv.unit), '') AS unit, "
                 + "    COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
-                + "    COALESCE(pv.is_active, 1) AS is_active, "
+                + "    CASE WHEN p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) THEN 1 ELSE 0 END AS is_active, "
                 + "    p.name AS product_name, "
                 + "    p.origin, "
                 + "    c.category_name, "
@@ -39,8 +39,9 @@ public class ProductDAO extends DBContext {
                 + "FROM products p "
                 + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
                 + "LEFT JOIN categories c ON p.category_id = c.category_id "
-                + "LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
+                + "LEFT JOIN (SELECT product_id, MAX(image_url) AS image_url FROM product_images WHERE is_thumbnail = 1 GROUP BY product_id) pi ON p.product_id = pi.product_id "
                 + "WHERE p.shop_id = ? "
+                + "GROUP BY p.product_id, p.name, p.origin, c.category_name, p.certification, p.is_active, pi.image_url "
                 + "ORDER BY p.product_id DESC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -171,6 +172,31 @@ public class ProductDAO extends DBContext {
         return false;
     }
 
+    public boolean softDeleteProduct(long productId, long shopId) {
+        String updateProduct = "UPDATE products SET is_active = 0 WHERE product_id = ? AND shop_id = ?";
+        String updateVariants = "UPDATE product_variants SET is_active = 0 WHERE product_id = ?";
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            try (PreparedStatement productStatement = conn.prepareStatement(updateProduct)) {
+                productStatement.setLong(1, productId);
+                productStatement.setLong(2, shopId);
+                if (productStatement.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+            try (PreparedStatement variantStatement = conn.prepareStatement(updateVariants)) {
+                variantStatement.setLong(1, productId);
+                variantStatement.executeUpdate();
+            }
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     // Đếm số lượng biến thể theo từng tab trạng thái của shop
     public List<ProductVariant> getFilteredVariantsByShop(long shopId, String keyword, String categoryId,
             String certification, String stockLevel,
@@ -294,22 +320,17 @@ public class ProductDAO extends DBContext {
 
     // Đếm số lượng biến thể theo từng tab trạng thái của shop
     public int countVariantsByStatusTab(long shopId, String statusTab) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT COUNT(pv.variant_id) "
-                + "FROM product_variants pv "
-                + "JOIN products p ON pv.product_id = p.product_id "
-                + "WHERE p.shop_id = ?"
-        );
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?");
 
         if (statusTab != null && !statusTab.trim().isEmpty() && !statusTab.equalsIgnoreCase("all")) {
             if ("active".equalsIgnoreCase(statusTab)) {
-                sql.append(" AND pv.is_active = 1 AND pv.stock_quantity > 0");
+                sql.append(" AND p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity > 0)");
             } else if ("vietgap".equalsIgnoreCase(statusTab)) {
                 sql.append(" AND (p.certification LIKE '%VietGAP%' OR p.certification LIKE '%OCOP%')");
             } else if ("hidden".equalsIgnoreCase(statusTab)) {
-                sql.append(" AND (pv.stock_quantity = 0 OR pv.is_active = 0)");
+                sql.append(" AND (p.is_active = 0 OR NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity > 0))");
             } else if ("warning".equalsIgnoreCase(statusTab)) {
-                sql.append(" AND pv.stock_quantity <= 5");
+                sql.append(" AND EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity <= 5)");
             }
         }
 

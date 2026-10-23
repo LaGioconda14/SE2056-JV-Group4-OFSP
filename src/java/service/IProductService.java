@@ -29,6 +29,7 @@ public interface IProductService {
                            boolean isActive, String coverImageUrl, List<String> detailImages, String batchCode) throws IllegalArgumentException;
     
     boolean softDeleteVariant(long variantId, long shopId);
+    boolean softDeleteProduct(long productId, long shopId);
     // Lấy thông tin biến thể sản phẩm theo ID để sửa
     ProductVariant getVariantById(long variantId);
     //sửa

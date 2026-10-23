@@ -102,7 +102,7 @@ public class ShopEditProductServlet extends HttpServlet {
         }
 
         // 3. Forward đúng sang trang chỉnh sửa JSP
-        request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop_product/shop-edit-product.jsp").forward(request, response);
     } 
 
     /** 
@@ -177,13 +177,13 @@ public class ShopEditProductServlet extends HttpServlet {
                 request.setAttribute("storageTemps", productService.getAllStorageTemps());
                 request.setAttribute("units", productService.getAllUnits());
                 
-                request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/shop_product/shop-edit-product.jsp").forward(request, response);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
-            request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop_product/shop-edit-product.jsp").forward(request, response);
         }
     }
 

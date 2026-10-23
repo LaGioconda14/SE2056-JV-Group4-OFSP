@@ -117,6 +117,14 @@ public class ProductServiceImpl implements IProductService {
         }
         return productDAO.softDeleteVariant(variantId, shopId);
     }
+
+    @Override
+    public boolean softDeleteProduct(long productId, long shopId) {
+        if (productId <= 0 || shopId <= 0) {
+            throw new IllegalArgumentException("Mã sản phẩm hoặc cửa hàng không hợp lệ!");
+        }
+        return productDAO.softDeleteProduct(productId, shopId);
+    }
     
     @Override
     public ProductVariant getVariantById(long variantId) {

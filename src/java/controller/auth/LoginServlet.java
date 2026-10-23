@@ -142,6 +142,6 @@ public class LoginServlet extends HttpServlet {
         }
 
         // Khách hàng thông thường -> Redirect về trang chủ mua sắm
-        response.sendRedirect(request.getContextPath() + "/home.jsp");
+        response.sendRedirect(request.getContextPath() + "/home");
     }
 }
