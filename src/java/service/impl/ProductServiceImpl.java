@@ -15,8 +15,8 @@ public class ProductServiceImpl implements IProductService {
     private final CategoryDAO categoryDAO = new CategoryDAO();
 
     @Override//lấy danh sách sản phẩm theo shopID 
-    public List<ProductVariant> getVariantsByShopId(long shopId) {
-        return productDAO.getVariantsByShopId(shopId);
+    public List<Product> getProductSummariesByShopId(long shopId) {
+        return productDAO.getProductSummariesByShopId(shopId);
     }
 
     @Override
@@ -25,13 +25,8 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public int countVariantsByShopId(long shopId) {
-        return productDAO.countVariantsByShopId(shopId);
-    }
-
-    @Override
-    public int countVariantsByStatusTab(long shopId, String statusTab) {
-        return productDAO.countVariantsByStatusTab(shopId, statusTab);
+    public int countProductsByStatusTab(long shopId, String statusTab) {
+        return productDAO.countProductsByStatusTab(shopId, statusTab);
     }
     
     @Override
@@ -188,6 +183,14 @@ public class ProductServiceImpl implements IProductService {
     @Override
     public List<ProductVariant> getVariantsByProductId(long productId) {
         return productDAO.getVariantsByProductId(productId);
+    }
+
+    @Override
+    public List<ProductVariant> getShopVariantsByProductId(long shopId, long productId) {
+        if (shopId <= 0 || productId <= 0) {
+            return Collections.emptyList();
+        }
+        return productDAO.getShopVariantsByProductId(shopId, productId);
     }
 
     @Override

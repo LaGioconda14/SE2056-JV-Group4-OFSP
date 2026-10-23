@@ -1,4 +1,4 @@
-package controller.shop_product_variants;
+package controller.shop_product;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 import model.Shop;
-import model.ProductVariant;
+import model.Product;
 import dao.ShopDAO;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
@@ -61,28 +61,17 @@ public class ShopProductServlet extends HttpServlet {
             }
         }
 
-        // 4. Lấy danh sách sản phẩm/biến thể thông qua tầng Service
+        // 4. Lấy danh sách sản phẩm của shop
         if (shopId != null) {
-            List<ProductVariant> listVariants = productService.getVariantsByShopId(shopId);
-            request.setAttribute("listVariants", listVariants);
-            request.setAttribute("totalVariantsCount", listVariants.size());
-            int totalProducts = productService.countProductsByShopId(shopId);
-            int totalSkus = productService.countVariantsByShopId(shopId);
-            request.setAttribute("listVariants", listVariants);
-            request.setAttribute("totalProducts", totalProducts);
-            request.setAttribute("totalSkus", totalSkus);
-            //========Đếm sản phẩm theo tab=============//
-            int tabAllCount = productService.countVariantsByStatusTab(shopId, "all");
-            int tabActiveCount = productService.countVariantsByStatusTab(shopId, "active");
-            int tabVietgapCount = productService.countVariantsByStatusTab(shopId, "vietgap");
-            int tabHiddenCount = productService.countVariantsByStatusTab(shopId, "hidden");
-            int tabWarningCount = productService.countVariantsByStatusTab(shopId, "warning");
+            List<Product> products = productService.getProductSummariesByShopId(shopId);
+            request.setAttribute("products", products);
+            request.setAttribute("totalProductsCount", productService.countProductsByShopId(shopId));
 
-            request.setAttribute("tabAllCount", tabAllCount);
-            request.setAttribute("tabActiveCount", tabActiveCount);
-            request.setAttribute("tabVietgapCount", tabVietgapCount);
-            request.setAttribute("tabHiddenCount", tabHiddenCount);
-            request.setAttribute("tabWarningCount", tabWarningCount);
+            request.setAttribute("tabAllProductCount", productService.countProductsByStatusTab(shopId, "all"));
+            request.setAttribute("tabActiveProductCount", productService.countProductsByStatusTab(shopId, "active"));
+            request.setAttribute("tabVietgapProductCount", productService.countProductsByStatusTab(shopId, "vietgap"));
+            request.setAttribute("tabHiddenProductCount", productService.countProductsByStatusTab(shopId, "hidden"));
+            request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
         }
 
         // 5. Forward sang trang JSP

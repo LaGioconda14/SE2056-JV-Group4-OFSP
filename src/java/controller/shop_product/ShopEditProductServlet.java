@@ -3,7 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
 
-package controller.shop_product_variants;
+package controller.shop_product;
 
 import java.io.IOException;
 import java.io.PrintWriter;

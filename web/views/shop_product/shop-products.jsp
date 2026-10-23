@@ -255,31 +255,31 @@
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=all" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${empty statusTab || statusTab == 'all' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Tất cả</span>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] ${empty statusTab || statusTab == 'all' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabAllCount ? tabAllCount : 0}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] ${empty statusTab || statusTab == 'all' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabAllProductCount ? tabAllProductCount : 0}</span>
                         </a>
 
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=active" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'active' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Đang mở bán</span>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] ${statusTab == 'active' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabActiveCount ? tabActiveCount : 0}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] ${statusTab == 'active' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabActiveProductCount ? tabActiveProductCount : 0}</span>
                         </a>
 
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=vietgap" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'vietgap' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Chờ duyệt VietGAP</span>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] bg-amber-100 text-amber-800 font-extrabold">${not empty tabVietgapCount ? tabVietgapCount : 0}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] bg-amber-100 text-amber-800 font-extrabold">${not empty tabVietgapProductCount ? tabVietgapProductCount : 0}</span>
                         </a>
 
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=hidden" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'hidden' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Hết hàng / Tạm ẩn</span>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] bg-rose-100 text-rose-700 font-extrabold">${not empty tabHiddenCount ? tabHiddenCount : 0}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] bg-rose-100 text-rose-700 font-extrabold">${not empty tabHiddenProductCount ? tabHiddenProductCount : 0}</span>
                         </a>
 
                         <a href="${pageContext.request.contextPath}/shop/products?statusTab=warning" 
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'warning' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Vi phạm / Cảnh báo</span>
-                            <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 text-slate-600">${not empty tabWarningCount ? tabWarningCount : 0}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 text-slate-600">${not empty tabWarningProductCount ? tabWarningProductCount : 0}</span>
                         </a>
                     </div>
 
@@ -350,7 +350,7 @@
                             </div>
 
                             <div class="text-slate-500 font-semibold">
-                                Đang hiển thị: <span class="text-slate-900 font-extrabold">${not empty listVariants ? listVariants.size() : 0}</span> / tổng <span class="text-slate-900 font-extrabold">${not empty totalVariantsCount ? totalVariantsCount : (not empty listVariants ? listVariants.size() : 0)}</span> nông sản
+                                Đang hiển thị: <span class="text-slate-900 font-extrabold">${not empty products ? products.size() : 0}</span> / tổng <span class="text-slate-900 font-extrabold">${not empty totalProductsCount ? totalProductsCount : (not empty products ? products.size() : 0)}</span> nông sản
                             </div>
                         </div>
                     </form>
@@ -376,33 +376,33 @@
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-xs">
                                     <c:choose>
-                                        <c:when test="${not empty listVariants}">
-                                            <c:forEach var="v" items="${listVariants}">
+                                        <c:when test="${not empty products}">
+                                            <c:forEach var="product" items="${products}">
                                                 <tr class="hover:bg-slate-50/80 transition-colors group">
                                                     <!-- Checkbox chọn dòng -->
                                                     <td class="text-center py-4 px-4 align-middle">
-                                                        <input type="checkbox" name="productIds" value="${v.productId}" class="variant-row-checkbox w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                                                        <input type="checkbox" name="productIds" value="${product.id}" class="product-row-checkbox w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                                                     </td>
 
                                                     <!-- Cột Sản phẩm: Ảnh + Tên + Danh mục + Xuất xứ -->
                                                     <td class="py-4 px-4 align-middle">
                                                         <div class="flex items-center gap-3.5">
                                                             <div class="relative w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0 shadow-2xs group-hover:border-emerald-400 transition-all">
-                                                                <img src="${v.image}" alt="${v.productName}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=120&h=120&fit=crop';">
+                                                                <img src="${product.image}" alt="${product.name}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=120&h=120&fit=crop';">
                                                             </div>
                                                             <div class="min-w-0 flex-1">
-                                                                <a href="${pageContext.request.contextPath}/detail?id=${v.productId}" class="font-extrabold text-sm text-slate-900 hover:text-emerald-700 transition-colors line-clamp-1 block">
-                                                                    ${v.productName}
+                                                                <a href="${pageContext.request.contextPath}/detail?id=${product.id}" class="font-extrabold text-sm text-slate-900 hover:text-emerald-700 transition-colors line-clamp-1 block">
+                                                                    ${product.name}
                                                                 </a>
                                                                 <div class="flex items-center gap-2 mt-1 flex-wrap">
                                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                                                         <i class="fa-solid fa-layer-group text-[9px] mr-1 text-slate-400"></i>
-                                                                        ${not empty v.categoryName ? v.categoryName : 'Chưa phân loại'}
+                                                                        ${not empty product.categoryName ? product.categoryName : 'Chưa phân loại'}
                                                                     </span>
-                                                                    <c:if test="${not empty v.origin}">
+                                                                    <c:if test="${not empty product.origin}">
                                                                         <span class="text-[11px] font-medium text-slate-400 flex items-center gap-1">
                                                                             <i class="fa-solid fa-location-dot text-[9px] text-slate-400"></i>
-                                                                            ${v.origin}
+                                                                            ${product.origin}
                                                                         </span>
                                                                     </c:if>
                                                                 </div>
@@ -413,16 +413,14 @@
                                                     <!-- Cột Giá bán lẻ / Khoảng giá -->
                                                     <td class="py-4 px-4 align-middle">
                                                         <c:choose>
-                                                            <c:when test="${v.price > 0}">
+                                                            <c:when test="${product.price > 0}">
                                                                 <div class="flex flex-col">
                                                                     <span class="font-black text-sm text-emerald-700 tracking-tight">
-                                                                        <fmt:formatNumber value="${v.price}" type="number" maxFractionDigits="0"/> ₫
+                                                                        <fmt:formatNumber value="${product.price}" type="number" maxFractionDigits="0"/> ₫
+                                                                        <c:if test="${product.oldPrice > product.price}">
+                                                                            – <fmt:formatNumber value="${product.oldPrice}" type="number" maxFractionDigits="0"/> ₫
+                                                                        </c:if>
                                                                     </span>
-                                                                    <c:if test="${v.originalPrice > v.price}">
-                                                                        <span class="text-[11px] font-medium text-slate-400 line-through mt-0.5">
-                                                                            <fmt:formatNumber value="${v.originalPrice}" type="number" maxFractionDigits="0"/> ₫
-                                                                        </span>
-                                                                    </c:if>
                                                                 </div>
                                                             </c:when>
                                                             <c:otherwise>
@@ -436,13 +434,13 @@
                                                         <div class="flex flex-col gap-1.5 max-w-[130px]">
                                                             <div class="flex items-center justify-between">
                                                                 <span class="font-black text-xs text-slate-800">
-                                                                    ${v.stockQuantity} <span class="text-[10px] font-bold text-slate-400"></span>
+                                                                    ${product.stockQuantity} <span class="text-[10px] font-bold text-slate-400"></span>
                                                                 </span>
                                                                 <c:choose>
-                                                                    <c:when test="${v.stockQuantity < 5}">
+                                                                    <c:when test="${product.stockQuantity < 5}">
                                                                         <span class="text-[9px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">Cực thấp</span>
                                                                     </c:when>
-                                                                    <c:when test="${v.stockQuantity <= 15}">
+                                                                    <c:when test="${product.stockQuantity <= 15}">
                                                                         <span class="text-[9px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Sắp hết</span>
                                                                     </c:when>
                                                                     <c:otherwise>
@@ -453,14 +451,14 @@
                                                             <!-- Progress bar tồn kho -->
                                                             <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                                                 <c:choose>
-                                                                    <c:when test="${v.stockQuantity < 5}">
-                                                                        <div class="bg-rose-500 h-1.5 rounded-full" style="width: ${v.stockQuantity * 10}%"></div>
+                                                                    <c:when test="${product.stockQuantity < 5}">
+                                                                        <div class="bg-rose-500 h-1.5 rounded-full" style="width: ${product.stockQuantity * 10}%"></div>
                                                                     </c:when>
-                                                                    <c:when test="${v.stockQuantity <= 15}">
-                                                                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: ${v.stockQuantity * 5}%"></div>
+                                                                    <c:when test="${product.stockQuantity <= 15}">
+                                                                        <div class="bg-amber-500 h-1.5 rounded-full" style="width: ${product.stockQuantity * 5}%"></div>
                                                                     </c:when>
                                                                     <c:otherwise>
-                                                                        <div class="bg-emerald-500 h-1.5 rounded-full" style="width: ${v.stockQuantity > 100 ? 100 : v.stockQuantity}%"></div>
+                                                                        <div class="bg-emerald-500 h-1.5 rounded-full" style="width: ${product.stockQuantity > 100 ? 100 : product.stockQuantity}%"></div>
                                                                     </c:otherwise>
                                                                 </c:choose>
                                                             </div>
@@ -471,7 +469,7 @@
                                                     <td class="py-4 px-4 align-middle">
                                                         <div class="flex flex-col items-start gap-1">
                                                             <c:choose>
-                                                                <c:when test="${v.isActive}">
+                                                                <c:when test="${product.activeForSale}">
                                                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold">
                                                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                                                         Đang mở bán
@@ -485,7 +483,7 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                             <span class="text-[10px] font-semibold text-slate-400 pl-1">
-                                                                ${v.totalVariantsCount > 0 ? v.totalVariantsCount : 1} phân loại
+                                                                ${product.variantCount > 0 ? product.variantCount : 1} phân loại
                                                             </span>
                                                         </div>
                                                     </td>
@@ -493,24 +491,24 @@
                                                     <!-- Cột Chứng nhận -->
                                                     <td class="py-4 px-4 align-middle">
                                                         <c:choose>
-                                                            <c:when test="${v.certification == 'VietGAP'}">
+                                                            <c:when test="${product.certification == 'VietGAP'}">
                                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-300 text-[10px] font-black tracking-wide">
                                                                     <i class="fa-solid fa-shield-check text-emerald-600"></i> VietGAP
                                                                 </span>
                                                             </c:when>
-                                                            <c:when test="${v.certification == 'OCOP'}">
+                                                            <c:when test="${product.certification == 'OCOP'}">
                                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-300 text-[10px] font-black tracking-wide">
                                                                     <i class="fa-solid fa-award text-amber-600"></i> OCOP 4★
                                                                 </span>
                                                             </c:when>
-                                                            <c:when test="${v.certification == 'Organic'}">
+                                                            <c:when test="${product.certification == 'Organic'}">
                                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 border border-teal-300 text-[10px] font-black tracking-wide">
                                                                     <i class="fa-solid fa-leaf text-teal-600"></i> Hữu cơ
                                                                 </span>
                                                             </c:when>
                                                             <c:otherwise>
                                                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold">
-                                                                    ${not empty v.certification ? v.certification : 'Tiêu chuẩn'}
+                                                                    ${not empty product.certification ? product.certification : 'Tiêu chuẩn'}
                                                                 </span>
                                                             </c:otherwise>
                                                         </c:choose>
@@ -519,9 +517,12 @@
                                                     <!-- Cột Thao tác -->
                                                     <td class="py-4 px-4 align-middle text-right">
                                                         <div class="inline-flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 shadow-2xs">
+                                                            <a href="${pageContext.request.contextPath}/shop/product/variants?productId=${product.id}" class="inline-flex items-center gap-1.5 h-8 px-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-indigo-700 hover:border-indigo-300 transition-all text-[10px] font-bold" title="Quản lý biến thể">
+                                                                <i class="fa-solid fa-layer-group text-[11px]"></i><span>Biến thể</span>
+                                                            </a>
                                                             <c:choose>
-                                                                <c:when test="${v.variantId > 0}">
-                                                                    <a href="${pageContext.request.contextPath}/shop/product/edit?id=${v.variantId}" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Sửa thông tin sản phẩm">
+                                                                <c:when test="${product.primaryVariantId > 0}">
+                                                                    <a href="${pageContext.request.contextPath}/shop/product/edit?id=${product.primaryVariantId}" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Sửa thông tin sản phẩm">
                                                                         <i class="fa-solid fa-pen-to-square text-[11px]"></i>
                                                                     </a>
                                                                 </c:when>
@@ -532,11 +533,11 @@
                                                                 </c:otherwise>
                                                             </c:choose>
 
-                                                            <a href="${pageContext.request.contextPath}/detail?id=${v.productId}" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Xem giao diện hiển thị">
+                                                            <a href="${pageContext.request.contextPath}/detail?id=${product.id}" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Xem giao diện hiển thị">
                                                                 <i class="fa-regular fa-eye text-[12px]"></i>
                                                             </a>
 
-                                                            <a href="${pageContext.request.contextPath}/shop/product/delete?productId=${v.productId}" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm nông sản này không? Hành động này không thể hoàn tác!');" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-rose-700 hover:border-rose-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Xóa sản phẩm">
+                                                            <a href="${pageContext.request.contextPath}/shop/product/delete?productId=${product.id}" onclick="return confirm('Bạn có chắc chắn muốn xóa sản phẩm nông sản này không? Hành động này không thể hoàn tác!');" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-rose-700 hover:border-rose-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Xóa sản phẩm">
                                                                 <i class="fa-regular fa-trash-can text-[11px]"></i>
                                                             </a>
                                                         </div>
@@ -571,7 +572,7 @@
                                     <option value="20" ${pageSize == 20 ? 'selected' : ''}>20</option>
                                     <option value="50" ${pageSize == 50 ? 'selected' : ''}>50</option>
                                 </select>
-                                <span>trên tổng <strong class="text-slate-900">${not empty totalVariantsCount ? totalVariantsCount : (not empty listVariants ? listVariants.size() : 0)}</strong> nông sản</span>
+                                <span>trên tổng <strong class="text-slate-900">${not empty totalProductsCount ? totalProductsCount : (not empty products ? products.size() : 0)}</strong> nông sản</span>
                             </div>
 
                             <div class="flex items-center gap-1.5">
@@ -604,7 +605,7 @@
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const selectAll = document.getElementById('selectAllCheckbox');
-                const rowCheckboxes = document.querySelectorAll('.variant-row-checkbox');
+                const rowCheckboxes = document.querySelectorAll('.product-row-checkbox');
 
                 if (selectAll) {
                     selectAll.addEventListener('change', function () {

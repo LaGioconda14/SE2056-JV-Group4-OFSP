@@ -26,6 +26,9 @@ public class Product {
     private String storageTemp;
     private String certification;
     private long shopId;
+    private long primaryVariantId;
+    private int variantCount;
+    private boolean activeForSale;
     private String categorySlug;
     private String filterSlugs;
     
@@ -118,6 +121,15 @@ public class Product {
 
     public long getShopId() { return shopId; }
     public void setShopId(long shopId) { this.shopId = shopId; }
+
+    public long getPrimaryVariantId() { return primaryVariantId; }
+    public void setPrimaryVariantId(long primaryVariantId) { this.primaryVariantId = primaryVariantId; }
+
+    public int getVariantCount() { return variantCount; }
+    public void setVariantCount(int variantCount) { this.variantCount = variantCount; }
+
+    public boolean isActiveForSale() { return activeForSale; }
+    public void setActiveForSale(boolean activeForSale) { this.activeForSale = activeForSale; }
 
     public String getCategorySlug() { return categorySlug; }
     public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }

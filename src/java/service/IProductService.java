@@ -8,10 +8,9 @@ import model.ProductVariant;
 
 public interface IProductService {
     //lấy danh sách sản phẩm theo shopID
-    List<ProductVariant> getVariantsByShopId(long shopId);
+    List<Product> getProductSummariesByShopId(long shopId);
     int countProductsByShopId(long shopId);
-    int countVariantsByShopId(long shopId);
-    int countVariantsByStatusTab(long shopId, String statusTab);
+    int countProductsByStatusTab(long shopId, String statusTab);
     //lấy danh mục
     List<Category> getAllCategories();
     //Lấy chứng nhận
@@ -59,6 +58,7 @@ public interface IProductService {
     // Các phương thức cho View Product Details
     Product getProductById(int productId);
     List<ProductVariant> getVariantsByProductId(long productId);
+    List<ProductVariant> getShopVariantsByProductId(long shopId, long productId);
     List<String> getImagesByProductId(long productId);
     
     List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,

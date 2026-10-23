@@ -17,90 +17,53 @@ import util.DBContext;
 
 public class ProductDAO extends DBContext {
 
-    // 1. Lấy một dòng tổng hợp cho mỗi sản phẩm của shop
-    public List<ProductVariant> getVariantsByShopId(long shopId) {
-        List<ProductVariant> list = new ArrayList<>();
-        String sql = "SELECT "
-                + "    COALESCE(MIN(pv.variant_id), 0) AS variant_id, "
-                + "    p.product_id, "
-                + "    '' AS sku, "
-                + "    '' AS variant_name, "
-                + "    COALESCE(MIN(pv.price), 0) AS price, "
-                + "    COALESCE(MAX(pv.price), 0) AS original_price, "
-                + "    COALESCE(SUM(pv.stock_quantity), 0) AS stock_quantity, "
-                + "    COALESCE(MAX(pv.unit), '') AS unit, "
-                + "    COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
-                + "    CASE WHEN p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) THEN 1 ELSE 0 END AS is_active, "
-                + "    p.name AS product_name, "
-                + "    p.origin, "
-                + "    c.category_name, "
-                + "    p.certification, "
-                + "    (SELECT COUNT(*) FROM product_variants WHERE product_id = p.product_id) AS total_variants_count "
+    // Returns one product summary per shop product, with variant-derived totals.
+    public List<Product> getProductSummariesByShopId(long shopId) {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT p.product_id, p.name, p.origin, p.certification, c.category_name, "
+                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
+                + "COALESCE(MIN(pv.variant_id), 0) AS primary_variant_id, "
+                + "COALESCE(MIN(pv.price), 0) AS min_price, COALESCE(MAX(pv.price), 0) AS max_price, "
+                + "COALESCE(SUM(pv.stock_quantity), 0) AS total_stock, "
+                + "(SELECT COUNT(*) FROM product_variants WHERE product_id = p.product_id) AS variant_count, "
+                + "CASE WHEN p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) THEN 1 ELSE 0 END AS active_for_sale "
                 + "FROM products p "
                 + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
                 + "LEFT JOIN categories c ON p.category_id = c.category_id "
                 + "LEFT JOIN (SELECT product_id, MAX(image_url) AS image_url FROM product_images WHERE is_thumbnail = 1 GROUP BY product_id) pi ON p.product_id = pi.product_id "
                 + "WHERE p.shop_id = ? "
-                + "GROUP BY p.product_id, p.name, p.origin, c.category_name, p.certification, p.is_active, pi.image_url "
+                + "GROUP BY p.product_id, p.name, p.origin, p.certification, c.category_name, p.is_active, pi.image_url "
                 + "ORDER BY p.product_id DESC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProductVariant v = new ProductVariant();
-                    v.setVariantId(rs.getInt("variant_id"));
-                    v.setProductId(rs.getLong("product_id"));
-                    v.setSku(rs.getString("sku"));
-                    v.setVariantName(rs.getString("variant_name"));
-                    v.setPrice(rs.getBigDecimal("price"));
-                    v.setOriginalPrice(rs.getBigDecimal("original_price"));
-                    v.setStockQuantity(rs.getInt("stock_quantity"));
-                    v.setUnit(rs.getString("unit"));
-
-                    String img = rs.getString("image_url");
-                    if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1543528176-61b239494933?w=800&auto=format&fit=crop&q=80";
-                    }
-                    v.setImage(img);
-
-                    v.setIsActive(rs.getBoolean("is_active"));
-                    v.setProductName(rs.getString("product_name"));
-                    v.setOrigin(rs.getString("origin"));
-                    v.setCategoryName(rs.getString("category_name"));
-                    v.setCertification(rs.getString("certification"));
-                    v.setTotalVariantsCount(rs.getInt("total_variants_count"));
-
-                    list.add(v);
+                    Product product = new Product();
+                    product.setId(rs.getLong("product_id"));
+                    product.setName(rs.getString("name"));
+                    product.setOrigin(rs.getString("origin"));
+                    product.setCertification(rs.getString("certification"));
+                    product.setCategoryName(rs.getString("category_name"));
+                    product.setImage(rs.getString("image_url"));
+                    product.setPrimaryVariantId(rs.getLong("primary_variant_id"));
+                    product.setPrice(rs.getBigDecimal("min_price"));
+                    product.setOldPrice(rs.getBigDecimal("max_price"));
+                    product.setStockQuantity(rs.getInt("total_stock"));
+                    product.setVariantCount(rs.getInt("variant_count"));
+                    product.setActiveForSale(rs.getBoolean("active_for_sale"));
+                    products.add(product);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return list;
+        return products;
     }
 
     // 2. Đếm tổng số sản phẩm gốc của shop
     public int countProductsByShopId(long shopId) {
         String sql = "SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, shopId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    // 3. Đếm tổng số biến thể (SKUs) của shop
-    public int countVariantsByShopId(long shopId) {
-        String sql = "SELECT COUNT(pv.variant_id) FROM product_variants pv "
-                + "JOIN products p ON pv.product_id = p.product_id "
-                + "WHERE p.shop_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -319,7 +282,7 @@ public class ProductDAO extends DBContext {
     }
 
     // Đếm số lượng biến thể theo từng tab trạng thái của shop
-    public int countVariantsByStatusTab(long shopId, String statusTab) {
+    public int countProductsByStatusTab(long shopId, String statusTab) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?");
 
         if (statusTab != null && !statusTab.trim().isEmpty() && !statusTab.equalsIgnoreCase("all")) {
@@ -1060,6 +1023,37 @@ public class ProductDAO extends DBContext {
                     v.setDescription(rs.getString("description"));
 
                     list.add(v);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<ProductVariant> getShopVariantsByProductId(long shopId, long productId) {
+        List<ProductVariant> list = new ArrayList<>();
+        String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, "
+                + "pv.original_price, pv.stock_quantity, pv.is_active, p.name AS product_name "
+                + "FROM product_variants pv JOIN products p ON p.product_id = pv.product_id "
+                + "WHERE p.shop_id = ? AND p.product_id = ? ORDER BY pv.variant_id";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            ps.setLong(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ProductVariant variant = new ProductVariant();
+                    variant.setVariantId(rs.getLong("variant_id"));
+                    variant.setProductId(rs.getLong("product_id"));
+                    variant.setSku(rs.getString("sku"));
+                    variant.setVariantName(rs.getString("variant_name"));
+                    variant.setUnit(rs.getString("unit"));
+                    variant.setPrice(rs.getBigDecimal("price"));
+                    variant.setOriginalPrice(rs.getBigDecimal("original_price"));
+                    variant.setStockQuantity(rs.getInt("stock_quantity"));
+                    variant.setIsActive(rs.getBoolean("is_active"));
+                    variant.setProductName(rs.getString("product_name"));
+                    list.add(variant);
                 }
             }
         } catch (Exception e) {
