@@ -1,6 +1,5 @@
 package controller.admin;
 
-import com.google.gson.Gson;
 import dao.AdminManagementDAO;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -17,30 +16,20 @@ import model.User;
 @WebServlet(name = "AdminUserServlet", urlPatterns = {"/admin/users"})
 public class AdminUserServlet extends HttpServlet {
     private final AdminManagementDAO dao = new AdminManagementDAO();
-    private final Gson gson = new Gson();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-
-        // AJAX endpoint: Lấy chi tiết hồ sơ & lịch sử giao dịch người dùng
-        if ("detail".equalsIgnoreCase(action)) {
-            String userIdStr = request.getParameter("userId");
-            response.setContentType("application/json; charset=UTF-8");
-            if (userIdStr != null && !userIdStr.trim().isEmpty()) {
-                try {
-                    long userId = Long.parseLong(userIdStr.trim());
-                    Map<String, Object> detail = dao.getUserDetail(userId);
-                    if (detail != null) {
-                        response.getWriter().write(gson.toJson(detail));
-                        return;
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("{\"error\": \"Không tìm thấy thông tin chi tiết của tài khoản người dùng!\"}");
-            return;
+        String viewUserIdStr = request.getParameter("viewUserId");
+        if (viewUserIdStr != null && !viewUserIdStr.trim().isEmpty()) {
+            try {
+                long viewUserId = Long.parseLong(viewUserIdStr.trim());
+                Map<String, Object> detail = dao.getUserDetail(viewUserId);
+                if (detail != null) {
+                    request.setAttribute("userDetail", detail);
+                }
+            } catch (NumberFormatException ignored) {}
         }
 
         // Handle flash messages from session

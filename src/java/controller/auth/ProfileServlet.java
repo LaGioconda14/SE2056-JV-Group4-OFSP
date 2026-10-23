@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -385,7 +384,6 @@ public class ProfileServlet extends HttpServlet {
             reason = "Người mua hủy đơn trực tiếp";
         }
 
-        Map<String, Object> result = new HashMap<>();
         try {
             if (orderId == null || orderId.trim().isEmpty()) {
                 throw new IllegalArgumentException("Mã đơn hàng không hợp lệ!");
@@ -393,34 +391,15 @@ public class ProfileServlet extends HttpServlet {
 
             boolean ok = orderService.cancelOrderByCustomer(sessionUser.getId(), orderId.trim(), reason.trim());
             if (ok) {
-                result.put("success", true);
-                result.put("message", "Đã hủy đơn hàng thành công!");
                 setSessionFlash(session, "successMessage", "Đã hủy đơn hàng #" + orderId.trim() + " thành công!");
             } else {
-                result.put("success", false);
-                result.put("message", "Không thể hủy đơn hàng. Vui lòng thử lại!");
-                setSessionFlash(session, "errorMessage", (String) result.get("message"));
+                setSessionFlash(session, "errorMessage", "Không thể hủy đơn hàng. Vui lòng thử lại!");
             }
         } catch (Exception ex) {
-            result.put("success", false);
-            result.put("message", ex.getMessage());
             setSessionFlash(session, "errorMessage", ex.getMessage());
         }
 
-        if (isAjaxRequest(request)) {
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().print(new Gson().toJson(result));
-        } else {
-            response.sendRedirect(request.getContextPath() + "/profile#orders");
-        }
-    }
-
-    private boolean isAjaxRequest(HttpServletRequest request) {
-        String requestedWith = request.getHeader("X-Requested-With");
-        String acceptHeader = request.getHeader("Accept");
-        return "XMLHttpRequest".equalsIgnoreCase(requestedWith)
-                || request.getParameter("ajax") != null
-                || (acceptHeader != null && acceptHeader.contains("application/json"));
+        response.sendRedirect(request.getContextPath() + "/profile#orders");
     }
 
     private void setSessionFlash(HttpSession session, String key, String message) {

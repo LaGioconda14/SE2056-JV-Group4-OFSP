@@ -217,7 +217,26 @@
                                         </td>
                                         <td class="text-end text-nowrap">
                                             <!-- Nút 1: Xem hồ sơ pháp lý chi tiết -->
-                                            <button type="button" class="btn-action-sm btn-action-inspect me-1" title="Xem toàn bộ hồ sơ pháp lý & chứng nhận" onclick="openKycInspectModal('${r.requestId}')">
+                                            <button type="button" class="btn-action-sm btn-action-inspect me-1" title="Xem toàn bộ hồ sơ pháp lý & chứng nhận"
+                                                    data-request-id="${r.requestId}"
+                                                    data-applicant-name="${fn:escapeXml(r.applicantName)}"
+                                                    data-applicant-phone="${fn:escapeXml(r.applicantPhone)}"
+                                                    data-applicant-email="${fn:escapeXml(r.applicantEmail)}"
+                                                    data-user-id="${r.userId}"
+                                                    data-shop-name="${fn:escapeXml(r.shopName)}"
+                                                    data-business-type="${fn:escapeXml(r.businessType)}"
+                                                    data-certification-name="${fn:escapeXml(r.certificationName)}"
+                                                    data-province="${fn:escapeXml(r.province)}"
+                                                    data-farm-address="${fn:escapeXml(r.farmAddress)}"
+                                                    data-produce-specialty="${fn:escapeXml(r.produceSpecialty)}"
+                                                    data-id-card-number="${fn:escapeXml(r.idCardNumber)}"
+                                                    data-reason="${fn:escapeXml(r.reason)}"
+                                                    data-status="${r.status}"
+                                                    data-reviewer-name="${fn:escapeXml(r.reviewerName)}"
+                                                    data-reviewed-at="${r.reviewedAtFormatted}"
+                                                    data-review-note="${fn:escapeXml(r.reviewNote)}"
+                                                    data-created-at="${r.createdAtFormatted}"
+                                                    onclick="openKycInspectModal(this)">
                                                 <i class="bi bi-eye"></i> Xem hồ sơ
                                             </button>
 
@@ -358,7 +377,23 @@
                                         </td>
                                         <td class="text-end text-nowrap">
                                             <!-- Nút 1: Xem chi tiết shop -->
-                                            <button type="button" class="btn-action-sm btn-action-inspect me-1" title="Xem hồ sơ gian hàng" onclick="openShopDetailModal('${s.shopId}')">
+                                            <button type="button" class="btn-action-sm btn-action-inspect me-1" title="Xem hồ sơ gian hàng"
+                                                    data-shop-id="${s.shopId}"
+                                                    data-shop-name="${fn:escapeXml(s.shopName)}"
+                                                    data-business-type="${fn:escapeXml(s.businessType)}"
+                                                    data-status="${s.status}"
+                                                    data-owner-name="${fn:escapeXml(s.ownerName)}"
+                                                    data-phone="${fn:escapeXml(not empty s.phone ? s.phone : s.ownerPhone)}"
+                                                    data-email="${fn:escapeXml(s.ownerEmail)}"
+                                                    data-province="${fn:escapeXml(s.province)}"
+                                                    data-address="${fn:escapeXml(s.address)}"
+                                                    data-certification-name="${fn:escapeXml(s.certificationName)}"
+                                                    data-commission-rate="${s.commissionRate}"
+                                                    data-total-sales="${s.totalSalesFormatted}"
+                                                    data-total-orders="${s.totalOrdersCount}"
+                                                    data-suspended-reason="${fn:escapeXml(s.suspendedReason)}"
+                                                    data-suspended-date="${s.suspendedAtFormatted}"
+                                                    onclick="openShopDetailModal(this)">
                                                 <i class="bi bi-eye"></i> Chi tiết
                                             </button>
 
@@ -420,12 +455,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                <div id="kycInspectLoading" class="text-center py-5">
-                    <div class="spinner-border text-success" role="status"></div>
-                    <div class="text-muted small mt-2">Đang tải hồ sơ thẩm định...</div>
-                </div>
-
-                <div id="kycInspectBody" style="display: none;">
+                <div id="kycInspectBody">
                     <div class="row g-3 mb-3">
                         <!-- Thông tin chủ hộ & Pháp lý -->
                         <div class="col-md-6">
@@ -712,10 +742,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                <div id="shopDetailLoading" class="text-center py-4">
-                    <div class="spinner-border text-success" role="status"></div>
-                </div>
-                <div id="shopDetailBody" style="display: none;">
+                <div id="shopDetailBody">
                     <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-3" style="background: #f0fdf4; border: 1px solid #dcfce7;">
                         <div class="user-summary-icon-box bg-white text-success fs-4" style="width: 48px; height: 48px; border-radius: 10px; display:flex; align-items:center; justify-content:center;">
                             <i class="bi bi-shop"></i>

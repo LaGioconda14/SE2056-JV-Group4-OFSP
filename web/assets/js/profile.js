@@ -378,162 +378,17 @@ document.addEventListener('DOMContentLoaded', function() {
             activateTab(targetId, this.id);
         });
     });
-
-    const citySelect = document.getElementById('citySelect');
-    const districtSelect = document.getElementById('districtSelect');
-    const wardSelect = document.getElementById('wardSelect');
-    const addAddressModalEl = document.getElementById('addAddressModal');
-
-    const fallbackProvinces = [
-        {"name":"Thành phố Hà Nội","code":1},
-        {"name":"Thành phố Hồ Chí Minh","code":79},
-        {"name":"Thành phố Đà Nẵng","code":48},
-        {"name":"Thành phố Hải Phòng","code":31},
-        {"name":"Thành phố Cần Thơ","code":92},
-        {"name":"Tỉnh An Giang","code":89},
-        {"name":"Tỉnh Bà Rịa - Vũng Tàu","code":77},
-        {"name":"Tỉnh Bắc Giang","code":24},
-        {"name":"Tỉnh Bắc Kạn","code":6},
-        {"name":"Tỉnh Bạc Liêu","code":95},
-        {"name":"Tỉnh Bắc Ninh","code":27},
-        {"name":"Tỉnh Bến Tre","code":83},
-        {"name":"Tỉnh Bình Định","code":52},
-        {"name":"Tỉnh Bình Dương","code":74},
-        {"name":"Tỉnh Bình Phước","code":70},
-        {"name":"Tỉnh Bình Thuận","code":60},
-        {"name":"Tỉnh Cà Mau","code":96},
-        {"name":"Tỉnh Cao Bằng","code":4},
-        {"name":"Tỉnh Đắk Lắk","code":66},
-        {"name":"Tỉnh Đắk Nông","code":67},
-        {"name":"Tỉnh Điện Biên","code":11},
-        {"name":"Tỉnh Đồng Nai","code":75},
-        {"name":"Tỉnh Đồng Tháp","code":87},
-        {"name":"Tỉnh Gia Lai","code":64},
-        {"name":"Tỉnh Hà Giang","code":2},
-        {"name":"Tỉnh Hà Nam","code":35},
-        {"name":"Tỉnh Hà Tĩnh","code":42},
-        {"name":"Tỉnh Hải Dương","code":30},
-        {"name":"Tỉnh Hậu Giang","code":93},
-        {"name":"Tỉnh Hòa Bình","code":17},
-        {"name":"Tỉnh Hưng Yên","code":33},
-        {"name":"Tỉnh Khánh Hòa","code":56},
-        {"name":"Tỉnh Kiên Giang","code":91},
-        {"name":"Tỉnh Kon Tum","code":62},
-        {"name":"Tỉnh Lai Châu","code":12},
-        {"name":"Tỉnh Lâm Đồng","code":68},
-        {"name":"Tỉnh Lạng Sơn","code":20},
-        {"name":"Tỉnh Lào Cai","code":10},
-        {"name":"Tỉnh Long An","code":80},
-        {"name":"Tỉnh Nam Định","code":36},
-        {"name":"Tỉnh Nghệ An","code":40},
-        {"name":"Tỉnh Ninh Bình","code":37},
-        {"name":"Tỉnh Ninh Thuận","code":58},
-        {"name":"Tỉnh Phú Thọ","code":25},
-        {"name":"Tỉnh Phú Yên","code":54},
-        {"name":"Tỉnh Quảng Bình","code":44},
-        {"name":"Tỉnh Quảng Nam","code":49},
-        {"name":"Tỉnh Quảng Ngãi","code":51},
-        {"name":"Tỉnh Quảng Ninh","code":22},
-        {"name":"Tỉnh Quảng Trị","code":45},
-        {"name":"Tỉnh Sóc Trăng","code":94},
-        {"name":"Tỉnh Sơn La","code":14},
-        {"name":"Tỉnh Tây Ninh","code":72},
-        {"name":"Tỉnh Thái Bình","code":34},
-        {"name":"Tỉnh Thái Nguyên","code":19},
-        {"name":"Tỉnh Thanh Hóa","code":38},
-        {"name":"Thành phố Huế","code":46},
-        {"name":"Tỉnh Tiền Giang","code":82},
-        {"name":"Tỉnh Trà Vinh","code":84},
-        {"name":"Tỉnh Tuyên Quang","code":8},
-        {"name":"Tỉnh Vĩnh Long","code":86},
-        {"name":"Tỉnh Vĩnh Phúc","code":26},
-        {"name":"Tỉnh Yên Bái","code":15}
-    ];
-
-    async function initProvinces() {
-        if (!citySelect) return;
-        let list = [];
-        try {
-            const ctx = window.contextPath || '';
-            const res = await fetch(ctx + '/api/address/provinces');
-            if (!res.ok) throw new Error();
-            list = await res.json();
-        } catch (e) {
-            list = fallbackProvinces;
-        }
-        citySelect.innerHTML = '<option value="" selected disabled>Chọn Tỉnh / Thành phố</option>';
-        list.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.name;
-            opt.textContent = p.name;
-            opt.dataset.code = p.code;
-            citySelect.appendChild(opt);
-        });
-    }
-
-    if (citySelect) {
-        citySelect.addEventListener('change', async function() {
-            const selectedOpt = citySelect.options[citySelect.selectedIndex];
-            const pCode = selectedOpt.dataset.code;
-            districtSelect.disabled = true;
-            districtSelect.innerHTML = '<option value="" selected disabled>Đang tải danh sách...</option>';
-            wardSelect.disabled = true;
-            wardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
-
-            if (!pCode) return;
-            try {
-                const ctx = window.contextPath || '';
-                const res = await fetch(ctx + '/api/address/districts?provinceCode=' + encodeURIComponent(pCode));
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                districtSelect.innerHTML = '<option value="" selected disabled>Chọn Quận / Huyện</option>';
-                data.districts.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.name;
-                    opt.textContent = d.name;
-                    opt.dataset.code = d.code;
-                    districtSelect.appendChild(opt);
-                });
-                districtSelect.disabled = false;
-            } catch (e) {
-                districtSelect.innerHTML = '<option value="" selected disabled>Chọn Quận / Huyện</option>';
-                districtSelect.disabled = false;
-            }
-        });
-    }
-
-    if (districtSelect) {
-        districtSelect.addEventListener('change', async function() {
-            const selectedOpt = districtSelect.options[districtSelect.selectedIndex];
-            const dCode = selectedOpt.dataset.code;
-            wardSelect.disabled = true;
-            wardSelect.innerHTML = '<option value="" selected disabled>Đang tải danh sách...</option>';
-
-            if (!dCode) return;
-            try {
-                const ctx = window.contextPath || '';
-                const res = await fetch(ctx + '/api/address/wards?districtCode=' + encodeURIComponent(dCode));
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                wardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
-                data.wards.forEach(w => {
-                    const opt = document.createElement('option');
-                    opt.value = w.name;
-                    opt.textContent = w.name;
-                    wardSelect.appendChild(opt);
-                });
-                wardSelect.disabled = false;
-            } catch (e) {
-                wardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
-                wardSelect.disabled = false;
-            }
-        });
-    }
-
-    if (addAddressModalEl) {
-        addAddressModalEl.addEventListener('show.bs.modal', function() {
-            if (citySelect && citySelect.options.length <= 1) {
-                initProvinces();
+    const cancelOrderForm = document.getElementById('cancelOrderForm');
+    if (cancelOrderForm) {
+        cancelOrderForm.addEventListener('submit', function() {
+            const select = document.getElementById('cancelReasonSelect');
+            const custom = document.getElementById('cancelReasonCustom');
+            const finalReason = document.getElementById('finalCancelReason');
+            if (select && select.value === 'OTHER') {
+                const text = custom ? custom.value.trim() : '';
+                if (finalReason) finalReason.value = text ? text : 'Lý do khác';
+            } else if (select && finalReason) {
+                finalReason.value = select.value;
             }
         });
     }
@@ -714,11 +569,8 @@ function showOrderTracking(orderId) {
     setText('trackRecipientAddress', recipientAddress);
     setText('trackNoteText', deliverySlot ? ('Khung giờ giao đã chọn: ' + deliverySlot) : 'Đóng thùng cách nhiệt chuỗi lạnh FreshCold tiêu chuẩn.');
 
-    const goodsAmount = getAttr('data-goods-amount', 0);
-    setText('trackGoodsSubtotal', formatVND(goodsAmount));
-    setText('trackShippingFee', formatVND(getAttr('data-shipping-fee', 0)));
-    setText('trackVoucherDiscount', '-' + formatVND(getAttr('data-discount', 0)));
-    setText('trackFinalTotal', formatVND(getAttr('data-final-amount', goodsAmount)));
+    const finalAmount = getAttr('data-final-amount', getAttr('data-goods-amount', 0));
+    setText('trackFinalTotal', formatVND(finalAmount));
 
     const payBadge = document.getElementById('trackPaymentMethodBadge');
     if (payBadge) {
@@ -763,6 +615,7 @@ function showOrderTracking(orderId) {
 
     const orderHour = createdAt ? (createdAt.trim().split(' ')[1] || createdAt) : 'Vừa xong';
     const isCancel = status === 'CANCELLED' || status === 'CANCELED';
+    const isReturned = status === 'RETURNED' || status === 'REFUNDED' || status === 'DISPUTED' || status === 'FAILED';
     const isCompleted = status === 'COMPLETED' || status === 'DELIVERED' || status === 'SUCCESS';
     const isShipping = status === 'SHIPPING' || status === 'DELIVERING' || status === 'IN_TRANSIT';
     const isPacking = ['PACKING', 'CONFIRMED', 'PROCESSING', 'PREPARING', 'PACKED', 'READY_TO_SHIP'].includes(status);
@@ -781,6 +634,14 @@ function showOrderTracking(orderId) {
         completedSteps = 1;
         activeStep = 0;
         times = [orderHour, 'Đã hủy', '--:--', '--:--', '--:--', '--:--'];
+    } else if (isReturned) {
+        badgeText = 'ĐÃ TRẢ HÀNG';
+        badgeCls = 'bg-warning-subtle text-warning border-warning-subtle';
+        estText = 'Đơn hàng đã được trả về nhà vườn';
+        estCls = 'text-warning bg-warning-subtle border-warning-subtle';
+        completedSteps = 6;
+        activeStep = 0;
+        times = [orderHour, 'Đã xác nhận', 'Đã đóng gói', 'Đã bàn giao', 'Đã chuyển hàng', 'Đã trả hàng'];
     } else if (isCompleted) {
         badgeText = 'GIAO THÀNH CÔNG';
         badgeCls = 'bg-success-subtle text-success border-success-subtle';
@@ -827,17 +688,25 @@ function showOrderTracking(orderId) {
         estTimeEl.className = 'small fw-semibold px-3 py-1 rounded-pill border ' + estCls;
     }
 
-    const driverCard = document.getElementById('trackDriverCard');
-    if (driverCard) driverCard.style.display = (isShipping || isCompleted) ? 'block' : 'none';
-
     const prepCard = document.getElementById('trackPreparingCard');
-    if (prepCard) prepCard.classList.toggle('d-none', !(isPacking || (!isCancel && !isShipping && !isCompleted && !isNew)));
+    if (prepCard) prepCard.classList.toggle('d-none', !(isPacking || isNew));
 
     const cancelCard = document.getElementById('trackCancelledCard');
     if (cancelCard) {
         cancelCard.classList.toggle('d-none', !isCancel);
         if (isCancel) {
             setText('trackCancelReason', 'Lý do: ' + getAttr('data-cancel-reason', 'Người mua hủy đơn trực tiếp'));
+        }
+    }
+
+    const returnCard = document.getElementById('trackReturnedCard');
+    if (returnCard) {
+        returnCard.classList.toggle('d-none', !isReturned);
+        if (isReturned) {
+            const failureReason = getAttr('data-failure-reason');
+            const cancelReason = getAttr('data-cancel-reason');
+            const reason = failureReason || cancelReason || 'Khách từ chối nhận khi đồng kiểm với Shipper (Giao sai loại quả hoặc thiếu số lượng/dập nát).';
+            setText('trackReturnedReason', reason);
         }
     }
 
@@ -857,8 +726,16 @@ function showOrderTracking(orderId) {
                 if (circle) circle.innerHTML = isCancel ? '<i class="bi bi-x-lg"></i>' : '<i class="bi bi-shop"></i>';
             }
 
+            if (i === 6) {
+                const titleEl = stepEl.querySelector('.stepper-title');
+                if (titleEl) titleEl.textContent = isReturned ? 'Đã trả hàng' : 'Đã giao hàng';
+                if (circle) circle.innerHTML = isReturned ? '<i class="bi bi-arrow-return-left"></i>' : '<i class="bi bi-house-check"></i>';
+            }
+
             if (isCancel && i === 2) {
                 stepEl.classList.add('cancelled');
+            } else if (isReturned && i === 6) {
+                stepEl.classList.add('completed', 'returned');
             } else if (i <= completedSteps) {
                 stepEl.classList.add('completed');
             } else if (i === activeStep) {
@@ -892,126 +769,35 @@ function openCancelModal(orderId) {
     const codeEl = document.getElementById('cancelModalOrderCode');
     const select = document.getElementById('cancelReasonSelect');
     const custom = document.getElementById('cancelReasonCustom');
+    const finalReason = document.getElementById('finalCancelReason');
 
-    if (inputId) inputId.value = orderId;
-    if (codeEl) codeEl.textContent = '#' + orderId;
-    if (select) select.value = 'Đổi ý, không muốn mua nữa';
+    if (inputId) inputId.value = orderId || '';
+    if (codeEl) codeEl.textContent = '#' + (orderId || '');
+    if (select) select.selectedIndex = 0;
     if (custom) {
         custom.value = '';
         custom.classList.add('d-none');
     }
+    if (finalReason) finalReason.value = select ? select.value : 'Đổi ý, không muốn mua nữa';
 
     const modalEl = document.getElementById('cancelOrderModal');
     if (modalEl && window.bootstrap && bootstrap.Modal) {
         const m = bootstrap.Modal.getOrCreateInstance(modalEl);
         m.show();
-    } else {
-        cancelOrderFallback(orderId);
     }
 }
 
 function toggleCustomCancelReason(val) {
     const custom = document.getElementById('cancelReasonCustom');
+    const finalReason = document.getElementById('finalCancelReason');
     if (!custom) return;
     if (val === 'OTHER') {
         custom.classList.remove('d-none');
         custom.focus();
+        if (finalReason) finalReason.value = custom.value.trim() || 'Lý do khác';
     } else {
         custom.classList.add('d-none');
-    }
-}
-
-async function submitCancelOrder() {
-    const inputId = document.getElementById('cancelTargetOrderId');
-    const orderId = inputId ? inputId.value : '';
-    if (!orderId) {
-        alert('Không tìm thấy mã đơn hàng!');
-        return;
-    }
-
-    const select = document.getElementById('cancelReasonSelect');
-    const custom = document.getElementById('cancelReasonCustom');
-    let reason = select ? select.value : 'Đổi ý, không muốn mua nữa';
-    if (reason === 'OTHER') {
-        reason = custom && custom.value.trim() ? custom.value.trim() : 'Lý do khác';
-    }
-
-    const btn = document.getElementById('btnConfirmCancelOrder');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang hủy...';
-    }
-
-    try {
-        const ctx = window.contextPath || '';
-        const params = new URLSearchParams();
-        params.append('action', 'cancelOrder');
-        params.append('orderId', orderId);
-        params.append('reason', reason);
-        params.append('ajax', 'true');
-
-        const res = await fetch(ctx + '/profile', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            body: params.toString()
-        });
-
-        const data = await res.json();
-        if (data && data.success) {
-            const modalEl = document.getElementById('cancelOrderModal');
-            if (modalEl && window.bootstrap && bootstrap.Modal) {
-                const m = bootstrap.Modal.getInstance(modalEl);
-                if (m) m.hide();
-            }
-            alert(data.message || 'Hủy đơn hàng thành công!');
-            // Chuyển sang tab Đã hủy và tải lại trang
-            window.location.href = ctx + '/profile#orders';
-            window.location.reload();
-        } else {
-            alert(data.message || 'Không thể hủy đơn hàng!');
-        }
-    } catch (e) {
-        alert('Có lỗi xảy ra khi hủy đơn hàng: ' + (e.message || e));
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-x-circle me-1"></i> Xác Nhận Hủy Đơn';
-        }
-    }
-}
-
-function cancelOrderFallback(orderId) {
-    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng #' + orderId + ' ngay lập tức?')) {
-        const reason = prompt('Lý do hủy đơn hàng:', 'Đổi ý, không muốn mua nữa') || 'Người mua hủy đơn trực tiếp';
-        const ctx = window.contextPath || '';
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = ctx + '/profile';
-
-        const actInput = document.createElement('input');
-        actInput.type = 'hidden';
-        actInput.name = 'action';
-        actInput.value = 'cancelOrder';
-        form.appendChild(actInput);
-
-        const idInput = document.createElement('input');
-        idInput.type = 'hidden';
-        idInput.name = 'orderId';
-        idInput.value = orderId;
-        form.appendChild(idInput);
-
-        const rInput = document.createElement('input');
-        rInput.type = 'hidden';
-        rInput.name = 'reason';
-        rInput.value = reason;
-        form.appendChild(rInput);
-
-        document.body.appendChild(form);
-        form.submit();
+        if (finalReason) finalReason.value = val;
     }
 }
 
@@ -1074,86 +860,7 @@ function selectReturnPhotoPreset(url) {
 
 function viewReturnDetail(subOrderIdOrCode) {
     if (!subOrderIdOrCode) return;
-
-    const returnForm = document.querySelector('#returnOrderModal form');
-    const basePath = returnForm ? returnForm.getAttribute('action') : 'customer/return';
-    const url = basePath + '?subOrderId=' + encodeURIComponent(subOrderIdOrCode);
-
-    fetch(url)
-        .then(res => {
-            if (!res.ok) throw new Error('Không thể tải thông tin khiếu nại');
-            return res.json();
-        })
-        .then(data => {
-            if (data && data.disputeId) {
-                const codeEl = document.getElementById('dispCodeText');
-                const badgeEl = document.getElementById('dispStatusBadge');
-                const reasonEl = document.getElementById('dispReasonText');
-                const compEl = document.getElementById('dispComplaintText');
-                const imgEl = document.getElementById('dispEvidenceImg');
-                const claimEl = document.getElementById('dispClaimAmount');
-                const resTitle = document.getElementById('dispResolutionTitle');
-                const resNote = document.getElementById('dispResolutionNote');
-
-                if (codeEl) codeEl.textContent = data.disputeCode || ('DIS-' + data.disputeId);
-
-                if (badgeEl) {
-                    const status = (data.status || 'OPEN').toUpperCase();
-                    if (status === 'REFUNDED_BUYER' || status === 'RESOLVED') {
-                        badgeEl.className = 'badge bg-success fs-6';
-                        badgeEl.textContent = 'Đã Hoàn Tiền';
-                    } else if (status === 'REJECTED') {
-                        badgeEl.className = 'badge bg-danger fs-6';
-                        badgeEl.textContent = 'Từ Chối Hoàn Tiền';
-                    } else if (status === 'MEDIATING') {
-                        badgeEl.className = 'badge bg-warning text-dark fs-6';
-                        badgeEl.textContent = 'Đang Thẩm Định Quả';
-                    } else {
-                        badgeEl.className = 'badge bg-primary fs-6';
-                        badgeEl.textContent = 'Chờ Shop Phản Hồi';
-                    }
-                }
-
-                if (reasonEl) reasonEl.textContent = data.reasonCategory || 'Khiếu nại tươi ngon';
-                if (compEl) compEl.textContent = data.complaintText || 'Không có mô tả chi tiết';
-
-                if (imgEl) {
-                    if (data.evidenceImageUrl && data.evidenceImageUrl.trim() !== '') {
-                        imgEl.src = data.evidenceImageUrl;
-                        imgEl.style.display = 'inline-block';
-                    } else {
-                        imgEl.style.display = 'none';
-                    }
-                }
-
-                if (claimEl) {
-                    const formatted = Number(data.claimAmount || 0).toLocaleString('vi-VN');
-                    claimEl.textContent = formatted + '₫';
-                }
-
-                if (resTitle && resNote) {
-                    if (data.resolutionNote && data.resolutionNote.trim() !== '') {
-                        resTitle.textContent = 'Phản hồi từ ' + (data.resolverName || 'Hệ thống Sàn') + ':';
-                        resNote.textContent = data.resolutionNote;
-                    } else {
-                        resTitle.textContent = 'Tiến độ:';
-                        resNote.textContent = 'Yêu cầu của bạn đang được Bộ phận Vận hành Sàn & Nhà Vườn cùng xem xét ảnh bằng chứng. Kết quả thẩm định sẽ được cập nhật trong 24h.';
-                    }
-                }
-
-                const modalEl = document.getElementById('returnDetailModal');
-                if (modalEl && window.bootstrap && bootstrap.Modal) {
-                    const m = bootstrap.Modal.getOrCreateInstance(modalEl);
-                    m.show();
-                }
-            } else {
-                alert('Chưa có thông tin khiếu nại trả hàng cho đơn này hoặc đơn hàng đang xử lý.');
-            }
-        })
-        .catch(err => {
-            console.error('Lỗi tra cứu khiếu nại:', err);
-            alert('Không thể kết nối đến máy chủ để lấy thông tin khiếu nại.');
-        });
+    showOrderTracking(subOrderIdOrCode);
 }
 
 

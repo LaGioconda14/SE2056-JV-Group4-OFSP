@@ -51,37 +51,28 @@ function openAddCategoryModal(defaultParentId) {
     modal.show();
 }
 
-function openEditCategoryModal(categoryId) {
-    const ctx = typeof getAdminContextPath === 'function' ? getAdminContextPath() : '';
-    fetch(ctx + '/admin/categories?action=categoryDetail&categoryId=' + encodeURIComponent(categoryId))
-        .then(res => {
-            if (!res.ok) throw new Error('Không thể tải chi tiết danh mục');
-            return res.json();
-        })
-        .then(data => {
-            document.getElementById('categoryForm').reset();
-            document.getElementById('categoryFormAction').value = 'updateCategory';
-            document.getElementById('categoryFormId').value = data.categoryId;
-            document.getElementById('categoryModalTitle').textContent = 'Chỉnh Sửa Danh Mục: ' + data.categoryName;
-            document.getElementById('categoryModalIcon').className = 'bi bi-pencil-square fs-5';
-            document.getElementById('btnSaveCategory').innerHTML = '<i class="bi bi-save me-1"></i> Cập Nhật Danh Mục';
+function openEditCategoryModal(btn) {
+    if (!btn) return;
+    const d = btn.dataset;
+    document.getElementById('categoryForm').reset();
+    document.getElementById('categoryFormAction').value = 'updateCategory';
+    document.getElementById('categoryFormId').value = d.categoryId || '';
+    document.getElementById('categoryModalTitle').textContent = 'Chỉnh Sửa Danh Mục: ' + (d.categoryName || '');
+    document.getElementById('categoryModalIcon').className = 'bi bi-pencil-square fs-5';
+    document.getElementById('btnSaveCategory').innerHTML = '<i class="bi bi-save me-1"></i> Cập Nhật Danh Mục';
 
-            document.getElementById('modalCategoryName').value = data.categoryName || '';
-            document.getElementById('modalCategorySlug').value = data.slug || '';
-            document.getElementById('modalCategoryDesc').value = data.description || '';
-            document.getElementById('modalCategoryParent').value = (data.parentId !== null && data.parentId !== undefined) ? data.parentId : '0';
-            document.getElementById('modalCategoryOrder').value = data.displayOrder || 0;
-            document.getElementById('modalCategoryIcon').value = data.iconClass || 'bi-tag';
-            document.getElementById('modalCategoryImageUrl').value = data.imageUrl || '';
-            document.getElementById('modalCategoryIsActive').checked = (data.isActive === true || data.isActive === 'true');
-            updateIconPreview(data.iconClass || 'bi-tag');
+    document.getElementById('modalCategoryName').value = d.categoryName || '';
+    document.getElementById('modalCategorySlug').value = d.slug || '';
+    document.getElementById('modalCategoryDesc').value = d.description || '';
+    document.getElementById('modalCategoryParent').value = d.parentId || '0';
+    document.getElementById('modalCategoryOrder').value = d.displayOrder || 0;
+    document.getElementById('modalCategoryIcon').value = d.iconClass || 'bi-tag';
+    document.getElementById('modalCategoryImageUrl').value = d.imageUrl || '';
+    document.getElementById('modalCategoryIsActive').checked = (d.isActive === '1' || d.isActive === 'true');
+    updateIconPreview(d.iconClass || 'bi-tag');
 
-            const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
-            modal.show();
-        })
-        .catch(err => {
-            alert('Lỗi: ' + err.message);
-        });
+    const modal = new bootstrap.Modal(document.getElementById('categoryModal'));
+    modal.show();
 }
 
 function openDeleteCategoryModal(categoryId, categoryName, activeSkus) {
@@ -90,36 +81,3 @@ function openDeleteCategoryModal(categoryId, categoryName, activeSkus) {
     const modal = new bootstrap.Modal(document.getElementById('deleteCategoryModal'));
     modal.show();
 }
-
-function toggleCategoryActive(categoryId, isChecked) {
-    const ctx = typeof getAdminContextPath === 'function' ? getAdminContextPath() : '';
-    const formData = new URLSearchParams();
-    formData.append('action', 'toggleCategoryStatus');
-    formData.append('categoryId', categoryId);
-    formData.append('isActive', isChecked ? '1' : '0');
-    formData.append('ajax', '1');
-
-    fetch(ctx + '/admin/categories', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData.toString()
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            if (typeof showAdminToast === 'function') {
-                showAdminToast('Đã ' + (isChecked ? 'bật hiển thị' : 'tắt hiển thị') + ' danh mục #' + categoryId + ' ngoài sàn!');
-            }
-        } else {
-            alert('Không thể thay đổi trạng thái danh mục #' + categoryId);
-        }
-    })
-    .catch(err => {
-        console.error('Lỗi toggle:', err);
-        alert('Lỗi kết nối khi cập nhật trạng thái danh mục.');
-    });
-}
-

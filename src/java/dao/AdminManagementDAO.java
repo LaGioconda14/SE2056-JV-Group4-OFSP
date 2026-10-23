@@ -1019,7 +1019,7 @@ public class AdminManagementDAO extends DBContext {
     public List<Map<String, Object>> getCategoriesList(String statusFilter, String searchKeyword, String parentIdFilter) {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.is_active, ")
+        sql.append("SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.display_order, c.is_active, ")
            .append("       pcat.category_name as parent_name, ")
            .append("       COALESCE(p.active_skus, 0) as active_skus ")
            .append("FROM categories c ")
@@ -1083,6 +1083,7 @@ public class AdminManagementDAO extends DBContext {
                     item.put("imageUrl", rs.getString("image_url"));
                     item.put("iconClass", rs.getString("icon_class"));
                     item.put("activeSkus", rs.getInt("active_skus"));
+                    item.put("displayOrder", rs.getInt("display_order"));
                     item.put("isActive", rs.getBoolean("is_active"));
 
                     // Cold Storage details by category group

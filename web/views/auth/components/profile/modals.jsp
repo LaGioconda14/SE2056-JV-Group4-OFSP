@@ -40,23 +40,82 @@
                             </label>
                             <select class="form-select" id="citySelect" name="city" required>
                                 <option value="" selected disabled>Chọn Tỉnh / Thành phố</option>
+                                <option value="Thành phố Hà Nội">Thành phố Hà Nội</option>
+                                <option value="Thành phố Hồ Chí Minh">Thành phố Hồ Chí Minh</option>
+                                <option value="Thành phố Đà Nẵng">Thành phố Đà Nẵng</option>
+                                <option value="Thành phố Hải Phòng">Thành phố Hải Phòng</option>
+                                <option value="Thành phố Cần Thơ">Thành phố Cần Thơ</option>
+                                <option value="Tỉnh An Giang">Tỉnh An Giang</option>
+                                <option value="Tỉnh Bà Rịa - Vũng Tàu">Tỉnh Bà Rịa - Vũng Tàu</option>
+                                <option value="Tỉnh Bắc Giang">Tỉnh Bắc Giang</option>
+                                <option value="Tỉnh Bắc Kạn">Tỉnh Bắc Kạn</option>
+                                <option value="Tỉnh Bạc Liêu">Tỉnh Bạc Liêu</option>
+                                <option value="Tỉnh Bắc Ninh">Tỉnh Bắc Ninh</option>
+                                <option value="Tỉnh Bến Tre">Tỉnh Bến Tre</option>
+                                <option value="Tỉnh Bình Định">Tỉnh Bình Định</option>
+                                <option value="Tỉnh Bình Dương">Tỉnh Bình Dương</option>
+                                <option value="Tỉnh Bình Phước">Tỉnh Bình Phước</option>
+                                <option value="Tỉnh Bình Thuận">Tỉnh Bình Thuận</option>
+                                <option value="Tỉnh Cà Mau">Tỉnh Cà Mau</option>
+                                <option value="Tỉnh Cao Bằng">Tỉnh Cao Bằng</option>
+                                <option value="Tỉnh Đắk Lắk">Tỉnh Đắk Lắk</option>
+                                <option value="Tỉnh Đắk Nông">Tỉnh Đắk Nông</option>
+                                <option value="Tỉnh Điện Biên">Tỉnh Điện Biên</option>
+                                <option value="Tỉnh Đồng Nai">Tỉnh Đồng Nai</option>
+                                <option value="Tỉnh Đồng Tháp">Tỉnh Đồng Tháp</option>
+                                <option value="Tỉnh Gia Lai">Tỉnh Gia Lai</option>
+                                <option value="Tỉnh Hà Giang">Tỉnh Hà Giang</option>
+                                <option value="Tỉnh Hà Nam">Tỉnh Hà Nam</option>
+                                <option value="Tỉnh Hà Tĩnh">Tỉnh Hà Tĩnh</option>
+                                <option value="Tỉnh Hải Dương">Tỉnh Hải Dương</option>
+                                <option value="Tỉnh Hậu Giang">Tỉnh Hậu Giang</option>
+                                <option value="Tỉnh Hòa Bình">Tỉnh Hòa Bình</option>
+                                <option value="Tỉnh Hưng Yên">Tỉnh Hưng Yên</option>
+                                <option value="Tỉnh Khánh Hòa">Tỉnh Khánh Hòa</option>
+                                <option value="Tỉnh Kiên Giang">Tỉnh Kiên Giang</option>
+                                <option value="Tỉnh Kon Tum">Tỉnh Kon Tum</option>
+                                <option value="Tỉnh Lai Châu">Tỉnh Lai Châu</option>
+                                <option value="Tỉnh Lâm Đồng">Tỉnh Lâm Đồng</option>
+                                <option value="Tỉnh Lạng Sơn">Tỉnh Lạng Sơn</option>
+                                <option value="Tỉnh Lào Cai">Tỉnh Lào Cai</option>
+                                <option value="Tỉnh Long An">Tỉnh Long An</option>
+                                <option value="Tỉnh Nam Định">Tỉnh Nam Định</option>
+                                <option value="Tỉnh Nghệ An">Tỉnh Nghệ An</option>
+                                <option value="Tỉnh Ninh Bình">Tỉnh Ninh Bình</option>
+                                <option value="Tỉnh Ninh Thuận">Tỉnh Ninh Thuận</option>
+                                <option value="Tỉnh Phú Thọ">Tỉnh Phú Thọ</option>
+                                <option value="Tỉnh Phú Yên">Tỉnh Phú Yên</option>
+                                <option value="Tỉnh Quảng Bình">Tỉnh Quảng Bình</option>
+                                <option value="Tỉnh Quảng Nam">Tỉnh Quảng Nam</option>
+                                <option value="Tỉnh Quảng Ngãi">Tỉnh Quảng Ngãi</option>
+                                <option value="Tỉnh Quảng Ninh">Tỉnh Quảng Ninh</option>
+                                <option value="Tỉnh Quảng Trị">Tỉnh Quảng Trị</option>
+                                <option value="Tỉnh Sóc Trăng">Tỉnh Sóc Trăng</option>
+                                <option value="Tỉnh Sơn La">Tỉnh Sơn La</option>
+                                <option value="Tỉnh Tây Ninh">Tỉnh Tây Ninh</option>
+                                <option value="Tỉnh Thái Bình">Tỉnh Thái Bình</option>
+                                <option value="Tỉnh Thái Nguyên">Tỉnh Thái Nguyên</option>
+                                <option value="Tỉnh Thanh Hóa">Tỉnh Thanh Hóa</option>
+                                <option value="Thành phố Huế">Thành phố Huế</option>
+                                <option value="Tỉnh Tiền Giang">Tỉnh Tiền Giang</option>
+                                <option value="Tỉnh Trà Vinh">Tỉnh Trà Vinh</option>
+                                <option value="Tỉnh Tuyên Quang">Tỉnh Tuyên Quang</option>
+                                <option value="Tỉnh Vĩnh Long">Tỉnh Vĩnh Long</option>
+                                <option value="Tỉnh Vĩnh Phúc">Tỉnh Vĩnh Phúc</option>
+                                <option value="Tỉnh Yên Bái">Tỉnh Yên Bái</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label-bold" for="districtSelect">
+                            <label class="form-label-bold" for="districtInput">
                                 Quận / Huyện <span class="text-danger">*</span>
                             </label>
-                            <select class="form-select" id="districtSelect" name="district" required disabled>
-                                <option value="" selected disabled>Chọn Quận / Huyện</option>
-                            </select>
+                            <input type="text" class="form-control" id="districtInput" name="district" placeholder="Nhập Quận / Huyện" required maxlength="100">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label-bold" for="wardSelect">
+                            <label class="form-label-bold" for="wardInput">
                                 Phường / Xã
                             </label>
-                            <select class="form-select" id="wardSelect" name="ward" disabled>
-                                <option value="" selected disabled>Chọn Phường / Xã</option>
-                            </select>
+                            <input type="text" class="form-control" id="wardInput" name="ward" placeholder="Nhập Phường / Xã" maxlength="100">
                         </div>
 
                         <div class="col-12">
@@ -219,6 +278,21 @@
                             </div>
                         </div>
 
+                        <div class="tracking-card mb-4 d-none" id="trackReturnedCard">
+                            <div class="p-3 rounded-4 bg-warning-subtle border border-warning-subtle d-flex align-items-start gap-3">
+                                <div class="stat-icon-circle bg-warning text-white fs-4 mt-1"><i class="bi bi-arrow-return-left"></i></div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <h6 class="fw-bold text-dark mb-0">Lý do trả hàng</h6>
+                                        <span class="badge bg-warning text-dark fw-bold px-2 py-1">ĐÃ TRẢ HÀNG</span>
+                                    </div>
+                                    <p class="small text-dark mb-0 lh-base" id="trackReturnedReason">
+                                        Khách từ chối nhận khi đồng kiểm với Shipper (Hoa quả dập nát / Sai sản phẩm).
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="tracking-card mb-4 d-none" id="trackCancelledCard">
                             <div class="p-3 rounded-4 bg-danger-subtle border border-danger-subtle d-flex align-items-start gap-3">
                                 <div class="stat-icon-circle bg-danger text-white fs-4 mt-1"><i class="bi bi-x-circle-fill"></i></div>
@@ -227,32 +301,6 @@
                                     <p class="small text-muted mb-0 lh-base" id="trackCancelReason">
                                         Lý do: Người mua hủy đơn trực tiếp.
                                     </p>
-                                </div>
-                            </div>
-                        </div>
-
-                                                <div class="tracking-card mb-4" id="trackDriverCard">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                                <div class="d-flex align-items-center gap-3">
-                                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" class="driver-avatar rounded-circle border shadow-xs" alt="Tài xế">
-                                    <div>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <h6 class="fw-bold text-dark mb-0" id="trackDriverName">Tài xế chuỗi lạnh Gốc Vườn</h6>
-                                            <span class="badge bg-success-subtle text-success small" id="trackDriverBadge">Tài xế chuyên dụng</span>
-                                        </div>
-                                        <div class="text-muted small" id="trackDriverSubtitle">Đội ngũ giao vận nội bộ Gốc Vườn Express</div>
-                                        <div class="text-muted small mt-1" id="trackDriverInfoRow">
-                                            Xe chuyên dụng bảo quản lạnh • <span class="text-warning">★ 5.0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <a href="#" id="trackDriverCallBtn" class="btn btn-success fw-semibold px-3 py-2 rounded-3 shadow-xs" style="display: none;">
-                                        <i class="bi bi-telephone-fill me-1"></i> <span id="trackDriverCallText">Gọi tài xế</span>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-secondary px-3 py-2 rounded-3" onclick="alert('Đang kết nối khung chat trực tiếp với tài xế giao hàng...')">
-                                        <i class="bi bi-chat-dots-fill"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -290,19 +338,6 @@
                             <div class="fw-bold text-dark mb-3 d-flex align-items-center">
                                 <i class="bi bi-credit-card text-success me-2"></i> Chi tiết thanh toán
                             </div>
-                            <div class="d-flex justify-content-between text-muted small mb-2">
-                                <span>Tạm tính hoa quả:</span>
-                                <span class="text-dark fw-semibold" id="trackGoodsSubtotal">0₫</span>
-                            </div>
-                            <div class="d-flex justify-content-between text-muted small mb-2">
-                                <span>Phí giao chuỗi lạnh FreshCold:</span>
-                                <span class="text-dark fw-semibold" id="trackShippingFee">25.000₫</span>
-                            </div>
-                            <div class="d-flex justify-content-between text-muted small mb-2">
-                                <span>Voucher sàn tài trợ (FREESHIP30K):</span>
-                                <span class="text-danger fw-semibold" id="trackVoucherDiscount">-0₫</span>
-                            </div>
-                            <hr class="my-2 border-dashed">
                             <div class="d-flex justify-content-between align-items-baseline mb-2">
                                 <span class="fw-bold text-dark">Tổng cần thanh toán:</span>
                                 <span class="fw-bolder text-success fs-4" id="trackFinalTotal">0₫</span>
@@ -449,58 +484,6 @@
     </div>
 </div>
 
-<div class="modal fade" id="returnDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                    <i class="bi bi-info-circle-fill"></i> Tiến Độ Xử Lý Trả Hàng & Hoàn Tiền
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <div>
-                        <span class="text-muted small d-block">Mã khiếu nại:</span>
-                        <strong class="text-dark fs-6" id="dispCodeText">DIS-892</strong>
-                    </div>
-                    <span class="badge bg-success fs-6" id="dispStatusBadge">Đã Hoàn Tiền</span>
-                </div>
-
-                <div class="mb-3">
-                    <span class="text-muted small d-block">Nhóm lý do:</span>
-                    <strong class="text-dark" id="dispReasonText">Quả dập nát / úng hỏng do vận chuyển</strong>
-                </div>
-
-                <div class="mb-3">
-                    <span class="text-muted small d-block">Mô tả sự cố của bạn:</span>
-                    <p class="text-secondary small bg-light p-2 rounded-3 border mb-0" id="dispComplaintText">
-                        Dâu tây bị dập nát cuống do chèn ép trong thùng đá.
-                    </p>
-                </div>
-
-                <div class="mb-3">
-                    <span class="text-muted small d-block">Ảnh bằng chứng đã gửi:</span>
-                    <img id="dispEvidenceImg" src="" class="rounded border mt-1 shadow-xs" style="max-height: 140px; object-fit: cover;">
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center p-3 bg-success-subtle rounded-3 border border-success-subtle mb-3">
-                    <span class="text-dark fw-semibold">Số tiền hoàn:</span>
-                    <span class="text-success fw-bolder fs-5" id="dispClaimAmount">0₫</span>
-                </div>
-
-                <div class="alert alert-info py-2 px-3 small rounded-3 mb-0" id="dispResolutionBox">
-                    <i class="bi bi-chat-quote-fill me-1"></i> <strong id="dispResolutionTitle">Phản hồi từ sàn:</strong>
-                    <span id="dispResolutionNote">Hệ thống đã chấp thuận khiếu nại và hoàn tiền về ví của bạn.</span>
-                </div>
-            </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Modal Xác Nhận Hủy Đơn Hàng (Người mua hủy trực tiếp không cần ai duyệt) -->
 <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -511,39 +494,40 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4">
-                <input type="hidden" id="cancelTargetOrderId" value="">
-                
-                <div class="d-flex align-items-center gap-3 p-3 bg-danger-subtle rounded-3 mb-3 border border-danger-subtle">
-                    <i class="bi bi-exclamation-triangle-fill text-danger fs-3"></i>
-                    <div>
-                        <div class="fw-bold text-danger">Hủy đơn hàng <span id="cancelModalOrderCode">#ORD</span></div>
-                        <div class="small text-muted">Đơn hàng sẽ được hủy ngay lập tức mà không cần chờ người bán phê duyệt.</div>
+            <form action="${pageContext.request.contextPath}/profile" method="POST" id="cancelOrderForm">
+                <input type="hidden" name="action" value="cancelOrder">
+                <input type="hidden" name="orderId" id="cancelTargetOrderId" value="">
+                <input type="hidden" id="finalCancelReason" name="reason" value="Đổi ý, không muốn mua nữa">
+
+                <div class="modal-body p-4">
+                    <div class="d-flex align-items-center gap-3 p-3 bg-danger-subtle rounded-3 mb-3 border border-danger-subtle">
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-3"></i>
+                        <div>
+                            <div class="fw-bold text-danger">Hủy đơn hàng <span id="cancelModalOrderCode">#ORD</span></div>
+                            <div class="small text-muted">Đơn hàng sẽ được hủy ngay lập tức mà không cần chờ người bán phê duyệt.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold text-dark small">Vui lòng chọn lý do hủy đơn: <span class="text-danger">*</span></label>
+                        <select id="cancelReasonSelect" class="form-select form-select-sm mb-2" onchange="toggleCustomCancelReason(this.value)">
+                            <option value="Đổi ý, không muốn mua nữa">Đổi ý, không muốn mua nữa</option>
+                            <option value="Muốn thay đổi địa chỉ hoặc số điện thoại nhận hàng">Muốn thay đổi địa chỉ hoặc số điện thoại nhận hàng</option>
+                            <option value="Muốn thay đổi sản phẩm trong giỏ (thêm/bớt mặt hàng)">Muốn thay đổi sản phẩm trong giỏ (thêm/bớt mặt hàng)</option>
+                            <option value="Tìm thấy giá rẻ hơn ở nơi khác">Tìm thấy giá rẻ hơn ở nơi khác</option>
+                            <option value="Thời gian giao hàng dự kiến không phù hợp">Thời gian giao hàng dự kiến không phù hợp</option>
+                            <option value="OTHER">Lý do khác...</option>
+                        </select>
+                        <textarea id="cancelReasonCustom" class="form-control form-control-sm d-none mt-2" rows="2" placeholder="Nhập lý do cụ thể..."></textarea>
                     </div>
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold text-dark small">Vui lòng chọn lý do hủy đơn: <span class="text-danger">*</span></label>
-                    <select id="cancelReasonSelect" class="form-select form-select-sm mb-2" onchange="toggleCustomCancelReason(this.value)">
-                        <option value="Đổi ý, không muốn mua nữa">Đổi ý, không muốn mua nữa</option>
-                        <option value="Muốn thay đổi địa chỉ hoặc số điện thoại nhận hàng">Muốn thay đổi địa chỉ hoặc số điện thoại nhận hàng</option>
-                        <option value="Muốn thay đổi sản phẩm trong giỏ (thêm/bớt mặt hàng)">Muốn thay đổi sản phẩm trong giỏ (thêm/bớt mặt hàng)</option>
-                        <option value="Tìm thấy giá rẻ hơn ở nơi khác">Tìm thấy giá rẻ hơn ở nơi khác</option>
-                        <option value="Thời gian giao hàng dự kiến không phù hợp">Thời gian giao hàng dự kiến không phù hợp</option>
-                        <option value="OTHER">Lý do khác...</option>
-                    </select>
-                    <textarea id="cancelReasonCustom" class="form-control form-control-sm d-none mt-2" rows="2" placeholder="Nhập lý do cụ thể..."></textarea>
+                <div class="modal-footer bg-light px-4 py-3">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-semibold" id="btnConfirmCancelOrder">
+                        <i class="bi bi-x-circle me-1"></i> Xác Nhận Hủy Đơn
+                    </button>
                 </div>
-            </div>
-            <div class="modal-footer bg-light px-4 py-3">
-                <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-danger rounded-pill px-4 fw-semibold" id="btnConfirmCancelOrder" onclick="submitCancelOrder()">
-                    <i class="bi bi-x-circle me-1"></i> Xác Nhận Hủy Đơn
-                </button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
-
-
-

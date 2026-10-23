@@ -1,6 +1,5 @@
 package controller.admin;
 
-import com.google.gson.Gson;
 import dao.AdminManagementDAO;
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -17,51 +16,11 @@ import model.User;
 @WebServlet(name = "AdminShopServlet", urlPatterns = {"/admin/shops"})
 public class AdminShopServlet extends HttpServlet {
     private final AdminManagementDAO dao = new AdminManagementDAO();
-    private final Gson gson = new Gson();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
-
-        // AJAX endpoint: Chi tiết hồ sơ KYC đăng ký gian hàng
-        if ("requestDetail".equalsIgnoreCase(action)) {
-            String reqIdStr = request.getParameter("requestId");
-            response.setContentType("application/json; charset=UTF-8");
-            if (reqIdStr != null && !reqIdStr.trim().isEmpty()) {
-                try {
-                    long reqId = Long.parseLong(reqIdStr.trim());
-                    Map<String, Object> reqDetail = dao.getShopRequestDetail(reqId);
-                    if (reqDetail != null) {
-                        response.getWriter().write(gson.toJson(reqDetail));
-                        return;
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("{\"error\": \"Không tìm thấy thông tin hồ sơ đăng ký mở shop!\"}");
-            return;
-        }
-
-        // AJAX endpoint: Chi tiết gian hàng
-        if ("shopDetail".equalsIgnoreCase(action)) {
-            String shopIdStr = request.getParameter("shopId");
-            response.setContentType("application/json; charset=UTF-8");
-            if (shopIdStr != null && !shopIdStr.trim().isEmpty()) {
-                try {
-                    long sId = Long.parseLong(shopIdStr.trim());
-                    Map<String, Object> sDetail = dao.getShopDetail(sId);
-                    if (sDetail != null) {
-                        response.getWriter().write(gson.toJson(sDetail));
-                        return;
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("{\"error\": \"Không tìm thấy thông tin gian hàng!\"}");
-            return;
-        }
-
         // Handle flash session messages
         HttpSession session = request.getSession();
         if (session.getAttribute("successMessage") != null) {

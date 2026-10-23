@@ -50,6 +50,7 @@
                              data-shop-name="${order.shopName}"
                              data-created-at="${order.createdAt}"
                              data-cancel-reason="${order.cancelReason != null ? order.cancelReason : ''}"
+                             data-failure-reason="${order.failureReason != null ? order.failureReason : ''}"
                              data-delivery-slot="${order.deliverySlot != null ? order.deliverySlot : ''}"
                              data-recipient-name="${order.shippingAddress != null ? order.shippingAddress.recipientName : user.fullName}"
                              data-recipient-phone="${order.shippingAddress != null ? order.shippingAddress.recipientPhone : user.phone}"
@@ -210,18 +211,15 @@
                                                 Liên Hệ Người Bán
                                             </button>
                                         </c:when>
-                                        <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED'}">
-                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="viewReturnDetail('${order.subOrderId}')">
-                                                <i class="bi bi-clock-history me-1"></i> Chi Tiết Trả Hàng
+                                        <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED' or statusUpper == 'FAILED'}">
+                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="showOrderTracking('${order.id}')">
+                                                <i class="bi bi-arrow-return-left me-1"></i> Xem Tiến Độ Trả Hàng
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
                                             </button>
                                         </c:when>
                                         <c:otherwise>
-                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
-                                                <i class="bi bi-truck me-1"></i> Tra Cứu Vận Chuyển
-                                            </button>
                                             <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="cancelOrder('${order.id}')">
                                                 <i class="bi bi-x-circle me-1"></i> Hủy Đơn Hàng
                                             </button>

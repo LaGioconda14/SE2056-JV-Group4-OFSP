@@ -124,7 +124,7 @@
                                                 <td class="py-3.5 px-4">
                                                     <div class="font-bold text-slate-900">${o.shippingAddress.recipientName}</div>
                                                     <div class="text-[11px] text-slate-400 truncate max-w-xs">
-                                                        ${o.shippingAddress.city} • SĐT: ${o.shippingAddress.recipientPhone}
+                                                        ${o.shippingAddress.city} • SĐT: ${fn:substring(o.shippingAddress.recipientPhone, 0, 7)}***
                                                     </div>
                                                 </td>
                                                 <td class="py-3.5 px-4">
