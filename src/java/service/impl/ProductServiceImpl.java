@@ -66,7 +66,7 @@ public class ProductServiceImpl implements IProductService {
             throw new IllegalArgumentException("Tên nông sản không được để trống!");
         }
         
-        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+        if (price.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Giá bán lẻ phải lớn hơn 0!");
         }
         
@@ -103,6 +103,89 @@ public class ProductServiceImpl implements IProductService {
                 sku, variantName, unit, price, originalPrice, stockQuantity, lowStockThreshold,
                 isActive, coverImageUrl, detailImages, batchCode
         );
+    }
+
+    @Override
+    public long addVariantToProduct(long shopId, long productId, String sku, String variantName, String unit,
+            String priceValue, String originalPriceValue, String stockQuantityValue,
+            String lowStockThresholdValue, boolean isActive) {
+        if (shopId <= 0 || productId <= 0) {
+            throw new IllegalArgumentException("Sản phẩm hoặc cửa hàng không hợp lệ.");
+        }
+        if (variantName == null || variantName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên biến thể không được để trống.");
+        }
+        if (unit == null || unit.trim().isEmpty()) {
+            throw new IllegalArgumentException("Đơn vị tính không được để trống.");
+        }
+        BigDecimal price = parseRequiredPrice(priceValue);
+        BigDecimal originalPrice = parseOptionalPrice(originalPriceValue);
+        int stockQuantity = parseNonNegativeInteger(stockQuantityValue, "Số lượng tồn kho");
+        int lowStockThreshold = parseOptionalPositiveInteger(lowStockThresholdValue, 10);
+        if (price.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Giá bán phải lớn hơn 0.");
+        }
+        if (originalPrice != null && originalPrice.compareTo(price) < 0) {
+            throw new IllegalArgumentException("Giá gốc không được thấp hơn giá bán.");
+        }
+        if (sku != null && !sku.trim().isEmpty() && productDAO.isSkuExists(sku.trim())) {
+            throw new IllegalArgumentException("Mã SKU đã tồn tại, vui lòng nhập mã khác.");
+        }
+        long variantId = productDAO.addVariantToProduct(shopId, productId, sku, variantName, unit, price,
+                originalPrice, stockQuantity, lowStockThreshold > 0 ? lowStockThreshold : 10, isActive);
+        if (variantId <= 0) {
+            throw new IllegalArgumentException("Không thể thêm biến thể. Vui lòng kiểm tra lại thông tin.");
+        }
+        return variantId;
+    }
+
+    private BigDecimal parseRequiredPrice(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Giá bán không được để trống.");
+        }
+        try {
+            return new BigDecimal(value.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Giá bán không hợp lệ.");
+        }
+    }
+
+    private BigDecimal parseOptionalPrice(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(value.trim());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Giá gốc không hợp lệ.");
+        }
+    }
+
+    private int parseNonNegativeInteger(String value, String fieldName) {
+        try {
+            int parsedValue = Integer.parseInt(value);
+            if (parsedValue < 0) {
+                throw new IllegalArgumentException(fieldName + " không được nhỏ hơn 0.");
+            }
+            return parsedValue;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(fieldName + " không hợp lệ.");
+        }
+    }
+
+    private int parseOptionalPositiveInteger(String value, int defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            int parsedValue = Integer.parseInt(value.trim());
+            if (parsedValue <= 0) {
+                throw new IllegalArgumentException("Ngưỡng cảnh báo kho phải lớn hơn 0.");
+            }
+            return parsedValue;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Ngưỡng cảnh báo kho không hợp lệ.");
+        }
     }
     
     @Override

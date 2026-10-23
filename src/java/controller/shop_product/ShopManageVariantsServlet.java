@@ -48,6 +48,8 @@ public class ShopManageVariantsServlet extends HttpServlet {
             List<ProductVariant> variants = productService.getShopVariantsByProductId(shopId, productId);
             request.setAttribute("productSummary", productSummary);
             request.setAttribute("variants", variants);
+            request.setAttribute("successMessage", session.getAttribute("successMessage"));
+            session.removeAttribute("successMessage");
             request.getRequestDispatcher("/views/shop_product/shop-product-variants.jsp").forward(request, response);
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/shop/products");

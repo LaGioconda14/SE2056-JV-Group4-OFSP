@@ -26,6 +26,9 @@ public interface IProductService {
                            String sku, String variantName, String unit, BigDecimal price, 
                            BigDecimal originalPrice, int stockQuantity, int lowStockThreshold,
                            boolean isActive, String coverImageUrl, List<String> detailImages, String batchCode) throws IllegalArgumentException;
+    long addVariantToProduct(long shopId, long productId, String sku, String variantName, String unit,
+                             String price, String originalPrice, String stockQuantity,
+                             String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     
     boolean softDeleteVariant(long variantId, long shopId);
     boolean softDeleteProduct(long productId, long shopId);
