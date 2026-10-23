@@ -160,6 +160,9 @@
                             <a href="<c:out value='${profileUrl}'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <span class="material-symbols-outlined text-[18px]">person</span> Hồ sơ cá nhân
                             </a>
+                            <a href="${pageContext.request.contextPath}/payment/history" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">receipt_long</span> Lịch sử thanh toán
+                            </a>
                             <a href="<c:out value='${changePasswordUrl}'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <span class="material-symbols-outlined text-[18px]">key</span> Đổi mật khẩu
                             </a>

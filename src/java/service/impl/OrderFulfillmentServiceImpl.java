@@ -9,6 +9,7 @@ import service.IOrderFulfillmentService;
 public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
 
     private final OrderFulfillmentDAO fulfillmentDAO = new OrderFulfillmentDAO();
+    private final service.IRefundService refundService = new RefundServiceImpl();
 
     @Override
     public SubOrder getSubOrderDetails(String subOrderCode) {
@@ -28,7 +29,17 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
         if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
             return false;
         }
-        return fulfillmentDAO.cancelSubOrder(subOrderCode.trim(), cancelReason, cancelledBy);
+        boolean ok = fulfillmentDAO.cancelSubOrder(subOrderCode.trim(), cancelReason, cancelledBy);
+        if (ok) {
+            // Shop hủy sub-order đã thanh toán online -> hoàn tiền toàn phần cho khách.
+            try {
+                refundService.autoRefundOnCancel(null, subOrderCode.trim());
+            } catch (Exception ex) {
+                java.util.logging.Logger.getLogger(OrderFulfillmentServiceImpl.class.getName())
+                        .log(java.util.logging.Level.SEVERE, "Auto refund on cancel failed: " + subOrderCode, ex);
+            }
+        }
+        return ok;
     }
 
     @Override

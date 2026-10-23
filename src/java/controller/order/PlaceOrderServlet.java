@@ -16,12 +16,16 @@ import jakarta.servlet.http.HttpSession;
 import model.ShippingAddress;
 import model.User;
 import service.IOrderService;
+import service.IPaymentService;
 import service.impl.OrderServiceImpl;
+import service.impl.PaymentServiceImpl;
+import util.PaymentGatewayUtil;
 
 @WebServlet(name = "PlaceOrderServlet", urlPatterns = {"/order/place"})
 public class PlaceOrderServlet extends HttpServlet {
 
     private final IOrderService orderService = new OrderServiceImpl();
+    private final IPaymentService paymentService = new PaymentServiceImpl();
     private static final int MAX_CHECKOUT_ITEMS = 100;
 
     @Override
@@ -131,6 +135,21 @@ public class PlaceOrderServlet extends HttpServlet {
             session.removeAttribute("checkoutItemIds");
             session.removeAttribute("checkoutCouponCode");
             session.removeAttribute("checkoutShopCoupons");
+
+            // Thanh toán online: đơn đã tạo (PENDING) -> khởi tạo giao dịch và chuyển khách sang cổng.
+            if (paymentService.isOnlineProvider(paymentMethod)) {
+                try {
+                    String gatewayUrl = paymentService.startOnlinePayment(
+                            user.getId(), orderId, paymentMethod, PaymentGatewayUtil.baseUrl(request));
+                    response.sendRedirect(gatewayUrl);
+                } catch (Exception payEx) {
+                    // Đơn vẫn giữ, khách có thể thanh toán lại hoặc hủy ở trang thất bại.
+                    session.setAttribute("paymentError", payEx.getMessage());
+                    response.sendRedirect(request.getContextPath() + "/payment/failed?orderId=" + orderId);
+                }
+                return;
+            }
+
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
 
             response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);

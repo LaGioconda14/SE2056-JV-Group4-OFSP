@@ -301,9 +301,10 @@ public class OrderServiceImpl implements IOrderService {
 
         String normalizedPayment = paymentMethod == null ? ""
                 : paymentMethod.trim().toUpperCase(Locale.ROOT);
-        if (!"COD".equals(normalizedPayment)) {
-            throw new IllegalArgumentException(
-                    "Hiện tại hệ thống chỉ hỗ trợ thanh toán khi nhận hàng (COD)!");
+        // COD: thu tiền khi giao. VNPAY / BANK_TRANSFER: thanh toán online qua cổng (mock).
+        if (!("COD".equals(normalizedPayment) || "VNPAY".equals(normalizedPayment)
+                || "BANK_TRANSFER".equals(normalizedPayment))) {
+            throw new IllegalArgumentException("Phương thức thanh toán không được hỗ trợ!");
         }
 
         address.setRecipientName(address.getRecipientName().trim());
@@ -319,6 +320,8 @@ public class OrderServiceImpl implements IOrderService {
             sub.setDeliverySlot(normalizedSlot);
         }
         order.setPaymentStatus("PENDING");
+        // Đơn online ở trạng thái PENDING cho tới khi cổng xác nhận đã thanh toán; COD xác nhận ngay.
+        order.setOrderStatus("COD".equals(normalizedPayment) ? "CONFIRMED" : "PENDING");
 
         return orderDAO.createOrder(order, address, cartItemIds,
                 normalizedPayment, saveAddress);
@@ -366,6 +369,18 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
-        return orderDAO.cancelOrderByCustomer(customerId, orderIdentifier, cancelReason);
+        boolean ok = orderDAO.cancelOrderByCustomer(customerId, orderIdentifier, cancelReason);
+        if (ok) {
+            // Hủy đơn đã thanh toán online -> tự động hoàn tiền toàn phần (đơn COD chưa thu tiền thì bỏ qua).
+            try {
+                refundService.autoRefundOnCancel(customerId, orderIdentifier);
+            } catch (Exception ex) {
+                java.util.logging.Logger.getLogger(OrderServiceImpl.class.getName())
+                        .log(java.util.logging.Level.SEVERE, "Auto refund on cancel failed: " + orderIdentifier, ex);
+            }
+        }
+        return ok;
     }
+
+    private final service.IRefundService refundService = new RefundServiceImpl();
 }

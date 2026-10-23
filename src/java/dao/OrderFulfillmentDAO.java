@@ -150,7 +150,9 @@ public class OrderFulfillmentDAO extends DBContext {
 
     public boolean updateSubOrderStatus(String subOrderCode, SubOrderStatus newStatus) {
         if (newStatus == null) return false;
-        String sql = "UPDATE sub_orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_code = ?";
+        String sql = "UPDATE sub_orders SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_code = ? "
+                + "AND EXISTS (SELECT 1 FROM orders o WHERE o.order_id = sub_orders.order_id "
+                + "AND (o.payment_method = 'COD' OR o.payment_status = 'PAID'))";
         Connection conn = getConnection();
         if (conn == null) {
             return false;
@@ -212,6 +214,8 @@ public class OrderFulfillmentDAO extends DBContext {
             + "JOIN orders o ON so.order_id = o.order_id "
             + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
             + "WHERE 1=1 "
+            // Đơn thanh toán online chỉ hiện cho shop sau khi đã thanh toán thành công.
+            + "AND (o.payment_method = 'COD' OR o.payment_status = 'PAID') "
         );
         if (shopId > 0) {
             sql.append(" AND so.shop_id = ? ");
@@ -283,8 +287,12 @@ public class OrderFulfillmentDAO extends DBContext {
         boolean isAll = (status == null);
 
         String sql = isAll
-                ? "SELECT COUNT(*) FROM sub_orders WHERE shop_id = ?"
-                : "SELECT COUNT(*) FROM sub_orders WHERE shop_id = ? AND status = ?";
+                ? "SELECT COUNT(*) FROM sub_orders WHERE shop_id = ? "
+                    + "AND EXISTS (SELECT 1 FROM orders o WHERE o.order_id = sub_orders.order_id "
+                    + "AND (o.payment_method = 'COD' OR o.payment_status = 'PAID'))"
+                : "SELECT COUNT(*) FROM sub_orders WHERE shop_id = ? AND status = ? "
+                    + "AND EXISTS (SELECT 1 FROM orders o WHERE o.order_id = sub_orders.order_id "
+                    + "AND (o.payment_method = 'COD' OR o.payment_status = 'PAID'))";
 
         Connection conn = getConnection();
         if (conn == null) {

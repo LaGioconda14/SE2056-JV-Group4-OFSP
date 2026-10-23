@@ -319,8 +319,12 @@
                                 <span>Thanh toán khi nhận hàng (COD)</span>
                             </label>
                             <label class="payment-method-pill px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-medium cursor-pointer transition select-none flex items-center gap-1.5">
-                                <input type="radio" name="paymentMethod" value="CARD" class="hidden">
-                                <span>Thẻ ngân hàng (CARD)</span>
+                                <input type="radio" name="paymentMethod" value="VNPAY" class="hidden">
+                                <span>Thanh toán qua VNPAY-QR</span>
+                            </label>
+                            <label class="payment-method-pill px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-medium cursor-pointer transition select-none flex items-center gap-1.5">
+                                <input type="radio" name="paymentMethod" value="BANK_TRANSFER" class="hidden">
+                                <span>Chuyển khoản ngân hàng</span>
                             </label>
                             <span class="px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed">
                                 Ví điện tử (Sắp có)
@@ -329,29 +333,9 @@
                     </div>
 
                     <!-- Khung nhập thẻ (Chỉ hiển thị khi chọn Thẻ ngân hàng) -->
-                    <div id="card-payment-form" class="hidden bg-emerald-50/40 border border-emerald-200 rounded-xl p-5 space-y-4">
-                        <div class="flex items-center gap-2 text-[#00652c] font-bold text-sm">
-                            <span class="material-symbols-outlined text-[20px]">credit_card</span>
-                            <span>Thông tin thẻ ngân hàng</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardHolder">Tên chủ thẻ (Không dấu)</label>
-                                <input type="text" id="cardHolder" name="cardHolder" placeholder="NGUYEN VAN A" autocomplete="cc-name" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm uppercase outline-none focus:border-emerald-600">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardNumber">Số thẻ</label>
-                                <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" autocomplete="cc-number" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardExpiry">Ngày hết hạn (MM/YY)</label>
-                                <input type="text" id="cardExpiry" name="cardExpiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardCvv">Mã bảo mật CVV/CVC</label>
-                                <input type="password" id="cardCvv" name="cardCvv" placeholder="•••" maxlength="4" autocomplete="cc-csc" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
-                            </div>
-                        </div>
+                    <div id="online-payment-note" class="hidden bg-emerald-50/40 border border-emerald-200 rounded-xl p-4 text-xs text-gray-700 flex items-start gap-2">
+                        <span class="material-symbols-outlined text-[#00652c] text-[20px]">verified_user</span>
+                        <span>Sau khi bấm <strong>Thanh toán</strong>, bạn sẽ được chuyển sang cổng thanh toán (mô phỏng VNPay) để hoàn tất giao dịch trong 15 phút. FreshFruit không lưu thông tin thẻ của bạn.</span>
                     </div>
 
                     <!-- Bảng tổng hợp chi phí (Căn phải giống Shopee) -->
@@ -1006,7 +990,7 @@
     // 3. Xử lý chuyển đổi phương thức thanh toán (COD vs CARD)
     const paymentForm = document.getElementById('checkout-form');
     const paymentLabels = document.querySelectorAll('.payment-method-pill');
-    const cardForm = document.getElementById('card-payment-form');
+    const onlineNote = document.getElementById('online-payment-note');
     const submitBtn = document.getElementById('submit-order-btn');
 
     paymentLabels.forEach(label => {
@@ -1029,13 +1013,11 @@
             const radio = this.querySelector('input[type="radio"]');
             if (radio) {
                 radio.checked = true;
-                if (radio.value === 'CARD') {
-                    if (cardForm) cardForm.classList.remove('hidden');
-                    if (paymentForm) paymentForm.action = paymentForm.dataset.paymentAction;
+                if (radio.value !== 'COD') {
+                    if (onlineNote) onlineNote.classList.remove('hidden');
                     if (submitBtn) submitBtn.textContent = 'Thanh toán';
                 } else {
-                    if (cardForm) cardForm.classList.add('hidden');
-                    if (paymentForm) paymentForm.action = paymentForm.dataset.orderAction;
+                    if (onlineNote) onlineNote.classList.add('hidden');
                     if (submitBtn) submitBtn.textContent = 'Đặt hàng';
                 }
             }

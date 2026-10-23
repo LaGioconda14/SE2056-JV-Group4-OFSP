@@ -214,6 +214,19 @@ public class DeliveryDAO extends DBContext {
                     psPay.setLong(1, deliveryId);
                     psPay.executeUpdate();
                 }
+
+                // Ghi nhận khoản thu COD vào bảng payments để hiện trong lịch sử thanh toán.
+                String syncCodPayment = "UPDATE p SET p.payment_status = 'SUCCESS', p.paid_at = CURRENT_TIMESTAMP, "
+                    + "p.transaction_code = COALESCE(p.transaction_code, 'COD-' + o.order_code) "
+                    + "FROM payments p "
+                    + "JOIN orders o ON o.order_id = p.order_id "
+                    + "JOIN sub_orders so ON so.order_id = o.order_id "
+                    + "JOIN deliveries d ON d.sub_order_id = so.sub_order_id "
+                    + "WHERE d.delivery_id = ? AND p.payment_provider = 'COD' AND p.payment_status = 'PENDING'";
+                try (PreparedStatement psCod = conn.prepareStatement(syncCodPayment)) {
+                    psCod.setLong(1, deliveryId);
+                    psCod.executeUpdate();
+                }
                 return true;
             }
         } catch (SQLException ex) {

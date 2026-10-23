@@ -61,6 +61,35 @@
                 </a>
             </li>
         </ul>
+
+        <!-- 3. FINANCE -->
+        <div class="nav-section-title" data-i18n="nav_sec_finance">TÀI CHÍNH</div>
+        <ul class="sidebar-nav">
+            <li>
+                <a href="${pageContext.request.contextPath}/admin/payments" class="sidebar-nav-link ${param.activePage == 'payments' ? 'active' : ''}">
+                    <i class="bi bi-credit-card-2-front"></i>
+                    <span data-i18n="nav_payments">Giao Dịch Thanh Toán</span>
+                </a>
+            </li>
+            <li>
+                <a href="${pageContext.request.contextPath}/admin/refunds" class="sidebar-nav-link ${param.activePage == 'refunds' ? 'active' : ''}">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    <span data-i18n="nav_refunds">Hoàn Tiền</span>
+                </a>
+            </li>
+            <li>
+                <a href="${pageContext.request.contextPath}/admin/payouts" class="sidebar-nav-link ${param.activePage == 'payouts' ? 'active' : ''}">
+                    <i class="bi bi-bank"></i>
+                    <span data-i18n="nav_payouts">Quyết Toán &amp; Chi Trả</span>
+                </a>
+            </li>
+            <li>
+                <a href="${pageContext.request.contextPath}/admin/payment-analytics" class="sidebar-nav-link ${param.activePage == 'payment-analytics' ? 'active' : ''}">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span data-i18n="nav_payment_analytics">Phân Tích Dòng Tiền</span>
+                </a>
+            </li>
+        </ul>
     </div>
 
     <div class="sidebar-footer">
