@@ -1015,27 +1015,156 @@ function cancelOrderFallback(orderId) {
     }
 }
 
-function openReviewModal(orderCode) {
-    const codeEl = document.getElementById('reviewModalOrderCode');
-    if (codeEl) {
-        codeEl.textContent = '#' + orderCode;
+/* FE10_PROFILE_REVIEW_INTEGRATION: Uses current FE-10 API; no database changes. */
+let fe10ProfileOrderCode = '';
+let fe10ProfileShopId = '';
+let fe10ProfileCsrf = '';
+let fe10ProfileLoading = false;
+
+function setOrderReviewRating(value) {
+    const rating = Math.max(1, Math.min(5, parseInt(value, 10) || 5));
+    const input = document.getElementById('reviewRating');
+    if (input) input.value = String(rating);
+    document.querySelectorAll('#reviewModal .fe10-review-star').forEach(function (star) {
+        const selected = Number(star.dataset.rating) <= rating;
+        star.classList.toggle('selected', selected);
+        star.setAttribute('aria-checked', Number(star.dataset.rating) === rating ? 'true' : 'false');
+    });
+    const text = document.getElementById('reviewRatingCaption');
+    if (text) text.textContent = ['', 'Rất tệ', 'Chưa hài lòng', 'Bình thường', 'Hài lòng', 'Tuyệt vời'][rating];
+}
+
+function fe10ProfileMessage(message, error) {
+    const target = document.getElementById('reviewFormMessage');
+    if (!target) return;
+    target.textContent = message || '';
+    target.className = error ? 'fe10-review-message is-error' : 'fe10-review-message';
+}
+
+function fe10ReviewProductChanged() {
+    const select = document.getElementById('reviewPurchaseSelect');
+    const preview = document.getElementById('reviewSelectedProduct');
+    const submit = document.getElementById('reviewSubmitButton');
+    if (!select || !preview) return;
+    const option = select.options[select.selectedIndex];
+    const enabled = Boolean(select.value) && !fe10ProfileLoading;
+    preview.textContent = enabled ? option.textContent : 'Chọn một sản phẩm đã giao để đánh giá.';
+    if (submit) submit.disabled = !enabled;
+}
+
+async function fe10ProfileJson(response) {
+    let data;
+    try { data = await response.json(); }
+    catch (e) { throw new Error('Server không trả JSON. Kiểm tra Output Tomcat.'); }
+    if (!response.ok) throw new Error(data.error || 'Yêu cầu thất bại: HTTP ' + response.status);
+    return data;
+}
+
+async function openReviewModal(orderCode, shopId) {
+    fe10ProfileOrderCode = String(orderCode || '').trim();
+    fe10ProfileShopId = String(shopId || '').trim();
+    const code = document.getElementById('reviewModalOrderCode');
+    const modalElement = document.getElementById('reviewModal');
+    const select = document.getElementById('reviewPurchaseSelect');
+    const comment = document.getElementById('reviewComment');
+    if (!modalElement || !select || !window.bootstrap || !bootstrap.Modal) {
+        alert('Không tìm thấy popup đánh giá hoặc Bootstrap.');
+        return;
     }
-    const modalEl = document.getElementById('reviewModal');
-    if (modalEl && window.bootstrap && bootstrap.Modal) {
-        const m = bootstrap.Modal.getOrCreateInstance(modalEl);
-        m.show();
+    if (code) code.textContent = '#' + fe10ProfileOrderCode;
+    if (comment) comment.value = '';
+    setOrderReviewRating(5);
+    fe10ProfileMessage('Đang tìm sản phẩm đã giao trong đơn hàng...', false);
+    select.replaceChildren(new Option('Đang tải sản phẩm...', ''));
+    select.disabled = true;
+    fe10ProfileLoading = true;
+    fe10ReviewProductChanged();
+    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    try {
+        const ctx = window.contextPath || '';
+        const response = await fetch(ctx + '/reviews/purchases?type=PRODUCT', {
+            credentials: 'same-origin', cache: 'no-store'
+        });
+        const data = await fe10ProfileJson(response);
+        const purchases = (data.purchases || []).filter(function (item) {
+            return String(item.orderCode || '').trim() === fe10ProfileOrderCode &&
+                   String(item.shopId || '') === fe10ProfileShopId;
+        });
+        select.replaceChildren(new Option('Chọn sản phẩm cần đánh giá', ''));
+        for (const item of purchases) {
+            const option = new Option(
+                (item.productName || 'Sản phẩm') + (item.canReview ? '' : ' — Đã đánh giá'),
+                String(item.purchaseRef)
+            );
+            option.disabled = !item.canReview;
+            select.add(option);
+        }
+        select.disabled = false;
+        fe10ProfileMessage(
+            purchases.length === 0
+                ? 'Không tìm thấy sản phẩm đã giao của đơn này. Kiểm tra trạng thái DELIVERED và mã đơn hàng.'
+                : purchases.every(item => !item.canReview)
+                    ? 'Tất cả sản phẩm trong đơn này đã được đánh giá.'
+                    : 'Chọn một sản phẩm trong đơn, chấm sao và gửi nhận xét.',
+            purchases.length === 0
+        );
+    } catch (error) {
+        select.replaceChildren(new Option('Không thể tải sản phẩm', ''));
+        fe10ProfileMessage(error.message, true);
+    } finally {
+        fe10ProfileLoading = false;
+        fe10ReviewProductChanged();
     }
 }
 
-function submitReview() {
-    const comment = document.getElementById('reviewComment');
-    const modalEl = document.getElementById('reviewModal');
-    if (modalEl && window.bootstrap && bootstrap.Modal) {
-        const m = bootstrap.Modal.getInstance(modalEl);
-        if (m) m.hide();
+async function submitReview() {
+    if (fe10ProfileLoading) return;
+    const select = document.getElementById('reviewPurchaseSelect');
+    const commentBox = document.getElementById('reviewComment');
+    const submitButton = document.getElementById('reviewSubmitButton');
+    const purchaseRef = select ? select.value : '';
+    const rating = document.getElementById('reviewRating')?.value || '5';
+    const comment = commentBox ? commentBox.value.trim() : '';
+    if (!purchaseRef) {
+        fe10ProfileMessage('Bạn cần chọn một sản phẩm chưa đánh giá.', true);
+        return;
     }
-    if (comment) comment.value = '';
-    alert('Cảm ơn bạn! Đánh giá chất lượng trái cây của bạn đã được gửi thành công.');
+    if (comment.length > 2000) {
+        fe10ProfileMessage('Nội dung không được quá 2000 ký tự.', true);
+        return;
+    }
+    fe10ProfileLoading = true;
+    if (submitButton) submitButton.disabled = true;
+    fe10ProfileMessage('Đang lưu đánh giá vào hệ thống...', false);
+    try {
+        const ctx = window.contextPath || '';
+        if (!fe10ProfileCsrf) {
+            const csrfResponse = await fetch(ctx + '/reviews/csrf', {
+                credentials: 'same-origin', cache: 'no-store'
+            });
+            fe10ProfileCsrf = (await fe10ProfileJson(csrfResponse)).csrfToken;
+            if (!fe10ProfileCsrf) throw new Error('Không lấy được mã bảo vệ CSRF.');
+        }
+        const fields = new URLSearchParams({
+            action: 'create', type: 'PRODUCT', purchaseRef: purchaseRef,
+            rating: rating, comment: comment
+        });
+        const response = await fetch(ctx + '/reviews', {
+            method: 'POST', credentials: 'same-origin', cache: 'no-store',
+            headers: { 'X-CSRF-Token': fe10ProfileCsrf, 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body: fields.toString()
+        });
+        const result = await fe10ProfileJson(response);
+        if (!result.reviewId) throw new Error('Máy chủ chưa xác nhận đã lưu đánh giá.');
+        bootstrap.Modal.getInstance(document.getElementById('reviewModal'))?.hide();
+        alert('Đánh giá đã được lưu thành công! Mã đánh giá #' + result.reviewId);
+        window.location.reload();
+    } catch (error) {
+        fe10ProfileMessage('Không lưu được: ' + error.message, true);
+    } finally {
+        fe10ProfileLoading = false;
+        fe10ReviewProductChanged();
+    }
 }
 
 // =========================================================================

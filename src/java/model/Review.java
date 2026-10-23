@@ -19,6 +19,14 @@ public class Review implements Serializable {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
+    // Optional fields for FE-10 product/shop review screens.
+    private String type;
+    private Long subOrderId;
+    private Long productId;
+    private String productName;
+    private String shopName;
+    private String thumbnailUrl;
+
     public Review() {
     }
 
@@ -117,5 +125,53 @@ public class Review implements Serializable {
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
     }
-}
 
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Long getSubOrderId() {
+        return subOrderId;
+    }
+
+    public void setSubOrderId(Long subOrderId) {
+        this.subOrderId = subOrderId;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+}
