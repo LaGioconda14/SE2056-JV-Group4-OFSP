@@ -134,7 +134,6 @@ public class ProductDAO extends DBContext {
     }
 
     // Đếm số lượng sản phẩm theo từng tab trạng thái của shop
-
     // Đếm số lượng biến thể theo từng tab trạng thái của shop
     public int countProductsByStatusTab(long shopId, String statusTab) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?");
@@ -361,14 +360,13 @@ public class ProductDAO extends DBContext {
         String sql = "INSERT INTO product_variants (product_id, sku, variant_name, unit, price, original_price, stock_quantity, low_stock_threshold, is_active, created_at, updated_at) "
                 + "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP "
                 + "FROM products WHERE product_id = ? AND shop_id = ?";
-        String finalSku = (sku == null || sku.trim().isEmpty())? "SKU-" + (System.currentTimeMillis() % 1000000) : sku.trim();
+        String finalSku = (sku == null || sku.trim().isEmpty()) ? "SKU-" + (System.currentTimeMillis() % 1000000) : sku.trim();
         int skuRetry = 1;
         while (isSkuExists(finalSku)) {
             finalSku = "SKU-" + (System.currentTimeMillis() % 1000000) + "-" + (skuRetry++);
         }
 
-        try (Connection conn = getConnection();
-                PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setLong(1, productId);
             statement.setString(2, finalSku);
             statement.setString(3, variantName.trim());
@@ -517,6 +515,7 @@ public class ProductDAO extends DBContext {
             return false;
         }
     }
+
     //Chỉnh sửa biến thể theo variantID 
     public boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName,
             String unit, BigDecimal price, BigDecimal originalPrice, int stockQuantity,
@@ -1011,12 +1010,12 @@ public class ProductDAO extends DBContext {
     }
 
     public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
-                                                 String ratingStr, String availability, String origin) {
+            String ratingStr, String availability, String origin) {
         return searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, ratingStr, availability, origin, "default");
     }
 
     public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
-                                                 String ratingStr, String availability, String origin, String sortBy) {
+            String ratingStr, String availability, String origin, String sortBy) {
         List<Product> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
@@ -1190,7 +1189,6 @@ public class ProductDAO extends DBContext {
     }
 
     // Ví dụ hàm lấy thông tin biến thể để đưa lên form sửa
-
     public List<Product> getHomeFeaturedTabs() {
         List<Product> list = new ArrayList<>();
         // Câu lệnh SQL tối ưu: Lấy thông tin sản phẩm, danh mục, ảnh đại diện thumbnail, 
