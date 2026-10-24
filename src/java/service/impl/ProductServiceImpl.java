@@ -208,6 +208,53 @@ public class ProductServiceImpl implements IProductService {
     public ProductVariant getVariantById(long variantId) {
         return productDAO.getVariantById(variantId);
     }
+
+    @Override
+    public ProductVariant getShopVariantById(long variantId, long shopId) {
+        if (variantId <= 0 || shopId <= 0) {
+            return null;
+        }
+        return productDAO.getShopVariantById(variantId, shopId);
+    }
+
+    @Override
+    public boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName, String unit,
+            String priceValue, String originalPriceValue, String stockQuantityValue,
+            String lowStockThresholdValue, boolean isActive) {
+        if (shopId <= 0 || variantId <= 0) {
+            throw new IllegalArgumentException("Biến thể hoặc cửa hàng không hợp lệ.");
+        }
+        if (variantName == null || variantName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên biến thể không được để trống.");
+        }
+        if (unit == null || unit.trim().isEmpty()) {
+            throw new IllegalArgumentException("Đơn vị tính không được để trống.");
+        }
+        BigDecimal price = parseRequiredPrice(priceValue);
+        BigDecimal originalPrice = parseOptionalPrice(originalPriceValue);
+        int stockQuantity = parseNonNegativeInteger(stockQuantityValue, "Số lượng tồn kho");
+        int lowStockThreshold = parseOptionalPositiveInteger(lowStockThresholdValue, 10);
+        if (price.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Giá bán phải lớn hơn 0.");
+        }
+        if (originalPrice != null && originalPrice.compareTo(price) < 0) {
+            throw new IllegalArgumentException("Giá gốc không được thấp hơn giá bán.");
+        }
+        ProductVariant existingVariant = productDAO.getShopVariantById(variantId, shopId);
+        if (existingVariant == null) {
+            throw new IllegalArgumentException("Không tìm thấy biến thể thuộc cửa hàng này.");
+        }
+        String updatedSku = sku == null || sku.trim().isEmpty() ? existingVariant.getSku() : sku.trim();
+        if (updatedSku != null && productDAO.isSkuUsedByAnotherVariant(updatedSku, variantId)) {
+            throw new IllegalArgumentException("Mã SKU đã tồn tại, vui lòng nhập mã khác.");
+        }
+        boolean updated = productDAO.updateVariantDetails(shopId, variantId, updatedSku, variantName, unit, price,
+                originalPrice, stockQuantity, lowStockThreshold, isActive);
+        if (!updated) {
+            throw new IllegalArgumentException("Cập nhật biến thể thất bại.");
+        }
+        return true;
+    }
     
     @Override
     public boolean updateFullProduct(long shopId,long variantId, String name, int categoryId, String origin, 

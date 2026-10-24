@@ -101,7 +101,7 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex justify-end gap-2">
-                                                <a href="${pageContext.request.contextPath}/shop/product/edit?id=${variant.variantId}" class="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center hover:text-emerald-700" title="Sửa biến thể"><i class="fa-solid fa-pen"></i></a>
+                                                <a href="${pageContext.request.contextPath}/shop/product/variant/edit?variantId=${variant.variantId}" class="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center hover:text-emerald-700" title="Sửa biến thể"><i class="fa-solid fa-pen"></i></a>
                                                 <a href="${pageContext.request.contextPath}/shop/product/delete?id=${variant.variantId}" onclick="return confirm('Bạn có chắc muốn xóa biến thể này?');" class="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center hover:text-rose-700" title="Xóa biến thể"><i class="fa-regular fa-trash-can"></i></a>
                                             </div>
                                         </td>

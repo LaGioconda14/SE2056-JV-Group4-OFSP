@@ -361,8 +361,7 @@ public class ProductDAO extends DBContext {
         String sql = "INSERT INTO product_variants (product_id, sku, variant_name, unit, price, original_price, stock_quantity, low_stock_threshold, is_active, created_at, updated_at) "
                 + "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP "
                 + "FROM products WHERE product_id = ? AND shop_id = ?";
-        String finalSku = (sku == null || sku.trim().isEmpty())
-                ? "SKU-" + (System.currentTimeMillis() % 1000000) : sku.trim();
+        String finalSku = (sku == null || sku.trim().isEmpty())? "SKU-" + (System.currentTimeMillis() % 1000000) : sku.trim();
         int skuRetry = 1;
         while (isSkuExists(finalSku)) {
             finalSku = "SKU-" + (System.currentTimeMillis() % 1000000) + "-" + (skuRetry++);
@@ -461,6 +460,87 @@ public class ProductDAO extends DBContext {
             e.printStackTrace();
         }
         return pv;
+    }
+
+    public ProductVariant getShopVariantById(long variantId, long shopId) {
+        String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, pv.original_price, "
+                + "pv.stock_quantity, pv.low_stock_threshold, pv.is_active, p.name AS product_name, p.origin, "
+                + "p.storage_temp, p.certification, p.description, c.category_name, "
+                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url "
+                + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                + "LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
+                + "WHERE pv.variant_id = ? AND p.shop_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setLong(1, variantId);
+            statement.setLong(2, shopId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                ProductVariant variant = new ProductVariant();
+                variant.setVariantId(rs.getLong("variant_id"));
+                variant.setProductId(rs.getLong("product_id"));
+                variant.setSku(rs.getString("sku"));
+                variant.setVariantName(rs.getString("variant_name"));
+                variant.setUnit(rs.getString("unit"));
+                variant.setPrice(rs.getBigDecimal("price"));
+                variant.setOriginalPrice(rs.getBigDecimal("original_price"));
+                variant.setStockQuantity(rs.getInt("stock_quantity"));
+                variant.setLowStockThreshold(rs.getInt("low_stock_threshold"));
+                variant.setIsActive(rs.getBoolean("is_active"));
+                variant.setProductName(rs.getString("product_name"));
+                variant.setOrigin(rs.getString("origin"));
+                variant.setStorageTemp(rs.getString("storage_temp"));
+                variant.setCertification(rs.getString("certification"));
+                variant.setDescription(rs.getString("description"));
+                variant.setCategoryName(rs.getString("category_name"));
+                variant.setImage(rs.getString("image_url"));
+                return variant;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean isSkuUsedByAnotherVariant(String sku, long variantId) {
+        String sql = "SELECT 1 FROM product_variants WHERE sku = ? AND variant_id <> ?";
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setString(1, sku);
+            statement.setLong(2, variantId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    //Chỉnh sửa biến thể theo variantID 
+    public boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName,
+            String unit, BigDecimal price, BigDecimal originalPrice, int stockQuantity,
+            int lowStockThreshold, boolean isActive) {
+        String sql = "UPDATE pv SET pv.sku = ?, pv.variant_name = ?, pv.unit = ?, pv.price = ?, "
+                + "pv.original_price = ?, pv.stock_quantity = ?, pv.low_stock_threshold = ?, pv.is_active = ?, "
+                + "pv.updated_at = CURRENT_TIMESTAMP FROM product_variants pv "
+                + "JOIN products p ON pv.product_id = p.product_id WHERE pv.variant_id = ? AND p.shop_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setString(1, sku == null || sku.trim().isEmpty() ? "SKU-" + variantId : sku.trim());
+            statement.setString(2, variantName.trim());
+            statement.setString(3, unit.trim());
+            statement.setBigDecimal(4, price);
+            statement.setBigDecimal(5, originalPrice != null ? originalPrice : price);
+            statement.setInt(6, stockQuantity);
+            statement.setInt(7, lowStockThreshold);
+            statement.setBoolean(8, isActive);
+            statement.setLong(9, variantId);
+            statement.setLong(10, shopId);
+            return statement.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // =========================================================================

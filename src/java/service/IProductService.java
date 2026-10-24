@@ -34,6 +34,10 @@ public interface IProductService {
     boolean softDeleteProduct(long productId, long shopId);
     // Lấy thông tin biến thể sản phẩm theo ID để sửa
     ProductVariant getVariantById(long variantId);
+    ProductVariant getShopVariantById(long variantId, long shopId);
+    boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName, String unit,
+                                 String price, String originalPrice, String stockQuantity,
+                                 String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     //sửa
     public boolean updateFullProduct(long shopId,long variantId, String name, int categoryId, String origin, 
                                      String storageTemp, String certification, String description, 
