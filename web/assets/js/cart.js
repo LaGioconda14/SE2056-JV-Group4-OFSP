@@ -54,10 +54,6 @@
         return {items, subtotal, shopSubtotals};
     }
 
-    function selectionKey(currentSnapshot) {
-        return currentSnapshot.items.map(item => item.itemId + ':' + item.quantity).join('|');
-    }
-
     function updateCheckboxes() {
         const itemCheckboxes = purchasableRows().map(row => row.querySelector('[data-cart-item]')).filter(Boolean);
         const selectedCount = itemCheckboxes.filter(checkbox => checkbox.checked).length;
@@ -89,11 +85,6 @@
         const currentSnapshot = snapshot();
         const selectedCount = currentSnapshot.items.length;
         const totalCount = purchasableRows().length;
-        const savings = window.CartVouchers
-            ? window.CartVouchers.getSavings(currentSnapshot)
-            : {product: 0, shipping: 0};
-        const delivery = Math.max(0, 0 - numberValue(savings.shipping));
-        const total = Math.max(0, currentSnapshot.subtotal - numberValue(savings.product) + delivery);
 
         document.querySelectorAll('[data-selected-summary-count]').forEach(output => {
             output.replaceChildren('Đã chọn: ');
@@ -105,8 +96,6 @@
         const countOutput = document.getElementById('items-count-text');
         const label = document.getElementById('btn-checkout-label');
         const checkout = document.getElementById('btn-checkout');
-        const subtotalOutput = document.getElementById('summary-subtotal');
-        const deliveryOutput = document.getElementById('summary-delivery');
         const totalOutput = document.getElementById('summary-total');
         if (countOutput) countOutput.textContent = selectedCount + ' món';
         if (label) label.textContent = selectedCount ? 'Mua hàng (' + selectedCount + ')' : 'Chọn món để mua';
@@ -114,13 +103,7 @@
             checkout.disabled = selectedCount === 0;
             checkout.setAttribute('aria-disabled', String(selectedCount === 0));
         }
-        if (subtotalOutput) subtotalOutput.textContent = currency.format(currentSnapshot.subtotal);
-        if (deliveryOutput) deliveryOutput.textContent = currency.format(delivery);
-        if (totalOutput) totalOutput.textContent = currency.format(total);
-
-        document.dispatchEvent(new CustomEvent('cart:selection-changed', {
-            detail: {...currentSnapshot, key: selectionKey(currentSnapshot)}
-        }));
+        if (totalOutput) totalOutput.textContent = currency.format(currentSnapshot.subtotal);
     }
 
     function changeQuantity(button, offset) {
@@ -175,11 +158,7 @@
         const coupon = document.getElementById('checkout-form-coupon');
         if (!form || !container || !coupon) return;
         const hiddenInputs = currentSnapshot.items.map(item => hiddenInput('cartItemIds', item.itemId));
-        const vouchers = window.CartVouchers ? window.CartVouchers.getSelected() : {platform: null, shops: {}};
-        coupon.value = vouchers.platform && vouchers.platform.code ? vouchers.platform.code : '';
-        Object.entries(vouchers.shops || {}).forEach(([shopId, voucher]) => {
-            if (voucher && voucher.code) hiddenInputs.push(hiddenInput('shopCoupon_' + shopId, voucher.code));
-        });
+        coupon.value = '';
         container.replaceChildren(...hiddenInputs);
         form.submit();
     }
@@ -203,11 +182,6 @@
         if (action === 'checkout') submitCheckout();
         if (action === 'toggle-notifications') toggleNotifications(button);
         if (action === 'clear-notifications') document.getElementById('header-noti-badge')?.classList.add('hidden');
-        if (action === 'open-platform-vouchers') window.CartVouchers?.open('PLATFORM', null, null, button);
-        if (action === 'open-shop-vouchers') window.CartVouchers?.open('SHOP', button.dataset.shopId, button.dataset.shopName, button);
-        if (action === 'apply-coupon') window.CartVouchers?.applyInput();
-        if (action === 'remove-platform-voucher') window.CartVouchers?.removePlatform();
-        if (action === 'remove-shop-voucher') window.CartVouchers?.removeShop(button.dataset.shopId);
     }
 
     function handleChange(event) {

@@ -1,21 +1,15 @@
 package controller.cart;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import exception.CartErrorCode;
 import exception.CartException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.User;
 
 final class CartControllerSupport {
-
-    private static final Gson GSON = new GsonBuilder().serializeNulls().create();
 
     private CartControllerSupport() {
     }
@@ -68,13 +62,6 @@ final class CartControllerSupport {
                 .log(Level.SEVERE, "Unexpected cart controller failure", cause);
         return new CartException(CartErrorCode.DATABASE_FAILURE,
                 "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!", cause);
-    }
-
-    static void writeJson(HttpServletResponse response, int status, Map<String, ?> body)
-            throws IOException {
-        response.setStatus(status);
-        response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(GSON.toJson(body));
     }
 
     static int status(CartException ex) {

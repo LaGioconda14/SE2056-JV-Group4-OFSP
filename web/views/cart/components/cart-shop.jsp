@@ -14,11 +14,4 @@
         <%@ include file="cart-item.jsp" %>
         <c:if test="${item.availabilityStatus ne 'NOT_FOUND'}"><%@ include file="variant-dialog.jsp" %></c:if>
     </c:forEach>
-    <div class="flex flex-wrap items-center justify-between gap-3 bg-surface-container-low/60 px-5 py-3 text-xs" id="shop-voucher-row-${shopEntry.key}">
-        <div class="flex items-center gap-2 text-tertiary"><span class="material-symbols-outlined text-[18px]">confirmation_number</span><span>Voucher của Shop:</span><span data-shop-voucher-badge="${shopEntry.key}"></span></div>
-        <div class="flex items-center gap-2">
-            <button type="button" data-cart-action="open-shop-vouchers" data-shop-id="${shopEntry.key}" data-shop-name="<c:out value='${not empty shop.shopName ? shop.shopName : "Shop"}'/>" class="font-semibold text-primary hover:underline">Xem thêm voucher</button>
-            <button type="button" data-cart-action="remove-shop-voucher" data-shop-id="${shopEntry.key}" hidden class="text-error hover:underline ml-1">Bỏ chọn</button>
-        </div>
-    </div>
 </section>

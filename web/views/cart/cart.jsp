@@ -9,7 +9,6 @@
 <c:url var="removeUrl" value="/cart/remove"/>
 <c:url var="changeVariantUrl" value="/cart/change-variant"/>
 <c:url var="checkoutUrl" value="/checkout"/>
-<c:url var="vouchersUrl" value="/cart/vouchers"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -160,9 +159,7 @@
     </div>
 </main>
 
-<%@ include file="components/voucher-dialog.jsp" %>
 <%@ include file="components/cart-footer.jsp" %>
-<script src="<c:url value='/assets/js/cart.js?v=20261022'/>"></script>
-<script src="<c:url value='/assets/js/cart-vouchers.js?v=20261022'/>"></script>
+<script src="<c:url value='/assets/js/cart.js?v=20261024'/>"></script>
 </body>
 </html>

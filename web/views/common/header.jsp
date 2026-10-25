@@ -225,26 +225,6 @@
         localStorage.setItem('gocvuon_noti_read', 'true');
     }
 
-    function addHeaderNotification(title, message) {
-        const list = document.getElementById('header-noti-list');
-        const badge = document.getElementById('header-noti-badge');
-        if (badge) {
-            badge.classList.remove('hidden');
-            let count = parseInt(badge.textContent.trim()) || 0;
-            badge.textContent = count + 1;
-        }
-        if (list) {
-            const item = document.createElement('div');
-            item.className = 'flex items-start gap-3 p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-xs text-gray-800 shadow-2xs';
-            item.innerHTML = '<span class="material-symbols-outlined text-emerald-600 text-[18px] shrink-0 mt-0.5">check_circle</span>'
-                + '<div class="flex-1">'
-                + '<p class="font-bold text-gray-900">' + title + '</p>'
-                + '<p class="text-gray-600 text-[11px] mt-0.5">' + message + '</p>'
-                + '</div>';
-            list.insertBefore(item, list.firstChild);
-        }
-    }
-
     window.showToast = function(message, type = 'success') {
         const container = document.getElementById('global-toast-container');
         if (!container) return;
@@ -283,77 +263,4 @@
         }
     });
 
-    // Chỉ đăng ký một handler và nhường form đã có AJAX riêng xử lý để tránh gửi hai POST.
-    if (!window.__cartAddSubmitBound) {
-        window.__cartAddSubmitBound = true;
-        document.addEventListener('submit', function(e) {
-        const form = e.target;
-        if (form && form.action && form.action.includes('/cart/add')) {
-            if (e.defaultPrevented) return;
-            const submitter = e.submitter;
-            if (submitter && submitter.value === 'buyNow') {
-                return; // allow normal Buy Now submission to /checkout
-            }
-            e.preventDefault();
-            if (form.dataset.cartSubmitting === 'true') return;
-            form.dataset.cartSubmitting = 'true';
-            const formData = new FormData(form);
-            const params = new URLSearchParams();
-            for (const [key, value] of formData.entries()) {
-                params.append(key, value);
-            }
-            params.append('ajax', 'true');
-
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) submitBtn.disabled = true;
-
-            fetch(form.action, {
-                method: 'POST',
-                body: params,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(res => {
-                if (res.status === 401) {
-                    return res.json().then(data => {
-                        window.location.href = data.redirect || (window.contextPath + '/login');
-                    });
-                }
-                return res.json();
-            })
-            .then(data => {
-                form.dataset.cartSubmitting = 'false';
-                if (submitBtn) submitBtn.disabled = false;
-                if (!data) return;
-                if (data.redirect) {
-                    window.location.href = data.redirect;
-                    return;
-                }
-                if (data.success) {
-                    if (data.cartSize !== undefined) {
-                        const badges = document.querySelectorAll('#nav-cart-badge, #cartBadge');
-                        badges.forEach(b => {
-                            b.textContent = data.cartSize > 99 ? '99+' : data.cartSize;
-                            b.classList.toggle('hidden', data.cartSize <= 0);
-                            b.classList.toggle('flex', data.cartSize > 0);
-                        });
-                        const notiCartCount = document.getElementById('noti-cart-count');
-                        if (notiCartCount) notiCartCount.textContent = data.cartSize;
-                    }
-                    window.showToast(data.message || 'Đã thêm sản phẩm vào giỏ hàng thành công!', 'success');
-                    addHeaderNotification('Thêm giỏ hàng', data.message || 'Đã thêm sản phẩm vào giỏ hàng!');
-                } else {
-                    window.showToast(data.message || 'Không thể thêm vào giỏ hàng!', 'error');
-                }
-            })
-            .catch(err => {
-                form.dataset.cartSubmitting = 'false';
-                if (submitBtn) submitBtn.disabled = false;
-                window.showToast('Không thể xác nhận kết quả thêm giỏ hàng. Vui lòng tải lại trang để kiểm tra.', 'error');
-            });
-        }
-        });
-    }
 </script>
