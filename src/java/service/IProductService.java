@@ -31,7 +31,8 @@ public interface IProductService {
                              String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     
     boolean softDeleteVariant(long variantId, long shopId);
-    boolean softDeleteProduct(long productId, long shopId);
+    
+    boolean softDeleteProductAndVariants(long productId, long shopId);
     // Lấy thông tin biến thể sản phẩm theo ID để sửa
     ProductVariant getVariantById(long variantId);
     ProductVariant getShopVariantById(long variantId, long shopId);
@@ -72,5 +73,6 @@ public interface IProductService {
             String ratingStr, String availability, String origin);
     List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin, String sortBy);
-    
+    //Thanh tìm kiếm cho shop|
+    List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId, String certification, String stockLevel);
 }

@@ -197,11 +197,11 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public boolean softDeleteProduct(long productId, long shopId) {
+    public boolean softDeleteProductAndVariants(long productId, long shopId) {
         if (productId <= 0 || shopId <= 0) {
             throw new IllegalArgumentException("Mã sản phẩm hoặc cửa hàng không hợp lệ!");
         }
-        return productDAO.softDeleteProduct(productId, shopId);
+        return productDAO.softDeleteProductAndVariants(productId, shopId);
     }
     
     @Override
@@ -339,5 +339,10 @@ public class ProductServiceImpl implements IProductService {
             String ratingStr, String availability, String origin, String sortBy) {
         return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr,
                 ratingStr, availability, origin, sortBy);
+    }
+
+    @Override
+    public List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId, String certification, String stockLevel) {
+        return productDAO.getShopFilteredProducts(shopId, keyword, categoryId, certification, stockLevel);
     }
 }

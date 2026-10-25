@@ -284,15 +284,16 @@
                     </div>
 
                     <!-- SEARCH & FILTER TOOLBAR -->
-                    <form action="${pageContext.request.contextPath}/shop/products" method="GET" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-                        <input type="hidden" name="statusTab" value="${statusTab}">
+                    <form action="${pageContext.request.contextPath}/shop/product/search" method="GET" class="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
 
                         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3 items-center">
+                            <!-- 1. Ô tìm kiếm từ khóa -->
                             <div class="xl:col-span-5 relative">
                                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
                                 <input type="text" name="keyword" value="${param.keyword}" placeholder="Tìm theo tên nông sản, mã xuất xứ..." class="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
                             </div>
 
+                            <!-- 2. Dropdown Danh mục -->
                             <div class="xl:col-span-3">
                                 <select name="categoryId" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer" onchange="this.form.submit()">
                                     <option value="">Tất cả danh mục quả</option>
@@ -304,16 +305,19 @@
                                 </select>
                             </div>
 
+                            <!-- 3. Dropdown Chứng nhận -->
                             <div class="xl:col-span-2">
                                 <select name="certification" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer" onchange="this.form.submit()">
                                     <option value="">Chứng nhận: Tất cả</option>
-                                    <option value="VietGAP" ${param.certification == 'VietGAP' ? 'selected' : ''}>VietGAP</option>
-                                    <option value="OCOP" ${param.certification == 'OCOP' ? 'selected' : ''}>OCOP</option>
-                                    <option value="GlobalGAP" ${param.certification == 'GlobalGAP' ? 'selected' : ''}>GlobalGAP</option>
-                                    <option value="Organic" ${param.certification == 'Organic' ? 'selected' : ''}>Organic</option>
+                                    <c:forEach var="cert" items="${certifications}">
+                                        <option value="${cert}" ${param.certification == cert ? 'selected' : ''}>
+                                            ${cert}
+                                        </option>
+                                    </c:forEach>
                                 </select>
                             </div>
 
+                            <!-- 4. Dropdown Tồn kho (Đã fix lỗi ngắt dòng) -->
                             <div class="xl:col-span-2">
                                 <select name="stockLevel" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer" onchange="this.form.submit()">
                                     <option value="">Tồn kho: Tất cả</option>
@@ -325,33 +329,16 @@
                             </div>
                         </div>
 
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
-                            <div class="flex items-center flex-wrap gap-2">
-                                <span class="font-extrabold text-[10px] uppercase tracking-wider text-slate-400 mr-1">LỌC NHANH:</span>
-
-                                <a href="${pageContext.request.contextPath}/shop/products?stockLevel=critical" 
-                                   class="px-3 py-1.5 rounded-xl border font-semibold text-slate-600 hover:border-rose-400 hover:text-rose-700 hover:bg-rose-50 flex items-center gap-1.5 transition-all ${param.stockLevel == 'critical' ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-slate-50 border-slate-200'}">
-                                    <i class="fa-solid fa-triangle-exclamation text-rose-500 text-[11px]"></i> Tồn &lt; 5 đơn vị
-                                </a>
-
-                                <a href="${pageContext.request.contextPath}/shop/products?certification=VietGAP" 
-                                   class="px-3 py-1.5 rounded-xl border font-semibold text-slate-600 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 flex items-center gap-1.5 transition-all ${param.certification == 'VietGAP' ? 'bg-emerald-50 border-emerald-400 text-emerald-800' : 'bg-slate-50 border-slate-200'}">
-                                    <i class="fa-solid fa-shield-check text-emerald-600 text-[11px]"></i> Chuẩn VietGAP
-                                </a>
-
-                                <a href="${pageContext.request.contextPath}/shop/products?certification=OCOP" 
-                                   class="px-3 py-1.5 rounded-xl border font-semibold text-slate-600 hover:border-amber-500 hover:text-amber-700 hover:bg-amber-50 flex items-center gap-1.5 transition-all ${param.certification == 'OCOP' ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-slate-50 border-slate-200'}">
-                                    <i class="fa-solid fa-award text-amber-500 text-[11px]"></i> OCOP 4 Sao Tỉnh
-                                </a>
-
-                                <a href="${pageContext.request.contextPath}/shop/products" class="text-slate-400 hover:text-rose-600 font-bold ml-2 underline transition-all">
-                                    Xóa bộ lọc
-                                </a>
-                            </div>
-
+                        <!-- Thanh hiển thị kết quả thống kê -->
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
                             <div class="text-slate-500 font-semibold">
                                 Đang hiển thị: <span class="text-slate-900 font-extrabold">${not empty products ? products.size() : 0}</span> / tổng <span class="text-slate-900 font-extrabold">${not empty totalProductsCount ? totalProductsCount : (not empty products ? products.size() : 0)}</span> nông sản
                             </div>
+                            <c:if test="${not empty param.keyword or not empty param.categoryId or not empty param.certification or not empty param.stockLevel}">
+                                <a href="${pageContext.request.contextPath}/shop/products" class="text-emerald-600 font-bold hover:underline">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Xóa bộ lọc
+                                </a>
+                            </c:if>
                         </div>
                     </form>
 
@@ -567,7 +554,7 @@
                         <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
                                 <span>Hiển thị</span>
-                                <select class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:outline-none focus:border-emerald-500 transition-all shadow-2xs" onchange="location.href = '${pageContext.request.contextPath}/shop/products?page=1&pageSize=' + this.value;">
+                                <select class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:outline-none focus:border-emerald-500 transition-all shadow-2xs" onchange="const params = new URLSearchParams(window.location.search); params.set('page', '1'); params.set('pageSize', this.value); window.location.href = '${pageContext.request.contextPath}/shop/product/search?' + params.toString();">
                                     <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
                                     <option value="20" ${pageSize == 20 ? 'selected' : ''}>20</option>
                                     <option value="50" ${pageSize == 50 ? 'selected' : ''}>50</option>
@@ -577,19 +564,19 @@
 
                             <div class="flex items-center gap-1.5">
                                 <c:if test="${currentPage > 1}">
-                                    <a href="${pageContext.request.contextPath}/shop/products?page=${currentPage - 1}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-700 transition-all text-xs shadow-2xs">
+                                    <a href="${pageContext.request.contextPath}/shop/product/search?page=${currentPage - 1}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-700 transition-all text-xs shadow-2xs">
                                         <i class="fa-solid fa-chevron-left text-[10px]"></i>
                                     </a>
                                 </c:if>
 
                                 <c:forEach begin="1" end="${totalPages > 0 ? totalPages : 1}" var="p">
-                                    <a href="${pageContext.request.contextPath}/shop/products?page=${p}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl font-bold flex items-center justify-center transition-all text-xs ${p == currentPage ? 'bg-emerald-700 text-white shadow-xs shadow-emerald-700/30' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-2xs'}">
+                                    <a href="${pageContext.request.contextPath}/shop/product/search?page=${p}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl font-bold flex items-center justify-center transition-all text-xs ${p == currentPage ? 'bg-emerald-700 text-white shadow-xs shadow-emerald-700/30' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-2xs'}">
                                         ${p}
                                     </a>
                                 </c:forEach>
 
                                 <c:if test="${currentPage < totalPages}">
-                                    <a href="${pageContext.request.contextPath}/shop/products?page=${currentPage + 1}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-700 transition-all text-xs shadow-2xs">
+                                    <a href="${pageContext.request.contextPath}/shop/product/search?page=${currentPage + 1}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-700 transition-all text-xs shadow-2xs">
                                         <i class="fa-solid fa-chevron-right text-[10px]"></i>
                                     </a>
                                 </c:if>
