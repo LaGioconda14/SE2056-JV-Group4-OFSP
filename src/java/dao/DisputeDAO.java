@@ -1,5 +1,7 @@
 package dao;
 
+import enums.OrderStatus;
+import enums.SubOrderStatus;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -74,16 +76,18 @@ public class DisputeDAO extends DBContext {
             }
 
             if (rows > 0) {
-                // Update sub_order status to RETURNED
-                String updateSub = "UPDATE sub_orders SET status = 'RETURNED', cancel_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
+                // Update sub_order status to FAILED
+                String updateSub = "UPDATE sub_orders SET status = '" + SubOrderStatus.FAILED.name()
+                        + "', cancel_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
                 try (PreparedStatement psSub = conn.prepareStatement(updateSub)) {
                     psSub.setNString(1, dispute.getReasonCategory() + ": " + dispute.getComplaintText());
                     psSub.setLong(2, dispute.getSubOrderId());
                     psSub.executeUpdate();
                 }
 
-                // Update parent order status to RETURNED
-                String updateOrd = "UPDATE o SET o.order_status = 'RETURNED', o.updated_at = CURRENT_TIMESTAMP "
+                // Update parent order status to CANCELLED
+                String updateOrd = "UPDATE o SET o.order_status = '" + OrderStatus.CANCELLED.name()
+                    + "', o.updated_at = CURRENT_TIMESTAMP "
                     + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_id = ?";
                 try (PreparedStatement psOrd = conn.prepareStatement(updateOrd)) {
                     psOrd.setLong(1, dispute.getSubOrderId());
