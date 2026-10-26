@@ -10,6 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.DriverProfile;
 import enums.DeliveryStatus;
+import enums.OrderStatus;
 import enums.SubOrderStatus;
 import util.DBContext;
 
@@ -418,7 +419,8 @@ public class DriverDAO extends DBContext {
             }
 
             // Sync Parent Order status to SHIPPING
-            String updateOrdSql = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = GETDATE() "
+            String updateOrdSql = "UPDATE o SET o.order_status = '" + OrderStatus.SHIPPING.name()
+                    + "', o.updated_at = GETDATE() "
                     + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_id = ?";
             try (PreparedStatement psOrd = conn.prepareStatement(updateOrdSql)) {
                 psOrd.setLong(1, subOrderId);

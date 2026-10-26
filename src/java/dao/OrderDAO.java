@@ -1,5 +1,11 @@
 package dao;
 
+import enums.OrderStatus;
+import enums.PaymentMethod;
+import enums.PaymentStatus;
+import enums.PaymentTransactionStatus;
+import enums.PaymentType;
+import enums.SubOrderStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
@@ -316,9 +322,12 @@ public class OrderDAO extends DBContext {
                 ps.setBigDecimal(5, order.getTotalShippingFee());
                 ps.setBigDecimal(6, order.getPlatformDiscount());
                 ps.setBigDecimal(7, order.getFinalAmount());
-                ps.setString(8, order.getPaymentStatus() != null ? order.getPaymentStatus() : "PENDING");
-                ps.setString(9, paymentMethod != null && !paymentMethod.trim().isEmpty() ? paymentMethod : "COD");
-                ps.setString(10, order.getOrderStatus() != null ? order.getOrderStatus() : "PROCESSING");
+                ps.setString(8, order.getPaymentStatus() != null
+                        ? order.getPaymentStatus() : PaymentStatus.PENDING.name());
+                ps.setString(9, paymentMethod != null && !paymentMethod.trim().isEmpty()
+                        ? paymentMethod : PaymentMethod.COD.name());
+                ps.setString(10, order.getOrderStatus() != null
+                        ? order.getOrderStatus() : OrderStatus.PROCESSING.name());
 
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -362,7 +371,8 @@ public class OrderDAO extends DBContext {
                     ps.setBigDecimal(8, sub.getShopTotal());
                     ps.setBigDecimal(9, commissionRate);
                     ps.setBigDecimal(10, commissionAmount);
-                    ps.setString(11, sub.getStatus() != null ? sub.getStatus() : "NEW");
+                    ps.setString(11, sub.getStatus() != null
+                            ? sub.getStatus() : SubOrderStatus.NEW.name());
 
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -444,9 +454,10 @@ public class OrderDAO extends DBContext {
             try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
                 ps.setLong(1, orderId);
                 ps.setString(2, paymentMethod);
-                ps.setString(3, "COD".equals(paymentMethod) ? "CASH" : "ONLINE");
+                ps.setString(3, PaymentMethod.COD.name().equals(paymentMethod)
+                        ? PaymentType.CASH.name() : PaymentType.ONLINE.name());
                 ps.setBigDecimal(4, order.getFinalAmount());
-                ps.setString(5, "PENDING");
+                ps.setString(5, PaymentTransactionStatus.PENDING.name());
                 ps.executeUpdate();
             }
 
@@ -595,7 +606,7 @@ public class OrderDAO extends DBContext {
     // 4. Láº¤Y CHI TIáº¾T ÄÆ N HÃ€NG THEO ID
     public Order getOrderById(long orderId) {
         String sqlOrder = "SELECT o.order_id, o.customer_id, o.coupon_id, o.total_goods_amount, "
-                + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, "
+                + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, o.payment_method, "
                 + "o.created_at, o.updated_at, "
                 + "sa.recipient_name, sa.recipient_phone, sa.street_address, sa.ward, sa.district, sa.city "
                 + "FROM orders o "
@@ -634,6 +645,7 @@ public class OrderDAO extends DBContext {
                         order.setPlatformDiscount(rs.getBigDecimal("platform_discount"));
                         order.setFinalAmount(rs.getBigDecimal("final_amount"));
                         order.setPaymentStatus(rs.getString("payment_status"));
+                        order.setPaymentMethod(rs.getString("payment_method"));
                         order.setCreatedAt(rs.getTimestamp("created_at"));
                         order.setUpdatedAt(rs.getTimestamp("updated_at"));
 
@@ -1020,14 +1032,11 @@ public class OrderDAO extends DBContext {
             if ("SHIPPING".equals(status) || "DELIVERING".equals(status) || "IN_TRANSIT".equals(status)) {
                 throw new IllegalStateException("Đơn hàng đang trong quá trình vận chuyển giao hàng, không thể hủy!");
             }
-            if ("COMPLETED".equals(status) || "DELIVERED".equals(status) || "SUCCESS".equals(status)) {
+            if (OrderStatus.COMPLETED.name().equals(status) || SubOrderStatus.DELIVERED.name().equals(status)) {
                 throw new IllegalStateException("Đơn hàng đã được giao thành công, không thể hủy!");
             }
             if ("CANCELLED".equals(status) || "CANCELED".equals(status)) {
                 throw new IllegalStateException("Đơn hàng này đã được hủy trước đó!");
-            }
-            if ("RETURNED".equals(status) || "REFUNDED".equals(status) || "DISPUTED".equals(status)) {
-                throw new IllegalStateException("Đơn hàng đang trong quy trình đổi trả / khiếu nại, không thể hủy!");
             }
 
             String reasonToSave = (cancelReason != null && !cancelReason.trim().isEmpty()) ? cancelReason.trim() : "Người mua hủy đơn trực tiếp";
@@ -1056,7 +1065,8 @@ public class OrderDAO extends DBContext {
                 }
 
                 // Đồng bộ trạng thái đơn cha nếu tất cả sub_orders đều đã CANCELLED
-                String syncParentSql = "UPDATE o SET o.order_status = 'CANCELLED', o.updated_at = CURRENT_TIMESTAMP "
+                String syncParentSql = "UPDATE o SET o.order_status = '" + OrderStatus.CANCELLED.name()
+                                     + "', o.updated_at = CURRENT_TIMESTAMP "
                                      + "FROM orders o "
                                      + "WHERE o.order_id = ? "
                                      + "  AND NOT EXISTS ( "
@@ -1092,7 +1102,8 @@ public class OrderDAO extends DBContext {
                     psSubs.executeUpdate();
                 }
 
-                String cancelOrderSql = "UPDATE orders SET order_status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP "
+                String cancelOrderSql = "UPDATE orders SET order_status = '" + OrderStatus.CANCELLED.name()
+                                      + "', updated_at = CURRENT_TIMESTAMP "
                                       + "WHERE order_id = ?";
                 try (PreparedStatement psOrder = conn.prepareStatement(cancelOrderSql)) {
                     psOrder.setLong(1, matchedOrderId);

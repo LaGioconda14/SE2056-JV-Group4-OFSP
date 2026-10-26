@@ -32,9 +32,6 @@
             <button type="button" class="order-filter-btn" data-filter="cancelled" onclick="filterOrders('cancelled', this)">
                 Đã hủy<span class="order-tab-count" id="count-cancelled"></span>
             </button>
-            <button type="button" class="order-filter-btn" data-filter="returned" onclick="filterOrders('returned', this)">
-                Trả hàng/Hoàn tiền<span class="order-tab-count" id="count-returned"></span>
-            </button>
         </div>
 
         <c:choose>
@@ -82,11 +79,6 @@
                                             <span class="text-muted small me-1"><i class="bi bi-snow text-primary"></i> Đang giao chuỗi lạnh</span>
                                             <span class="text-muted">|</span>
                                             <span class="shopee-status-shipping ms-1">CHỜ GIAO HÀNG</span>
-                                        </c:when>
-                                        <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED'}">
-                                            <span class="text-muted small me-1"><i class="bi bi-arrow-counterclockwise text-warning"></i> Yêu cầu đổi trả</span>
-                                            <span class="text-muted">|</span>
-                                            <span class="shopee-status-shipping ms-1">TRẢ HÀNG</span>
                                         </c:when>
                                         <c:when test="${statusUpper == 'CANCELLED' or statusUpper == 'CANCELED'}">
                                             <span class="shopee-status-cancelled ms-1">ĐÃ HỦY</span>
@@ -165,8 +157,8 @@
                                         <c:when test="${statusUpper == 'CANCELLED'}">
                                             Đơn hàng đã được hủy bởi bạn hoặc người bán.
                                         </c:when>
-                                        <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED'}">
-                                            Đang xử lý yêu cầu Trả hàng/Hoàn tiền từ hệ thống.
+                                        <c:when test="${statusUpper == 'FAILED'}">
+                                            Giao hàng không thành công.
                                         </c:when>
                                         <c:otherwise>
                                             Người bán đang chuẩn bị đóng gói hoa quả tươi chuyển giao cho đơn vị vận chuyển.
@@ -179,9 +171,6 @@
                                             <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
-                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="openReturnModal('${order.id}', '${order.shopName}', '${order.totalAmount}', '${order.subOrderId}')">
-                                                <i class="bi bi-arrow-return-left me-1"></i> Yêu Cầu Trả Hàng/Hoàn Tiền
-                                            </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
                                             </button>
@@ -211,9 +200,9 @@
                                                 Liên Hệ Người Bán
                                             </button>
                                         </c:when>
-                                        <c:when test="${statusUpper == 'RETURNED' or statusUpper == 'REFUNDED' or statusUpper == 'DISPUTED' or statusUpper == 'FAILED'}">
+                                        <c:when test="${statusUpper == 'FAILED'}">
                                             <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="showOrderTracking('${order.id}')">
-                                                <i class="bi bi-arrow-return-left me-1"></i> Xem Tiến Độ Trả Hàng
+                                                <i class="bi bi-exclamation-triangle me-1"></i> Xem Chi Tiết Sự Cố
                                             </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán

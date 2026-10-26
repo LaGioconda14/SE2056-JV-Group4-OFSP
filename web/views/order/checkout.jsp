@@ -4,7 +4,7 @@
 <fmt:setLocale value="vi_VN"/>
 <c:url var="cartUrl" value="/cart"/>
 <c:url var="placeOrderUrl" value="/order/place"/>
-<c:url var="paymentUrl" value="/payment"/>
+<c:url var="checkoutUrl" value="/checkout"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -47,6 +47,13 @@
         </div>
         <c:remove var="checkoutError" scope="session"/>
     </c:if>
+    <c:if test="${not empty addressError}">
+        <div class="mb-5 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800" role="alert"><c:out value="${addressError}"/></div>
+    </c:if>
+    <c:if test="${not empty sessionScope.checkoutAddressSuccess}">
+        <div class="mb-5 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800" role="status"><c:out value="${sessionScope.checkoutAddressSuccess}"/></div>
+        <c:remove var="checkoutAddressSuccess" scope="session"/>
+    </c:if>
 
     <c:choose>
         <c:when test="${empty selectedItems or empty draftOrder}">
@@ -61,8 +68,6 @@
         </c:when>
         <c:otherwise>
             <form method="post" action="<c:out value='${placeOrderUrl}'/>" id="checkout-form"
-                  data-order-action="<c:out value='${placeOrderUrl}'/>"
-                  data-payment-action="<c:out value='${paymentUrl}'/>"
                   class="space-y-4">
 
                 <!-- Hidden parameters -->
@@ -76,7 +81,11 @@
                         <input type="hidden" name="shopCoupon_${entry.key}" value="<c:out value='${entry.value}'/>">
                     </c:if>
                 </c:forEach>
-                <input type="hidden" name="deliverySlot" value="AFTERNOON">
+                <input type="hidden" name="deliverySlot" value="<c:out value='${not empty formDraft.deliverySlot ? formDraft.deliverySlot : "AFTERNOON"}'/>">
+                <input type="hidden" name="checkoutAction" id="checkout-action" disabled>
+                <input type="hidden" name="targetShopId" id="target-shop-id" disabled>
+                <input type="hidden" name="newCouponCode" id="new-coupon-code" disabled>
+                <input type="hidden" name="newShopCouponCode" id="new-shop-coupon-code" disabled>
 
                 <!-- ==================== 1. KHỐI ĐỊA CHỈ NHẬN HÀNG (GIỐNG SHOPEE) ==================== -->
                 <div class="bg-white rounded-xl shadow-xs overflow-hidden border border-gray-200/70">
@@ -95,8 +104,14 @@
                         <!-- Active Selected Address Display -->
                         <div id="active-address-display">
                             <c:choose>
+                                <c:when test="${formDraft.addressSelection eq 'new'}">
+                                    <div class="text-sm text-amber-800">Địa chỉ mới chưa được lưu. Vui lòng bấm Xác nhận trong hộp địa chỉ.</div>
+                                </c:when>
                                 <c:when test="${not empty customerAddresses}">
                                     <c:set var="activeAddr" value="${not empty defaultAddress ? defaultAddress : customerAddresses[0]}"/>
+                                    <c:forEach var="candidateAddress" items="${customerAddresses}">
+                                        <c:if test="${selectedAddressId eq candidateAddress.addressId}"><c:set var="activeAddr" value="${candidateAddress}"/></c:if>
+                                    </c:forEach>
                                     <div class="flex flex-wrap items-baseline gap-3 text-sm">
                                         <strong class="font-extrabold text-gray-900" id="display-recipient-name">
                                             <c:out value="${activeAddr.recipientName}"/> (<c:out value="${activeAddr.recipientPhone}"/>)
@@ -140,6 +155,7 @@
                     <c:when test="${not empty itemsByShop}">
                         <c:forEach var="shopEntry" items="${itemsByShop}">
                             <c:set var="shopItems" value="${shopEntry.value}"/>
+                            <c:set var="shopNoteKey" value="shopNote_${shopEntry.key}"/>
                             <c:set var="shop" value="${shopItems[0].variant.product}"/>
                             <c:set var="shopSubtotal" value="${0}"/>
                             <c:forEach var="item" items="${shopItems}">
@@ -243,7 +259,7 @@
                                 <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50 grid grid-cols-1 md:grid-cols-12 gap-4 items-center text-xs">
                                     <div class="md:col-span-5 flex items-center gap-2.5">
                                         <span class="text-gray-600 shrink-0 font-medium">Lời nhắn:</span>
-                                        <input type="text" name="shopNote_${shopEntry.key}" placeholder="Lưu ý cho Người bán..." class="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-emerald-600">
+                                        <input type="text" name="shopNote_${shopEntry.key}" value="<c:out value='${formDraft[shopNoteKey]}'/>" placeholder="Lưu ý cho Người bán..." class="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-emerald-600">
                                     </div>
                                     <div class="md:col-span-7 flex flex-col md:flex-row md:items-center justify-between gap-2 md:pl-6 border-l-0 md:border-l border-gray-200">
                                         <div>
@@ -314,12 +330,12 @@
                         <strong class="text-base text-gray-900 font-bold">Phương thức thanh toán</strong>
                         <div class="flex flex-wrap items-center gap-3" id="payment-options-container">
                             <label class="payment-method-pill px-4 py-2 rounded-xl border-2 border-[#00652c] bg-emerald-50/60 text-[#00652c] text-xs font-bold cursor-pointer transition select-none flex items-center gap-1.5">
-                                <input type="radio" name="paymentMethod" value="COD" checked class="hidden">
+                                <input type="radio" name="paymentMethod" value="COD" <c:if test="${formDraft.paymentMethod ne 'CARD'}">checked</c:if> class="hidden">
                                 <span class="material-symbols-outlined text-[16px]">check</span>
                                 <span>Thanh toán khi nhận hàng (COD)</span>
                             </label>
                             <label class="payment-method-pill px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-medium cursor-pointer transition select-none flex items-center gap-1.5">
-                                <input type="radio" name="paymentMethod" value="CARD" class="hidden">
+                                <input type="radio" name="paymentMethod" value="CARD" <c:if test="${formDraft.paymentMethod eq 'CARD'}">checked</c:if> class="hidden">
                                 <span>Thẻ ngân hàng (CARD)</span>
                             </label>
                             <span class="px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed">
@@ -328,31 +344,7 @@
                         </div>
                     </div>
 
-                    <!-- Khung nhập thẻ (Chỉ hiển thị khi chọn Thẻ ngân hàng) -->
-                    <div id="card-payment-form" class="hidden bg-emerald-50/40 border border-emerald-200 rounded-xl p-5 space-y-4">
-                        <div class="flex items-center gap-2 text-[#00652c] font-bold text-sm">
-                            <span class="material-symbols-outlined text-[20px]">credit_card</span>
-                            <span>Thông tin thẻ ngân hàng</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardHolder">Tên chủ thẻ (Không dấu)</label>
-                                <input type="text" id="cardHolder" name="cardHolder" placeholder="NGUYEN VAN A" autocomplete="cc-name" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm uppercase outline-none focus:border-emerald-600">
-                            </div>
-                            <div class="sm:col-span-2">
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardNumber">Số thẻ</label>
-                                <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" autocomplete="cc-number" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardExpiry">Ngày hết hạn (MM/YY)</label>
-                                <input type="text" id="cardExpiry" name="cardExpiry" placeholder="MM/YY" maxlength="5" autocomplete="cc-exp" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1" for="cardCvv">Mã bảo mật CVV/CVC</label>
-                                <input type="password" id="cardCvv" name="cardCvv" placeholder="•••" maxlength="4" autocomplete="cc-csc" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-600">
-                            </div>
-                        </div>
-                    </div>
+                    <p id="card-payment-notice" class="hidden text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4">Thanh toán thẻ chưa được kết nối. Đơn hàng sẽ được ghi nhận ở trạng thái chờ thanh toán; không nhập thông tin thẻ tại đây.</p>
 
                     <!-- Bảng tổng hợp chi phí (Căn phải giống Shopee) -->
                     <div class="flex flex-col items-end space-y-3 pt-3 text-sm">
@@ -416,7 +408,7 @@
                                            data-phone="<c:out value='${address.recipientPhone}'/>"
                                            data-full="<c:out value='${address.fullAddress}'/>"
                                            data-default="${address.defaultAddress}"
-                                           <c:if test="${address.defaultAddress or (not empty defaultAddress and defaultAddress.addressId eq address.addressId)}">checked</c:if>
+                                           <c:if test="${selectedAddressId eq address.addressId or (empty formDraft.addressSelection and ((not empty defaultAddress and defaultAddress.addressId eq address.addressId) or (empty defaultAddress and customerAddresses[0].addressId eq address.addressId)))}">checked</c:if>
                                            class="mt-1 accent-[#00652c]">
                                     <div class="flex-1 text-xs space-y-1">
                                         <div class="flex items-center gap-2">
@@ -434,49 +426,52 @@
 
                             <!-- Thêm địa chỉ mới option -->
                             <label class="p-4 border rounded-xl flex items-start gap-3 cursor-pointer hover:border-emerald-500 transition">
-                                <input type="radio" name="addressSelection" value="new" id="radio-address-new" class="mt-1 accent-[#00652c]" <c:if test="${empty customerAddresses}">checked</c:if>>
+                                <input type="radio" name="addressSelection" value="new" id="radio-address-new" class="mt-1 accent-[#00652c]" <c:if test="${formDraft.addressSelection eq 'new' or (empty formDraft.addressSelection and empty customerAddresses)}">checked</c:if>>
                                 <div class="flex-1 text-xs">
                                     <strong class="text-sm font-bold text-gray-900">+ Thêm địa chỉ nhận hàng mới</strong>
                                 </div>
                             </label>
 
                             <!-- Form nhập địa chỉ mới -->
-                            <div id="new-address-inputs" class="space-y-3 pt-3 border-t border-dashed border-gray-200 <c:if test='${not empty customerAddresses}'>hidden</c:if>">
+                            <div id="new-address-inputs" class="space-y-3 pt-3 border-t border-dashed border-gray-200 <c:if test='${not empty customerAddresses and formDraft.addressSelection ne "new"}'>hidden</c:if>">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                     <div>
                                         <label class="block font-bold text-gray-700 mb-1">Họ tên người nhận</label>
-                                        <input type="text" name="recipientName" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                        <input type="text" name="recipientName" value="<c:out value='${formDraft.recipientName}'/>" class="w-full border rounded-lg px-3 py-2 text-xs">
                                     </div>
                                     <div>
                                         <label class="block font-bold text-gray-700 mb-1">Số điện thoại</label>
-                                        <input type="tel" name="recipientPhone" class="w-full border rounded-lg px-3 py-2 text-xs">
+                                        <input type="tel" name="recipientPhone" value="<c:out value='${formDraft.recipientPhone}'/>" class="w-full border rounded-lg px-3 py-2 text-xs">
                                     </div>
                                     <div class="sm:col-span-2">
                                         <label class="block font-bold text-gray-700 mb-1" for="checkoutCitySelect">Tỉnh / Thành phố <span class="text-red-500">*</span></label>
-                                        <select id="checkoutCitySelect" name="city" class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600">
-                                            <option value="" selected disabled>Chọn Tỉnh / Thành phố</option>
+                                        <select id="checkoutCitySelect" name="provinceCode" class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600">
+                                            <option value="" disabled <c:if test="${empty formDraft.provinceCode}">selected</c:if>>Chọn Tỉnh / Thành phố</option>
+                                            <c:forEach var="province" items="${provinces}"><option value="<c:out value='${province.code}'/>" <c:if test="${formDraft.provinceCode eq province.code}">selected</c:if>><c:out value="${province.name}"/></option></c:forEach>
                                         </select>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-gray-700 mb-1" for="checkoutDistrictSelect">Quận / Huyện <span class="text-red-500">*</span></label>
-                                        <select id="checkoutDistrictSelect" name="district" disabled class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600 disabled:bg-gray-100 disabled:text-gray-400">
-                                            <option value="" selected disabled>Chọn Quận / Huyện</option>
+                                        <select id="checkoutDistrictSelect" name="districtCode" <c:if test="${empty districts}">disabled</c:if> class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600 disabled:bg-gray-100 disabled:text-gray-400">
+                                            <option value="" disabled <c:if test="${empty formDraft.districtCode}">selected</c:if>>Chọn Quận / Huyện</option>
+                                            <c:forEach var="district" items="${districts}"><option value="<c:out value='${district.code}'/>" <c:if test="${formDraft.districtCode eq district.code}">selected</c:if>><c:out value="${district.name}"/></option></c:forEach>
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-gray-700 mb-1" for="checkoutWardSelect">Phường / Xã</label>
-                                        <select id="checkoutWardSelect" name="ward" disabled class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600 disabled:bg-gray-100 disabled:text-gray-400">
-                                            <option value="" selected disabled>Chọn Phường / Xã</option>
+                                        <label class="block font-bold text-gray-700 mb-1" for="checkoutWardSelect">Phường / Xã <span class="text-red-500">*</span></label>
+                                        <select id="checkoutWardSelect" name="wardCode" <c:if test="${empty wards}">disabled</c:if> class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600 disabled:bg-gray-100 disabled:text-gray-400">
+                                            <option value="" disabled <c:if test="${empty formDraft.wardCode}">selected</c:if>>Chọn Phường / Xã</option>
+                                            <c:forEach var="ward" items="${wards}"><option value="<c:out value='${ward.code}'/>" <c:if test="${formDraft.wardCode eq ward.code}">selected</c:if>><c:out value="${ward.name}"/></option></c:forEach>
                                         </select>
                                     </div>
                                     <div class="sm:col-span-2">
                                         <label class="block font-bold text-gray-700 mb-1">Địa chỉ cụ thể (Số nhà, tên ngõ, tòa nhà...) <span class="text-red-500">*</span></label>
-                                        <input type="text" name="streetAddress" placeholder="Ví dụ: Số 20 ngõ 10" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-emerald-600">
+                                        <input type="text" name="streetAddress" value="<c:out value='${formDraft.streetAddress}'/>" placeholder="Ví dụ: Số 20 ngõ 10" class="w-full border rounded-lg px-3 py-2 text-xs outline-none focus:border-emerald-600">
                                     </div>
                                     <div class="sm:col-span-2">
                                         <label class="flex items-center gap-2 cursor-pointer">
-                                            <input type="checkbox" name="saveAddress" value="true" checked class="accent-[#00652c]">
-                                            <span class="text-gray-600">Lưu địa chỉ này vào sổ địa chỉ</span>
+                                            <input type="checkbox" name="isDefault" value="true" <c:if test="${formDraft.isDefault eq 'true'}">checked</c:if> class="accent-[#00652c]">
+                                            <span class="text-gray-600">Đặt làm địa chỉ mặc định</span>
                                         </label>
                                     </div>
                                 </div>
@@ -577,93 +572,36 @@
 
 <!-- ==================== JAVASCRIPT XỬ LÝ THANH TOÁN ==================== -->
 <script>
-    // 1. Xử lý nạp danh mục hành chính từ backend & modal địa chỉ
-    const checkoutCitySelect = document.getElementById('checkoutCitySelect');
-    const checkoutDistrictSelect = document.getElementById('checkoutDistrictSelect');
-    const checkoutWardSelect = document.getElementById('checkoutWardSelect');
+    function submitCheckoutAction(action, values = {}) {
+        const form = document.getElementById('checkout-form');
+        if (!form) return;
+        const actionInput = document.getElementById('checkout-action');
+        actionInput.disabled = false;
+        actionInput.value = action;
+        ['targetShopId', 'newCouponCode', 'newShopCouponCode'].forEach(id => {
+            const input = form.elements.namedItem(id);
+            if (input) {
+                input.disabled = !(id in values);
+                input.value = values[id] || '';
+            }
+        });
+        form.action = '<c:out value="${checkoutUrl}"/>';
+        form.submit();
+    }
 
-    async function initCheckoutProvinces() {
-        if (!checkoutCitySelect || checkoutCitySelect.options.length > 1) return;
-        try {
-            const res = await fetch('${pageContext.request.contextPath}/api/address/provinces');
-            if (!res.ok) throw new Error();
-            const list = await res.json();
-            checkoutCitySelect.innerHTML = '<option value="" selected disabled>Chọn Tỉnh / Thành phố</option>';
-            list.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.name;
-                opt.textContent = p.name;
-                opt.dataset.code = p.code;
-                checkoutCitySelect.appendChild(opt);
-            });
-        } catch (e) {
-            console.warn('Không thể nạp danh sách tỉnh thành:', e);
+    document.getElementById('checkoutCitySelect')?.addEventListener('change', () => submitCheckoutAction('selectProvince'));
+    document.getElementById('checkoutDistrictSelect')?.addEventListener('change', () => submitCheckoutAction('selectDistrict'));
+    document.getElementById('checkout-form')?.addEventListener('submit', function(event) {
+        if (document.getElementById('checkout-action')?.disabled &&
+                document.querySelector('input[name="addressSelection"]:checked')?.value === 'new') {
+            event.preventDefault();
+            openAddressModal();
+            alert('Vui lòng xác nhận và lưu địa chỉ mới trước khi đặt hàng!');
         }
-    }
-
-    if (checkoutCitySelect) {
-        checkoutCitySelect.addEventListener('change', async function() {
-            const selectedOpt = checkoutCitySelect.options[checkoutCitySelect.selectedIndex];
-            const pCode = selectedOpt.dataset.code;
-            checkoutDistrictSelect.disabled = true;
-            checkoutDistrictSelect.innerHTML = '<option value="" selected disabled>Đang tải danh sách...</option>';
-            checkoutWardSelect.disabled = true;
-            checkoutWardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
-
-            if (!pCode) return;
-            try {
-                const res = await fetch('${pageContext.request.contextPath}/api/address/districts?provinceCode=' + encodeURIComponent(pCode));
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                checkoutDistrictSelect.innerHTML = '<option value="" selected disabled>Chọn Quận / Huyện</option>';
-                data.districts.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.name;
-                    opt.textContent = d.name;
-                    opt.dataset.code = d.code;
-                    checkoutDistrictSelect.appendChild(opt);
-                });
-                checkoutDistrictSelect.disabled = false;
-            } catch (e) {
-                checkoutDistrictSelect.innerHTML = '<option value="" selected disabled>Chọn Quận / Huyện</option>';
-                checkoutDistrictSelect.disabled = false;
-            }
-        });
-    }
-
-    if (checkoutDistrictSelect) {
-        checkoutDistrictSelect.addEventListener('change', async function() {
-            const selectedOpt = checkoutDistrictSelect.options[checkoutDistrictSelect.selectedIndex];
-            const dCode = selectedOpt.dataset.code;
-            checkoutWardSelect.disabled = true;
-            checkoutWardSelect.innerHTML = '<option value="" selected disabled>Đang tải danh sách...</option>';
-
-            if (!dCode) return;
-            try {
-                const res = await fetch('${pageContext.request.contextPath}/api/address/wards?districtCode=' + encodeURIComponent(dCode));
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                checkoutWardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
-                data.wards.forEach(w => {
-                    const opt = document.createElement('option');
-                    opt.value = w.name;
-                    opt.textContent = w.name;
-                    checkoutWardSelect.appendChild(opt);
-                });
-                checkoutWardSelect.disabled = false;
-            } catch (e) {
-                checkoutWardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
-                checkoutWardSelect.disabled = false;
-            }
-        });
-    }
+    });
 
     function openAddressModal() {
-        const dialog = document.getElementById('address-modal');
-        if (dialog) {
-            dialog.showModal();
-            initCheckoutProvinces();
-        }
+        document.getElementById('address-modal')?.showModal();
     }
 
     function closeAddressModal() {
@@ -678,18 +616,12 @@
             if (newInputs) {
                 if (this.value === 'new') {
                     newInputs.classList.remove('hidden');
-                    initCheckoutProvinces();
                 } else {
                     newInputs.classList.add('hidden');
                 }
             }
         });
     });
-
-    function escapeHtml(s) {
-        if (!s) return '';
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
 
     function confirmAddressSelection() {
         const selected = document.querySelector('input[name="addressSelection"]:checked');
@@ -709,92 +641,11 @@
             const city = (document.getElementById('checkoutCitySelect')?.value || '').trim();
             const district = (document.getElementById('checkoutDistrictSelect')?.value || '').trim();
             const ward = (document.getElementById('checkoutWardSelect')?.value || '').trim();
-            const isDefault = document.querySelector('input[name="saveAddress"]')?.checked ? 'true' : 'false';
-
-            if (!name || !phone || !street || !city || !district) {
-                alert('Vui lòng điền đầy đủ họ tên, số điện thoại, tỉnh/thành phố, quận/huyện và địa chỉ cụ thể!');
+            if (!name || !phone || !street || !city || !district || !ward) {
+                alert('Vui lòng điền đầy đủ họ tên, số điện thoại, tỉnh/thành phố, quận/huyện, phường/xã và địa chỉ cụ thể!');
                 return;
             }
-
-            const confirmBtn = document.getElementById('btn-confirm-address');
-            if (confirmBtn) {
-                confirmBtn.disabled = true;
-                confirmBtn.textContent = 'Đang lưu...';
-            }
-
-            const bodyParams = new URLSearchParams();
-            bodyParams.append('recipientName', name);
-            bodyParams.append('recipientPhone', phone);
-            bodyParams.append('streetAddress', street);
-            bodyParams.append('city', city);
-            bodyParams.append('district', district);
-            bodyParams.append('ward', ward);
-            bodyParams.append('isDefault', isDefault);
-
-            fetch('${pageContext.request.contextPath}/api/address/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                    'Accept': 'application/json'
-                },
-                body: bodyParams.toString()
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (confirmBtn) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Xác nhận';
-                }
-                if (data && data.success) {
-                    // Cập nhật hiển thị địa chỉ ra ngoài trang thanh toán
-                    if (nameEl) nameEl.textContent = data.recipientName + ' (' + data.recipientPhone + ')';
-                    if (addrEl) addrEl.textContent = data.fullAddress;
-                    if (badgeEl) {
-                        if (data.isDefault) badgeEl.classList.remove('hidden');
-                        else badgeEl.classList.add('hidden');
-                    }
-
-                    // Chèn option mới vào danh sách địa chỉ đã lưu trong modal và chọn nó
-                    const modalList = document.querySelector('#address-modal .p-6.max-h-\\[60vh\\]');
-                    const newOptionLabel = document.querySelector('#radio-address-new')?.closest('label');
-                    if (modalList && newOptionLabel) {
-                        const newLabel = document.createElement('label');
-                        newLabel.className = 'p-4 border rounded-xl flex items-start gap-3 cursor-pointer hover:border-emerald-500 transition border-emerald-600 bg-emerald-50/20';
-                        newLabel.innerHTML = '<input type="radio" name="addressSelection" value="saved:' + data.addressId + '" checked '
-                            + 'data-name="' + escapeHtml(data.recipientName) + '" '
-                            + 'data-phone="' + escapeHtml(data.recipientPhone) + '" '
-                            + 'data-full="' + escapeHtml(data.fullAddress) + '" '
-                            + 'data-default="' + Boolean(data.isDefault) + '" class="mt-1 accent-[#00652c]">'
-                            + '<div class="flex-1 text-xs space-y-1">'
-                            + '<div class="flex items-center gap-2">'
-                            + '<strong class="text-sm font-bold text-gray-900">' + escapeHtml(data.recipientName) + '</strong>'
-                            + '<span class="text-gray-400">|</span>'
-                            + '<span class="text-gray-600">' + escapeHtml(data.recipientPhone) + '</span>'
-                            + (data.isDefault ? '<span class="px-2 py-0.5 text-[10px] font-bold text-red-600 border border-red-500 rounded bg-red-50">Mặc định</span>' : '')
-                            + '</div>'
-                            + '<p class="text-gray-700">' + escapeHtml(data.fullAddress) + '</p>'
-                            + '</div>';
-                        modalList.insertBefore(newLabel, newOptionLabel);
-                    }
-
-                    // Reset form nhập mới
-                    const newInputs = document.getElementById('new-address-inputs');
-                    if (newInputs) newInputs.classList.add('hidden');
-                    const radioNew = document.getElementById('radio-address-new');
-                    if (radioNew) radioNew.checked = false;
-
-                    closeAddressModal();
-                } else {
-                    alert(data && data.message ? data.message : 'Lỗi khi lưu địa chỉ vào cơ sở dữ liệu!');
-                }
-            })
-            .catch(err => {
-                if (confirmBtn) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = 'Xác nhận';
-                }
-                alert('Không thể kết nối máy chủ để lưu địa chỉ: ' + err.message);
-            });
+            submitCheckoutAction('createAddress');
             return;
         }
 
@@ -811,7 +662,12 @@
             else badgeEl.classList.add('hidden');
         }
         closeAddressModal();
+        submitCheckoutAction('selectAddress');
     }
+
+    <c:if test="${not empty selectedItems and not empty draftOrder and formDraft.openAddressModal eq 'true'}">
+    openAddressModal();
+    </c:if>
 
     // Dữ liệu voucher của các shop và voucher đã áp dụng
     const shopCouponsData = {
@@ -956,8 +812,7 @@
 
     function applyShopCoupon(shopId, code) {
         if (!code || !code.trim()) return;
-        window.location.href = '${pageContext.request.contextPath}/checkout?shopId=' + encodeURIComponent(shopId)
-            + '&shopCouponCode=' + encodeURIComponent(code.trim().toUpperCase());
+        submitCheckoutAction('applyShopCoupon', {targetShopId: shopId, newShopCouponCode: code.trim().toUpperCase()});
     }
 
     function applyManualShopCoupon() {
@@ -972,7 +827,7 @@
     }
 
     function removeShopCoupon(shopId) {
-        window.location.href = '${pageContext.request.contextPath}/checkout?removeShopCoupon=' + encodeURIComponent(shopId);
+        submitCheckoutAction('removeShopCoupon', {targetShopId: shopId});
     }
 
     // 3. Xử lý Voucher Sàn
@@ -987,8 +842,7 @@
     }
 
     function applyCouponCode(code) {
-        document.getElementById('checkout-coupon-code').value = code;
-        window.location.href = '${pageContext.request.contextPath}/checkout?couponCode=' + encodeURIComponent(code);
+        submitCheckoutAction('applyCoupon', {newCouponCode: code});
     }
 
     function applyManualCoupon() {
@@ -999,14 +853,13 @@
     }
 
     function removeCheckoutCoupon() {
-        document.getElementById('checkout-coupon-code').value = '';
-        window.location.href = '${pageContext.request.contextPath}/checkout?removeCoupon=true';
+        submitCheckoutAction('removeCoupon');
     }
 
     // 3. Xử lý chuyển đổi phương thức thanh toán (COD vs CARD)
     const paymentForm = document.getElementById('checkout-form');
     const paymentLabels = document.querySelectorAll('.payment-method-pill');
-    const cardForm = document.getElementById('card-payment-form');
+    const cardNotice = document.getElementById('card-payment-notice');
     const submitBtn = document.getElementById('submit-order-btn');
 
     paymentLabels.forEach(label => {
@@ -1030,33 +883,19 @@
             if (radio) {
                 radio.checked = true;
                 if (radio.value === 'CARD') {
-                    if (cardForm) cardForm.classList.remove('hidden');
-                    if (paymentForm) paymentForm.action = paymentForm.dataset.paymentAction;
-                    if (submitBtn) submitBtn.textContent = 'Thanh toán';
+                    if (cardNotice) cardNotice.classList.remove('hidden');
+                    if (submitBtn) submitBtn.textContent = 'Đặt hàng (chờ thanh toán)';
                 } else {
-                    if (cardForm) cardForm.classList.add('hidden');
-                    if (paymentForm) paymentForm.action = paymentForm.dataset.orderAction;
+                    if (cardNotice) cardNotice.classList.add('hidden');
                     if (submitBtn) submitBtn.textContent = 'Đặt hàng';
                 }
             }
         });
     });
 
-    // Format số thẻ & Expiry
-    const cardNumber = document.getElementById('cardNumber');
-    const cardExpiry = document.getElementById('cardExpiry');
-    if (cardNumber) {
-        cardNumber.addEventListener('input', function() {
-            let v = this.value.replace(/\D/g, '').slice(0, 19);
-            this.value = v.replace(/(.{4})/g, '$1 ').trim();
-        });
-    }
-    if (cardExpiry) {
-        cardExpiry.addEventListener('input', function() {
-            let v = this.value.replace(/\D/g, '').slice(0, 4);
-            if (v.length > 2) this.value = v.slice(0, 2) + '/' + v.slice(2);
-            else this.value = v;
-        });
+    if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'CARD') {
+        cardNotice?.classList.remove('hidden');
+        if (submitBtn) submitBtn.textContent = 'Đặt hàng (chờ thanh toán)';
     }
 
     document.addEventListener('DOMContentLoaded', function() {

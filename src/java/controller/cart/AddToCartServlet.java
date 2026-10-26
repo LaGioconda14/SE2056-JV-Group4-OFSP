@@ -1,6 +1,5 @@
 package controller.cart;
 
-import exception.CartException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.CartMutationResult;
 import model.User;
 import service.ICartService;
@@ -16,6 +17,7 @@ import service.impl.CartServiceImpl;
 @WebServlet(name = "AddToCartServlet", urlPatterns = {"/cart/add"})
 public class AddToCartServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(AddToCartServlet.class.getName());
     private transient ICartService cartService;
 
     public AddToCartServlet() {
@@ -41,17 +43,18 @@ public class AddToCartServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        User user = CartControllerSupport.activeUser(request);
-        String returnUrl = CartControllerSupport.safeReturnUrl(request.getParameter("returnUrl"));
-        if (user == null) {
+        HttpSession session = request.getSession(false);
+        Object sessionUser = session != null ? session.getAttribute("user") : null;
+        User user = sessionUser instanceof User ? (User) sessionUser : null;
+        String returnUrl = safeReturnUrl(request.getParameter("returnUrl"));
+        if (user == null || user.getId() <= 0 || !user.isActive()) {
             handleUnauthenticated(request, response);
             return;
         }
 
-        HttpSession session = request.getSession(false);
         try {
-            long variantId = CartControllerSupport.positiveLong(request, "variantId");
-            int quantity = CartControllerSupport.positiveInt(request, "quantity");
+            long variantId = Long.parseLong(request.getParameter("variantId"));
+            int quantity = Integer.parseInt(request.getParameter("quantity"));
             CartMutationResult result = cartService.addItem(user.getId(), variantId, quantity);
             int cartSize = result.cartItemCount();
             session.setAttribute("cartSize", cartSize);
@@ -64,12 +67,18 @@ public class AddToCartServlet extends HttpServlet {
                 return;
             }
 
-            CartControllerSupport.success(session, "Đã thêm sản phẩm vào giỏ hàng!");
-        } catch (CartException ex) {
-            CartControllerSupport.error(session, ex);
+            session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
+            session.removeAttribute("cartError");
+        } catch (NumberFormatException ex) {
+            session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
+            session.removeAttribute("cartSuccess");
+        } catch (IllegalArgumentException ex) {
+            session.setAttribute("cartError", ex.getMessage());
+            session.removeAttribute("cartSuccess");
         } catch (RuntimeException ex) {
-            CartException safeError = CartControllerSupport.unexpected(ex);
-            CartControllerSupport.error(session, safeError);
+            LOGGER.log(Level.SEVERE, "Cannot add item to cart", ex);
+            session.setAttribute("cartError", "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!");
+            session.removeAttribute("cartSuccess");
         }
 
         response.sendRedirect(request.getContextPath()
@@ -81,5 +90,18 @@ public class AddToCartServlet extends HttpServlet {
         String message = "Vui lòng đăng nhập để thêm sản phẩm vào giỏ!";
         request.getSession(true).setAttribute("errorMessage", message);
         response.sendRedirect(request.getContextPath() + "/login");
+    }
+
+    private String safeReturnUrl(String returnUrl) {
+        if (returnUrl == null) {
+            return null;
+        }
+        String normalized = returnUrl.trim();
+        if (!normalized.startsWith("/") || normalized.startsWith("//")
+                || normalized.contains("://") || normalized.contains("\r")
+                || normalized.contains("\n")) {
+            return null;
+        }
+        return normalized;
     }
 }
