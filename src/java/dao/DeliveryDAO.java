@@ -11,6 +11,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.Delivery;
 import enums.DeliveryStatus;
+import enums.OrderStatus;
+import enums.PaymentMethod;
+import enums.PaymentTransactionStatus;
 import enums.SubOrderStatus;
 import enums.PaymentStatus;
 import model.OrderItem;
@@ -46,7 +49,7 @@ public class DeliveryDAO extends DBContext {
             } else if ("delivering".equalsIgnoreCase(statusFilter)) {
                 sql.append(" AND d.delivery_status IN ('DELIVERING', 'IN_TRANSIT', 'PICKED_UP') ");
             } else if ("completed".equalsIgnoreCase(statusFilter)) {
-                sql.append(" AND d.delivery_status IN ('DELIVERED', 'SUCCESS') ");
+                sql.append(" AND d.delivery_status = 'DELIVERED' ");
             } else if ("failed".equalsIgnoreCase(statusFilter)) {
                 sql.append(" AND d.delivery_status IN ('FAILED', 'CANCELLED') ");
             }
@@ -145,7 +148,8 @@ public class DeliveryDAO extends DBContext {
                     psSub.executeUpdate();
                 }
 
-                String syncOrder = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = CURRENT_TIMESTAMP "
+                String syncOrder = "UPDATE o SET o.order_status = '" + OrderStatus.SHIPPING.name()
+                    + "', o.updated_at = CURRENT_TIMESTAMP "
                     + "FROM orders o "
                     + "JOIN sub_orders so ON o.order_id = so.order_id "
                     + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
@@ -171,11 +175,17 @@ public class DeliveryDAO extends DBContext {
         Connection conn = getConnection();
         if (conn == null) return false;
 
-        try (conn; PreparedStatement ps = conn.prepareStatement(updateDel)) {
-            ps.setString(1, proofImageUrl != null && !proofImageUrl.trim().isEmpty() ? proofImageUrl.trim() : "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600");
-            ps.setLong(2, deliveryId);
-            ps.setLong(3, driverId);
-            int rows = ps.executeUpdate();
+        try {
+            conn.setAutoCommit(false);
+            int rows;
+            try (PreparedStatement ps = conn.prepareStatement(updateDel)) {
+                ps.setString(1, proofImageUrl != null && !proofImageUrl.trim().isEmpty()
+                        ? proofImageUrl.trim()
+                        : "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600");
+                ps.setLong(2, deliveryId);
+                ps.setLong(3, driverId);
+                rows = ps.executeUpdate();
+            }
             if (rows > 0) {
                 // Update sub_orders to DELIVERED
                 String syncSub = "UPDATE so SET so.status = '" + SubOrderStatus.DELIVERED.name() + "', so.updated_at = CURRENT_TIMESTAMP "
@@ -193,7 +203,8 @@ public class DeliveryDAO extends DBContext {
                 }
 
                 // If all sub_orders of order are DELIVERED, set order to COMPLETED
-                String syncOrd = "UPDATE o SET o.order_status = 'COMPLETED', o.updated_at = CURRENT_TIMESTAMP "
+                String syncOrd = "UPDATE o SET o.order_status = '" + OrderStatus.COMPLETED.name()
+                    + "', o.updated_at = CURRENT_TIMESTAMP "
                     + "FROM orders o "
                     + "JOIN sub_orders so ON o.order_id = so.order_id "
                     + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
@@ -209,15 +220,43 @@ public class DeliveryDAO extends DBContext {
                     + "FROM orders o "
                     + "JOIN sub_orders so ON o.order_id = so.order_id "
                     + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
-                    + "WHERE d.delivery_id = ? AND o.payment_method = 'COD'";
+                    + "WHERE d.delivery_id = ? AND o.payment_method = '" + PaymentMethod.COD.name() + "' "
+                    + "AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id "
+                    + "AND other.status <> '" + SubOrderStatus.DELIVERED.name() + "')";
                 try (PreparedStatement psPay = conn.prepareStatement(syncPayment)) {
                     psPay.setLong(1, deliveryId);
                     psPay.executeUpdate();
                 }
+
+                String syncPaymentTransaction = "UPDATE p SET p.payment_status = '"
+                    + PaymentTransactionStatus.SUCCESS.name() + "', p.paid_at = CURRENT_TIMESTAMP "
+                    + "FROM payments p "
+                    + "JOIN orders o ON p.order_id = o.order_id "
+                    + "JOIN sub_orders so ON o.order_id = so.order_id "
+                    + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                    + "WHERE d.delivery_id = ? AND o.payment_method = '" + PaymentMethod.COD.name() + "' "
+                    + "AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id "
+                    + "AND other.status <> '" + SubOrderStatus.DELIVERED.name() + "')";
+                try (PreparedStatement psPay = conn.prepareStatement(syncPaymentTransaction)) {
+                    psPay.setLong(1, deliveryId);
+                    psPay.executeUpdate();
+                }
+                conn.commit();
                 return true;
             }
         } catch (SQLException ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException rollbackEx) {
+                ex.addSuppressed(rollbackEx);
+            }
             LOGGER.log(Level.SEVERE, "Error completing delivery " + deliveryId, ex);
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException closeEx) {
+                LOGGER.log(Level.WARNING, "Error closing delivery connection", closeEx);
+            }
         }
         return false;
     }
@@ -233,32 +272,18 @@ public class DeliveryDAO extends DBContext {
         if (conn == null) return false;
 
         try (conn; PreparedStatement ps = conn.prepareStatement(updateDel)) {
-            ps.setNString(1, failureReason != null ? failureReason : "Khách hàng từ chối nhận hoa quả");
+            ps.setNString(1, failureReason != null ? failureReason : "Giao hàng không thành công");
             ps.setLong(2, deliveryId);
             ps.setLong(3, driverId);
             int rows = ps.executeUpdate();
             if (rows > 0) {
-                // Update sub_order to RETURNED with cancel_reason
-                String syncSub = "UPDATE so SET so.status = '" + SubOrderStatus.RETURNED.name() + "', so.cancel_reason = ?, so.updated_at = CURRENT_TIMESTAMP "
+                // Update sub_order to FAILED with cancel_reason
+                String syncSub = "UPDATE so SET so.status = '" + SubOrderStatus.FAILED.name() + "', so.cancel_reason = ?, so.updated_at = CURRENT_TIMESTAMP "
                     + "FROM sub_orders so JOIN deliveries d ON so.sub_order_id = d.sub_order_id WHERE d.delivery_id = ?";
                 try (PreparedStatement psSub = conn.prepareStatement(syncSub)) {
                     psSub.setNString(1, failureReason);
                     psSub.setLong(2, deliveryId);
                     psSub.executeUpdate();
-                }
-
-                // Automatically record in disputes table to initiate return/refund workflow
-                String createDispute = "INSERT INTO disputes (dispute_code, sub_order_id, customer_id, shop_id, reason_category, complaint_text, claim_amount, status, created_at) "
-                    + "SELECT 'DIS-' + CAST(d.delivery_id AS VARCHAR(10)) + '-' + CAST(DATEDIFF(s, '1970-01-01', CURRENT_TIMESTAMP) % 10000 AS VARCHAR(5)), "
-                    + "       so.sub_order_id, o.customer_id, so.shop_id, N'Từ chối nhận khi đồng kiểm với Shipper', ?, so.shop_total, 'OPEN', CURRENT_TIMESTAMP "
-                    + "FROM deliveries d "
-                    + "JOIN sub_orders so ON d.sub_order_id = so.sub_order_id "
-                    + "JOIN orders o ON so.order_id = o.order_id "
-                    + "WHERE d.delivery_id = ?";
-                try (PreparedStatement psDisp = conn.prepareStatement(createDispute)) {
-                    psDisp.setNString(1, failureReason);
-                    psDisp.setLong(2, deliveryId);
-                    psDisp.executeUpdate();
                 }
                 return true;
             }
@@ -278,7 +303,7 @@ public class DeliveryDAO extends DBContext {
         } else if ("delivering".equalsIgnoreCase(statusFilter)) {
             sql.append(" AND d.delivery_status IN ('DELIVERING', 'IN_TRANSIT', 'PICKED_UP') ");
         } else if ("completed".equalsIgnoreCase(statusFilter)) {
-            sql.append(" AND d.delivery_status IN ('DELIVERED', 'SUCCESS') ");
+            sql.append(" AND d.delivery_status = 'DELIVERED' ");
         } else if ("failed".equalsIgnoreCase(statusFilter)) {
             sql.append(" AND d.delivery_status IN ('FAILED', 'CANCELLED') ");
         }
@@ -304,7 +329,8 @@ public class DeliveryDAO extends DBContext {
             + "FROM deliveries d "
             + "JOIN sub_orders so ON d.sub_order_id = so.sub_order_id "
             + "JOIN orders o ON so.order_id = o.order_id "
-            + "WHERE d.driver_id = ? AND d.delivery_status IN ('DELIVERED', 'SUCCESS') AND o.payment_method = 'COD'";
+            + "WHERE d.driver_id = ? AND d.delivery_status = '" + DeliveryStatus.DELIVERED.name()
+            + "' AND o.payment_method = '" + PaymentMethod.COD.name() + "'";
         Connection conn = getConnection();
         if (conn == null) return BigDecimal.ZERO;
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {

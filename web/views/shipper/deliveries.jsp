@@ -132,7 +132,7 @@
                                         <span class="text-muted small fw-normal">(${del.subOrderCode})</span>
                                     </div>
                                     <c:choose>
-                                        <c:when test="${statusUpper == 'DELIVERED' or statusUpper == 'SUCCESS'}">
+                                        <c:when test="${statusUpper == 'DELIVERED'}">
                                             <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill">
                                                 <i class="bi bi-check-circle-fill me-1"></i> GIAO THÀNH CÔNG
                                             </span>
@@ -224,13 +224,17 @@
                                     </div>
                                     <div class="text-end">
                                         <c:choose>
-                                            <c:when test="${del.COD}">
+                                            <c:when test="${del.COD and del.paymentStatus ne 'PAID'}">
                                                 <span class="text-danger small fw-semibold d-block">Tiền cần thu hộ (COD):</span>
                                                 <span class="fs-5 fw-bold text-danger">${del.formattedTotal}</span>
                                             </c:when>
-                                            <c:otherwise>
+                                            <c:when test="${del.paymentStatus eq 'PAID'}">
                                                 <span class="text-success small fw-semibold d-block">Đã thanh toán Online:</span>
                                                 <span class="fs-6 fw-bold text-success">0₫ (Không thu tiền)</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="text-warning small fw-semibold d-block">Đang chờ thanh toán:</span>
+                                                <span class="fs-6 fw-bold text-warning">Không thu tiền mặt</span>
                                             </c:otherwise>
                                         </c:choose>
                                     </div>
@@ -310,17 +314,17 @@
                                     </c:when>
 
                                     <%-- CASE 3: Đã giao thành công --%>
-                                    <c:when test="${statusUpper == 'DELIVERED' or statusUpper == 'SUCCESS'}">
+                                    <c:when test="${statusUpper == 'DELIVERED'}">
                                         <div class="d-flex justify-content-between align-items-center text-muted small">
                                             <span class="text-success fw-semibold"><i class="bi bi-shield-check"></i> Đã hoàn tất chuyến giao chuỗi lạnh</span>
                                             <fmt:formatDate value="${del.deliveredAt}" pattern="HH:mm dd/MM/yyyy"/>
                                         </div>
                                     </c:when>
 
-                                    <%-- CASE 4: Giao thất bại / Đã hoàn hàng --%>
+                                    <%-- CASE 4: Giao thất bại --%>
                                     <c:otherwise>
                                         <div class="d-flex justify-content-between align-items-center text-muted small">
-                                            <span class="text-danger fw-semibold"><i class="bi bi-arrow-return-left"></i> Đã kích hoạt quy trình Trả hàng/Hoàn tiền</span>
+                                            <span class="text-danger fw-semibold"><i class="bi bi-x-circle"></i> Giao hàng không thành công</span>
                                         </div>
                                     </c:otherwise>
                                 </c:choose>
@@ -436,7 +440,7 @@
                     </div>
 
                     <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
-                        <i class="bi bi-info-circle me-1"></i> Khi xác nhận sự cố, đơn hàng sẽ chuyển sang trạng thái <strong>Trả hàng</strong> và hệ thống sẽ tự động kích hoạt quy trình Trả hàng/Hoàn tiền cho khách hàng.
+                        <i class="bi bi-info-circle me-1"></i> Khi xác nhận sự cố, đơn hàng sẽ chuyển sang trạng thái <strong>Giao thất bại</strong>.
                     </div>
 
                     <div class="mb-3">
