@@ -131,6 +131,7 @@ public class PlaceOrderServlet extends HttpServlet {
             session.removeAttribute("checkoutItemIds");
             session.removeAttribute("checkoutCouponCode");
             session.removeAttribute("checkoutShopCoupons");
+            session.removeAttribute("checkoutFormDraft");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
 
             response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);

@@ -82,9 +82,9 @@
                         <span class="px-1.5 py-0.5 rounded-full text-[10px] ${currentTab eq 'DELIVERED' ? 'bg-teal-100 text-teal-800' : 'bg-slate-100 text-slate-600'}">${countDelivered}</span>
                     </a>
                     <a href="?status=FAILED${not empty keyword ? '&keyword=' += keyword : ''}" 
-                       class="px-3.5 py-2.5 border-b-2 transition flex items-center gap-2 ${currentTab eq 'FAILED' or currentTab eq 'RETURNED' ? 'border-rose-600 text-rose-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
+                       class="px-3.5 py-2.5 border-b-2 transition flex items-center gap-2 ${currentTab eq 'FAILED' ? 'border-rose-600 text-rose-700 font-bold' : 'border-transparent text-slate-500 hover:text-slate-800'}">
                         <span>Giao thất bại</span>
-                        <span class="px-1.5 py-0.5 rounded-full text-[10px] ${currentTab eq 'FAILED' or currentTab eq 'RETURNED' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'}">${countFailed}</span>
+                        <span class="px-1.5 py-0.5 rounded-full text-[10px] ${currentTab eq 'FAILED' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600'}">${countFailed}</span>
                     </a>
                     <a href="?status=CANCELLED${not empty keyword ? '&keyword=' += keyword : ''}" 
                        class="px-3.5 py-2.5 border-b-2 transition flex items-center gap-2 ${currentTab eq 'CANCELLED' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'}">
@@ -157,12 +157,12 @@
                                                                 Đang giao hàng
                                                             </span>
                                                         </c:when>
-                                                        <c:when test="${o.status eq 'DELIVERED' or o.status eq 'COMPLETED'}">
+                                                        <c:when test="${o.status eq 'DELIVERED'}">
                                                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
                                                                 Đã giao thành công
                                                             </span>
                                                         </c:when>
-                                                        <c:when test="${o.status eq 'RETURNED' or o.status eq 'FAILED'}">
+                                                        <c:when test="${o.status eq 'FAILED'}">
                                                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center gap-1">
                                                                 <i class="fa-solid fa-triangle-exclamation text-[9px]"></i> Giao thất bại
                                                             </span>

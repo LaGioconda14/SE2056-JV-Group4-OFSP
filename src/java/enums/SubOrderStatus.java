@@ -7,8 +7,6 @@ public enum SubOrderStatus {
     SHIPPING,
     DELIVERED,
     FAILED,
-    RETURNED,
-    REFUNDED,
     CANCELLED;
 
     public static SubOrderStatus from(String value) {

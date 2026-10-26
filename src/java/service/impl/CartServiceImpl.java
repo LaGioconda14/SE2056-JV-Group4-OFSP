@@ -1,8 +1,6 @@
 package service.impl;
 
 import dao.CartDAO;
-import exception.CartErrorCode;
-import exception.CartException;
 import model.Cart;
 import model.CartItem;
 import model.CartMutationResult;
@@ -67,15 +65,13 @@ public class CartServiceImpl implements ICartService {
 
     private void validateId(long id) {
         if (id <= 0) {
-            throw new CartException(CartErrorCode.INVALID_INPUT,
-                    "Thông tin giỏ hàng không hợp lệ!");
+            throw new IllegalArgumentException("Thông tin giỏ hàng không hợp lệ!");
         }
     }
 
     private void validateQuantity(int quantity) {
         if (quantity <= 0) {
-            throw new CartException(CartErrorCode.INVALID_INPUT,
-                    "Số lượng phải lớn hơn 0!");
+            throw new IllegalArgumentException("Số lượng phải lớn hơn 0!");
         }
     }
 }

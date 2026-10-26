@@ -52,6 +52,7 @@
                     <p class="eyebrow">Đặt hàng thành công</p>
                     <h1>Cảm ơn bạn đã mua hàng!</h1>
                     <p><c:choose><c:when test="${not empty sessionScope.orderSuccess}"><c:out value="${sessionScope.orderSuccess}"/></c:when><c:otherwise>Đơn hàng của bạn đã được Gốc Vườn tiếp nhận.</c:otherwise></c:choose></p>
+                    <c:if test="${order.paymentStatus eq 'PENDING' and order.paymentMethod eq 'CARD'}"><p>Đơn hàng đã được ghi nhận, thanh toán chưa hoàn tất. Không có khoản thanh toán thẻ nào được thực hiện tại trang này.</p></c:if>
                     <c:remove var="orderSuccess" scope="session"/>
                     <div class="order-number">Mã đơn hàng <strong>#<c:out value="${order.orderId}"/></strong></div>
                 </section>

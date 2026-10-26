@@ -68,8 +68,8 @@
                     </div>
                 </div>
 
-                <c:set var="isFailedOrder" value="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}" />
-                <c:set var="isDeliveredOrder" value="${subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED'}" />
+                <c:set var="isFailedOrder" value="${subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}" />
+                <c:set var="isDeliveredOrder" value="${subOrder.status eq 'DELIVERED'}" />
                 <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
                     <div class="flex items-start justify-between relative">
                         
@@ -388,17 +388,17 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE 4: GIAO THẤT BẠI / HOÀN HÀNG (FAILED / RETURNED) --%>
+                            <%-- CASE 4: GIAO THẤT BẠI (FAILED) --%>
                             <c:when test="${isFailedOrder}">
                                 <div class="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs bg-rose-50/20">
                                     <div class="flex items-start gap-4">
                                         <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl font-bold shrink-0 shadow-2xs border border-rose-200">
-                                            <i class="fa-solid fa-truck-ramp-box"></i>
+                                            <i class="fa-solid fa-triangle-exclamation"></i>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-rose-100">
                                                 <div class="flex items-center gap-2">
-                                                    <h2 class="text-base font-extrabold text-rose-950">Giao Hàng Thất Bại &amp; Kích Hoạt Hoàn Hàng</h2>
+                                                    <h2 class="text-base font-extrabold text-rose-950">Giao Hàng Thất Bại</h2>
                                                     <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-300 uppercase">
                                                         GIAO THẤT BẠI
                                                     </span>
@@ -440,7 +440,7 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE 5: ĐÃ GIAO THÀNH CÔNG (DELIVERED / COMPLETED) --%>
+                            <%-- CASE 5: ĐÃ GIAO THÀNH CÔNG (DELIVERED) --%>
                             <c:when test="${isDeliveredOrder}">
                                 <div class="bg-white rounded-2xl border border-teal-200 p-6 shadow-xs bg-teal-50/20">
                                     <div class="flex items-center justify-between pb-3 border-b border-teal-100">
@@ -617,10 +617,16 @@
                                 <div class="pt-3 border-t border-slate-100 flex items-baseline justify-between">
                                     <div>
                                         <c:choose>
-                                            <c:when test="${subOrder.paymentStatus eq 'PAID' or (not empty subOrder.paymentMethod and !subOrder.paymentMethod.toUpperCase().contains('COD'))}">
+                                            <c:when test="${subOrder.paymentStatus eq 'PAID'}">
                                                 <div class="text-sm font-extrabold text-slate-900">Tổng Tiền Đã Thanh Toán</div>
                                                 <div class="text-[11px] text-emerald-600 font-bold">
                                                     <i class="fa-solid fa-circle-check"></i> Đã thanh toán qua ${subOrder.paymentMethod} (Không thu COD)
+                                                </div>
+                                            </c:when>
+                                            <c:when test="${subOrder.paymentMethod ne 'COD'}">
+                                                <div class="text-sm font-extrabold text-slate-900">Tổng Tiền Chờ Thanh Toán</div>
+                                                <div class="text-[11px] text-amber-600 font-bold">
+                                                    <i class="fa-solid fa-clock"></i> Đang chờ thanh toán qua ${subOrder.paymentMethod}
                                                 </div>
                                             </c:when>
                                             <c:otherwise>

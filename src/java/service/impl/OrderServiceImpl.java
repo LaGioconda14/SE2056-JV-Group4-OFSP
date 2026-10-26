@@ -2,6 +2,9 @@ package service.impl;
 
 import dao.CouponDAO;
 import dao.OrderDAO;
+import enums.DeliverySlot;
+import enums.PaymentMethod;
+import enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -291,19 +294,15 @@ public class OrderServiceImpl implements IOrderService {
                     "Vui lòng nhập đầy đủ phường/xã, quận/huyện và tỉnh/thành phố!");
         }
 
-        String normalizedSlot = deliverySlot == null ? ""
-                : deliverySlot.trim().toUpperCase(Locale.ROOT);
-        if (!("MORNING".equals(normalizedSlot)
-                || "AFTERNOON".equals(normalizedSlot)
-                || "EVENING".equals(normalizedSlot))) {
+        DeliverySlot selectedSlot = DeliverySlot.from(deliverySlot);
+        if (selectedSlot == null) {
             throw new IllegalArgumentException("Khung giờ giao hàng không hợp lệ!");
         }
 
-        String normalizedPayment = paymentMethod == null ? ""
-                : paymentMethod.trim().toUpperCase(Locale.ROOT);
-        if (!"COD".equals(normalizedPayment)) {
+        PaymentMethod selectedPayment = PaymentMethod.from(paymentMethod);
+        if (selectedPayment != PaymentMethod.COD && selectedPayment != PaymentMethod.CARD) {
             throw new IllegalArgumentException(
-                    "Hiện tại hệ thống chỉ hỗ trợ thanh toán khi nhận hàng (COD)!");
+                    "Phương thức thanh toán không hợp lệ!");
         }
 
         address.setRecipientName(address.getRecipientName().trim());
@@ -316,12 +315,13 @@ public class OrderServiceImpl implements IOrderService {
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
         Order order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
         for (SubOrder sub : order.getSubOrders()) {
-            sub.setDeliverySlot(normalizedSlot);
+            sub.setDeliverySlot(selectedSlot);
         }
-        order.setPaymentStatus("PENDING");
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        order.setPaymentMethod(selectedPayment);
 
         return orderDAO.createOrder(order, address, cartItemIds,
-                normalizedPayment, saveAddress);
+                selectedPayment.name(), saveAddress);
     }
 
     @Override

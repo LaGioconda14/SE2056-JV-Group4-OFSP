@@ -1,8 +1,6 @@
 package dao;
 
 import enums.CartItemAvailability;
-import exception.CartErrorCode;
-import exception.CartException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -173,8 +171,7 @@ public class CartDAO extends DBContext {
                 if (currentVariant == null || newVariant == null
                         || currentVariant.getProduct().getProductId()
                         != newVariant.getProduct().getProductId()) {
-                    throw new CartException(CartErrorCode.VARIANT_UNAVAILABLE,
-                            "Biến thể thay thế không hợp lệ!");
+                    throw new IllegalArgumentException("Biến thể thay thế không hợp lệ!");
                 }
                 if (current.getVariant().getVariantId() == newVariantId) {
                     conn.commit();
@@ -187,8 +184,7 @@ public class CartDAO extends DBContext {
                 int finalQuantity = (int) Math.min(combinedQuantity,
                         (long) newVariant.getStockQuantity());
                 if (finalQuantity <= 0) {
-                    throw new CartException(CartErrorCode.VARIANT_UNAVAILABLE,
-                            "Biến thể thay thế đã hết hàng!");
+                    throw new IllegalArgumentException("Biến thể thay thế đã hết hàng!");
                 }
 
                 if (target != null && target.getCartItemId() != cartItemId) {
@@ -244,8 +240,7 @@ public class CartDAO extends DBContext {
             ps.setLong(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) {
-                    throw new CartException(CartErrorCode.CART_NOT_FOUND,
-                            "Giỏ hàng không tồn tại!");
+                    throw new IllegalArgumentException("Giỏ hàng không tồn tại!");
                 }
                 return rs.getLong("cart_id");
             }
@@ -487,18 +482,15 @@ public class CartDAO extends DBContext {
 
     private void validateStock(ProductVariant variant, long quantity) {
         if (variant == null) {
-            throw new CartException(CartErrorCode.VARIANT_UNAVAILABLE,
-                    "Sản phẩm hiện không khả dụng!");
+            throw new IllegalArgumentException("Sản phẩm hiện không khả dụng!");
         }
         if (quantity > variant.getStockQuantity()) {
-            throw new CartException(CartErrorCode.INSUFFICIENT_STOCK,
-                    "Số lượng vượt quá tồn kho!");
+            throw new IllegalArgumentException("Số lượng vượt quá tồn kho!");
         }
     }
 
-    private CartException itemNotFound() {
-        return new CartException(CartErrorCode.ITEM_NOT_FOUND,
-                "Sản phẩm không có trong giỏ hàng!");
+    private IllegalArgumentException itemNotFound() {
+        return new IllegalArgumentException("Sản phẩm không có trong giỏ hàng!");
     }
 
     private Connection requireConnection() throws SQLException {
@@ -518,9 +510,9 @@ public class CartDAO extends DBContext {
         }
     }
 
-    private CartException databaseFailure(SQLException cause) {
+    private IllegalStateException databaseFailure(SQLException cause) {
         LOGGER.log(Level.SEVERE, "Cart database operation failed", cause);
-        return new CartException(CartErrorCode.DATABASE_FAILURE,
+        return new IllegalStateException(
                 "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!", cause);
     }
 

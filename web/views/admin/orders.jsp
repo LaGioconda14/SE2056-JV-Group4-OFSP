@@ -134,11 +134,11 @@
                     <span>Tất cả đơn</span>
                     <span class="rbac-badge">542</span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/orders?status=PICKING" class="rbac-tab-item">
-                    <span>Chờ lấy hàng từ vườn</span>
+                <a href="${pageContext.request.contextPath}/admin/orders?status=PROCESSING" class="rbac-tab-item">
+                    <span>Đang xử lý</span>
                     <span class="rbac-badge">48</span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/orders?status=DELIVERING" class="rbac-tab-item">
+                <a href="${pageContext.request.contextPath}/admin/orders?status=SHIPPING" class="rbac-tab-item">
                     <span>Đang giao hàng</span>
                     <span class="rbac-badge">128</span>
                 </a>
@@ -146,8 +146,8 @@
                     <span>Đã giao thành công</span>
                     <span class="rbac-badge" style="background: #dcfce7; color: #15803d;">342</span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/orders?status=FAILED" class="rbac-tab-item">
-                    <span>Giao thất bại / Hoàn trả</span>
+                <a href="${pageContext.request.contextPath}/admin/orders?status=CANCELLED" class="rbac-tab-item">
+                    <span>Đã hủy đơn</span>
                 </a>
             </div>
 

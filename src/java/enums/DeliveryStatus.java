@@ -7,7 +7,6 @@ public enum DeliveryStatus {
     IN_TRANSIT,
     DELIVERING,
     DELIVERED,
-    SUCCESS,
     FAILED,
     CANCELLED;
 

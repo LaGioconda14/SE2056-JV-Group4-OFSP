@@ -4,7 +4,8 @@ public enum PaymentMethod {
     COD,
     CARD,
     VNPAY,
-    MOMO;
+    MOMO,
+    BANK_TRANSFER;
 
     public static PaymentMethod from(String value) {
         if (value == null || value.isBlank()) {
