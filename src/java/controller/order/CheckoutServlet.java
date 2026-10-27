@@ -78,6 +78,10 @@ public class CheckoutServlet extends HttpServlet {
         }
         String action = request.getParameter("checkoutAction");
         if (action == null || action.isBlank()) {
+            if ("buyNow".equals(request.getParameter("checkoutMode"))) {
+                session.removeAttribute("checkoutCouponCode");
+                session.removeAttribute("checkoutShopCoupons");
+            }
             processCheckout(request, response);
             return;
         }
@@ -423,12 +427,19 @@ public class CheckoutServlet extends HttpServlet {
         if (saved == null) {
             return result;
         }
-        if (!(saved instanceof Map<?, ?> savedCoupons)) {
+        if (!(saved instanceof Map<?, ?>)) {
             throw new IllegalArgumentException("Danh sách mã giảm giá đã lưu không hợp lệ!");
         }
+        Map<?, ?> savedCoupons = (Map<?, ?>) saved;
         for (Map.Entry<?, ?> entry : savedCoupons.entrySet()) {
-            if (!(entry.getKey() instanceof Long shopId) || shopId <= 0
-                    || !(entry.getValue() instanceof String code) || code.isBlank()) {
+            Object key = entry.getKey();
+            Object value = entry.getValue();
+            if (!(key instanceof Long) || !(value instanceof String)) {
+                throw new IllegalArgumentException("Danh sách mã giảm giá đã lưu không hợp lệ!");
+            }
+            long shopId = (Long) key;
+            String code = (String) value;
+            if (shopId <= 0 || code.isBlank()) {
                 throw new IllegalArgumentException("Danh sách mã giảm giá đã lưu không hợp lệ!");
             }
             result.put(shopId, code);
