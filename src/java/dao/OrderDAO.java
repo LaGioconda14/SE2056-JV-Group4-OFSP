@@ -117,6 +117,59 @@ public class OrderDAO extends DBContext {
         return items;
     }
 
+    public CartItem getBuyNowItem(long variantId, int quantity) {
+        String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "       p.product_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
+                + "       s.shop_id, s.shop_name, s.status AS shop_status, "
+                + "       (SELECT TOP 1 pi2.image_url FROM product_images pi2 "
+                + "        WHERE pi2.product_id = p.product_id AND pi2.is_thumbnail = 1 "
+                + "        ORDER BY pi2.display_order) AS thumbnail_url "
+                + "FROM product_variants pv "
+                + "INNER JOIN products p ON pv.product_id = p.product_id "
+                + "INNER JOIN shops s ON p.shop_id = s.shop_id "
+                + "WHERE pv.variant_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new IllegalStateException("Không thể tải sản phẩm mua ngay. Vui lòng thử lại!");
+        }
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, variantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                Product product = new Product();
+                product.setProductId(rs.getLong("product_id"));
+                product.setName(rs.getString("product_name"));
+                product.setOrigin(rs.getString("origin"));
+                product.setActive(rs.getBoolean("product_active"));
+                product.setShopId(rs.getLong("shop_id"));
+                product.setShopName(rs.getString("shop_name"));
+                product.setShopStatus(rs.getString("shop_status"));
+                product.setThumbnailUrl(rs.getString("thumbnail_url"));
+                product.setImage(rs.getString("thumbnail_url"));
+
+                ProductVariant variant = new ProductVariant();
+                variant.setVariantId(rs.getLong("variant_id"));
+                variant.setSku(rs.getString("sku"));
+                variant.setVariantName(rs.getString("variant_name"));
+                variant.setUnit(rs.getString("unit"));
+                variant.setWeightKg(rs.getBigDecimal("weight_kg"));
+                variant.setPrice(rs.getBigDecimal("price"));
+                variant.setStockQuantity(rs.getInt("stock_quantity"));
+                variant.setActive(rs.getBoolean("variant_active"));
+                variant.setProduct(product);
+                return new CartItem(0, variant, quantity);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting Buy Now item for variant " + variantId, ex);
+            throw new IllegalStateException("Không thể tải sản phẩm mua ngay. Vui lòng thử lại!", ex);
+        }
+    }
+
     // 2. Láº¤Y Äá»ŠA CHá»ˆ Máº¶C Äá»ŠNH HOáº¶C Äá»ŠA CHá»ˆ Gáº¦N NHáº¤T Cá»¦A KHÃCH HÃ€NG
     public CustomerAddress getDefaultAddress(long customerId) {
         String sql = "SELECT TOP 1 address_id, user_id, recipient_name, recipient_phone, "
@@ -218,6 +271,18 @@ public class OrderDAO extends DBContext {
     // 3. Táº O ÄÆ N HÃ€NG TOÃ€N DIá»†N (TRANSACTION AN TOÃ€N)
     public long createOrder(Order order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        return createOrderInternal(order, address, cartItemIdsToDelete, paymentMethod,
+                saveCustomerAddress, true);
+    }
+
+    public long createBuyNowOrder(Order order, ShippingAddress address,
+            String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        return createOrderInternal(order, address, Collections.emptyList(), paymentMethod,
+                saveCustomerAddress, false);
+    }
+
+    private long createOrderInternal(Order order, ShippingAddress address, List<Long> cartItemIdsToDelete,
+            String paymentMethod, boolean saveCustomerAddress, boolean consumeCart) throws Exception {
         String insertOrderSql = "INSERT INTO orders (order_code, customer_id, coupon_id, total_goods_amount, "
                 + "total_shipping_fee, platform_discount, final_amount, payment_status, payment_method, order_status) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -265,7 +330,9 @@ public class OrderDAO extends DBContext {
         try {
             conn.setAutoCommit(false); // Báº®T Äáº¦U TRANSACTION
 
-            lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
+            if (consumeCart) {
+                lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
+            }
 
             if (saveCustomerAddress) {
                 insertCustomerAddress(conn, insertCustomerAddressSql,
@@ -424,7 +491,7 @@ public class OrderDAO extends DBContext {
             }
 
             // F. XÃ“A CÃC Sáº¢N PHáº¨M ÄÃƒ MUA KHá»ŽI GIá»Ž HÃ€NG
-            if (cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
+            if (consumeCart && cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
                 try (PreparedStatement ps = conn.prepareStatement(deleteCartItemsSql)) {
                     for (Long itemId : cartItemIdsToDelete) {
                         ps.setLong(1, itemId);

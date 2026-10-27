@@ -59,14 +59,6 @@ public class AddToCartServlet extends HttpServlet {
             int cartSize = result.cartItemCount();
             session.setAttribute("cartSize", cartSize);
 
-            if ("buyNow".equals(request.getParameter("action"))) {
-                session.removeAttribute("checkoutCouponCode");
-                session.removeAttribute("checkoutShopCoupons");
-                response.sendRedirect(request.getContextPath() + "/checkout?cartItemIds="
-                        + result.item().getCartItemId());
-                return;
-            }
-
             session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
             session.removeAttribute("cartError");
         } catch (NumberFormatException ex) {

@@ -37,6 +37,23 @@ public class PlaceOrderServlet extends HttpServlet {
             return;
         }
 
+        boolean buyNow = "buyNow".equals(request.getParameter("checkoutMode"));
+        Long buyNowVariantId = null;
+        Integer buyNowQuantity = null;
+        if (buyNow) {
+            try {
+                buyNowVariantId = Long.parseLong(request.getParameter("variantId"));
+                buyNowQuantity = Integer.parseInt(request.getParameter("quantity"));
+                if (buyNowVariantId <= 0 || buyNowQuantity <= 0) {
+                    throw new NumberFormatException();
+                }
+            } catch (NumberFormatException ex) {
+                session.setAttribute("checkoutError", "Sản phẩm mua ngay không hợp lệ!");
+                response.sendRedirect(request.getContextPath() + "/checkout");
+                return;
+            }
+        }
+
         // Lấy danh sách cartItemIds
         String[] itemIdParams = request.getParameterValues("cartItemIds");
         List<Long> cartItemIds = new ArrayList<>();
@@ -49,7 +66,7 @@ public class PlaceOrderServlet extends HttpServlet {
             }
         }
 
-        if (cartItemIds.isEmpty()) {
+        if (!buyNow && cartItemIds.isEmpty()) {
             session.setAttribute("cartError", "Không có sản phẩm nào được chọn!");
             response.sendRedirect(request.getContextPath() + "/cart");
             return;
@@ -123,12 +140,22 @@ public class PlaceOrderServlet extends HttpServlet {
         }
 
         try {
-            long orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
-                    deliverySlot, paymentMethod, couponCode, shopCouponCodes,
-                    "new".equals(addressSelection) && saveAddress);
+            long orderId;
+            if (buyNow) {
+                orderId = orderService.placeBuyNowOrder((long) user.getId(), buyNowVariantId,
+                        buyNowQuantity, shippingAddress, deliverySlot, paymentMethod, couponCode,
+                        shopCouponCodes, "new".equals(addressSelection) && saveAddress);
+            } else {
+                orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
+                        deliverySlot, paymentMethod, couponCode, shopCouponCodes,
+                        "new".equals(addressSelection) && saveAddress);
+            }
 
             // Dọn dẹp session sau khi đặt hàng thành công
             session.removeAttribute("checkoutItemIds");
+            session.removeAttribute("checkoutMode");
+            session.removeAttribute("checkoutBuyNowVariantId");
+            session.removeAttribute("checkoutBuyNowQuantity");
             session.removeAttribute("checkoutCouponCode");
             session.removeAttribute("checkoutShopCoupons");
             session.removeAttribute("checkoutFormDraft");
