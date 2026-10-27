@@ -14,6 +14,8 @@ public interface IOrderService {
 
     List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds);
 
+    CartItem getBuyNowItemForCheckout(long variantId, int quantity);
+
     Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode);
 
     Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
@@ -24,6 +26,10 @@ public interface IOrderService {
             boolean saveAddress) throws Exception;
 
     long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception;
+
+    long placeBuyNowOrder(long customerId, long variantId, int quantity, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception;
 

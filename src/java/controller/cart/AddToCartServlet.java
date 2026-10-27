@@ -55,17 +55,23 @@ public class AddToCartServlet extends HttpServlet {
         try {
             long variantId = Long.parseLong(request.getParameter("variantId"));
             int quantity = Integer.parseInt(request.getParameter("quantity"));
+            if ("buyNow".equals(request.getParameter("action"))) {
+                if (variantId <= 0 || quantity <= 0) {
+                    throw new IllegalArgumentException("Dữ liệu sản phẩm không hợp lệ!");
+                }
+                session.setAttribute("checkoutMode", "buyNow");
+                session.setAttribute("checkoutBuyNowVariantId", variantId);
+                session.setAttribute("checkoutBuyNowQuantity", quantity);
+                session.removeAttribute("checkoutItemIds");
+                session.removeAttribute("checkoutCouponCode");
+                session.removeAttribute("checkoutShopCoupons");
+                response.sendRedirect(request.getContextPath() + "/checkout");
+                return;
+            }
+
             CartMutationResult result = cartService.addItem(user.getId(), variantId, quantity);
             int cartSize = result.cartItemCount();
             session.setAttribute("cartSize", cartSize);
-
-            if ("buyNow".equals(request.getParameter("action"))) {
-                session.removeAttribute("checkoutCouponCode");
-                session.removeAttribute("checkoutShopCoupons");
-                response.sendRedirect(request.getContextPath() + "/checkout?cartItemIds="
-                        + result.item().getCartItemId());
-                return;
-            }
 
             session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
             session.removeAttribute("cartError");

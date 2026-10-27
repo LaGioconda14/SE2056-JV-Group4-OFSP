@@ -75,6 +75,11 @@
                 <c:forEach var="cartItemId" items="${cartItemIds}">
                     <input type="hidden" name="cartItemIds" value="<c:out value='${cartItemId}'/>">
                 </c:forEach>
+                <c:if test="${buyNow}">
+                    <input type="hidden" name="checkoutMode" value="buyNow">
+                    <input type="hidden" name="variantId" value="<c:out value='${buyNowVariantId}'/>">
+                    <input type="hidden" name="quantity" value="<c:out value='${buyNowQuantity}'/>">
+                </c:if>
                 <input type="hidden" name="couponCode" id="checkout-coupon-code" value="<c:out value='${couponCode}'/>">
                 <c:forEach var="entry" items="${shopCouponCodes}">
                     <c:if test="${not empty entry.value}">

@@ -163,7 +163,7 @@ public class CheckoutServlet extends HttpServlet {
         } else if ("applyShopCoupon".equals(action) || "removeShopCoupon".equals(action)) {
             try {
                 long shopId = parsePositiveId(request.getParameter("targetShopId"), "Cửa hàng không hợp lệ!");
-                if (orderService.getSelectedItemsForCheckout(user.getId(), restoreItemIds(session))
+                if (loadSelectedItems(user.getId(), restoreSelection(session))
                         .stream().noneMatch(item -> item.getVariant().getProduct().getShopId() == shopId)) {
                     throw new IllegalArgumentException("Cửa hàng không thuộc đơn hàng thanh toán!");
                 }
@@ -200,15 +200,14 @@ public class CheckoutServlet extends HttpServlet {
 
         try {
             CheckoutSelection selection = parseSelection(request, session);
-            List<CartItem> selectedItems = orderService.getSelectedItemsForCheckout(
-                    user.getId(), selection.itemIds());
+            List<CartItem> selectedItems = loadSelectedItems(user.getId(), selection);
             if (!Boolean.TRUE.equals(request.getAttribute("checkoutActionHandled"))) {
                 draft(session, user.getId()).remove("openAddressModal");
             }
             Map<Long, List<CartItem>> itemsByShop = groupItemsByShop(selectedItems);
             DraftResult draft = buildDraftWithVoucherFallback(user.getId(), selectedItems,
                     selection.couponCode(), selection.shopCouponCodes(), request, session);
-            setViewAttributes(request, user.getId(), selection.itemIds(), selectedItems,
+            setViewAttributes(request, user.getId(), selection, selectedItems,
                     itemsByShop, draft);
             Map<String, String> formDraft = draft(session, user.getId());
             request.setAttribute("formDraft", formDraft);
@@ -259,42 +258,68 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private CheckoutSelection parseSelection(HttpServletRequest request, HttpSession session) {
-        List<Long> itemIds = parseOrRestoreItemIds(request, session);
+        CheckoutSelection source = parseOrRestoreSource(request, session);
         String couponCode = parsePlatformCoupon(request, session);
         Map<Long, String> shopCoupons = parseShopCoupons(request, session);
-        return new CheckoutSelection(itemIds, couponCode, shopCoupons);
+        return new CheckoutSelection(source.itemIds(), source.buyNowVariantId(),
+                source.buyNowQuantity(), couponCode, shopCoupons);
     }
 
-    private List<Long> parseOrRestoreItemIds(HttpServletRequest request, HttpSession session) {
+    private CheckoutSelection parseOrRestoreSource(HttpServletRequest request, HttpSession session) {
         String[] values = request.getParameterValues("cartItemIds");
-        List<Long> ids;
         if (values != null && values.length > 0) {
-            if (values.length > MAX_CHECKOUT_ITEMS) {
-                throw new IllegalArgumentException(
-                        "Bạn chỉ có thể thanh toán tối đa 100 dòng sản phẩm mỗi lần!");
-            }
-            Set<Long> uniqueIds = new LinkedHashSet<>();
-            for (String value : values) {
-                long id = parsePositiveId(value, "Danh sách sản phẩm thanh toán không hợp lệ!");
-                if (!uniqueIds.add(id)) {
-                    throw new IllegalArgumentException(
-                            "Danh sách sản phẩm thanh toán chứa sản phẩm trùng lặp!");
-                }
-            }
-            ids = new ArrayList<>(uniqueIds);
-            session.setAttribute("checkoutItemIds", ids);
-        } else {
-            ids = restoreItemIds(session);
+            List<Long> itemIds = parseItemIds(values);
+            session.setAttribute("checkoutItemIds", itemIds);
+            clearBuyNowSelection(session);
+            return new CheckoutSelection(itemIds, null, null, null, Collections.emptyMap());
         }
-        if (ids.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Vui lòng chọn ít nhất một sản phẩm từ giỏ hàng để mua!");
+
+        if ("buyNow".equals(request.getParameter("checkoutMode"))) {
+            long variantId = parsePositiveId(request.getParameter("variantId"),
+                    "Sản phẩm mua ngay không hợp lệ!");
+            int quantity = parsePositiveQuantity(request.getParameter("quantity"));
+            saveBuyNowSelection(session, variantId, quantity);
+            return new CheckoutSelection(Collections.emptyList(), variantId, quantity,
+                    null, Collections.emptyMap());
         }
-        if (ids.size() > MAX_CHECKOUT_ITEMS) {
+        return restoreSelection(session);
+    }
+
+    private List<Long> parseItemIds(String[] values) {
+        if (values.length > MAX_CHECKOUT_ITEMS) {
             throw new IllegalArgumentException(
                     "Bạn chỉ có thể thanh toán tối đa 100 dòng sản phẩm mỗi lần!");
         }
-        return ids;
+        Set<Long> uniqueIds = new LinkedHashSet<>();
+        for (String value : values) {
+            long id = parsePositiveId(value, "Danh sách sản phẩm thanh toán không hợp lệ!");
+            if (!uniqueIds.add(id)) {
+                throw new IllegalArgumentException(
+                        "Danh sách sản phẩm thanh toán chứa sản phẩm trùng lặp!");
+            }
+        }
+        return new ArrayList<>(uniqueIds);
+    }
+
+    private CheckoutSelection restoreSelection(HttpSession session) {
+        if ("buyNow".equals(session.getAttribute("checkoutMode"))) {
+            Object variant = session.getAttribute("checkoutBuyNowVariantId");
+            Object quantity = session.getAttribute("checkoutBuyNowQuantity");
+            if (variant instanceof Long variantId && variantId > 0
+                    && quantity instanceof Integer buyNowQuantity && buyNowQuantity > 0) {
+                return new CheckoutSelection(Collections.emptyList(), variantId, buyNowQuantity,
+                        null, Collections.emptyMap());
+            }
+            clearBuyNowSelection(session);
+            throw new IllegalArgumentException("Thông tin mua ngay đã hết hạn hoặc không hợp lệ!");
+        }
+
+        List<Long> itemIds = restoreItemIds(session);
+        if (itemIds.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Vui lòng chọn ít nhất một sản phẩm từ giỏ hàng để mua!");
+        }
+        return new CheckoutSelection(itemIds, null, null, null, Collections.emptyMap());
     }
 
     private List<Long> restoreItemIds(HttpSession session) {
@@ -310,6 +335,27 @@ public class CheckoutServlet extends HttpServlet {
             }
         }
         return new ArrayList<>(uniqueIds);
+    }
+
+    private List<CartItem> loadSelectedItems(long customerId, CheckoutSelection selection) {
+        if (selection.isBuyNow()) {
+            return List.of(orderService.getBuyNowItemForCheckout(
+                    selection.buyNowVariantId(), selection.buyNowQuantity()));
+        }
+        return orderService.getSelectedItemsForCheckout(customerId, selection.itemIds());
+    }
+
+    private void saveBuyNowSelection(HttpSession session, long variantId, int quantity) {
+        session.setAttribute("checkoutMode", "buyNow");
+        session.setAttribute("checkoutBuyNowVariantId", variantId);
+        session.setAttribute("checkoutBuyNowQuantity", quantity);
+        session.removeAttribute("checkoutItemIds");
+    }
+
+    private void clearBuyNowSelection(HttpSession session) {
+        session.removeAttribute("checkoutMode");
+        session.removeAttribute("checkoutBuyNowVariantId");
+        session.removeAttribute("checkoutBuyNowQuantity");
     }
 
     private String parsePlatformCoupon(HttpServletRequest request, HttpSession session) {
@@ -458,7 +504,7 @@ public class CheckoutServlet extends HttpServlet {
         return new DraftResult(draft, validPlatformCoupon, validShopCoupons);
     }
 
-    private void setViewAttributes(HttpServletRequest request, long customerId, List<Long> itemIds,
+    private void setViewAttributes(HttpServletRequest request, long customerId, CheckoutSelection selection,
             List<CartItem> selectedItems, Map<Long, List<CartItem>> itemsByShop, DraftResult draft) {
         CustomerAddress defaultAddress = orderService.getDefaultCustomerAddress(customerId);
         List<CustomerAddress> customerAddresses = orderService.getCustomerAddresses(customerId);
@@ -475,7 +521,10 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("draftOrder", draft.order());
         request.setAttribute("defaultAddress", defaultAddress);
         request.setAttribute("customerAddresses", customerAddresses);
-        request.setAttribute("cartItemIds", itemIds);
+        request.setAttribute("cartItemIds", selection.itemIds());
+        request.setAttribute("buyNow", selection.isBuyNow());
+        request.setAttribute("buyNowVariantId", selection.buyNowVariantId());
+        request.setAttribute("buyNowQuantity", selection.buyNowQuantity());
         request.setAttribute("couponCode", draft.couponCode());
         request.setAttribute("shopCouponCodes", draft.shopCouponCodes());
     }
@@ -489,6 +538,18 @@ public class CheckoutServlet extends HttpServlet {
             return id;
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException(message);
+        }
+    }
+
+    private int parsePositiveQuantity(String value) {
+        try {
+            int quantity = Integer.parseInt(value == null ? "" : value.trim());
+            if (quantity <= 0) {
+                throw new IllegalArgumentException("Số lượng mua ngay không hợp lệ!");
+            }
+            return quantity;
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Số lượng mua ngay không hợp lệ!");
         }
     }
 
@@ -584,8 +645,12 @@ public class CheckoutServlet extends HttpServlet {
 
     }
 
-    private record CheckoutSelection(List<Long> itemIds, String couponCode,
-            Map<Long, String> shopCouponCodes) {
+    private record CheckoutSelection(List<Long> itemIds, Long buyNowVariantId,
+            Integer buyNowQuantity, String couponCode, Map<Long, String> shopCouponCodes) {
+
+        private boolean isBuyNow() {
+            return buyNowVariantId != null && buyNowQuantity != null;
+        }
     }
 
     private record DraftResult(Order order, String couponCode,
