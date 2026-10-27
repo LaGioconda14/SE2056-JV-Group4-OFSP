@@ -145,35 +145,6 @@
                                                     <i class="fa-solid fa-snowflake text-blue-500 mr-1"></i>${not empty d.coldStorageType ? d.coldStorageType : 'Thùng giữ nhiệt FreshBox'}
                                                 </span>
                                             </div>
-                                            <div class="flex items-center justify-between text-slate-600">
-                                                <span class="text-[11px] text-slate-400">Khu vực:</span>
-                                                <span class="font-medium text-slate-700 text-[11px] truncate max-w-[170px]">
-                                                    <i class="fa-solid fa-location-dot text-rose-500 text-[10px] mr-1"></i>${not empty d.operatingDistricts ? d.operatingDistricts : (not empty d.operatingCity ? d.operatingCity : 'Nội thành')}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Performance Stats -->
-                                        <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-3 gap-2 text-center text-xs">
-                                            <div>
-                                                <div class="text-[10px] text-slate-400 font-bold uppercase">Đang giao</div>
-                                                <div class="text-sm font-black ${d.activeOrderCount > 0 ? 'text-blue-600' : 'text-slate-700'} mt-0.5">
-                                                    ${d.activeOrderCount} <span class="text-[9px] font-normal text-slate-400">đơn</span>
-                                                </div>
-                                            </div>
-                                            <div class="border-x border-slate-200">
-                                                <div class="text-[10px] text-slate-400 font-bold uppercase">Đã giao</div>
-                                                <div class="text-sm font-black text-emerald-700 mt-0.5">
-                                                    ${d.totalTrips} <span class="text-[9px] font-normal text-slate-400">chuyến</span>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div class="text-[10px] text-slate-400 font-bold uppercase">Đánh giá</div>
-                                                <div class="text-sm font-black text-amber-600 mt-0.5 flex items-center justify-center gap-1">
-                                                    <i class="fa-solid fa-star text-[10px]"></i>
-                                                    <span>${d.rating != null ? d.rating : '5.0'}</span>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
 
@@ -181,7 +152,7 @@
                                     <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                         <!-- Edit button -->
                                         <button type="button" 
-                                                onclick="openEditModal('${d.driverId}', '${d.fullName}', '${d.phone}', '${d.vehicleType}', '${d.licensePlate}', '${d.coldStorageType}', '${d.operatingDistricts}', '${d.availabilityStatus}')"
+                                                onclick="openEditModal('${d.driverId}', '${d.fullName}', '${d.phone}', '${d.vehicleType}', '${d.licensePlate}', '${d.coldStorageType}', '${d.availabilityStatus}')"
                                                 class="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
                                             <i class="fa-solid fa-pen-to-square text-slate-400"></i>
                                             <span>Sửa</span>
@@ -294,15 +265,9 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Thiết bị bảo quản lạnh</label>
-                        <input type="text" name="coldStorageType" value="Thùng giữ nhiệt FreshBox 2-5°C" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Khu vực hoạt động</label>
-                        <input type="text" name="operatingDistricts" placeholder="VD: Cầu Giấy, Ba Đình, Đống Đa" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Thiết bị bảo quản lạnh</label>
+                    <input type="text" name="coldStorageType" value="Thùng giữ nhiệt FreshBox 2-5°C" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
                 </div>
 
                 <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2">
@@ -383,11 +348,6 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Khu vực giao hàng phụ trách</label>
-                    <input type="text" name="operatingDistricts" id="editOperatingDistricts" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
-                </div>
-
                 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                     <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer">
                         Hủy
@@ -404,4 +364,3 @@
         <script src="${pageContext.request.contextPath}/assets/js/shop-shippers.js"></script>
     </body>
 </html>
-

@@ -377,25 +377,9 @@
                         <label class="form-label fw-bold small text-dark">
                             <i class="bi bi-image text-success me-1"></i> Ảnh bằng chứng giao hàng (PoD):
                         </label>
-                        <input type="text" class="form-control mb-2" name="proofImageUrl" id="proofImageUrlInput"
-                               placeholder="Nhập link ảnh hoặc bấm chọn mẫu bên dưới"
+                        <input type="text" class="form-control" name="proofImageUrl" id="proofImageUrlInput"
+                               placeholder="Nhập link ảnh bằng chứng giao hàng..."
                                value="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600">
-
-                        <div class="text-muted fs-xs mb-2">Ảnh mẫu chụp thực tế đồng kiểm nhận quả tươi:</div>
-                        <div class="d-flex gap-2">
-                            <img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=200&h=150&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 70px; height: 50px; object-fit: cover;"
-                                 alt="PoD 1" onclick="selectPoDPreset('https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600')" title="Chọn mẫu ảnh 1">
-                            <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=200&h=150&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 70px; height: 50px; object-fit: cover;"
-                                 alt="PoD 2" onclick="selectPoDPreset('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600')" title="Chọn mẫu ảnh 2">
-                            <img src="https://images.unsplash.com/photo-1587334274328-64186a80aeee?w=200&h=150&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 70px; height: 50px; object-fit: cover;"
-                                 alt="PoD 3" onclick="selectPoDPreset('https://images.unsplash.com/photo-1587334274328-64186a80aeee?w=600')" title="Chọn mẫu ảnh 3">
-                        </div>
-                        <div class="mt-2 text-center">
-                            <img id="podPreviewImg" src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600" class="rounded border shadow-xs" style="max-height: 120px; object-fit: cover;">
-                        </div>
                     </div>
 
                     <div class="form-check mb-2">
@@ -479,4 +463,3 @@
 <script src="${pageContext.request.contextPath}/assets/js/shipper.js"></script>
 </body>
 </html>
-

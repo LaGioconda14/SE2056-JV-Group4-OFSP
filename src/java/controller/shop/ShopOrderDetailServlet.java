@@ -43,10 +43,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
         }
 
         String code = request.getParameter("code");
-        if (code == null || code.trim().isEmpty()) {
-            code = fulfillmentService.getFirstSubOrderCode(shopId);
-        }
-
+        
         if (code == null || code.trim().isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/shop/orders");
             return;

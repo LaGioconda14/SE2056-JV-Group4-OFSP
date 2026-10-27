@@ -34,6 +34,7 @@
 
             <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-5">
 
+                <!-- 1. Header & Breadcrumb -->
                 <div class="flex items-center justify-between text-xs text-slate-500">
                     <div class="flex items-center gap-2">
                         <a href="${pageContext.request.contextPath}/shop/products" class="hover:text-emerald-700 transition">Kênh Người Bán</a>
@@ -47,6 +48,7 @@
                     </a>
                 </div>
 
+                <!-- 2. Page Title & Meta Badges -->
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -63,11 +65,11 @@
                                 <i class="fa-regular fa-clock text-slate-400 mr-1"></i> 
                                 <fmt:formatDate value="${subOrder.createdAt}" pattern="HH:mm dd/MM/yyyy" />
                             </span>
-          
                         </div>
                     </div>
                 </div>
 
+                <!-- 3. Status Stepper Tracker -->
                 <c:set var="isFailedOrder" value="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}" />
                 <c:set var="isDeliveredOrder" value="${subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED'}" />
                 <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
@@ -195,8 +197,10 @@
                     </div>
                 </div>
 
+                <!-- 4. Main Content Grid (8 Columns Main : 4 Columns Side) -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
+                    <!-- Left Column: Operations & Products -->
                     <div class="lg:col-span-8 space-y-5">
 
                         <c:choose>
@@ -278,7 +282,6 @@
                                     </div>
 
                                     <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        
                                         <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="m-0">
                                             <input type="hidden" name="action" value="confirm">
                                             <input type="hidden" name="code" value="${subOrder.subOrderCode}">
@@ -302,77 +305,48 @@
                                     <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                                         <div class="flex items-center gap-2.5">
                                             <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm font-bold">
-                                                <i class="fa-solid fa-box-open"></i>
+                                                <i class="fa-solid fa-boxes-packing"></i>
                                             </div>
-                                            <div>
-                                                <h2 class="text-base font-extrabold text-slate-900">Quy Chuẩn Kiểm Soát Đóng Gói Lạnh</h2>
-                                                <p class="text-[11px] text-slate-400">Kiểm tra và tick chọn 4 tiêu chuẩn bảo quản xuất xưởng</p>
-                                            </div>
+                                            <h2 class="text-base font-extrabold text-slate-900">Danh sách kiểm tra</h2>
                                         </div>
-                                        <span id="qcProgressBadge" class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60">
-                                                Bắt buộc hoàn thành <span id="qcCount">0</span>/4
-                                            </span>
+                                        <span id="qcProgressBadge" class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60 transition-all">
+                                            Bắt buộc hoàn thành <span id="qcCount">0</span>/4
+                                        </span>
                                     </div>
 
-                                    <div class="mt-4 space-y-3">
-                                        
-                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                            <input type="checkbox" class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                            <div class="flex-1 text-xs">
-                                                <div class="font-bold text-slate-900">Đã kiểm tra chất lượng &amp; loại bỏ quả dập/hỏng</div>
-                                                <div class="text-slate-500 text-[11px] mt-0.5">Soi kỹ bề mặt vỏ, kiểm tra độ đàn hồi, loại bỏ toàn bộ quả thâm úng để bảo quản lạnh an toàn.</div>
-                                            </div>
-                                        </label>
-
-                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                            <input type="checkbox" class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                            <div class="flex-1 text-xs">
-                                                <div class="font-bold text-slate-900">Đã cân đủ trọng lượng tịnh &amp; kiểm tra số lượng</div>
-                                                <div class="text-slate-500 text-[11px] mt-0.5">
-                                                    Chi tiết đóng gói: 
-                                                    <c:forEach items="${subOrder.items}" var="it" varStatus="st">
-                                                        <span class="font-medium text-slate-800">${it.productNameSnapshot} (x${it.quantity} ${it.unit})</span>${!st.last ? ', ' : ''}
-                                                    </c:forEach>
-                                                </div>
-                                            </div>
-                                        </label>
-
-                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                            <input type="checkbox" class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                            <div class="flex-1 text-xs">
-                                                <div class="font-bold text-slate-900">Đã đóng gói thùng xốp chuyên dụng &amp; chèn túi đá gel bảo ôn mát</div>
-                                                <div class="text-slate-500 text-[11px] mt-0.5">Đặt túi đá gel cách nhiệt có vách ngăn xốp chống đọng ẩm trực tiếp lên quả tươi.</div>
-                                            </div>
-                                        </label>
-
-                                        <label class="qc-check-label flex items-start gap-3.5 p-3.5 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
-                                            <input type="checkbox" class="qc-check mt-1 w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
-                                            <div class="flex-1 text-xs">
-                                                <div class="font-bold text-slate-900">Đã dán tem niêm phong và mã vận đơn #${subOrder.subOrderCode}</div>
-                                                <div class="text-slate-500 text-[11px] mt-0.5">Mã barcode ${subOrder.trackingNumber} in rõ nét trên nắp thùng và mặt bên.</div>
-                                            </div>
-                                        </label>
-                                    </div>
-
-                                    <div class="mt-4 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs border-t border-slate-100">
-                                        <button type="button" class="btn-open-cancel-modal text-rose-600 hover:text-rose-700 font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer">
-                                            <i class="fa-solid fa-triangle-exclamation"></i> Phát hiện hàng lỗi hỏng không đủ cung cấp? Hủy đơn
-                                        </button>
-                                        <div class="flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
-                                            <i class="fa-solid fa-shield-check text-emerald-600"></i> Bảo chứng chất lượng VietGAP &amp; OCOP
-                                        </div>
-                                    </div>
-
-                                    <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="mt-3 space-y-3">
+                                    <form id="formReadyToShip" action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="mt-4 space-y-4">
                                         <input type="hidden" name="action" value="ready_to_ship">
                                         <input type="hidden" name="code" value="${subOrder.subOrderCode}">
+
+                                        <div class="space-y-2.5">
+                                            <label class="qc-check-label flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
+                                                <input type="checkbox" class="qc-check w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                                <span class="text-xs font-semibold text-slate-800">Đã kiểm tra đúng sản phẩm và số lượng</span>
+                                            </label>
+
+                                            <label class="qc-check-label flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
+                                                <input type="checkbox" class="qc-check w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                                <span class="text-xs font-semibold text-slate-800">Đã kiểm tra chất lượng trái cây</span>
+                                            </label>
+
+                                            <label class="qc-check-label flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
+                                                <input type="checkbox" class="qc-check w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                                <span class="text-xs font-semibold text-slate-800">Đã chuẩn bị bao bì phù hợp</span>
+                                            </label>
+
+                                            <label class="qc-check-label flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-400 transition cursor-pointer select-none">
+                                                <input type="checkbox" class="qc-check w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                                                <span class="text-xs font-semibold text-slate-800">Đã đáp ứng yêu cầu bảo quản của đơn</span>
+                                            </label>
+                                        </div>
+
                                         <c:if test="${not empty shopShippers}">
-                                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                                                <label class="block text-xs font-bold text-slate-700 mb-1">
-                                                    <i class="fa-solid fa-motorcycle text-emerald-600 mr-1"></i> Phân công nhân viên giao hàng của Shop:
+                                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                                                <label for="driverUserIdSelect" class="block text-xs font-bold text-slate-700 mb-1.5">
+                                                    <i class="fa-solid fa-motorcycle text-emerald-600 mr-1"></i> Phân công nhân viên giao hàng của Shop: <span class="text-rose-500">*</span>
                                                 </label>
-                                                <select name="driverUserId" class="w-full p-2 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:border-emerald-500">
-                                                    <option value="">-- Tự động chọn shipper sẵn sàng gần nhất của Shop --</option>
+                                                <select name="driverUserId" id="driverUserIdSelect" required class="w-full p-2.5 text-xs rounded-lg border border-slate-300 bg-white focus:outline-none focus:border-emerald-500">
+                                                    <option value="">-- Chọn 1 nhân viên giao hàng của Shop --</option>
                                                     <c:forEach items="${shopShippers}" var="shp">
                                                         <option value="${shp.userId}" ${shp.userId eq subOrder.driverId ? 'selected' : ''}>
                                                             ${shp.fullName} (${shp.phone}) - ${shp.licensePlate} [${shp.availabilityLabel}]
@@ -381,7 +355,8 @@
                                                 </select>
                                             </div>
                                         </c:if>
-                                        <button type="submit" id="btnFinishPacking" class="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-sm transition shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+
+                                        <button type="submit" id="btnFinishPacking" disabled class="w-full py-3 px-4 rounded-xl bg-slate-200 text-slate-400 font-extrabold text-sm transition shadow-sm flex items-center justify-center gap-2 cursor-not-allowed">
                                             <i class="fa-solid fa-box-check"></i> Hoàn tất đóng gói &amp; Báo sẵn sàng giao
                                         </button>
                                     </form>
@@ -492,13 +467,14 @@
                                             <div class="text-slate-500 text-[11px] mt-0.5">Mã vận đơn: <b class="font-mono text-emerald-800 text-xs">${not empty subOrder.trackingNumber ? subOrder.trackingNumber : subOrder.subOrderCode}</b></div>
                                         </div>
                                         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-extrabold text-xs">
-                                            <i class="fa-solid fa-snowflake animate-spin"></i> Thùng bảo ôn 2-5°C
+                                            <i class="fa-solid fa-snowflake"></i> Thùng bảo ôn 2-5°C
                                         </div>
                                     </div>
                                 </div>
                             </c:otherwise>
                         </c:choose>
 
+                        <!-- Products List Card -->
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                             <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                                 <div class="flex items-center gap-2.5">
@@ -554,18 +530,6 @@
                                                                 </c:if>
                                                                 <span>• Tồn kho khả dụng: <span class="font-bold ${item.stockQuantity < 10 ? 'text-rose-600' : 'text-emerald-700'}">${item.stockQuantity} ${item.unit}</span></span>
                                                             </div>
-                                                            <div class="text-[10px] text-emerald-700 font-semibold mt-1 flex flex-wrap items-center gap-2">
-                                                                <span class="flex items-center gap-1">
-                                                                    <i class="fa-solid fa-leaf text-[9px]"></i> 
-                                                                    Xuất xứ: ${not empty item.origin ? item.origin : 'Nông trại đạt chuẩn'}
-                                                                </span>
-                                                                <c:if test="${not empty item.certification}">
-                                                                    <span class="text-amber-700 font-bold">• ${item.certification}</span>
-                                                                </c:if>
-                                                                <c:if test="${not empty item.storageTemp}">
-                                                                    <span class="text-blue-700 font-bold">• <i class="fa-solid fa-snowflake text-[8px]"></i> Bảo quản: ${item.storageTemp}</span>
-                                                                </c:if>
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -583,35 +547,12 @@
                                 </table>
                             </div>
 
+                            <!-- Simplified Order Summary -->
                             <div class="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
                                 <div class="flex justify-between text-slate-600">
                                     <span>Tiền hàng (Tạm tính ${not empty subOrder.items ? subOrder.items.size() : 0} sản phẩm):</span>
                                     <span class="font-bold text-slate-800">
                                         <fmt:formatNumber value="${subOrder.shopSubtotal}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                                    </span>
-                                </div>
-                                <div class="flex justify-between text-slate-600">
-                                    <span class="flex items-center gap-1.5">
-                                        Phí vận chuyển giao lạnh chuyên dụng: 
-                                        <c:if test="${empty subOrder.shopShippingFee or subOrder.shopShippingFee == 0}">
-                                            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1 rounded font-bold">Tài trợ bởi Shop</span>
-                                        </c:if>
-                                    </span>
-                                    <span class="text-emerald-700 font-bold">
-                                        <c:choose>
-                                            <c:when test="${subOrder.shopShippingFee != null && subOrder.shopShippingFee > 0}">
-                                                <fmt:formatNumber value="${subOrder.shopShippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
-                                            </c:when>
-                                            <c:otherwise>
-                                                Miễn phí (₫0)
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </span>
-                                </div>
-                                <div class="flex justify-between text-slate-600">
-                                    <span>Chiết khấu Voucher Người bán:</span>
-                                    <span class="text-slate-400">
-                                        -<fmt:formatNumber value="${subOrder.shopDiscount != null ? subOrder.shopDiscount : 0}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                     </span>
                                 </div>
                                 <div class="pt-3 border-t border-slate-100 flex items-baseline justify-between">
@@ -638,8 +579,10 @@
 
                     </div>
 
+                    <!-- Right Column: Recipient & Shipping Info -->
                     <div class="lg:col-span-4 space-y-5">
 
+                        <!-- Recipient Details -->
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                                 <div class="flex items-center gap-2">
@@ -696,97 +639,37 @@
                             </div>
                         </div>
 
-                        <!-- CARD: NHÂN VIÊN GIAO HÀNG CỦA SHOP -->
-                        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">
-                                        <i class="fa-solid fa-motorcycle"></i>
+                        <!-- Driver Info Card (when driver is already assigned) -->
+                        <c:if test="${not empty subOrder.driverName}">
+                            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+                                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fa-solid fa-motorcycle text-emerald-600 text-sm"></i>
+                                        <h3 class="text-sm font-extrabold text-slate-900">Nhân Viên Giao Hàng</h3>
                                     </div>
-                                    <h3 class="text-sm font-extrabold text-slate-900">Nhân Viên Giao Hàng Của Shop</h3>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        Đã Phân Công
+                                    </span>
                                 </div>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                    Nội Bộ Shop
-                                </span>
+                                <div class="mt-4 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-extrabold text-base shrink-0">
+                                        <i class="fa-solid fa-user-check"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-extrabold text-slate-900">${subOrder.driverName}</div>
+                                        <div class="text-[11px] text-slate-500">
+                                            SĐT: <b class="text-slate-700">${not empty subOrder.driverPhone ? subOrder.driverPhone : 'Chưa có SĐT'}</b>
+                                        </div>
+                                    </div>
+                                </div>
+                                <c:if test="${not empty subOrder.driverVehiclePlate}">
+                                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs flex items-center justify-between">
+                                        <span class="text-slate-500">Biển số phương tiện:</span>
+                                        <span class="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${subOrder.driverVehiclePlate}</span>
+                                    </div>
+                                </c:if>
                             </div>
-
-                            <c:choose>
-                                <c:when test="${not empty subOrder.driverName}">
-                                    <div class="flex items-start gap-3">
-                                        <div class="relative">
-                                            <img src="${not empty subOrder.driverAvatarUrl ? subOrder.driverAvatarUrl : 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop'}" 
-                                                 alt="${subOrder.driverName}" class="w-11 h-11 rounded-2xl object-cover border border-slate-200 shadow-2xs">
-                                            <span class="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white bg-emerald-500"></span>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center justify-between">
-                                                <div class="text-sm font-extrabold text-slate-900 truncate">
-                                                    ${subOrder.driverName}
-                                                </div>
-                                                <a href="tel:${subOrder.driverPhone}" class="text-xs text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">
-                                                    <i class="fa-solid fa-phone"></i> Gọi
-                                                </a>
-                                            </div>
-                                            <div class="text-[11px] text-slate-500 mt-0.5">
-                                                SĐT: <span class="font-semibold text-slate-800">${subOrder.driverPhone}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
-                                        <div class="flex items-center justify-between text-slate-600">
-                                            <span class="text-[11px] text-slate-400">Phương tiện:</span>
-                                            <span class="font-bold text-slate-800">${not empty subOrder.driverVehicleType ? subOrder.driverVehicleType : 'Xe máy thùng lạnh'}</span>
-                                        </div>
-                                        <div class="flex items-center justify-between text-slate-600">
-                                            <span class="text-[11px] text-slate-400">Biển số xe:</span>
-                                            <span class="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-[11px]">
-                                                ${not empty subOrder.driverVehiclePlate ? subOrder.driverVehiclePlate : '29-F1 888.88'}
-                                            </span>
-                                        </div>
-                                        <div class="flex items-center justify-between text-slate-600">
-                                            <span class="text-[11px] text-slate-400">Trạng thái vận chuyển:</span>
-                                            <span class="font-bold text-emerald-700 text-[11px]">
-                                                <c:choose>
-                                                    <c:when test="${subOrder.deliveryStatus eq 'DELIVERED' or isDeliveredOrder}">Đã giao thành công</c:when>
-                                                    <c:when test="${subOrder.deliveryStatus eq 'DELIVERING'}">Đang trên đường giao</c:when>
-                                                    <c:when test="${subOrder.deliveryStatus eq 'FAILED' or isFailedOrder}">Giao không thành công</c:when>
-                                                    <c:otherwise>Đã nhận lệnh - Chờ xuất kho</c:otherwise>
-                                                </c:choose>
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <c:if test="${subOrder.status ne 'CANCELLED' and not isDeliveredOrder and not isFailedOrder}">
-                                        <button type="button" onclick="openAssignShipperModal()" class="w-full py-2 px-3 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
-                                            <i class="fa-solid fa-arrows-rotate text-slate-400"></i>
-                                            <span>Đổi nhân viên giao hàng khác</span>
-                                        </button>
-                                    </c:if>
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="text-center py-2">
-                                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto mb-2 text-base">
-                                            <i class="fa-solid fa-user-clock"></i>
-                                        </div>
-                                        <div class="text-xs font-bold text-slate-800">Chưa phân công nhân viên giao hàng</div>
-                                        <div class="text-[11px] text-slate-400 mt-0.5">Chọn một shipper của gian hàng để trực tiếp giao đơn này</div>
-
-                                        <button type="button" onclick="openAssignShipperModal()" class="mt-3 w-full py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
-                                            <i class="fa-solid fa-user-plus"></i>
-                                            <span>Phân công shipper của shop ngay</span>
-                                        </button>
-                                    </div>
-                                </c:otherwise>
-                            </c:choose>
-
-                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                                <a href="${pageContext.request.contextPath}/shop/shippers" class="text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1">
-                                    <i class="fa-solid fa-users-gear"></i> Quản lý toàn bộ shipper của Shop
-                                </a>
-                                <span class="text-slate-400">(${not empty shopShippers ? shopShippers.size() : 0} shipper)</span>
-                            </div>
-                        </div>
+                        </c:if>
 
                     </div>
 
@@ -795,6 +678,7 @@
             </main>
         </div>
 
+        <!-- 5. Cancel Sub-Order Modal -->
         <div id="cancelModalBackdrop" class="modal-backdrop hidden"></div>
         <div id="cancelOrderModal" class="modal-dialog hidden">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -836,13 +720,6 @@
                             </div>
                         </label>
                         <label class="cancel-reason-option flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-rose-400 cursor-pointer transition">
-                            <input type="radio" name="cancelReasonCategory" value="Thời tiết bất thường / Không thu hoạch kịp" class="mt-0.5 text-rose-600">
-                            <div class="text-xs">
-                                <div class="font-bold text-slate-800">Thời tiết bất thường / Không thu hoạch kịp</div>
-                                <div class="text-[11px] text-slate-400">Vườn không kịp thu hoạch quả tươi đạt chuẩn trong khung giờ hẹn.</div>
-                            </div>
-                        </label>
-                        <label class="cancel-reason-option flex items-start gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:border-rose-400 cursor-pointer transition">
                             <input type="radio" name="cancelReasonCategory" value="Lý do khác" class="mt-0.5 text-rose-600">
                             <div class="text-xs">
                                 <div class="font-bold text-slate-800">Lý do phát sinh khác</div>
@@ -876,109 +753,5 @@
             </form>
         </div>
 
-        <!-- MODAL: PHÂN CÔNG NHÂN VIÊN GIAO HÀNG CHO ĐƠN CON -->
-        <div id="assignShipperBackdrop" class="modal-backdrop hidden" onclick="closeAssignShipperModal()"></div>
-        <div id="assignShipperModal" class="modal-dialog hidden w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl">
-            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-base font-bold border border-emerald-200">
-                        <i class="fa-solid fa-motorcycle"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-black text-slate-900">Phân Công Nhân Viên Giao Hàng Của Shop</h3>
-                        <p class="text-[11px] text-slate-400">Đơn hàng con: #${subOrder.subOrderCode}</p>
-                    </div>
-                </div>
-                <button type="button" onclick="closeAssignShipperModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
-                    <i class="fa-solid fa-xmark text-sm"></i>
-                </button>
-            </div>
-
-            <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="p-5 space-y-4">
-                <input type="hidden" name="action" value="assign_shipper">
-                <input type="hidden" name="code" value="${subOrder.subOrderCode}">
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-2">
-                        Chọn một nhân viên giao hàng thuộc Shop <span class="text-rose-500">*</span>
-                    </label>
-
-                    <c:choose>
-                        <c:when test="${not empty shopShippers}">
-                            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
-                                <c:forEach items="${shopShippers}" var="shp" varStatus="st">
-                                    <label class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-emerald-400 cursor-pointer transition bg-white has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50/30">
-                                        <div class="flex items-center gap-3">
-                                            <input type="radio" name="driverUserId" value="${shp.userId}" class="text-emerald-600" ${st.first ? 'checked' : ''}>
-                                            <img src="${not empty shp.avatarUrl ? shp.avatarUrl : 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop'}" 
-                                                 alt="${shp.fullName}" class="w-9 h-9 rounded-xl object-cover border border-slate-100">
-                                            <div class="text-xs">
-                                                <div class="font-extrabold text-slate-900 flex items-center gap-2">
-                                                    <span>${shp.fullName}</span>
-                                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase ${shp.availabilityBadgeClass}">
-                                                        ${shp.availabilityLabel}
-                                                    </span>
-                                                </div>
-                                                <div class="text-[11px] text-slate-500 mt-0.5">
-                                                    SĐT: <b>${shp.phone}</b> • Biển số: <span class="font-mono font-bold">${shp.licensePlate}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="text-right text-[11px]">
-                                            <span class="font-bold text-slate-700">${shp.activeOrderCount} đơn</span>
-                                            <div class="text-[10px] text-slate-400">đang phụ trách</div>
-                                        </div>
-                                    </label>
-                                </c:forEach>
-                            </div>
-                        </c:when>
-                        <c:otherwise>
-                            <div class="p-6 text-center border border-dashed border-slate-200 rounded-xl">
-                                <i class="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mb-2"></i>
-                                <div class="text-xs font-bold text-slate-800">Shop chưa có nhân viên giao hàng nào</div>
-                                <div class="text-[11px] text-slate-400 mt-1">Vui lòng thêm nhân viên giao hàng cho shop trước khi phân công.</div>
-                                <a href="${pageContext.request.contextPath}/shop/shippers" class="mt-3 inline-block px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800">
-                                    Thêm nhân viên ngay
-                                </a>
-                            </div>
-                        </c:otherwise>
-                    </c:choose>
-                </div>
-
-                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs flex items-start gap-2">
-                    <i class="fa-solid fa-circle-info text-emerald-600 mt-0.5 text-sm shrink-0"></i>
-                    <div class="leading-relaxed">
-                        Sau khi phân công, trạng thái đơn con sẽ được chuyển sang <b>Đang giao hàng (SHIPPING)</b> và tài xế của Shop sẽ trực tiếp nhận lệnh giao kiện hàng nông sản này.
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button type="button" onclick="closeAssignShipperModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition cursor-pointer">
-                        Đóng
-                    </button>
-                    <c:if test="${not empty shopShippers}">
-                        <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs cursor-pointer flex items-center gap-1.5">
-                            <i class="fa-solid fa-check"></i>
-                            <span>Xác Nhận Phân Công</span>
-                        </button>
-                    </c:if>
-                </div>
-            </form>
-        </div>
-
-        <script>
-            function openAssignShipperModal() {
-                var backdrop = document.getElementById('assignShipperBackdrop');
-                var modal = document.getElementById('assignShipperModal');
-                if (backdrop) backdrop.classList.remove('hidden');
-                if (modal) modal.classList.remove('hidden');
-            }
-            function closeAssignShipperModal() {
-                var backdrop = document.getElementById('assignShipperBackdrop');
-                var modal = document.getElementById('assignShipperModal');
-                if (backdrop) backdrop.classList.add('hidden');
-                if (modal) modal.classList.add('hidden');
-            }
-        </script>
     </body>
 </html>

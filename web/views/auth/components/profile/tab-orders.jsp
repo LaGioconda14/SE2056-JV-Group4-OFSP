@@ -136,9 +136,9 @@
                                         <div class="shopee-item-row">
                                             <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop" class="shopee-item-thumb" alt="Trái cây tươi">
                                             <div class="shopee-item-details">
-                                                    <div class="shopee-item-title">${order.note}</div>
-                                                    <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn Gốc Vườn</div>
-                                                    <div class="shopee-item-qty">x1</div>
+                                                <div class="shopee-item-title">${order.note}</div>
+                                                <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn Gốc Vườn</div>
+                                                <div class="shopee-item-qty">x1</div>
                                             </div>
                                             <div class="shopee-item-price">
                                                 <span class="shopee-price-current">${order.totalAmount}₫</span>
@@ -179,9 +179,6 @@
                                             <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
-                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="openReturnModal('${order.id}', '${order.shopName}', '${order.totalAmount}', '${order.subOrderId}')">
-                                                <i class="bi bi-arrow-return-left me-1"></i> Yêu Cầu Trả Hàng/Hoàn Tiền
-                                            </button>
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
                                             </button>
@@ -257,4 +254,3 @@
         </c:choose>
     </div>
 </div>
-

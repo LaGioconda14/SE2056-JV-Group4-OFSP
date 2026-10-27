@@ -195,8 +195,6 @@
                         <span>Mã đơn hàng: <strong id="trackModalOrderCode" class="text-dark">#ORD-98241</strong></span>
                         <span>•</span>
                         <span>Ngày đặt: <span id="trackModalOrderDate">--/--/----</span></span>
-                        <span>•</span>
-                        <span class="text-success fw-semibold"><i class="bi bi-snow me-1"></i>Chuỗi lạnh FreshCold</span>
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-2">

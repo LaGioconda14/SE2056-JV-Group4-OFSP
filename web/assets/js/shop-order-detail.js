@@ -32,12 +32,14 @@ if (typeof tailwind !== 'undefined') {
 document.addEventListener('DOMContentLoaded', function () {
 
     // ==========================================
-    // 1. QC Packaging Checklist Counter
+    // 1. QC Packaging Checklist Counter & Driver Selection Validation
     // ==========================================
     const checkboxes = document.querySelectorAll('.qc-check');
     const qcCountEl = document.getElementById('qcCount');
     const qcBadge = document.getElementById('qcProgressBadge');
     const btnFinish = document.getElementById('btnFinishPacking');
+    const formReadyToShip = document.getElementById('formReadyToShip');
+    const driverSelect = document.getElementById('driverUserIdSelect') || document.querySelector('select[name="driverUserId"]');
 
     function updateQcProgress() {
         if (!checkboxes || checkboxes.length === 0) return;
@@ -54,7 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (qcCountEl) qcCountEl.textContent = checkedCount;
 
-        if (checkedCount === 4) {
+        // Shipper must be selected if dropdown exists
+        const isDriverSelected = driverSelect ? (driverSelect.value && driverSelect.value.trim() !== '') : true;
+
+        if (checkedCount === 4 && isDriverSelected) {
             if (qcBadge) {
                 qcBadge.className = "px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 transition-all";
                 qcBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã hoàn tất 4/4 tiêu chuẩn';
@@ -65,8 +70,17 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         } else {
             if (qcBadge) {
-                qcBadge.className = "px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60 transition-all";
-                qcBadge.innerHTML = 'Bắt buộc hoàn thành <span id="qcCount">' + checkedCount + '</span>/4';
+                if (checkedCount === 4 && !isDriverSelected) {
+                    qcBadge.className = "px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-bold text-xs border border-amber-300 transition-all";
+                    qcBadge.innerHTML = '<i class="fa-solid fa-motorcycle mr-1"></i> Vui lòng chọn 1 shipper';
+                } else {
+                    qcBadge.className = "px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60 transition-all";
+                    qcBadge.innerHTML = 'Bắt buộc hoàn thành <span id="qcCount">' + checkedCount + '</span>/4';
+                }
+            }
+            if (btnFinish) {
+                btnFinish.disabled = true;
+                btnFinish.className = "w-full py-3 px-4 rounded-xl bg-slate-200 text-slate-400 font-extrabold text-sm transition shadow-sm flex items-center justify-center gap-2 cursor-not-allowed";
             }
         }
     }
@@ -74,6 +88,31 @@ document.addEventListener('DOMContentLoaded', function () {
     checkboxes.forEach(cb => {
         cb.addEventListener('change', updateQcProgress);
     });
+
+    if (driverSelect) {
+        driverSelect.addEventListener('change', updateQcProgress);
+    }
+
+    if (formReadyToShip) {
+        formReadyToShip.addEventListener('submit', function (e) {
+            let checkedCount = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) checkedCount++;
+            });
+            if (checkedCount < 4) {
+                e.preventDefault();
+                alert('Vui lòng kiểm tra và tích chọn đủ 4/4 tiêu chuẩn đóng gói!');
+                return false;
+            }
+            if (driverSelect && (!driverSelect.value || driverSelect.value.trim() === '')) {
+                e.preventDefault();
+                alert('Vui lòng chọn 1 nhân viên giao hàng của Shop trước khi hoàn tất!');
+                driverSelect.focus();
+                return false;
+            }
+        });
+    }
+
     updateQcProgress();
 
     // ==========================================
