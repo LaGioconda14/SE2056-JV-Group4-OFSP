@@ -1,5 +1,5 @@
 <%@page pageEncoding="UTF-8"%>
-<%@taglib prefix="c" uri="jakarta.tags.core"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
 <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
