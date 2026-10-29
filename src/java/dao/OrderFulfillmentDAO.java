@@ -170,18 +170,6 @@ public class OrderFulfillmentDAO extends DBContext {
                         psSync.setString(1, subOrderCode);
                         psSync.executeUpdate();
                     }
-
-                    // Auto-assign delivery task to optimal online cold-chain driver
-                    String getSubIdSql = "SELECT sub_order_id FROM sub_orders WHERE sub_order_code = ?";
-                    try (PreparedStatement psSubId = conn.prepareStatement(getSubIdSql)) {
-                        psSubId.setString(1, subOrderCode);
-                        try (ResultSet rsSubId = psSubId.executeQuery()) {
-                            if (rsSubId.next()) {
-                                long subOrderId = rsSubId.getLong("sub_order_id");
-                                new DriverDAO().autoAssignDelivery(subOrderId);
-                            }
-                        }
-                    }
                 } else if (newStatus == SubOrderStatus.DELIVERED) {
                     String syncDelivered = "UPDATE o SET o.order_status = 'COMPLETED', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
@@ -378,6 +366,170 @@ public class OrderFulfillmentDAO extends DBContext {
             return false;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error cancelling sub order: " + subOrderCode, e);
+            return false;
+        }
+    }
+
+    public boolean cancelSubOrderWithRestock(String subOrderCode, String cancelReason, Long cancelledBy) {
+        Connection conn = getConnection();
+        if (conn == null) return false;
+        try (conn) {
+            conn.setAutoCommit(false);
+
+            String cancelSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name()
+                    + "', cancel_reason = ?, cancelled_by = ?, "
+                    + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
+                    + "WHERE sub_order_code = ?";
+            try (PreparedStatement ps = conn.prepareStatement(cancelSql)) {
+                ps.setNString(1, cancelReason);
+                if (cancelledBy != null) ps.setLong(2, cancelledBy);
+                else ps.setNull(2, java.sql.Types.BIGINT);
+                ps.setString(3, subOrderCode);
+                int rows = ps.executeUpdate();
+                if (rows <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            String syncSql = "UPDATE o SET o.order_status = '" + SubOrderStatus.CANCELLED.name()
+                    + "', o.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
+                    + "WHERE so.sub_order_code = ? "
+                    + "  AND NOT EXISTS ( "
+                    + "      SELECT 1 FROM sub_orders other "
+                    + "      WHERE other.order_id = o.order_id "
+                    + "        AND other.status <> '" + SubOrderStatus.CANCELLED.name() + "' "
+                    + "  )";
+            try (PreparedStatement psSync = conn.prepareStatement(syncSql)) {
+                psSync.setString(1, subOrderCode);
+                psSync.executeUpdate();
+            }
+
+            // Hoan tra 100% ton kho ban vi hoa qua con tuoi nguyen
+            String restoreSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, pv.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM product_variants pv "
+                    + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
+                    + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
+                    + "WHERE so.sub_order_code = ? AND oi.variant_id IS NOT NULL";
+            try (PreparedStatement psRestock = conn.prepareStatement(restoreSql)) {
+                psRestock.setString(1, subOrderCode);
+                psRestock.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error cancelling sub order with restock: " + subOrderCode, e);
+            return false;
+        }
+    }
+
+    public boolean cancelSubOrderOutOfStock(String subOrderCode, String cancelReason, Long cancelledBy) {
+        Connection conn = getConnection();
+        if (conn == null) return false;
+        try (conn) {
+            conn.setAutoCommit(false);
+
+            String cancelSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name()
+                    + "', cancel_reason = ?, cancelled_by = ?, "
+                    + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
+                    + "WHERE sub_order_code = ?";
+            try (PreparedStatement ps = conn.prepareStatement(cancelSql)) {
+                ps.setNString(1, cancelReason);
+                if (cancelledBy != null) ps.setLong(2, cancelledBy);
+                else ps.setNull(2, java.sql.Types.BIGINT);
+                ps.setString(3, subOrderCode);
+                int rows = ps.executeUpdate();
+                if (rows <= 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            String syncSql = "UPDATE o SET o.order_status = '" + SubOrderStatus.CANCELLED.name()
+                    + "', o.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
+                    + "WHERE so.sub_order_code = ? "
+                    + "  AND NOT EXISTS ( "
+                    + "      SELECT 1 FROM sub_orders other "
+                    + "      WHERE other.order_id = o.order_id "
+                    + "        AND other.status <> '" + SubOrderStatus.CANCELLED.name() + "' "
+                    + "  )";
+            try (PreparedStatement psSync = conn.prepareStatement(syncSql)) {
+                psSync.setString(1, subOrderCode);
+                psSync.executeUpdate();
+            }
+
+            // Dong bo ton kho thuc te ve 0 de chan dat mua tiep
+            String zeroSql = "UPDATE pv SET pv.stock_quantity = 0, pv.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM product_variants pv "
+                    + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
+                    + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
+                    + "WHERE so.sub_order_code = ? AND oi.variant_id IS NOT NULL";
+            try (PreparedStatement psZero = conn.prepareStatement(zeroSql)) {
+                psZero.setString(1, subOrderCode);
+                psZero.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error cancelling sub order out of stock: " + subOrderCode, e);
+            return false;
+        }
+    }
+
+    public boolean processReturnedOrderRestock(String subOrderCode, String note, Long processedBy) {
+        Connection conn = getConnection();
+        if (conn == null) return false;
+        try (conn) {
+            conn.setAutoCommit(false);
+
+            String checkSql = "SELECT cancel_reason FROM sub_orders WHERE sub_order_code = ?";
+            String currentReason = "";
+            try (PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+                psCheck.setString(1, subOrderCode);
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next()) {
+                        currentReason = rs.getString("cancel_reason");
+                    } else {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+            }
+
+            if (currentReason != null && currentReason.contains("[ĐÃ XỬ LÝ")) {
+                conn.rollback();
+                return true;
+            }
+
+            String updatedReason = (currentReason != null ? currentReason : "")
+                    + " [ĐÃ XỬ LÝ NHẬP KHO: Hoa quả còn tươi nguyên, đã kiểm định và nhập lại kho"
+                    + (note != null && !note.isBlank() ? " - " + note.trim() : "") + "]";
+
+            String updateSubSql = "UPDATE sub_orders SET cancel_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_code = ?";
+            try (PreparedStatement psUp = conn.prepareStatement(updateSubSql)) {
+                psUp.setNString(1, updatedReason);
+                psUp.setString(2, subOrderCode);
+                psUp.executeUpdate();
+            }
+
+            String restockSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, pv.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM product_variants pv "
+                    + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
+                    + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
+                    + "WHERE so.sub_order_code = ? AND oi.variant_id IS NOT NULL";
+            try (PreparedStatement psRestock = conn.prepareStatement(restockSql)) {
+                psRestock.setString(1, subOrderCode);
+                psRestock.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error restocking returned sub order: " + subOrderCode, e);
             return false;
         }
     }

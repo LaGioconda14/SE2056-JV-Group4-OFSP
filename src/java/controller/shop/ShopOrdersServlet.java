@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.User;
 import model.SubOrder;
 import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
@@ -26,21 +27,22 @@ public class ShopOrdersServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
 
+        HttpSession session = request.getSession(false);
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+        Long shopId = (session != null && session.getAttribute("shopId") != null)
+                ? ((Number) session.getAttribute("shopId")).longValue() : null;
+
+        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         String statusTab = request.getParameter("status");
         if (statusTab == null || statusTab.trim().isEmpty()) {
             statusTab = "ALL";
         }
 
         String keyword = request.getParameter("keyword");
-
-        long shopId = 1L; // Default current shop
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute("shopId") != null) {
-            try {
-                shopId = ((Number) session.getAttribute("shopId")).longValue();
-            } catch (Exception ignored) {
-            }
-        }
 
         SubOrderStatus tabStatus = SubOrderStatus.from(statusTab);
         List<SubOrder> list = fulfillmentService.getSubOrdersByShop(shopId, tabStatus, keyword);
@@ -53,9 +55,7 @@ public class ShopOrdersServlet extends HttpServlet {
         int countFailed = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.FAILED);
         int countCancelled = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.CANCELLED);
 
-        if (session != null) {
-            session.setAttribute("shopSubOrdersCount", countAll);
-        }
+        session.setAttribute("shopSubOrdersCount", countAll);
 
         request.setAttribute("orderList", list);
         request.setAttribute("currentTab", statusTab.toUpperCase());

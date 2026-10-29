@@ -262,6 +262,17 @@ public class DriverDAO extends DBContext {
                 }
             }
 
+            // Sync full_name and phone to users table
+            if (targetUserId > 0) {
+                String syncUserSql = "UPDATE users SET full_name = ?, phone = ? WHERE user_id = ?";
+                try (PreparedStatement psSync = conn.prepareStatement(syncUserSql)) {
+                    psSync.setNString(1, fullName);
+                    psSync.setString(2, phone);
+                    psSync.setLong(3, targetUserId);
+                    psSync.executeUpdate();
+                }
+            }
+
             conn.commit();
             return true;
         } catch (SQLException ex) {
@@ -308,6 +319,7 @@ public class DriverDAO extends DBContext {
                 psU.setLong(3, driverId);
                 psU.executeUpdate();
             }
+
 
             conn.commit();
             return true;
@@ -425,6 +437,7 @@ public class DriverDAO extends DBContext {
                 psOrd.executeUpdate();
             }
 
+
             conn.commit();
             return true;
         } catch (SQLException ex) {
@@ -494,98 +507,6 @@ public class DriverDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Intelligent Auto-Assign Cold-Chain Dispatch Engine:
-     * 1. Prioritizes available drivers belonging to the SubOrder's Shop!
-     * 2. Fallback to platform drivers if shop has no available driver.
-     */
-    public Long findBestDriverForSubOrder(long subOrderId) {
-        Connection conn = getConnection();
-        if (conn == null) return null;
-
-        try (conn) {
-            // STEP 1: Check if the sub_order's SHOP has an available driver
-            String shopDriverSql = "SELECT dp.user_id "
-                    + "FROM driver_profiles dp "
-                    + "JOIN sub_orders so ON dp.shop_id = so.shop_id "
-                    + "WHERE so.sub_order_id = ? "
-                    + "  AND dp.approval_status = 'APPROVED' AND dp.availability_status = 'AVAILABLE' "
-                    + "  AND (SELECT COUNT(*) FROM deliveries d WHERE d.driver_id = dp.user_id AND d.delivery_status IN ('ASSIGNED', 'DELIVERING', 'IN_TRANSIT', 'PICKED_UP')) < dp.max_capacity_orders "
-                    + "ORDER BY dp.rating DESC, dp.total_trips DESC";
-            try (PreparedStatement psShop = conn.prepareStatement(shopDriverSql)) {
-                psShop.setLong(1, subOrderId);
-                try (ResultSet rsShop = psShop.executeQuery()) {
-                    if (rsShop.next()) {
-                        return rsShop.getLong("user_id");
-                    }
-                }
-            }
-
-            // STEP 2: Fallback to city-matched approved platform driver
-            String infoSql = "SELECT s.province AS shop_province FROM sub_orders so JOIN shops s ON so.shop_id = s.shop_id WHERE so.sub_order_id = ?";
-            String shopCity = null;
-            try (PreparedStatement psCity = conn.prepareStatement(infoSql)) {
-                psCity.setLong(1, subOrderId);
-                try (ResultSet rsCity = psCity.executeQuery()) {
-                    if (rsCity.next()) {
-                        shopCity = rsCity.getString("shop_province");
-                    }
-                }
-            }
-
-            if (shopCity == null || shopCity.trim().isEmpty()) {
-                shopCity = "TP. Hồ Chí Minh";
-            }
-
-            String cityPattern = (shopCity.toLowerCase().contains("hồ chí minh") || shopCity.toLowerCase().contains("hcm"))
-                    ? "%Hồ Chí Minh%" : (shopCity.toLowerCase().contains("hà nội") ? "%Hà Nội%" : "%" + shopCity.trim() + "%");
-
-            String driverSql = "SELECT dp.user_id "
-                    + "FROM driver_profiles dp "
-                    + "LEFT JOIN driver_locations dl ON dp.driver_id = dl.driver_id "
-                    + "WHERE dp.approval_status = 'APPROVED' AND dp.availability_status = 'AVAILABLE' "
-                    + "  AND dp.operating_city LIKE ? "
-                    + "  AND (SELECT COUNT(*) FROM deliveries d WHERE d.driver_id = dp.user_id AND d.delivery_status IN ('ASSIGNED', 'DELIVERING', 'IN_TRANSIT', 'PICKED_UP')) < dp.max_capacity_orders "
-                    + "ORDER BY CASE WHEN dp.user_id = 9 THEN 0 ELSE 1 END, dp.rating DESC";
-
-            try (PreparedStatement psDriver = conn.prepareStatement(driverSql)) {
-                psDriver.setString(1, cityPattern);
-                try (ResultSet rsDriver = psDriver.executeQuery()) {
-                    if (rsDriver.next()) {
-                        return rsDriver.getLong("user_id");
-                    }
-                }
-            }
-
-            // Secondary Fallback: query active users with role DRIVER directly
-            String userDriverSql = "SELECT TOP 1 u.user_id FROM users u "
-                    + "JOIN user_roles ur ON u.user_id = ur.user_id "
-                    + "WHERE ur.role_id = 4 AND u.status = 'ACTIVE' "
-                    + "ORDER BY CASE WHEN u.user_id = 9 THEN 0 ELSE 1 END, u.user_id ASC";
-            try (PreparedStatement psUd = conn.prepareStatement(userDriverSql)) {
-                try (ResultSet rsUd = psUd.executeQuery()) {
-                    if (rsUd.next()) {
-                        return rsUd.getLong("user_id");
-                    }
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error querying best driver for subOrderId " + subOrderId, ex);
-        }
-
-        return null;
-    }
-
-    /**
-     * Atomically dispatches a delivery to a driver, or queues it as ASSIGNING if no driver available
-     */
-    public boolean autoAssignDelivery(long subOrderId) {
-        Long bestDriverUserId = findBestDriverForSubOrder(subOrderId);
-        if (bestDriverUserId != null) {
-            return assignDriverToSubOrder(subOrderId, bestDriverUserId);
-        }
-        return false;
-    }
 
     private DriverProfile extractDriverProfile(ResultSet rs) throws SQLException {
         DriverProfile dp = new DriverProfile();

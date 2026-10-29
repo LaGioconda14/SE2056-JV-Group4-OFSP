@@ -25,7 +25,7 @@
                 </div>
                 <div>
                     <h4 class="text-xs font-extrabold text-slate-900 leading-tight">
-                        <c:out value="${not empty sessionScope.shopName ? sessionScope.shopName : (not empty sessionScope.shop.shopName ? sessionScope.shop.shopName : 'Mộc Châu Farm')}"/>
+                        <c:out value="${not empty sessionScope.shopName ? sessionScope.shopName : (not empty sessionScope.shop.shopName ? sessionScope.shop.shopName : 'Gian hàng của tôi')}"/>
                     </h4>
                     <p class="text-[10px] font-bold text-emerald-700 tracking-wider mt-0.5">SELLER CENTER</p>
                 </div>
@@ -59,7 +59,6 @@
                     <i class="fa-solid fa-warehouse ${curMenu eq 'inventory' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
                     <span>Kho & Cảnh báo tồn</span>
                 </span>
-                <span class="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold rounded-full">${not empty lowStockCount ? lowStockCount : 3}</span>
             </a>
 
             <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">ĐƠN HÀNG & GIAO VẬN</div>

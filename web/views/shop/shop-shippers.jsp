@@ -36,7 +36,7 @@
                     <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between shadow-2xs">
                         <div class="flex items-center gap-2.5">
                             <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                            <span>Thêm nhân viên giao hàng mới cho Shop thành công! Tài khoản đã sẵn sàng nhận phân công đơn.</span>
+                            <span>Đăng ký tài khoản Shipper mới cho Shop thành công! Tài khoản đã sẵn sàng nhận phân công đơn.</span>
                         </div>
                         <a href="${pageContext.request.contextPath}/shop/shippers" class="text-emerald-700 hover:text-emerald-900"><i class="fa-solid fa-xmark"></i></a>
                     </div>
@@ -77,6 +77,15 @@
                         <a href="${pageContext.request.contextPath}/shop/shippers" class="text-rose-700 hover:text-rose-900"><i class="fa-solid fa-xmark"></i></a>
                     </div>
                 </c:if>
+                <c:if test="${param.error eq 'missing_fields'}">
+                    <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center justify-between shadow-2xs">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base"></i>
+                            <span>Vui lòng điền đầy đủ các thông tin bắt buộc (Họ tên, SĐT, Email, Mật khẩu, Biển số xe).</span>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/shop/shippers" class="text-rose-700 hover:text-rose-900"><i class="fa-solid fa-xmark"></i></a>
+                    </div>
+                </c:if>
 
                 <!-- Page Header -->
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -92,111 +101,122 @@
 
                     <button type="button" onclick="openCreateModal()" class="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs flex items-center gap-2 self-start md:self-center cursor-pointer">
                         <i class="fa-solid fa-user-plus"></i>
-                        <span>Thêm Nhân Viên Giao Hàng</span>
+                        <span>Đăng Ký Shipper</span>
                     </button>
                 </div>
 
-                <!-- Shippers Grid List -->
+                <!-- Shippers Grid List (Thuộc sở hữu của Shop) -->
                 <c:choose>
                     <c:when test="${not empty drivers}">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                            <c:forEach items="${drivers}" var="d">
-                                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between">
-                                    <div>
-                                        <!-- Header row of card -->
-                                        <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
-                                            <div class="flex items-center gap-3">
-                                                <div class="relative">
-                                                    <img src="${not empty d.avatarUrl ? d.avatarUrl : 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop'}" 
-                                                         alt="${d.fullName}" class="w-12 h-12 rounded-2xl object-cover border border-slate-100 shadow-2xs">
-                                                    <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${d.available ? 'bg-emerald-500' : (d.busy ? 'bg-blue-500' : 'bg-slate-400')}" 
-                                                          title="${d.availabilityLabel}">
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <h3 class="text-sm font-extrabold text-slate-900 leading-snug">${d.fullName}</h3>
-                                                    <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
-                                                        <i class="fa-solid fa-phone text-emerald-600 text-[10px]"></i>
-                                                        <a href="tel:${d.phone}" class="font-semibold hover:text-emerald-700">${d.phone}</a>
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-user-check text-emerald-600"></i>
+                                    <span>Danh sách Shipper của Shop (${drivers.size()})</span>
+                                </h2>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                <c:forEach items="${drivers}" var="d">
+                                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between">
+                                        <div>
+                                            <!-- Header row of card -->
+                                            <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="relative">
+                                                        <img src="${not empty d.avatarUrl ? d.avatarUrl : 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop'}" 
+                                                             alt="${d.fullName}" class="w-12 h-12 rounded-2xl object-cover border border-slate-100 shadow-2xs">
+                                                        <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white flex items-center justify-center ${d.available ? 'bg-emerald-500' : (d.busy ? 'bg-blue-500' : 'bg-slate-400')}" 
+                                                              title="${d.availabilityLabel}">
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h3 class="text-sm font-extrabold text-slate-900 leading-snug">${d.fullName}</h3>
+                                                        <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
+                                                            <i class="fa-solid fa-phone text-emerald-600 text-[10px]"></i>
+                                                            <a href="tel:${d.phone}" class="font-semibold hover:text-emerald-700">${d.phone}</a>
+                                                        </div>
+                                                        <div class="text-[11px] text-slate-400 mt-0.5 truncate max-w-[150px]">
+                                                            ${d.email}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
 
-                                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase ${d.availabilityBadgeClass}">
-                                                ${d.availabilityLabel}
-                                            </span>
-                                        </div>
-
-                                        <!-- Details -->
-                                        <div class="mt-3.5 space-y-2 text-xs">
-                                            <div class="flex items-center justify-between text-slate-600">
-                                                <span class="text-[11px] text-slate-400">Phương tiện:</span>
-                                                <span class="font-bold text-slate-800">${not empty d.vehicleType ? d.vehicleType : 'Xe máy chuyên dụng'}</span>
-                                            </div>
-                                            <div class="flex items-center justify-between text-slate-600">
-                                                <span class="text-[11px] text-slate-400">Biển số xe:</span>
-                                                <span class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                                                    ${not empty d.licensePlate ? d.licensePlate : 'Chưa có'}
+                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase ${d.availabilityBadgeClass}">
+                                                    ${d.availabilityLabel}
                                                 </span>
                                             </div>
-                                            <div class="flex items-start justify-between text-slate-600 gap-2">
-                                                <span class="text-[11px] text-slate-400 shrink-0">Bảo quản lạnh:</span>
-                                                <span class="font-semibold text-emerald-800 text-right text-[11px] truncate max-w-[170px]" title="${d.coldStorageType}">
-                                                    <i class="fa-solid fa-snowflake text-blue-500 mr-1"></i>${not empty d.coldStorageType ? d.coldStorageType : 'Thùng giữ nhiệt FreshBox'}
-                                                </span>
+
+                                            <!-- Details -->
+                                            <div class="mt-3.5 space-y-2 text-xs">
+                                                <div class="flex items-center justify-between text-slate-600">
+                                                    <span class="text-[11px] text-slate-400">Phương tiện:</span>
+                                                    <span class="font-bold text-slate-800">${not empty d.vehicleType ? d.vehicleType : 'Xe máy chuyên dụng'}</span>
+                                                </div>
+                                                <div class="flex items-center justify-between text-slate-600">
+                                                    <span class="text-[11px] text-slate-400">Biển số xe:</span>
+                                                    <span class="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                                        ${not empty d.licensePlate ? d.licensePlate : 'Chưa có'}
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-start justify-between text-slate-600 gap-2">
+                                                    <span class="text-[11px] text-slate-400 shrink-0">Bảo quản lạnh:</span>
+                                                    <span class="font-semibold text-emerald-800 text-right text-[11px] truncate max-w-[170px]" title="${d.coldStorageType}">
+                                                        <i class="fa-solid fa-snowflake text-blue-500 mr-1"></i>${not empty d.coldStorageType ? d.coldStorageType : 'Thùng giữ nhiệt FreshBox'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Action buttons -->
-                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                                        <!-- Edit button -->
-                                        <button type="button" 
-                                                onclick="openEditModal('${d.driverId}', '${d.fullName}', '${d.phone}', '${d.vehicleType}', '${d.licensePlate}', '${d.coldStorageType}', '${d.availabilityStatus}')"
-                                                class="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
-                                            <i class="fa-solid fa-pen-to-square text-slate-400"></i>
-                                            <span>Sửa</span>
-                                        </button>
-
-                                        <!-- Toggle Status button -->
-                                        <form action="${pageContext.request.contextPath}/shop/shippers" method="POST" class="m-0">
-                                            <input type="hidden" name="action" value="toggle_status">
-                                            <input type="hidden" name="driverId" value="${d.driverId}">
-                                            <input type="hidden" name="newStatus" value="${d.available ? 'OFFLINE' : 'AVAILABLE'}">
-                                            <button type="submit" 
-                                                    class="px-3 py-1.5 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${d.available ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'}">
-                                                <i class="fa-solid ${d.available ? 'fa-pause' : 'fa-play'} text-[10px]"></i>
-                                                <span>${d.available ? 'Tạm nghỉ' : 'Kích hoạt'}</span>
+                                        <!-- Action buttons -->
+                                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                            <!-- Edit button -->
+                                            <button type="button" 
+                                                    onclick="openEditModal('${d.driverId}', '${d.fullName}', '${d.phone}', '${d.vehicleType}', '${d.licensePlate}', '${d.coldStorageType}', '${d.availabilityStatus}')"
+                                                    class="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
+                                                <i class="fa-solid fa-pen-to-square text-slate-400"></i>
+                                                <span>Sửa</span>
                                             </button>
-                                        </form>
 
-                                        <!-- Delete button -->
-                                        <form action="${pageContext.request.contextPath}/shop/shippers" method="POST" class="m-0" onsubmit="return confirm('Bạn có chắc muốn gỡ nhân viên này khỏi danh sách giao hàng của Shop?');">
-                                            <input type="hidden" name="action" value="delete">
-                                            <input type="hidden" name="driverId" value="${d.driverId}">
-                                            <button type="submit" 
-                                                    class="p-1.5 w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition cursor-pointer" 
-                                                    title="Gỡ khỏi Shop">
-                                                <i class="fa-regular fa-trash-can text-sm"></i>
-                                            </button>
-                                        </form>
+                                            <!-- Toggle Status button -->
+                                            <form action="${pageContext.request.contextPath}/shop/shippers" method="POST" class="m-0">
+                                                <input type="hidden" name="action" value="toggle_status">
+                                                <input type="hidden" name="driverId" value="${d.driverId}">
+                                                <input type="hidden" name="newStatus" value="${d.available ? 'OFFLINE' : 'AVAILABLE'}">
+                                                <button type="submit" 
+                                                        class="px-3 py-1.5 rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ${d.available ? 'bg-slate-100 hover:bg-slate-200 text-slate-700' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200'}">
+                                                    <i class="fa-solid ${d.available ? 'fa-pause' : 'fa-play'} text-[10px]"></i>
+                                                    <span>${d.available ? 'Tạm nghỉ' : 'Kích hoạt'}</span>
+                                                </button>
+                                            </form>
+
+                                            <!-- Delete button -->
+                                            <form action="${pageContext.request.contextPath}/shop/shippers" method="POST" class="m-0" onsubmit="return confirm('Bạn có chắc muốn gỡ nhân viên này khỏi danh sách giao hàng của Shop?');">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="driverId" value="${d.driverId}">
+                                                <button type="submit" 
+                                                        class="p-1.5 w-8 h-8 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition cursor-pointer" 
+                                                        title="Gỡ khỏi Shop">
+                                                    <i class="fa-regular fa-trash-can text-sm"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
-                                </div>
-                            </c:forEach>
+                                </c:forEach>
+                            </div>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs">
-                            <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-3xl mx-auto mb-4">
+                        <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-xs">
+                            <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto mb-3 border border-emerald-100">
                                 <i class="fa-solid fa-motorcycle"></i>
                             </div>
-                            <h3 class="text-base font-extrabold text-slate-900">Chưa có nhân viên giao hàng nào</h3>
-                            <p class="text-xs text-slate-500 max-w-md mx-auto mt-1">
-                                Thêm nhân viên giao hàng của shop để chủ động giao các đơn hàng nông sản, hoa quả tươi chuỗi lạnh đến tận tay khách hàng.
+                            <h3 class="text-base font-extrabold text-slate-900">Shop chưa có nhân viên giao hàng riêng</h3>
+                            <p class="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
+                                Đăng ký tài khoản shipper riêng cho shop để trực tiếp điều phối và giao các đơn hoa quả tươi chuỗi lạnh đến tận tay khách hàng.
                             </p>
                             <button type="button" onclick="openCreateModal()" class="mt-4 px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs inline-flex items-center gap-2 cursor-pointer">
                                 <i class="fa-solid fa-user-plus"></i>
-                                <span>Thêm Nhân Viên Giao Hàng Ngay</span>
+                                <span>Đăng Ký Shipper Ngay</span>
                             </button>
                         </div>
                     </c:otherwise>
@@ -205,7 +225,7 @@
             </main>
         </div>
 
-        <!-- MODAL 1: THÊM MỚI NHÂN VIÊN GIAO HÀNG CHO SHOP -->
+        <!-- MODAL 1: ĐĂNG KÝ TÀI KHOẢN SHIPPER CHO SHOP -->
         <div id="createModalBackdrop" class="modal-backdrop hidden" onclick="closeCreateModal()"></div>
         <div id="createShipperModal" class="modal-dialog hidden w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -214,8 +234,8 @@
                         <i class="fa-solid fa-user-plus"></i>
                     </div>
                     <div>
-                        <h3 class="text-sm font-black text-slate-900">Thêm Nhân Viên Giao Hàng Cho Shop</h3>
-                        <p class="text-[11px] text-slate-400">Tạo tài khoản tài xế riêng thuộc sự quản lý của Gian hàng</p>
+                        <h3 class="text-sm font-black text-slate-900">Đăng Ký Tài Khoản Shipper Cho Shop</h3>
+                        <p class="text-[11px] text-slate-400">Tạo tài khoản và hồ sơ nhân viên giao hàng thuộc sự quản lý của Shop</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeCreateModal()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer">
@@ -226,54 +246,55 @@
             <form action="${pageContext.request.contextPath}/shop/shippers" method="POST" class="p-5 space-y-4">
                 <input type="hidden" name="action" value="create">
 
+                <!-- Form thông tin đăng ký -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Họ và tên tài xế <span class="text-rose-500">*</span></label>
-                        <input type="text" name="fullName" required placeholder="VD: Nguyễn Văn Nam" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                        <input type="text" name="fullName" id="createFullName" required placeholder="VD: Nguyễn Văn Nam" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Số điện thoại <span class="text-rose-500">*</span></label>
-                        <input type="tel" name="phone" required placeholder="VD: 0912345678" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                        <input type="tel" name="phone" id="createPhone" required placeholder="VD: 0912345678" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Email đăng nhập <span class="text-rose-500">*</span></label>
-                        <input type="email" name="email" required placeholder="VD: shipper.nam@dalatfarm.vn" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                        <input type="email" name="email" id="createEmail" required placeholder="VD: shipper.nam@dalatfarm.vn" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu khởi tạo</label>
-                        <input type="text" name="password" value="123456" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu khởi tạo <span class="text-rose-500">*</span></label>
+                        <input type="text" name="password" id="createPassword" value="123456" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500" placeholder="Mặc định: 123456">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Loại phương tiện <span class="text-rose-500">*</span></label>
-                        <select name="vehicleType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500 bg-white">
+                        <select name="vehicleType" id="createVehicleType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500 bg-white">
                             <option value="Xe máy chuyên dụng FreshBox">Xe máy chuyên dụng FreshBox</option>
-                            <option value="Xe máy có thùng giữ nhiệt">Xe máy có thùng giữ nhiệt</option>
-                            <option value="Xe tải bảo ôn 1.25 tấn">Xe tải bảo ôn 1.25 tấn</option>
-                            <option value="Xe tải lạnh 2.5 tấn">Xe tải lạnh 2.5 tấn</option>
+                            <option value="Xe máy có thùng giữ nhiệt FreshFruit">Xe máy có thùng giữ nhiệt FreshFruit</option>
+                            <option value="Xe tải lạnh chuyên dụng 1.25 tấn">Xe tải lạnh chuyên dụng 1.25 tấn</option>
+                            <option value="Xe tải bảo ôn 2.5 tấn">Xe tải bảo ôn 2.5 tấn</option>
                             <option value="Xe bán tải lạnh">Xe bán tải lạnh</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Biển số xe <span class="text-rose-500">*</span></label>
-                        <input type="text" name="vehiclePlate" required placeholder="VD: 29-F1 888.88" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500 uppercase">
+                        <input type="text" name="vehiclePlate" id="createVehiclePlate" required placeholder="VD: 29-F1 888.88" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500 uppercase">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Thiết bị bảo quản lạnh</label>
-                    <input type="text" name="coldStorageType" value="Thùng giữ nhiệt FreshBox 2-5°C" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
+                    <input type="text" name="coldStorageType" id="createColdStorageType" value="Thùng giữ nhiệt FreshBox 2-5°C" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500">
                 </div>
 
                 <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2">
                     <i class="fa-solid fa-circle-info text-emerald-600 mt-0.5 text-sm shrink-0"></i>
                     <div class="leading-relaxed">
-                        <b>Lưu ý:</b> Tài khoản sau khi tạo sẽ trực tiếp thuộc quyền quản lý của Gian hàng. Khi đơn hàng con sẵn sàng giao, bạn có thể phân công trực tiếp cho shipper này.
+                        <b>Quyền hạn:</b> Sau khi đăng ký, tài khoản Shipper sẽ thuộc quyền quản lý trực tiếp của Shop. Shipper có thể dùng Email và Mật khẩu để đăng nhập nhận đơn giao hàng.
                     </div>
                 </div>
 
@@ -282,8 +303,8 @@
                         Hủy
                     </button>
                     <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs cursor-pointer flex items-center gap-1.5">
-                        <i class="fa-solid fa-check"></i>
-                        <span>Tạo Nhân Viên</span>
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Đăng Ký Shipper</span>
                     </button>
                 </div>
             </form>
@@ -361,6 +382,6 @@
         </div>
 
         <!-- Scripts -->
-        <script src="${pageContext.request.contextPath}/assets/js/shop-shippers.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/js/shop-shippers.js?v=<%= System.currentTimeMillis() %>"></script>
     </body>
 </html>

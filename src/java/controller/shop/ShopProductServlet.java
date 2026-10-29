@@ -92,6 +92,7 @@ public class ShopProductServlet extends HttpServlet {
             request.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
 
             int lowStockCount = shopDAO.getLowStockCountByShopId(shopId);
+            session.setAttribute("lowStockCount", lowStockCount);
             request.setAttribute("lowStockCount", lowStockCount);
         }
 

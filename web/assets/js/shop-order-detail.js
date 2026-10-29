@@ -148,19 +148,66 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnDismissCancelModal) btnDismissCancelModal.addEventListener('click', closeCancelModal);
     if (cancelModalBackdrop) cancelModalBackdrop.addEventListener('click', closeCancelModal);
 
-    // Cancel Reason Radio options highlight
+    // Cancel Reason Radio options highlight & dynamic section toggle
     const cancelReasonRadios = document.querySelectorAll('input[name="cancelReasonCategory"]');
-    cancelReasonRadios.forEach(radio => {
-        radio.addEventListener('change', function () {
-            cancelReasonRadios.forEach(r => {
-                const optCard = r.closest('.cancel-reason-option');
-                if (optCard) {
-                    if (r.checked) optCard.classList.add('is-selected');
-                    else optCard.classList.remove('is-selected');
-                }
-            });
+    const qcWasteBreakdown = document.getElementById('qcWasteBreakdown');
+    const outOfStockNotice = document.getElementById('outOfStockNotice');
+    const restockNotice = document.getElementById('restockNotice');
+
+    function updateCancelReasonView() {
+        let selectedVal = '';
+        cancelReasonRadios.forEach(r => {
+            const optCard = r.closest('.cancel-reason-option');
+            if (r.checked) {
+                selectedVal = r.value || '';
+                if (optCard) optCard.classList.add('is-selected');
+            } else {
+                if (optCard) optCard.classList.remove('is-selected');
+            }
         });
+
+        const valLower = selectedVal.toLowerCase();
+        if (valLower.includes('chất lượng') || valLower.includes('dập') || valLower.includes('hỏng')) {
+            if (qcWasteBreakdown) qcWasteBreakdown.classList.remove('hidden');
+            if (restockNotice) restockNotice.classList.add('hidden');
+        } else {
+            if (qcWasteBreakdown) qcWasteBreakdown.classList.add('hidden');
+            if (restockNotice) restockNotice.classList.remove('hidden');
+        }
+    }
+
+    cancelReasonRadios.forEach(radio => {
+        radio.addEventListener('change', updateCancelReasonView);
     });
+    updateCancelReasonView();
+
+    // Modal Return Waste (Hàng hoàn bị hỏng do vận chuyển)
+    const returnWasteModal = document.getElementById('returnWasteModal');
+    const returnWasteModalBackdrop = document.getElementById('returnWasteModalBackdrop');
+    const btnOpenReturnWasteModal = document.getElementById('btnOpenReturnWasteModal');
+    const btnCloseReturnWasteModal = document.getElementById('btnCloseReturnWasteModal');
+    const btnDismissReturnWasteModal = document.getElementById('btnDismissReturnWasteModal');
+
+    function openReturnWasteModal() {
+        if (returnWasteModal && returnWasteModalBackdrop) {
+            returnWasteModal.classList.remove('hidden');
+            returnWasteModalBackdrop.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeReturnWasteModal() {
+        if (returnWasteModal && returnWasteModalBackdrop) {
+            returnWasteModal.classList.add('hidden');
+            returnWasteModalBackdrop.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (btnOpenReturnWasteModal) btnOpenReturnWasteModal.addEventListener('click', openReturnWasteModal);
+    if (btnCloseReturnWasteModal) btnCloseReturnWasteModal.addEventListener('click', closeReturnWasteModal);
+    if (btnDismissReturnWasteModal) btnDismissReturnWasteModal.addEventListener('click', closeReturnWasteModal);
+    if (returnWasteModalBackdrop) returnWasteModalBackdrop.addEventListener('click', closeReturnWasteModal);
 
     // ==========================================
     // 3. Notification Toast for URL Query Params
@@ -175,7 +222,11 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => toast.remove(), 4500);
     }
 
-    if (urlParams.get('cancelled') === '1') {
+    if (urlParams.get('restocked') === '1') {
+        showToast('Đã kiểm định thành công! Toàn bộ hoa quả tươi đã được hoàn trả lại kho bán.', 'fa-solid fa-circle-check', 'bg-emerald-700');
+    } else if (urlParams.get('waste_logged') === '1') {
+        showToast('Đã ghi nhận tiêu hủy hoa quả hỏng do vận chuyển vào sổ Hao hụt thành công!', 'fa-solid fa-trash-can', 'bg-rose-600');
+    } else if (urlParams.get('cancelled') === '1') {
         showToast('Đã hủy đơn hàng con thành công. Hệ thống đã kích hoạt thông báo và hoàn tiền cho khách.', 'fa-solid fa-circle-xmark', 'bg-rose-600');
     } else if (urlParams.get('success') === '1') {
         showToast('Cập nhật trạng thái đơn hàng thành công!', 'fa-solid fa-circle-check', 'bg-emerald-700');

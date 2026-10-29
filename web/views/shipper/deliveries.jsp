@@ -95,9 +95,6 @@
                         </c:if>
                     </div>
                     <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
-                        <span class="badge bg-light text-dark border">
-                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Khu vực: <strong>${not empty driverProfile.operatingCity ? driverProfile.operatingCity : 'Toàn hệ thống'}</strong>
-                        </span>
                         <span class="badge bg-light text-primary border border-primary-subtle">
                             <i class="bi bi-box-seam me-1"></i> Đang phụ trách: <strong>${activeOrderCount != null ? activeOrderCount : 0} đơn</strong>
                         </span>

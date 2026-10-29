@@ -1,6 +1,7 @@
 package controller.shop;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.User;
 import model.DriverProfile;
 import service.IDriverService;
 import service.impl.DriverServiceImpl;
@@ -28,9 +30,16 @@ public class ShopShippersServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
 
-        long shopId = getShopIdFromSession(request);
+        HttpSession session = request.getSession(false);
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+        Long shopId = (session != null && session.getAttribute("shopId") != null)
+                ? ((Number) session.getAttribute("shopId")).longValue() : null;
 
-        // Get shippers of this shop for display
+        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         List<DriverProfile> drivers = driverService.getDriversByShopId(shopId, null, null);
 
         request.setAttribute("drivers", drivers);
@@ -47,7 +56,17 @@ public class ShopShippersServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
 
-        long shopId = getShopIdFromSession(request);
+        HttpSession session = request.getSession(false);
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+        Long shopId = (session != null && session.getAttribute("shopId") != null)
+                ? ((Number) session.getAttribute("shopId")).longValue() : null;
+
+        // Bắt buộc đăng nhập và có quyền SHOP_OWNER
+        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
         String action = request.getParameter("action");
 
         try {
@@ -139,16 +158,4 @@ public class ShopShippersServlet extends HttpServlet {
 
         response.sendRedirect(request.getContextPath() + "/shop/shippers");
     }
-
-    private long getShopIdFromSession(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute("shopId") != null) {
-            try {
-                return ((Number) session.getAttribute("shopId")).longValue();
-            } catch (Exception ignored) {
-            }
-        }
-        return 1L; // Default fallback to Shop 1
-    }
 }
-
