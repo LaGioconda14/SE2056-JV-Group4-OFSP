@@ -11,7 +11,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import model.Shop;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -137,6 +140,26 @@ public class DetailServlet extends HttpServlet {
                         transferFlashMessage(session, request, "cartSuccess", "successMessage");
                         transferFlashMessage(session, request, "cartError", "errorMessage");
                     }
+
+                    request.setAttribute("variants", product.getVariants());
+
+                    List<Map<String, String>> imageList = new ArrayList<>();
+                    if (product.getImages() != null) {
+                        for (String imageUrl : product.getImages()) {
+                            if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                                Map<String, String> image = new LinkedHashMap<>();
+                                image.put("imageUrl", imageUrl);
+                                imageList.add(image);
+                            }
+                        }
+                    }
+                    if (imageList.isEmpty() && product.getImage() != null) {
+                        Map<String, String> image = new LinkedHashMap<>();
+                        image.put("imageUrl", product.getImage());
+                        imageList.add(image);
+                    }
+                    request.setAttribute("imageList", imageList);
+
                     
                     // 3. Forward dữ liệu sang trang detail.jsp đã tạo
                     request.getRequestDispatcher("/views/product/product-detail.jsp").forward(request, response);

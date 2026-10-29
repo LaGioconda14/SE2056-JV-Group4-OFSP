@@ -1093,7 +1093,7 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
-    public List<Category> getHomeFeaturedTabs() {
+    public List<Category> getHomeFeaturedCategoryTabs() {
         List<Category> list = new ArrayList<>();
         String query = "SELECT category_id, category_name, slug "
                 + "FROM categories "
@@ -1994,6 +1994,751 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     cat.setIconClass(rs.getString("icon_class"));
                     cat.setProductCount(rs.getInt("product_count"));
                     list.add(cat);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+
+    // =========================================================================
+    // SHOP PRODUCT & VARIANT MANAGEMENT METHODS (from feature/shop_product)
+    // =========================================================================
+
+    // Return one summary per product with totals derived from its variants.
+    public List<Product> getProductSummariesByShopId(long shopId) {
+        List<Product> products = new ArrayList<>();
+        String sql = "SELECT p.product_id, p.name, p.origin, p.certification, "
+                + "(SELECT TOP 1 p2.storage_temp FROM products p2 WHERE p2.product_id = p.product_id) AS storage_temp, "
+                + "(SELECT TOP 1 p2.description FROM products p2 WHERE p2.product_id = p.product_id) AS description, "
+                + "c.category_name, "
+                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
+                + "COALESCE(MIN(pv.variant_id), 0) AS primary_variant_id, "
+                + "COALESCE(MIN(pv.price), 0) AS min_price, COALESCE(MAX(pv.price), 0) AS max_price, "
+                + "COALESCE(SUM(pv.stock_quantity), 0) AS total_stock, "
+                + "(SELECT COUNT(*) FROM product_variants WHERE product_id = p.product_id) AS variant_count, "
+                + "CASE WHEN p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) THEN 1 ELSE 0 END AS active_for_sale "
+                + "FROM products p "
+                + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                + "LEFT JOIN (SELECT product_id, MAX(image_url) AS image_url FROM product_images WHERE is_thumbnail = 1 GROUP BY product_id) pi ON p.product_id = pi.product_id "
+                + "WHERE p.shop_id = ? "
+                + "GROUP BY p.product_id, p.name, p.origin, p.certification, c.category_name, p.is_active, pi.image_url "
+                + "ORDER BY p.product_id DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product product = new Product();
+                    product.setId(rs.getLong("product_id"));
+                    product.setName(rs.getString("name"));
+                    product.setOrigin(rs.getString("origin"));
+                    product.setCertification(rs.getString("certification"));
+                    product.setStorageTemp(rs.getString("storage_temp"));
+                    product.setDescription(rs.getString("description"));
+                    product.setCategoryName(rs.getString("category_name"));
+                    product.setImage(rs.getString("image_url"));
+                    product.setPrimaryVariantId(rs.getLong("primary_variant_id"));
+                    product.setPrice(rs.getBigDecimal("min_price"));
+                    product.setOldPrice(rs.getBigDecimal("max_price"));
+                    product.setStockQuantity(rs.getInt("total_stock"));
+                    product.setVariantCount(rs.getInt("variant_count"));
+                    product.setActiveForSale(rs.getBoolean("active_for_sale"));
+                    products.add(product);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+
+    // Soft-delete a product and its variants in one transaction.
+    public boolean softDeleteProductAndVariants(long productId, long shopId) {
+        // Deactivate the product record.
+        String updateProductSql = "UPDATE products SET is_active = 0, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE product_id = ? AND shop_id = ?";
+
+        // Deactivate all variants belonging to the product.
+        String updateVariantsSql = "UPDATE product_variants SET is_active = 0, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE product_id = ?";
+
+        // Update both tables atomically.
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+
+            try {
+                // Verify shop ownership while deactivating the product.
+                try (PreparedStatement psProd = conn.prepareStatement(updateProductSql)) {
+                    psProd.setLong(1, productId);
+                    psProd.setLong(2, shopId);
+                    int affectedRows = psProd.executeUpdate();
+                    if (affectedRows == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                // Deactivate the product variants.
+                try (PreparedStatement psVar = conn.prepareStatement(updateVariantsSql)) {
+                    psVar.setLong(1, productId);
+                    psVar.executeUpdate();
+                }
+
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+
+
+    // Count products matching a status tab in shop management.
+    public int countProductsByStatusTab(long shopId, String statusTab) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?");
+
+        if (statusTab != null && !statusTab.trim().isEmpty() && !statusTab.equalsIgnoreCase("all")) {
+            if ("active".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity > 0)");
+            } else if ("vietgap".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND (p.certification LIKE '%VietGAP%' OR p.certification LIKE '%OCOP%')");
+            } else if ("hidden".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND (p.is_active = 0 OR NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity > 0))");
+            } else if ("warning".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity <= 5)");
+            }
+        }
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+
+
+    // Find a variant only when it belongs to the specified shop.
+    public ProductVariant getShopVariantById(long variantId, long shopId) {
+        String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, pv.original_price, "
+                + "pv.stock_quantity, pv.low_stock_threshold, pv.is_active, p.name AS product_name, p.origin, "
+                + "p.storage_temp, p.certification, p.description, c.category_name, "
+                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url "
+                + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                + "LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
+                + "WHERE pv.variant_id = ? AND p.shop_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setLong(1, variantId);
+            statement.setLong(2, shopId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                ProductVariant variant = new ProductVariant();
+                variant.setVariantId(rs.getLong("variant_id"));
+                variant.setProductId(rs.getLong("product_id"));
+                variant.setSku(rs.getString("sku"));
+                variant.setVariantName(rs.getString("variant_name"));
+                variant.setUnit(rs.getString("unit"));
+                variant.setPrice(rs.getBigDecimal("price"));
+                variant.setOriginalPrice(rs.getBigDecimal("original_price"));
+                variant.setStockQuantity(rs.getInt("stock_quantity"));
+                variant.setLowStockThreshold(rs.getInt("low_stock_threshold"));
+                variant.setIsActive(rs.getBoolean("is_active"));
+                variant.setProductName(rs.getString("product_name"));
+                variant.setOrigin(rs.getString("origin"));
+                variant.setStorageTemp(rs.getString("storage_temp"));
+                variant.setCertification(rs.getString("certification"));
+                variant.setDescription(rs.getString("description"));
+                variant.setCategoryName(rs.getString("category_name"));
+                variant.setImage(rs.getString("image_url"));
+                return variant;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
+
+    // Check whether another variant already uses the SKU.
+    public boolean isSkuUsedByAnotherVariant(String sku, long variantId) {
+        String sql = "SELECT 1 FROM product_variants WHERE sku = ? AND variant_id <> ?";
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setString(1, sku);
+            statement.setLong(2, variantId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+
+    // Return the latest active products for home page tabs.
+    public List<Product> getHomeFeaturedTabs() {
+        List<Product> list = new ArrayList<>();
+        // Select product details, category, thumbnail, and active variant prices.
+
+        String query = "SELECT p.product_id, p.name, p.origin, c.category_name, "
+                + "(SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id AND is_thumbnail = 1) AS image_url, "
+                + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
+                + "(SELECT MIN(original_price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS original_price "
+                + "FROM products p "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                + "WHERE p.is_active = 1 "
+                + "ORDER BY p.product_id DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                long id = rs.getLong("product_id");
+                String name = rs.getString("name");
+                String origin = rs.getString("origin");
+                String categoryName = rs.getString("category_name");
+                String image = rs.getString("image_url");
+                if (image == null || image.isEmpty()) {
+                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf"; // Fallback image.
+                }
+
+                BigDecimal price = rs.getBigDecimal("price");
+                if (price == null) {
+                    price = BigDecimal.ZERO;
+                }
+
+                // Use the selling price when no original price is stored.
+                BigDecimal oldPrice = rs.getBigDecimal("original_price");
+                if (oldPrice == null) {
+                    oldPrice = price;
+                }
+
+                // This home page query does not include review statistics.
+                int discountPercent = 0;
+
+                // Map the selected fields to a Product.
+                Product product = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 0.0, 0);
+                product.setOrigin(origin); // Set the product origin.
+
+                list.add(product);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+
+
+    // Return variants for a product owned by the specified shop.
+    public List<ProductVariant> getShopVariantsByProductId(long shopId, long productId) {
+        List<ProductVariant> list = new ArrayList<>();
+        String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, "
+                + "pv.original_price, pv.stock_quantity, pv.is_active, p.name AS product_name "
+                + "FROM product_variants pv JOIN products p ON p.product_id = pv.product_id "
+                + "WHERE p.shop_id = ? AND p.product_id = ? ORDER BY pv.variant_id";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            ps.setLong(2, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ProductVariant variant = new ProductVariant();
+                    variant.setVariantId(rs.getLong("variant_id"));
+                    variant.setProductId(rs.getLong("product_id"));
+                    variant.setSku(rs.getString("sku"));
+                    variant.setVariantName(rs.getString("variant_name"));
+                    variant.setUnit(rs.getString("unit"));
+                    variant.setPrice(rs.getBigDecimal("price"));
+                    variant.setOriginalPrice(rs.getBigDecimal("original_price"));
+                    variant.setStockQuantity(rs.getInt("stock_quantity"));
+                    variant.setIsActive(rs.getBoolean("is_active"));
+                    variant.setProductName(rs.getString("product_name"));
+                    list.add(variant);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+
+    // Search and filter active products belonging to a shop.
+    public List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId,
+            String certification, String stockLevel) {
+        List<Product> products = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.product_id, p.shop_id, p.name, p.category_id, c.category_name, "
+                + "p.origin, p.certification, p.description, p.storage_temp, product_image.image_url, "
+                + "cheapest.variant_id AS primary_variant_id, cheapest.price, "
+                + "cheapest.original_price, cheapest.unit, "
+                + "COALESCE(stock.total_stock, 0) AS total_stock, "
+                + "COALESCE(stock.variant_count, 0) AS variant_count "
+                + "FROM products p "
+                + "LEFT JOIN categories c ON c.category_id = p.category_id "
+                + "OUTER APPLY (SELECT TOP 1 pi.image_url FROM product_images pi "
+                + "WHERE pi.product_id = p.product_id "
+                + "ORDER BY pi.is_thumbnail DESC, pi.display_order ASC, pi.image_id ASC) product_image "
+                + "OUTER APPLY (SELECT TOP 1 pv.variant_id, pv.price, pv.original_price, pv.unit "
+                + "FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 "
+                + "ORDER BY pv.price ASC, pv.variant_id ASC) cheapest "
+                + "OUTER APPLY (SELECT SUM(CASE WHEN pv.is_active = 1 THEN pv.stock_quantity ELSE 0 END) AS total_stock, "
+                + "COUNT(*) AS variant_count FROM product_variants pv WHERE pv.product_id = p.product_id) stock "
+                + "WHERE p.shop_id = ? AND p.is_active = 1");
+
+        List<Object> parameters = new ArrayList<>();
+        parameters.add(shopId);
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String searchTerm = "%" + keyword.trim() + "%";
+            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ? OR EXISTS ("
+                    + "SELECT 1 FROM product_variants pv "
+                    + "WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.sku LIKE ?))");
+            parameters.add(searchTerm);
+            parameters.add(searchTerm);
+            parameters.add(searchTerm);
+        }
+
+        if (categoryId != null && categoryId > 0) {
+            sql.append(" AND p.category_id = ?");
+            parameters.add(categoryId);
+        }
+
+        if (certification != null && !certification.trim().isEmpty()) {
+            sql.append(" AND p.certification = ?");
+            parameters.add(certification.trim());
+        }
+
+        if (stockLevel != null) {
+            switch (stockLevel.trim().toLowerCase()) {
+                case "critical":
+                    sql.append(" AND COALESCE(stock.total_stock, 0) < 5");
+                    break;
+                case "low":
+                    sql.append(" AND COALESCE(stock.total_stock, 0) BETWEEN 5 AND 15");
+                    break;
+                case "stable":
+                    sql.append(" AND COALESCE(stock.total_stock, 0) BETWEEN 16 AND 40");
+                    break;
+                case "abundant":
+                    sql.append(" AND COALESCE(stock.total_stock, 0) > 40");
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        sql.append(" ORDER BY p.created_at DESC, p.product_id DESC");
+
+        try (Connection connection = getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < parameters.size(); i++) {
+                statement.setObject(i + 1, parameters.get(i));
+            }
+
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    Product product = new Product();
+                    product.setId(rs.getLong("product_id"));
+                    product.setShopId(rs.getLong("shop_id"));
+                    product.setName(rs.getString("name"));
+                    product.setCategoryId(rs.getInt("category_id"));
+                    product.setCategoryName(rs.getString("category_name"));
+                    product.setOrigin(rs.getString("origin"));
+                    product.setCertification(rs.getString("certification"));
+                    product.setDescription(rs.getString("description"));
+                    product.setStorageTemp(rs.getString("storage_temp"));
+
+                    String image = rs.getString("image_url");
+                    if (image == null || image.trim().isEmpty()) {
+                        image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                    }
+                    product.setImage(image);
+
+                    product.setPrimaryVariantId(rs.getLong("primary_variant_id"));
+                    BigDecimal price = rs.getBigDecimal("price");
+                    if (price == null) {
+                        price = BigDecimal.ZERO;
+                    }
+                    product.setPrice(price);
+
+                    BigDecimal originalPrice = rs.getBigDecimal("original_price");
+                    if (originalPrice == null || originalPrice.compareTo(price) < 0) {
+                        originalPrice = price;
+                    }
+                    product.setOldPrice(originalPrice);
+                    if (originalPrice.compareTo(price) > 0) {
+                        product.setDiscountPercent(originalPrice.subtract(price)
+                                .multiply(new BigDecimal("100"))
+                                .divide(originalPrice, 0, java.math.RoundingMode.HALF_UP)
+                                .intValue());
+                    }
+
+                    product.setUnit(rs.getString("unit"));
+                    product.setVariantCount(rs.getInt("variant_count"));
+                    int totalStock = rs.getInt("total_stock");
+                    product.setStockQuantity(totalStock);
+                    product.setInStock(totalStock > 0);
+                    product.setActiveForSale(totalStock > 0);
+                    products.add(product);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+
+
+
+    // Add a variant to a product owned by the shop.
+    public long addVariantToProduct(long shopId, long productId, String sku, String variantName, String unit,
+            BigDecimal price, BigDecimal originalPrice, int stockQuantity, int lowStockThreshold, boolean isActive) {
+        String sql = "INSERT INTO product_variants (product_id, sku, variant_name, unit, price, original_price, stock_quantity, low_stock_threshold, is_active, created_at, updated_at) "
+                + "SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP "
+                + "FROM products WHERE product_id = ? AND shop_id = ?";
+        String finalSku = (sku == null || sku.trim().isEmpty()) ? "SKU-" + (System.currentTimeMillis() % 1000000) : sku.trim();
+        int skuRetry = 1;
+        while (isSkuExists(finalSku)) {
+            finalSku = "SKU-" + (System.currentTimeMillis() % 1000000) + "-" + (skuRetry++);
+        }
+
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setLong(1, productId);
+            statement.setString(2, finalSku);
+            statement.setString(3, variantName.trim());
+            statement.setString(4, unit.trim());
+            statement.setBigDecimal(5, price);
+            statement.setBigDecimal(6, originalPrice != null ? originalPrice : price);
+            statement.setInt(7, stockQuantity);
+            statement.setInt(8, lowStockThreshold);
+            statement.setBoolean(9, isActive);
+            statement.setLong(10, productId);
+            statement.setLong(11, shopId);
+            if (statement.executeUpdate() == 0) {
+                return -1;
+            }
+            try (ResultSet keys = statement.getGeneratedKeys()) {
+                return keys.next() ? keys.getLong(1) : -1;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+
+
+    // Update a variant after verifying that it belongs to the shop.
+    public boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName,
+            String unit, BigDecimal price, BigDecimal originalPrice, int stockQuantity,
+            int lowStockThreshold, boolean isActive) {
+        String sql = "UPDATE pv SET pv.sku = ?, pv.variant_name = ?, pv.unit = ?, pv.price = ?, "
+                + "pv.original_price = ?, pv.stock_quantity = ?, pv.low_stock_threshold = ?, pv.is_active = ?, "
+                + "pv.updated_at = CURRENT_TIMESTAMP FROM product_variants pv "
+                + "JOIN products p ON pv.product_id = p.product_id WHERE pv.variant_id = ? AND p.shop_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
+            statement.setString(1, sku == null || sku.trim().isEmpty() ? "SKU-" + variantId : sku.trim());
+            statement.setString(2, variantName.trim());
+            statement.setString(3, unit.trim());
+            statement.setBigDecimal(4, price);
+            statement.setBigDecimal(5, originalPrice != null ? originalPrice : price);
+            statement.setInt(6, stockQuantity);
+            statement.setInt(7, lowStockThreshold);
+            statement.setBoolean(8, isActive);
+            statement.setLong(9, variantId);
+            statement.setLong(10, shopId);
+            return statement.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    // Find a variant by ID and include its related product details.
+
+    public boolean updateFullProduct(long shopId, long variantId, String name, int categoryId, String origin,
+            String storageTemp, String certification, String description,
+            String sku, String variantName, String unit, BigDecimal price,
+            BigDecimal originalPrice, int stockQuantity, boolean isActive,
+            String coverImageUrl) {
+
+        // Resolve the product through its variant and verify shop ownership.
+        String sqlGetProductId = "SELECT pv.product_id FROM product_variants pv "
+                + "JOIN products p ON pv.product_id = p.product_id "
+                + "WHERE pv.variant_id = ? AND p.shop_id = ?";
+
+        String sqlUpdateProduct = "UPDATE products SET name = ?, category_id = ?, origin = ?, storage_temp = ?, certification = ?, description = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
+        String sqlCheckImage = "SELECT image_id FROM product_images WHERE product_id = ? AND is_thumbnail = 1";
+        String sqlUpdateImage = "UPDATE product_images SET image_url = ? WHERE product_id = ? AND is_thumbnail = 1";
+        String sqlInsertImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) VALUES (?, ?, 1, 1, CURRENT_TIMESTAMP)";
+
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
+            long productId = -1;
+
+            // Verify ownership and resolve the product ID.
+            try (PreparedStatement ps = conn.prepareStatement(sqlGetProductId)) {
+                ps.setLong(1, variantId);
+                ps.setLong(2, shopId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        productId = rs.getLong("product_id");
+                    }
+                }
+            }
+
+            // Reject a missing variant or one owned by another shop.
+            if (productId == -1) {
+                conn.rollback();
+                return false;
+            }
+
+            // Update shared product fields.
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateProduct)) {
+                ps.setString(1, name);
+                if (categoryId > 0) {
+                    ps.setInt(2, categoryId);
+                } else {
+                    ps.setNull(2, java.sql.Types.INTEGER);
+                }
+                ps.setString(3, origin != null ? origin.trim() : "");
+                ps.setString(4, storageTemp != null ? storageTemp.trim() : "");
+                ps.setString(5, certification != null ? certification.trim() : "");
+                ps.setString(6, description != null ? description : "");
+                ps.setBoolean(7, isActive);
+                ps.setLong(8, productId);
+                ps.executeUpdate();
+            }
+
+            // Update the thumbnail or insert one when none exists.
+            if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+                boolean hasThumbnail = false;
+                try (PreparedStatement ps = conn.prepareStatement(sqlCheckImage)) {
+                    ps.setLong(1, productId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            hasThumbnail = true;
+                        }
+                    }
+                }
+
+                if (hasThumbnail) {
+                    try (PreparedStatement ps = conn.prepareStatement(sqlUpdateImage)) {
+                        ps.setString(1, coverImageUrl.trim());
+                        ps.setLong(2, productId);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    try (PreparedStatement ps = conn.prepareStatement(sqlInsertImage)) {
+                        ps.setLong(1, productId);
+                        ps.setString(2, coverImageUrl.trim());
+                        ps.executeUpdate();
+                    }
+                }
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin) {
+        return searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, ratingStr, availability, origin, "default");
+    }
+
+    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin, String sortBy) {
+        List<Product> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
+                .append("p.origin, p.certification, pi.image_url, ")
+                // Read the selling and original prices from the lowest-priced variant.
+                .append("(SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS price, ")
+                .append("(SELECT TOP 1 original_price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS original_price, ")
+                .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
+                .append("(SELECT COALESCE(SUM(stock_quantity), 0) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
+                .append("(SELECT AVG(CAST(r.rating AS DECIMAL(5,2))) FROM reviews r ")
+                .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append("JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
+                .append("(SELECT COUNT(*) FROM reviews r ")
+                .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append("JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count, ")
+                .append("(SELECT COALESCE(SUM(oi.quantity), 0) FROM order_items oi ")
+                .append("JOIN product_variants soldv ON soldv.variant_id = oi.variant_id ")
+                .append("WHERE soldv.product_id = p.product_id) AS popularity_count ")
+                .append("FROM products p ")
+                .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
+                .append("OUTER APPLY ( ")
+                .append("    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC ")
+                .append(") pi ")
+                .append("WHERE p.is_active = 1 ");
+
+        List<Object> params = new ArrayList<>();
+
+        // Filter by product name or origin.
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ?) ");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw);
+            params.add(kw);
+        }
+
+        // Filter by category.
+        if (categoryId != null && !categoryId.trim().isEmpty() && !categoryId.equals("0")) {
+            try {
+                int catId = Integer.parseInt(categoryId.trim());
+                sql.append(" AND p.category_id = ? ");
+                params.add(catId);
+            } catch (NumberFormatException ignored) {
+                sql.append(" AND c.slug = ? ");
+                params.add(categoryId.trim());
+            }
+        }
+
+        // Filter by the active variant price range.
+        if (minPriceStr != null && !minPriceStr.trim().isEmpty()) {
+            try {
+                BigDecimal minPrice = new BigDecimal(minPriceStr.trim());
+                sql.append(" AND (SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) >= ? ");
+                params.add(minPrice);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (maxPriceStr != null && !maxPriceStr.trim().isEmpty()) {
+            try {
+                BigDecimal maxPrice = new BigDecimal(maxPriceStr.trim());
+                sql.append(" AND (SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) <= ? ");
+                params.add(maxPrice);
+            } catch (Exception ignored) {
+            }
+        }
+
+        // Filter by minimum rating.
+        if (ratingStr != null && !ratingStr.trim().isEmpty()) {
+            try {
+                BigDecimal minRating = new BigDecimal(ratingStr.trim());
+                sql.append(" AND (SELECT AVG(CAST(r.rating AS DECIMAL(5,2))) FROM reviews r ")
+                        .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                        .append("JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                        .append("WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') >= ? ");
+                params.add(minRating);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        // Filter by stock availability.
+        if (availability != null && availability.equals("in_stock")) {
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
+        } else if (availability != null && availability.equals("out_of_stock")) {
+            sql.append(" AND NOT EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
+        }
+
+        // Filter by origin.
+        if (origin != null && !origin.trim().isEmpty()) {
+            sql.append(" AND p.origin LIKE ? ");
+            params.add("%" + origin.trim() + "%");
+        }
+
+        String orderBy;
+        if ("newest".equals(sortBy)) {
+            orderBy = "p.created_at DESC, p.product_id DESC";
+        } else if ("popular".equals(sortBy)) {
+            orderBy = "popularity_count DESC, p.product_id DESC";
+        } else if ("price_asc".equals(sortBy)) {
+            orderBy = "price ASC, p.product_id DESC";
+        } else if ("price_desc".equals(sortBy)) {
+            orderBy = "price DESC, p.product_id DESC";
+        } else if ("rating_desc".equals(sortBy)) {
+            orderBy = "avg_rating DESC, reviews_count DESC, p.product_id DESC";
+        } else {
+            orderBy = "p.is_featured DESC, p.product_id DESC";
+        }
+        sql.append(" ORDER BY ").append(orderBy);
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product p = new Product();
+                    p.setId(rs.getLong("product_id"));
+                    p.setName(rs.getString("name"));
+                    p.setCategoryId(rs.getInt("category_id"));
+                    p.setCategoryName(rs.getString("category_name"));
+
+                    String img = rs.getString("image_url");
+                    if (img == null || img.trim().isEmpty()) {
+                        img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                    }
+                    p.setImage(img);
+
+                    BigDecimal price = rs.getBigDecimal("price");
+                    if (price == null) {
+                        price = BigDecimal.ZERO;
+                    }
+                    p.setPrice(price);
+
+                    // Read the original price from the database.
+                    BigDecimal oldPrice = rs.getBigDecimal("original_price");
+                    if (oldPrice == null || oldPrice.compareTo(price) < 0) {
+                        oldPrice = price; // Nếu giá gốc rỗng hoặc nhỏ hơn giá bán thì mặc định bằng giá bán
+                    }
+                    p.setOldPrice(oldPrice);
+
+                    // Calculate the actual discount percentage.
+                    int discountPercent = 0;
+                    if (oldPrice.compareTo(price) > 0) {
+                        BigDecimal discountAmount = oldPrice.subtract(price);
+                        discountPercent = discountAmount.multiply(new BigDecimal("100"))
+                                .divide(oldPrice, 0, java.math.RoundingMode.HALF_UP)
+                                .intValue();
+                    }
+                    p.setDiscountPercent(discountPercent);
+
+                    p.setRating(rs.getDouble("avg_rating"));
+                    p.setReviewsCount(rs.getInt("reviews_count"));
+
+                    p.setOrigin(rs.getString("origin"));
+                    p.setCertification(rs.getString("certification"));
+                    p.setUnit(rs.getString("unit"));
+
+                    int totalStock = rs.getInt("total_stock");
+                    p.setStockQuantity(totalStock);
+                    p.setInStock(totalStock > 0);
+
+                    list.add(p);
                 }
             }
         } catch (Exception e) {

@@ -67,9 +67,13 @@ public class SearchServlet extends HttpServlet {
         String categoryId = request.getParameter("categoryId");
         String minPriceStr = request.getParameter("minPrice");
         String maxPriceStr = request.getParameter("maxPrice");
+        String ratingStr = request.getParameter("rating");
+        String availability = request.getParameter("availability");
+        String origin = request.getParameter("origin");
         
-        // Gọi hàm DAO lọc kết hợp từ khóa, danh mục và khoảng giá
-        List<Product> listProduct = productService.searchAndFilterProducts(query, categoryId, minPriceStr, maxPriceStr);
+        // Kết hợp từ khóa và các điều kiện bộ lọc
+        List<Product> listProduct = productService.searchAndFilterProducts(query, categoryId, minPriceStr, maxPriceStr,
+                ratingStr, availability, origin);
         
         // Lấy danh sách danh mục đổ ra sidebar bộ lọc
         List<Category> listCategories = productService.getHierarchyCategories(); 
@@ -78,6 +82,9 @@ public class SearchServlet extends HttpServlet {
         request.setAttribute("selectedCategory", categoryId);
         request.setAttribute("minPrice", minPriceStr);
         request.setAttribute("maxPrice", maxPriceStr);
+        request.setAttribute("selectedRating", ratingStr);
+        request.setAttribute("selectedAvailability", availability);
+        request.setAttribute("selectedOrigin", origin);
         request.setAttribute("listProduct", listProduct);
         request.setAttribute("listCategories", listCategories);
         

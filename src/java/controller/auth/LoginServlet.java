@@ -172,7 +172,7 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
                 break;
             default:
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
                 break;
         }
     }

@@ -8,11 +8,12 @@ import model.Product;
 import model.ProductVariant;
 
 public interface IProductService {
-    //lấy list sản phẩm
-    List<ProductVariant> getVariantsByShopId(long shopId);
+    //lấy danh sách sản phẩm theo shopID
+    List<Product> getProductSummariesByShopId(long shopId);
     int countProductsByShopId(long shopId);
     int countVariantsByShopId(long shopId);
-    int countVariantsByStatusTab(long shopId, String statusTab);
+    int countVariantsByStatusTab(long shopId, String tab);
+    int countProductsByStatusTab(long shopId, String statusTab);
     //lấy danh mục
     List<Category> getAllCategories();
     //Lấy chứng nhận
@@ -28,12 +29,22 @@ public interface IProductService {
                            String sku, String variantName, String unit, BigDecimal price, 
                            BigDecimal originalPrice, int stockQuantity, int lowStockThreshold,
                            boolean isActive, String coverImageUrl, List<String> detailImages, String batchCode) throws IllegalArgumentException;
+    long addVariantToProduct(long shopId, long productId, String sku, String variantName, String unit,
+                             String price, String originalPrice, String stockQuantity,
+                             String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     
     boolean softDeleteVariant(long variantId, long shopId);
+    
+    boolean softDeleteProductAndVariants(long productId, long shopId);
+    boolean softDeleteProduct(long productId, long shopId);
     // Lấy thông tin biến thể sản phẩm theo ID để sửa
     ProductVariant getVariantById(long variantId);
+    ProductVariant getShopVariantById(long variantId, long shopId);
+    boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName, String unit,
+                                 String price, String originalPrice, String stockQuantity,
+                                 String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     //sửa
-    public boolean updateFullProduct(long variantId, String name, int categoryId, String origin, 
+    public boolean updateFullProduct(long shopId,long variantId, String name, int categoryId, String origin, 
                                      String storageTemp, String certification, String description, 
                                      String sku, String variantName, String unit, BigDecimal price, 
                                      BigDecimal originalPrice, int stockQuantity, boolean isActive, 
@@ -46,7 +57,7 @@ public interface IProductService {
     /**
      * Lấy danh sách các tab danh mục hiển thị trên trang chủ.
      */
-    List<Category> getHomeFeaturedTabs();
+    List<Product> getHomeFeaturedTabs();
 
     /**
      * Lấy danh sách danh mục theo cấu trúc phân cấp đa tầng (cha - con).
@@ -59,9 +70,18 @@ public interface IProductService {
     // Các phương thức cho View Product Details
     Product getProductById(int productId);
     List<ProductVariant> getVariantsByProductId(long productId);
+    List<ProductVariant> getShopVariantsByProductId(long shopId, long productId);
+    List<ProductVariant> getVariantsByShopId(long shopId);
     List<String> getImagesByProductId(long productId);
     
     List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr);
+    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin);
+    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+            String ratingStr, String availability, String origin, String sortBy);
+
+    // Thanh tìm kiếm cho shop
+    List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId, String certification, String stockLevel);
 
     // Advanced Catalog methods
     List<Category> getAllCategoriesWithCount();

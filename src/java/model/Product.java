@@ -15,11 +15,8 @@ public class Product {
     private int discountPercent;
     private double rating;
     private int reviewsCount; 
-    private long shopId;
     private String shopName;
     private String shopStatus;
-    private String categorySlug;
-    private String filterSlugs;
     private String thumbnailUrl;
     private long defaultVariantId;
     private BigDecimal minPrice;
@@ -33,6 +30,12 @@ public class Product {
     private String description;
     private String storageTemp;
     private String certification;
+    private long shopId;
+    private String categorySlug;
+    private String filterSlugs;
+    private long primaryVariantId;
+    private int variantCount;
+    private boolean activeForSale;
     
     // Thuộc tính phục vụ trang Product Detail
     private List<String> images;             // Thư viện ảnh chi tiết
@@ -71,9 +74,6 @@ public class Product {
     public long getProductId() { return id; }
     public void setProductId(long productId) { this.id = productId; }
 
-    public long getShopId() { return shopId; }
-    public void setShopId(long shopId) { this.shopId = shopId; }
-
     public int getCategoryId() { return categoryId; }
     public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 
@@ -82,9 +82,6 @@ public class Product {
 
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
-
-    public String getCategorySlug() { return categorySlug; }
-    public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }
 
     public String getShopName() { return shopName; }
     public void setShopName(String shopName) { this.shopName = shopName; }
@@ -198,6 +195,22 @@ public class Product {
 
     public List<ProductVariant> getVariants() { return variants; }
     public void setVariants(List<ProductVariant> variants) { this.variants = variants; }
+
+    public long getPrimaryVariantId() { return primaryVariantId; }
+    public void setPrimaryVariantId(long primaryVariantId) { this.primaryVariantId = primaryVariantId; }
+
+    public int getVariantCount() { return variantCount; }
+    public void setVariantCount(int variantCount) { this.variantCount = variantCount; }
+
+    public boolean isActiveForSale() { return activeForSale; }
+    public void setActiveForSale(boolean activeForSale) { this.activeForSale = activeForSale; }
+
+
+    public long getShopId() { return shopId; }
+    public void setShopId(long shopId) { this.shopId = shopId; }
+
+    public String getCategorySlug() { return categorySlug; }
+    public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }
 
     public void setFilterSlugs(String filterSlugs) { this.filterSlugs = filterSlugs; }
     public String getFilterSlugs() {

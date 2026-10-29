@@ -1,5 +1,7 @@
 package controller.admin;
 
+import com.google.gson.Gson;
+
 import dao.AdminManagementDAO;
 import model.User;
 import java.io.IOException;
@@ -21,6 +23,7 @@ import jakarta.servlet.http.HttpSession;
 public class AdminShopServlet extends HttpServlet {
 
     private final AdminManagementDAO dao = new AdminManagementDAO();
+    private final Gson gson = new Gson();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -60,7 +63,6 @@ public class AdminShopServlet extends HttpServlet {
         }
 
         // Flash message sau thao tác
-        HttpSession session = request.getSession();
         Object flash = session.getAttribute("shopAdminMsg");
         if (flash != null) {
             request.setAttribute("flashMessage", flash);

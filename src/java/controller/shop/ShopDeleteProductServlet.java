@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -61,25 +62,30 @@ public class ShopDeleteProductServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
         Long shopId = (Long) session.getAttribute("shopId");
 
-        if (shopId == null) {
+        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
         try {
+            String productIdStr = request.getParameter("productId");
             String idStr = request.getParameter("id");
-            if (idStr != null && !idStr.trim().isEmpty()) {
+            boolean success = false;
+            if (productIdStr != null && !productIdStr.trim().isEmpty()) {
+                long productId = Long.parseLong(productIdStr);
+                success = productService.softDeleteProduct(productId, shopId);
+            } else if (idStr != null && !idStr.trim().isEmpty()) {
                 long variantId = Long.parseLong(idStr);
+                success = productService.softDeleteVariant(variantId, shopId);
+            }
 
-                boolean success = productService.softDeleteVariant(variantId, shopId);
-
-                if (success) {
-                    session.setAttribute("successMessage", "Đã ẩn/xóa sản phẩm thành công!");
-                } else {
-                    session.setAttribute("errorMessage", "Thao tác thất bại hoặc bạn không có quyền!");
-                }
+            if (success) {
+                session.setAttribute("successMessage", "Đã ẩn/xóa sản phẩm thành công!");
+            } else {
+                session.setAttribute("errorMessage", "Thao tác thất bại hoặc bạn không có quyền!");
             }
         } catch (Exception e) {
             e.printStackTrace();

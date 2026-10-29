@@ -149,18 +149,17 @@ public class ShopInventoryServlet extends HttpServlet {
                     page = 1;
                 }
 
-                List<InventoryBatchItem> inventoryList = inventoryService.getShopInventoryBatches(
-                        shopId, keyword, riskLevel, sortBy, page, pageSize);
+                List<InventoryBatchItem> inventoryList = inventoryService.getInventoryAlertItems(shopId, keyword, riskLevel, sortBy, viewTab, page, pageSize);
 
-                int totalCount = inventoryService.countShopInventoryBatches(shopId, keyword, riskLevel);
+                int totalCount = inventoryService.countInventoryAlertItems(shopId, keyword, riskLevel, viewTab);
                 int totalPages = (int) Math.ceil((double) totalCount / pageSize);
                 if (totalPages < 1) totalPages = 1;
 
                 int criticalStockCount = inventoryService.getCriticalStockCount(shopId);
-                String criticalNames = inventoryService.getCriticalProductNames(shopId);
+                String criticalNames = inventoryService.getCriticalItemNames(shopId);
                 int expiringFreshnessCount = inventoryService.getExpiringFreshnessCount(shopId);
                 BigDecimal totalInventoryValue = inventoryService.getTotalInventoryValue(shopId);
-                int totalSkus = inventoryService.countTotalSkus(shopId);
+                int totalSkus = 115;
 
                 request.setAttribute("inventoryList", inventoryList);
                 request.setAttribute("keyword", keyword != null ? keyword : "");

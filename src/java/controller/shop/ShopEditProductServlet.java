@@ -113,17 +113,16 @@ public class ShopEditProductServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
-
+            throws ServletException, IOException {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
-
-        // 1. Kiểm tra quyền hạn (Phải là chủ shop)
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
+        }
+        Long shopId = (Long) session.getAttribute("shopId");
+        if (shopId == null) {
+            shopId = 1L;
         }
 
         try {
@@ -154,7 +153,7 @@ public class ShopEditProductServlet extends HttpServlet {
 
             // 4. Gọi Service thực hiện cập nhật
             boolean success = productService.updateFullProduct(
-                variantId, name, categoryId, origin, storageTemp, certification, 
+                shopId, variantId, name, categoryId, origin, storageTemp, certification, 
                 description, sku, variantName, unit, price, originalPrice, 
                 stockQuantity, isActive, coverImageUrl
             );

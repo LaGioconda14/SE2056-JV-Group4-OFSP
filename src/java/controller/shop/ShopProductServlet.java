@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 import model.Shop;
+import model.Product;
 import model.ProductVariant;
 import dao.ShopDAO;
 import service.IOrderFulfillmentService;
@@ -27,54 +28,67 @@ public class ShopProductServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
 
+        // 1. Kiểm tra session đăng nhập
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
-        // 1. Kiểm tra đăng nhập và phân quyền Chủ shop
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        // 2. Lưu thông tin cơ bản của User vào Session để hiển thị ở Header
-        session.setAttribute("userfullname", user.getFullName());
-        session.setAttribute("email", user.getEmail());
-        session.setAttribute("userAvatar", user.getAvatarUrl());
-
-        // 3. Lấy thông tin Shop và nạp vào Session
+        // 2. Lấy thông tin shopId của user hiện tại
         Long shopId = (Long) session.getAttribute("shopId");
-        Shop shop = (Shop) session.getAttribute("shopObj");
-
-        if (shopId == null || shop == null) {
-            try {
-                shop = shopDAO.getShopByOwnerId(user.getId()); // Hoặc user.getId() tùy model của ông
-                if (shop != null) {
-                    shopId = (long) shop.getShopId();
-                    session.setAttribute("shopId", shopId);
-                    session.setAttribute("shopName", shop.getShopName());
-                    session.setAttribute("shopLogo", shop.getLogoUrl()); // Hoặc getLogoUrl()
-                    session.setAttribute("shopObj", shop);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+        if (shopId == null) {
+            Shop shop = shopDAO.getShopByOwnerId(user.getId());
+            if (shop != null) {
+                shopId = shop.getShopId();
+                session.setAttribute("shopId", shopId);
+                session.setAttribute("shop", shop);
             }
         }
 
-        // 4. Lấy danh sách sản phẩm/biến thể thông qua tầng Service
+        // 3. Xử lý thông báo chuyển tiếp (Flash message) nếu có
+        String message = request.getParameter("message");
+        if (message != null) {
+            switch (message) {
+                case "add_success":
+                    request.setAttribute("successMessage", "Thêm nông sản mới thành công!");
+                    break;
+                case "updated_success":
+                    request.setAttribute("successMessage", "Cập nhật thông tin nông sản thành công!");
+                    break;
+                case "delete_success":
+                    request.setAttribute("successMessage", "Đã xóa sản phẩm thành công!");
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // 4. Lấy danh sách sản phẩm và biến thể của shop
         if (shopId != null) {
+            // Lấy danh sách tóm tắt Product (kèm biến thể count, giá min-max, tổng tồn kho)
+            List<Product> products = productService.getProductSummariesByShopId(shopId);
+            request.setAttribute("products", products);
+            request.setAttribute("totalProductsCount", productService.countProductsByShopId(shopId));
+
+            request.setAttribute("tabAllProductCount", productService.countProductsByStatusTab(shopId, "all"));
+            request.setAttribute("tabActiveProductCount", productService.countProductsByStatusTab(shopId, "active"));
+            request.setAttribute("tabVietgapProductCount", productService.countProductsByStatusTab(shopId, "vietgap"));
+            request.setAttribute("tabHiddenProductCount", productService.countProductsByStatusTab(shopId, "hidden"));
+            request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
+
+            // Hỗ trợ tương thích ngược cho các tab variant
             List<ProductVariant> listVariants = productService.getVariantsByShopId(shopId);
             request.setAttribute("listVariants", listVariants);
-            request.setAttribute("totalVariantsCount", listVariants.size());
+            request.setAttribute("totalVariantsCount", listVariants != null ? listVariants.size() : 0);
             int totalProducts = productService.countProductsByShopId(shopId);
             int totalSkus = productService.countVariantsByShopId(shopId);
-            request.setAttribute("listVariants", listVariants);
             request.setAttribute("totalProducts", totalProducts);
             request.setAttribute("totalSkus", totalSkus);
-            //========Đếm sản phẩm theo tab=============//
+
             int tabAllCount = productService.countVariantsByStatusTab(shopId, "all");
             int tabActiveCount = productService.countVariantsByStatusTab(shopId, "active");
             int tabVietgapCount = productService.countVariantsByStatusTab(shopId, "vietgap");
