@@ -2,6 +2,24 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%
+    // Tự động load danh sách sản phẩm trang chủ và danh mục qua Service nếu truy cập trực tiếp
+    if (request.getAttribute("listProduct") == null) {
+        service.IProductService pService = new service.impl.ProductServiceImpl();
+        request.setAttribute("listProduct", pService.getHomeProducts());
+        request.setAttribute("homeTabs", pService.getHomeFeaturedTabs());
+        request.setAttribute("hierarchyCategories", pService.getHierarchyCategories());
+        request.setAttribute("categories", pService.getAllCategories());
+    }
+    if (request.getAttribute("homeTabs") == null) {
+        service.IProductService pService = new service.impl.ProductServiceImpl();
+        request.setAttribute("homeTabs", pService.getHomeFeaturedTabs());
+    }
+    if (request.getAttribute("hierarchyCategories") == null) {
+        service.IProductService pService = new service.impl.ProductServiceImpl();
+        request.setAttribute("hierarchyCategories", pService.getHierarchyCategories());
+    }
+%>
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth">
     <head>
@@ -12,6 +30,9 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/home.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/wishlist.css">
+        <script src="${pageContext.request.contextPath}/assets/js/home.js" defer></script>
+
     </head>
     <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -142,14 +163,25 @@
                 <c:choose>
                     <c:when test="${not empty listProduct}">
                         <c:forEach var="p" items="${listProduct}">
+
+                            <%-- Trạng thái yêu thích của sản phẩm này với người dùng đang đăng nhập --%>
+                            <c:set var="wished" value="${not empty wishlistIds and wishlistIds.contains(p.id)}" />
+
                             <div class="product-card group">
-                                <div>
+                                <div class="product-card-media">
+                                    <button type="button" class="wishlist-btn ${wished ? 'active' : ''}" data-product-id="${p.id}"
+                                            aria-pressed="${wished}" title="${wished ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'}"
+                                            aria-label="Yêu thích sản phẩm ${p.name}">
+                                        <i class="${wished ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                                    </button>
+
                                     <a href="${pageContext.request.contextPath}/detail?id=${p.id}" class="product-thumb">
                                         <img src="${p.image}" alt="${p.name}">
                                     </a>
                                     
                                     <div class="product-meta">
                                         <span class="product-cat-name">${p.categoryName}</span>
+
                                     </div>
 
                                     <h3 class="product-name" title="${p.name}">
@@ -177,6 +209,7 @@
                                             </span>
                                         </c:if>
                                     </div>
+
                                     <form action="${pageContext.request.contextPath}/cart/add" method="POST">
                                         <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
                                         <input type="hidden" name="variantId" value="${p.defaultVariantId}" />
@@ -212,6 +245,7 @@
                                     <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
                                 </svg>
                             </div>
+
                             <span class="text-xl font-extrabold text-white">Gốc <span class="text-emerald-500">Vườn</span></span>
                         </div>
                         <p class="text-xs sm:text-sm text-gray-400 mb-6 leading-relaxed max-w-sm">
@@ -236,6 +270,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Đăng Ký Nhận Bản Tin</h3>
+
                         <form id="newsletterForm" class="space-y-2">
                             <input type="email" placeholder="Nhập email của bạn..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" required>
                             <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow">Đăng Ký Ngay</button>
@@ -243,11 +278,14 @@
                     </div>
                 </div>
                 <div class="pt-8 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-4">
+
                     <p>&copy; 2026 Gốc Vườn Marketplace Inc. Bảo lưu mọi quyền.</p>
                 </div>
             </div>
         </footer>
 
         <script src="${pageContext.request.contextPath}/assets/js/home.js" defer></script>
+        <%-- Nút trái tim nổi góc dưới bên phải: bấm vào để mở trang danh sách yêu thích --%>
+        <jsp:include page="/views/common/wishlist-fab.jsp" />
     </body>
 </html>

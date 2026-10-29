@@ -12,10 +12,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.User;
 
-
 /**
  * Data Access Object for User entity handling SQL Server operations.
- * Compatible with [dbo].[users] and [dbo].[roles] tables.
+ * Compatible with [dbo].[users], [dbo].[roles], and [dbo].[shops] tables.
  */
 public class UserDAO extends DBContext {
 
@@ -31,10 +30,12 @@ public class UserDAO extends DBContext {
      */
     public User checkLogin(String email, String password) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
-                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at, "
+                   + "       s.shop_name "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
+                   + "LEFT JOIN shops s ON u.user_id = s.owner_id "
                    + "WHERE LOWER(u.email) = LOWER(?)";
 
         Connection conn = getConnection();
@@ -69,10 +70,12 @@ public class UserDAO extends DBContext {
      */
     public User findByEmail(String email) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
-                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at, "
+                   + "       s.shop_name "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
+                   + "LEFT JOIN shops s ON u.user_id = s.owner_id "
                    + "WHERE LOWER(u.email) = LOWER(?)";
 
         Connection conn = getConnection();
@@ -144,10 +147,12 @@ public class UserDAO extends DBContext {
      */
     public User findById(int id) {
         String sql = "SELECT u.user_id, u.email, u.password_hash, u.full_name, u.phone, u.avatar_url, u.gender, u.birth_date, "
-                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at "
+                   + "       COALESCE(r.role_name, 'CUSTOMER') AS role, u.status, u.created_at, "
+                   + "       s.shop_name "
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
+                   + "LEFT JOIN shops s ON u.user_id = s.owner_id "
                    + "WHERE u.user_id = ?";
 
         Connection conn = getConnection();
@@ -452,5 +457,24 @@ public class UserDAO extends DBContext {
         user.setCreatedAt(rs.getTimestamp("created_at"));
         return user;
     }
-}
 
+    /**
+     * Cập nhật riêng ngày sinh của user.
+     */
+    public boolean updateBirthDate(int userId, java.sql.Date birthDate) {
+        String sql = "UPDATE users SET birth_date = ?, updated_at = GETDATE() WHERE user_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in updateBirthDate");
+            return false;
+        }
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setDate(1, birthDate);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating birth date for user ID: " + userId, ex);
+        }
+        return false;
+    }
+}

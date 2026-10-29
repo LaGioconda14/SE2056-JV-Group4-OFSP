@@ -26,6 +26,8 @@ web/assets/images/avatars/*
 
 docs/
 .vscode/
+src/java/oauth.properties
+
 # OAuth private credentials (keep secret)
 *oauth.properties
 !*oauth.properties.example

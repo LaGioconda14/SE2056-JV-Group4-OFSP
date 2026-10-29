@@ -7,6 +7,7 @@
     <display-name>Online Fruit Shopping Platform</display-name>
 
     <!-- Filters -->
+    <!-- Filters -->
     <filter>
         <filter-name>AuthFilter</filter-name>
         <filter-class>filter.AuthFilter</filter-class>
@@ -15,6 +16,11 @@
         <filter-name>AuthFilter</filter-name>
         <url-pattern>/change-password</url-pattern>
         <url-pattern>/profile</url-pattern>
+        <url-pattern>/cart</url-pattern>
+        <url-pattern>/cart/*</url-pattern>
+        <url-pattern>/choose-role</url-pattern>
+        <url-pattern>/register-shop</url-pattern>
+        <url-pattern>/seller/*</url-pattern>
     </filter-mapping>
 
     <!-- Servlets -->

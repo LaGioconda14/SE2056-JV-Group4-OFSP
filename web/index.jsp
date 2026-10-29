@@ -5,7 +5,7 @@
     if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
         response.sendRedirect(request.getContextPath() + "/admin/dashboard");
     } else if (user != null && "SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
-        response.sendRedirect(request.getContextPath() + "/shop/products");
+        response.sendRedirect(request.getContextPath() + "/shop/dashboard");
     } else {
         response.sendRedirect(request.getContextPath() + "/home");
     }

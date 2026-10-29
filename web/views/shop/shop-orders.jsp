@@ -6,31 +6,26 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quản Lý Đơn Hàng Con - Gốc Vườn Seller Center</title>
+        <jsp:include page="/views/shop/layout/head.jsp" />
 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-        <script src="https://cdn.tailwindcss.com"></script>
+
 
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-orders.css">
         <script src="${pageContext.request.contextPath}/assets/js/shop-orders.js"></script>
     </head>
-    <body class="bg-slate-50 text-slate-800 antialiased font-['Inter'] min-h-screen flex m-0">
+    <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-            <jsp:param name="activeMenu" value="orders" />
+            <jsp:param name="active" value="orders" />
         </jsp:include>
 
-        <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div class="shop-main-wrapper">
 
             <jsp:include page="/views/shop/layout/header.jsp" />
 
-            <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-5">
+            <main class="shop-content-container">
 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>

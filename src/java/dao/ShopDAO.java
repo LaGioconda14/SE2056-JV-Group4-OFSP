@@ -13,7 +13,7 @@ import util.DBContext;
 public class ShopDAO extends DBContext {
 
     /**
-     * Lấy shopID bằng id người dùng đã được lưu bằng session
+     * Lấy shop_id dựa vào owner_id (chính là user_id của chủ shop)
      */
     public long getShopIdByOwnerId(long ownerId) {
         long shopId = -1;
@@ -313,7 +313,39 @@ public class ShopDAO extends DBContext {
         }
         return total;
     }
+    /**
+     * Cập nhật logo/banner của shop (bảng shops). Tham số null = giữ nguyên.
+     */
+    public boolean updateShopMedia(long ownerId, String logoUrl, String bannerUrl) {
+        String sql = "UPDATE shops SET logo_url = COALESCE(?, logo_url), "
+                + "banner_url = COALESCE(?, banner_url), updated_at = GETDATE() WHERE owner_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, logoUrl);
+            ps.setString(2, bannerUrl);
+            ps.setLong(3, ownerId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
+    /**
+     * Đổi trạng thái shop (ACTIVE / PAUSED / CLOSED).
+     * Chỉ đổi khi shop đang ở một trong 3 trạng thái này, tránh seller tự gỡ SUSPENDED / PENDING do Admin đặt.
+     */
+    public boolean updateShopStatusBySeller(long ownerId, String newStatus) {
+        String sql = "UPDATE shops SET status = ?, updated_at = GETDATE() "
+                + "WHERE owner_id = ? AND status IN ('ACTIVE', 'PAUSED', 'CLOSED')";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newStatus);
+            ps.setLong(2, ownerId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
     public List<Review> getReviewsByShopId(long shopId) {
         List<Review> list = new ArrayList<>();
         String sql = "SELECT r.review_id, r.order_item_id, r.customer_id, r.shop_id, r.rating, "
@@ -351,4 +383,6 @@ public class ShopDAO extends DBContext {
         }
         return list;
     }
+
+    
 }

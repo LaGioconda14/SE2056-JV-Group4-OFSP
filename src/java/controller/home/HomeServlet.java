@@ -12,10 +12,16 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import jakarta.servlet.http.HttpSession;
+import model.User;
 import model.Product;
 import service.IProductService;
+import service.IWishlistService;
 import service.impl.ProductServiceImpl;
+import service.impl.WishlistServiceImpl;
 
 /**
  *
@@ -25,6 +31,7 @@ import service.impl.ProductServiceImpl;
 public class HomeServlet extends HttpServlet {
 
     private final IProductService productService = new ProductServiceImpl();
+    private final IWishlistService wishlistService = new WishlistServiceImpl();
    
     /** 
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -74,6 +81,21 @@ public class HomeServlet extends HttpServlet {
             e.printStackTrace();
         }
         
+        // Danh sách sản phẩm yêu thích của người dùng đang đăng nhập (để tô sáng trái tim trên từng sản phẩm)
+        Set<Long> wishlistIds = Collections.emptySet();
+        HttpSession session = request.getSession(false);
+        Object sessionUser = (session != null) ? session.getAttribute("user") : null;
+        if (sessionUser instanceof User) {
+            try {
+                wishlistIds = wishlistService.getProductIds((long) ((User) sessionUser).getId());
+            } catch (RuntimeException e) {
+                // Chưa tạo bảng wishlists hoặc lỗi DB: trang chủ vẫn hiển thị bình thường
+                e.printStackTrace();
+            }
+        }
+        request.setAttribute("wishlistIds", wishlistIds);
+        request.setAttribute("wishlistCount", wishlistIds.size());
+
         // KIỂM TRA LẠI: Nếu file home.jsp nằm ở gốc web, hãy dùng "/home.jsp" 
         // Nếu nằm trong thư mục views/customer/home.jsp thì chỉnh lại cho khớp.
         request.getRequestDispatcher("/views/home.jsp").forward(request, response);

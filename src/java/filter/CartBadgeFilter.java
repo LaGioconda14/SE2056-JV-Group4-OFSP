@@ -16,7 +16,7 @@ import service.ICartService;
 import service.impl.CartServiceImpl;
 
 @WebFilter(filterName = "CartBadgeFilter", urlPatterns = {
-    "", "/home", "/products", "/search", "/detail", "/cart", "/cart/*", "/checkout", "/order/*", "/profile", "/profile/*"
+    "", "/home", "/products", "/search", "/detail", "/cart", "/cart/*", "/checkout", "/order/*", "/profile", "/profile/*", "/wishlist"
 })
 public class CartBadgeFilter implements Filter {
 

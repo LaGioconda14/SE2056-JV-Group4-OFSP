@@ -1,5 +1,6 @@
 package dao;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -114,6 +115,44 @@ public class CouponDAO extends DBContext {
             if (ps.executeUpdate() != 1) {
                 throw new SQLException("Mã giảm giá đã hết hạn hoặc hết lượt sử dụng!");
             }
+        }
+    }
+
+    /**
+     * Chặn khách dùng voucher vượt per_user_limit (mặc định 1 lần/khách).
+     * Gọi TRONG transaction tạo đơn, SAU findByIdForUpdate (đã khóa dòng coupon nên không bị race).
+     */
+    public void assertPerUserLimit(Connection conn, int couponId, long customerId) throws SQLException {
+        String sql = "SELECT c.code, c.per_user_limit, "
+                + "(SELECT COUNT(*) FROM coupon_usages u WHERE u.coupon_id = c.coupon_id AND u.customer_id = ?) AS used_by_user "
+                + "FROM coupons c WHERE c.coupon_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, customerId);
+            ps.setInt(2, couponId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int perUser = rs.getInt("per_user_limit");
+                    if (rs.wasNull() || perUser <= 0) {
+                        perUser = 1;
+                    }
+                    if (rs.getInt("used_by_user") >= perUser) {
+                        throw new SQLException("Bạn đã dùng hết số lần cho phép của mã giảm giá '"
+                                + rs.getString("code") + "'!");
+                    }
+                }
+            }
+        }
+    }
+
+    /** Lưu lịch sử dùng voucher (hiển thị ở trang "Lịch sử sử dụng" của shop). */
+    public void recordUsage(Connection conn, int couponId, long orderId, long customerId, BigDecimal discount) throws SQLException {
+        String sql = "INSERT INTO coupon_usages (coupon_id, order_id, customer_id, discount_amount) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, couponId);
+            ps.setLong(2, orderId);
+            ps.setLong(3, customerId);
+            ps.setBigDecimal(4, discount == null ? BigDecimal.ZERO : discount);
+            ps.executeUpdate();
         }
     }
 

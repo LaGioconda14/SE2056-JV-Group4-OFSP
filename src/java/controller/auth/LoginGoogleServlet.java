@@ -9,17 +9,20 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import dao.UserDAO;
 import model.GoogleAccount;
 import model.User;
 import service.IUserService;
 import service.impl.UserServiceImpl;
 import util.GoogleOAuthUtil;
+import util.SellerSessionUtil;
 
 @WebServlet(name = "LoginGoogleServlet", urlPatterns = {"/login-google"})
 public class LoginGoogleServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(LoginGoogleServlet.class.getName());
     private final IUserService userService = new UserServiceImpl();
+    private final UserDAO userDAO = new UserDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -36,11 +39,7 @@ public class LoginGoogleServlet extends HttpServlet {
 
         if (session.getAttribute("user") != null) {
             User loggedUser = (User) session.getAttribute("user");
-            if ("ADMIN".equalsIgnoreCase(loggedUser.getRole())) {
-                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-            }
+            redirectAfterLogin(loggedUser, false, session, request, response);
             return;
         }
 
@@ -61,6 +60,10 @@ public class LoginGoogleServlet extends HttpServlet {
             String accessToken = GoogleOAuthUtil.getToken(code);
             GoogleAccount googleUser = GoogleOAuthUtil.getUserInfo(accessToken);
 
+            // Tài khoản Google chưa có trong hệ thống sẽ được tự tạo -> sau đó cho chọn vai trò
+            String googleEmail = (googleUser.getEmail() == null) ? "" : googleUser.getEmail().trim().toLowerCase();
+            boolean isNewAccount = !googleEmail.isEmpty() && !userDAO.isEmailExists(googleEmail);
+
             User user = userService.processGoogleLogin(googleUser);
 
             session.setAttribute("user", user);
@@ -71,6 +74,7 @@ public class LoginGoogleServlet extends HttpServlet {
             }
 
             session.setAttribute("successMessage", "Đăng nhập Google thành công! Xin chào " + user.getFullName() + ".");
+
             if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
                 session.setAttribute("warningMessage", 
                     "Tài khoản của bạn đăng ký qua Google hiện chưa có Số điện thoại! "
@@ -78,16 +82,30 @@ public class LoginGoogleServlet extends HttpServlet {
                 session.setAttribute("phoneMissingWarning", true);
             }
 
-            if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
-                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-            }
-
+            redirectAfterLogin(user, isNewAccount, session, request, response);
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Google Authentication Error", ex);
             session.setAttribute("errorMessage", "Lỗi trong quá trình xác thực Google: " + ex.getMessage());
             response.sendRedirect(request.getContextPath() + "/login");
+        }
+    }
+
+    /** Điều hướng sau khi đăng nhập theo vai trò (chủ shop vào thẳng dashboard, tài khoản mới chọn vai trò). */
+    private void redirectAfterLogin(User user, boolean isNewAccount, HttpSession session,
+            HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String ctx = request.getContextPath();
+        String role = (user == null || user.getRole() == null) ? "CUSTOMER" : user.getRole().toUpperCase();
+        switch (role) {
+            case "ADMIN":
+                response.sendRedirect(ctx + "/admin/dashboard");
+                break;
+            case "SHOP_OWNER":
+                SellerSessionUtil.initShopSession(session, user.getId());
+                response.sendRedirect(ctx + "/shop/dashboard");
+                break;
+            default:
+                response.sendRedirect(ctx + (isNewAccount ? "/choose-role" : "/home"));
+                break;
         }
     }
 

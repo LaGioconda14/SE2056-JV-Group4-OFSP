@@ -124,4 +124,3 @@ public class ShopStorefrontServlet extends HttpServlet {
         doGet(request, response);
     }
 }
-

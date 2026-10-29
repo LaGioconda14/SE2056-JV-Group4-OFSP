@@ -12,6 +12,7 @@ import service.IProductService;
 
 public class ProductServiceImpl implements IProductService {
 
+    
     private final ProductDAO productDAO = new ProductDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
 

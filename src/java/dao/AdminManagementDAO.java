@@ -1,5 +1,6 @@
 package dao;
 
+import model.ShopRequest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,76 +25,143 @@ public class AdminManagementDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(AdminManagementDAO.class.getName());
     private static final DecimalFormat CURRENCY_FORMAT = new DecimalFormat("#,### ₫");
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy");
-
+private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy");
+    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
     // -------------------------------------------------------------------------
     // 1. SHOPS & VENDORS
     // -------------------------------------------------------------------------
+    /** Biểu thức trạng thái "hiệu lực" của 1 hồ sơ: đã duyệt thì lấy trạng thái thật của shop (shops.status). */
+    private static final String EFF_STATUS =
+            "CASE WHEN sr.status = 'APPROVED' THEN COALESCE(s.status, 'ACTIVE') "
+          + "     WHEN sr.status = 'PENDING_KYC' THEN 'PENDING' ELSE sr.status END";
+
+    /**
+     * Thống kê gian hàng - tính trên cùng nguồn dữ liệu với danh sách (shop_requests + shops)
+     * nên số trên thẻ / tab luôn khớp với số dòng hiển thị.
+     */
     public Map<String, Object> getShopStats() {
         Map<String, Object> stats = new HashMap<>();
-        String sql = "SELECT (SELECT COUNT(*) FROM shops) as total_shops, "
-                   + "       (SELECT COUNT(*) FROM shops WHERE status = 'ACTIVE') as active_shops, "
-                   + "       (SELECT COUNT(*) FROM shop_requests WHERE status = 'PENDING') as pending_kyc, "
-                   + "       (SELECT COALESCE(AVG(commission_rate), 8.0) FROM shops WHERE status = 'ACTIVE') as avg_comm, "
-                   + "       (SELECT COUNT(*) FROM shops WHERE status = 'SUSPENDED') as suspended";
+        stats.put("totalShops", 0);
+        stats.put("approvedShops", 0);
+        stats.put("activeShops", 0);
+        stats.put("pendingKyc", 0);
+        stats.put("rejected", 0);
+        stats.put("suspended", 0);
+        stats.put("paused", 0);
+        stats.put("avgComm", "0.0%");
+        stats.put("openDisputes", 0);
+        stats.put("oldestPendingDays", -1);
+        stats.put("suspendRate", "0.0");
 
-        try (Connection conn = getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            if (rs.next()) {
-                stats.put("totalShops", rs.getInt("total_shops"));
-                stats.put("activeShops", rs.getInt("active_shops"));
-                stats.put("pendingKyc", rs.getInt("pending_kyc"));
-                stats.put("avgComm", String.format("%.1f%%", rs.getDouble("avg_comm")));
-                stats.put("suspended", rs.getInt("suspended"));
+        String sql = "SELECT COUNT(*) AS total, "
+                + "COALESCE(SUM(CASE WHEN sr.status IN ('PENDING','PENDING_KYC') THEN 1 ELSE 0 END), 0) AS pending, "
+                + "COALESCE(SUM(CASE WHEN sr.status = 'REJECTED' THEN 1 ELSE 0 END), 0) AS rejected, "
+                + "COALESCE(SUM(CASE WHEN sr.status = 'APPROVED' THEN 1 ELSE 0 END), 0) AS approved, "
+                + "COALESCE(SUM(CASE WHEN " + EFF_STATUS + " = 'ACTIVE' THEN 1 ELSE 0 END), 0) AS active, "
+                + "COALESCE(SUM(CASE WHEN " + EFF_STATUS + " = 'SUSPENDED' THEN 1 ELSE 0 END), 0) AS suspended, "
+                + "COALESCE(SUM(CASE WHEN " + EFF_STATUS + " IN ('PAUSED','CLOSED') THEN 1 ELSE 0 END), 0) AS paused, "
+                + "MIN(CASE WHEN sr.status IN ('PENDING','PENDING_KYC') THEN sr.created_at END) AS oldest_pending "
+                + "FROM shop_requests sr LEFT JOIN shops s ON s.owner_id = sr.user_id";
+        try (Connection conn = getConnection()) {
+            try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+                if (rs.next()) {
+                    int approved = rs.getInt("approved");
+                    int suspended = rs.getInt("suspended");
+                    stats.put("totalShops", rs.getInt("total"));
+                    stats.put("approvedShops", approved);
+                    stats.put("activeShops", rs.getInt("active"));
+                    stats.put("pendingKyc", rs.getInt("pending"));
+                    stats.put("rejected", rs.getInt("rejected"));
+                    stats.put("suspended", suspended);
+                    stats.put("paused", rs.getInt("paused"));
+                    stats.put("suspendRate", String.format(java.util.Locale.US, "%.1f",
+                            approved > 0 ? suspended * 100.0 / approved : 0.0));
+                    Timestamp oldest = rs.getTimestamp("oldest_pending");
+                    if (oldest != null) {
+                        long days = java.time.temporal.ChronoUnit.DAYS.between(
+                                oldest.toLocalDateTime().toLocalDate(), java.time.LocalDate.now());
+                        stats.put("oldestPendingDays", (int) Math.max(days, 0));
+                    }
+                }
+            }
+            try (Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT AVG(commission_rate) FROM shops WHERE status <> 'PENDING_KYC'")) {
+                if (rs.next()) {
+                    stats.put("avgComm", String.format(java.util.Locale.US, "%.1f%%", rs.getDouble(1)));
+                }
+            }
+            try (Statement st = conn.createStatement();
+                 ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM disputes WHERE status IN ('OPEN','MEDIATING')")) {
+                if (rs.next()) {
+                    stats.put("openDisputes", rs.getInt(1));
+                }
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Error in getShopStats: " + ex.getMessage());
-            stats.put("totalShops", 6);
-            stats.put("activeShops", 4);
-            stats.put("pendingKyc", 2);
-            stats.put("avgComm", "8.0%");
-            stats.put("suspended", 0);
         }
         return stats;
     }
 
-    public List<Map<String, Object>> getShopsList() {
-        return getShopsList(null, null, null, null);
+    /** Các loại hình kinh doanh đang có trong DB (cho ô lọc). */
+    public List<String> getShopBusinessTypes() {
+        List<String> types = new ArrayList<>();
+        String sql = "SELECT DISTINCT business_type FROM shop_requests WHERE business_type IS NOT NULL ORDER BY business_type";
+        try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                types.add(rs.getString(1));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.WARNING, "Error in getShopBusinessTypes: " + ex.getMessage());
+        }
+        return types;
     }
 
+    /**
+     * Danh sách hồ sơ/gian hàng. statusFilter: ALL | ACTIVE | PENDING_KYC | SUSPENDED | REJECTED.
+     * Trường "status" trả về là trạng thái hiệu lực: ACTIVE / PAUSED / CLOSED / SUSPENDED / PENDING / REJECTED.
+     */
     public List<Map<String, Object>> getShopsList(String statusFilter, String typeFilter, String certFilter, String searchKeyword) {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT s.shop_id, s.shop_name, s.business_type, s.province, s.address, s.phone, s.certification_name, ")
-           .append("       s.commission_rate, s.rating, s.total_sales_amount, s.total_orders_count, s.status, ")
-           .append("       s.suspended_reason, s.suspended_at, s.created_at, ")
-           .append("       u.user_id as owner_id, u.full_name as owner_name, u.email as owner_email, u.phone as owner_phone ")
-           .append("FROM shops s ")
-           .append("JOIN users u ON s.owner_id = u.user_id ");
+        sql.append("SELECT sr.request_id, sr.user_id, sr.shop_name, sr.business_type, sr.province, sr.district, sr.ward, ")
+           .append("       sr.street_address, sr.pickup_address, sr.return_address, sr.id_card_number, sr.tax_code, ")
+           .append("       sr.id_card_front_url, sr.id_card_back_url, sr.shop_description, sr.shop_logo_url, sr.shop_banner_url, ")
+           .append("       sr.bank_name, sr.bank_account_number, sr.bank_account_holder, sr.reason, sr.created_at, sr.reviewed_at, ")
+           .append("       ").append(EFF_STATUS).append(" AS eff_status, ")
+           .append("       u.full_name AS owner_name, u.email AS owner_email, u.phone AS owner_phone, u.birth_date AS owner_birth, ")
+           .append("       rv.full_name AS reviewer_name, s.commission_rate, s.rating, ")
+           .append("       sus.message AS suspend_message, sus.created_at AS suspended_at ")
+           .append("FROM shop_requests sr ")
+           .append("JOIN users u ON sr.user_id = u.user_id ")
+           .append("LEFT JOIN users rv ON rv.user_id = sr.reviewed_by ")
+           .append("LEFT JOIN shops s ON s.owner_id = sr.user_id ")
+           .append("OUTER APPLY (SELECT TOP 1 n.message, n.created_at FROM notifications n ")
+           .append("             WHERE n.user_id = sr.user_id AND n.type = 'SHOP_SUSPENDED' ")
+           .append("             ORDER BY n.created_at DESC) sus ");
 
         List<String> conditions = new ArrayList<>();
         List<Object> params = new ArrayList<>();
 
-        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
-            conditions.add("s.status = ?");
-            params.add(statusFilter.trim());
+        String st = statusFilter == null ? "ALL" : statusFilter.trim().toUpperCase();
+        if ("ACTIVE".equals(st)) {
+            conditions.add(EFF_STATUS + " = 'ACTIVE'");
+        } else if ("PENDING_KYC".equals(st) || "PENDING".equals(st)) {
+            conditions.add(EFF_STATUS + " = 'PENDING'");
+        } else if ("SUSPENDED".equals(st)) {
+            conditions.add(EFF_STATUS + " = 'SUSPENDED'");
+        } else if ("REJECTED".equals(st)) {
+            conditions.add(EFF_STATUS + " = 'REJECTED'");
         }
 
         if (typeFilter != null && !typeFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(typeFilter.trim())) {
-            conditions.add("s.business_type = ?");
+            conditions.add("sr.business_type = ?");
             params.add(typeFilter.trim());
-        }
-
-        if (certFilter != null && !certFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(certFilter.trim())) {
-            conditions.add("LOWER(s.certification_name) LIKE ?");
-            params.add("%" + certFilter.trim().toLowerCase() + "%");
         }
 
         if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
             String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
-            conditions.add("(LOWER(s.shop_name) LIKE ? OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(COALESCE(u.phone, '')) LIKE ? OR LOWER(s.province) LIKE ? OR CAST(s.shop_id AS VARCHAR(20)) LIKE ?)");
-            params.add(kw);
+            conditions.add("(LOWER(sr.shop_name) LIKE ? OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ? "
+                    + "OR LOWER(sr.province) LIKE ? OR sr.id_card_number LIKE ?)");
             params.add(kw);
             params.add(kw);
             params.add(kw);
@@ -104,402 +172,171 @@ public class AdminManagementDAO extends DBContext {
         if (!conditions.isEmpty()) {
             sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
         }
-        sql.append("ORDER BY s.shop_id ASC");
+        sql.append("ORDER BY sr.request_id DESC");
 
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        SimpleDateFormat dt = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+        SimpleDateFormat d = new SimpleDateFormat("dd/MM/yyyy");
 
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     Map<String, Object> item = new HashMap<>();
-                    item.put("shopId", rs.getLong("shop_id"));
+                    long reqId = rs.getLong("request_id");
+                    String eff = rs.getString("eff_status");
+                    item.put("requestId", reqId);
+                    item.put("shopId", reqId);
+                    item.put("status", eff);
                     item.put("shopName", rs.getString("shop_name"));
                     item.put("businessType", rs.getString("business_type"));
                     item.put("province", rs.getString("province"));
-                    item.put("address", rs.getString("address"));
-                    item.put("phone", rs.getString("phone") != null ? rs.getString("phone") : rs.getString("owner_phone"));
-                    item.put("certificationName", rs.getString("certification_name"));
-                    item.put("commissionRate", String.format("%.1f%%", rs.getDouble("commission_rate")));
-                    item.put("rating", String.format("%.2f", rs.getDouble("rating")));
-                    item.put("totalSalesFormatted", CURRENCY_FORMAT.format(rs.getDouble("total_sales_amount")));
-                    item.put("totalOrdersCount", rs.getInt("total_orders_count"));
-                    item.put("status", rs.getString("status"));
-                    item.put("suspendedReason", rs.getString("suspended_reason"));
-                    Timestamp st = rs.getTimestamp("suspended_at");
-                    item.put("suspendedAtFormatted", st != null ? DATE_FORMAT.format(st) : null);
-                    Timestamp ct = rs.getTimestamp("created_at");
-                    item.put("createdAtFormatted", ct != null ? DATE_FORMAT.format(ct) : "-");
-                    item.put("ownerId", rs.getLong("owner_id"));
+                    item.put("district", rs.getString("district"));
+                    item.put("ward", rs.getString("ward"));
+                    item.put("streetAddress", rs.getString("street_address"));
+                    item.put("pickupAddress", rs.getString("pickup_address"));
+                    item.put("returnAddress", rs.getString("return_address"));
+                    item.put("idCardNumber", rs.getString("id_card_number"));
+                    item.put("taxCode", rs.getString("tax_code"));
+                    item.put("idCardFrontUrl", rs.getString("id_card_front_url"));
+                    item.put("idCardBackUrl", rs.getString("id_card_back_url"));
+                    item.put("shopDescription", rs.getString("shop_description"));
+                    item.put("shopLogoUrl", rs.getString("shop_logo_url"));
+                    item.put("shopBannerUrl", rs.getString("shop_banner_url"));
+                    item.put("bankName", rs.getString("bank_name"));
+                    item.put("bankAccountNumber", rs.getString("bank_account_number"));
+                    item.put("bankAccountHolder", rs.getString("bank_account_holder"));
                     item.put("ownerName", rs.getString("owner_name"));
                     item.put("ownerEmail", rs.getString("owner_email"));
                     item.put("ownerPhone", rs.getString("owner_phone"));
+                    item.put("reviewerName", rs.getString("reviewer_name"));
+                    java.sql.Date birth = rs.getDate("owner_birth");
+                    item.put("ownerBirth", birth != null ? d.format(birth) : null);
+                    Timestamp created = rs.getTimestamp("created_at");
+                    item.put("createdAt", created != null ? dt.format(created) : null);
+                    Timestamp reviewed = rs.getTimestamp("reviewed_at");
+                    item.put("reviewedAt", reviewed != null ? dt.format(reviewed) : null);
+                    item.put("rejectReason", "REJECTED".equals(eff) ? rs.getString("reason") : null);
+
+                    if ("SUSPENDED".equals(eff)) {
+                        String msg = rs.getString("suspend_message");
+                        if (msg != null) {
+                            int idx = msg.indexOf("Lý do: ");
+                            item.put("suspendReason", idx >= 0 ? msg.substring(idx + 7) : msg);
+                        }
+                        Timestamp sAt = rs.getTimestamp("suspended_at");
+                        item.put("suspendedAt", sAt != null ? dt.format(sAt) : null);
+                    }
+                    java.math.BigDecimal comm = rs.getBigDecimal("commission_rate");
+                    item.put("commissionRate", comm != null ? comm.toPlainString() + "%" : null);
                     list.add(item);
                 }
             }
         } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Error in getShopsList: " + ex.getMessage());
+            System.err.println("Lỗi SQL tại getShopsList: " + ex.getMessage());
+            ex.printStackTrace();
         }
         return list;
     }
 
-    /**
-     * Get list of shop onboarding / KYC requests from customers.
-     */
-    public List<Map<String, Object>> getShopRequestsList(String statusFilter, String searchKeyword) {
-        List<Map<String, Object>> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT sr.request_id, sr.user_id, sr.shop_name, sr.business_type, sr.produce_specialty, ")
-           .append("       sr.certification_name, sr.farm_address, sr.province, sr.id_card_number, sr.reason, ")
-           .append("       sr.review_note, sr.status, sr.reviewed_by, sr.reviewed_at, sr.created_at, ")
-           .append("       u.full_name as applicant_name, u.email as applicant_email, u.phone as applicant_phone, ")
-           .append("       rev.full_name as reviewer_name ")
-           .append("FROM shop_requests sr ")
-           .append("JOIN users u ON sr.user_id = u.user_id ")
-           .append("LEFT JOIN users rev ON sr.reviewed_by = rev.user_id ");
-
-        List<String> conditions = new ArrayList<>();
-        List<Object> params = new ArrayList<>();
-
-        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
-            conditions.add("sr.status = ?");
-            params.add(statusFilter.trim().toUpperCase());
-        }
-
-        if (searchKeyword != null && !searchKeyword.trim().isEmpty()) {
-            String kw = "%" + searchKeyword.trim().toLowerCase() + "%";
-            conditions.add("(LOWER(sr.shop_name) LIKE ? OR LOWER(u.full_name) LIKE ? OR LOWER(u.email) LIKE ? OR LOWER(COALESCE(u.phone, '')) LIKE ? OR LOWER(sr.province) LIKE ? OR LOWER(COALESCE(sr.certification_name, '')) LIKE ?)");
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-        }
-
-        if (!conditions.isEmpty()) {
-            sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
-        }
-        sql.append("ORDER BY CASE WHEN sr.status = 'PENDING' THEN 1 ELSE 2 END, sr.created_at DESC");
-
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            for (int i = 0; i < params.size(); i++) {
-                ps.setObject(i + 1, params.get(i));
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, Object> req = new HashMap<>();
-                    req.put("requestId", rs.getLong("request_id"));
-                    req.put("userId", rs.getLong("user_id"));
-                    req.put("shopName", rs.getString("shop_name"));
-                    req.put("businessType", rs.getString("business_type"));
-                    req.put("produceSpecialty", rs.getString("produce_specialty"));
-                    req.put("certificationName", rs.getString("certification_name"));
-                    req.put("farmAddress", rs.getString("farm_address"));
-                    req.put("province", rs.getString("province"));
-                    req.put("idCardNumber", rs.getString("id_card_number"));
-                    req.put("reason", rs.getString("reason"));
-                    req.put("reviewNote", rs.getString("review_note"));
-                    req.put("status", rs.getString("status"));
-                    req.put("applicantName", rs.getString("applicant_name"));
-                    req.put("applicantEmail", rs.getString("applicant_email"));
-                    req.put("applicantPhone", rs.getString("applicant_phone") != null ? rs.getString("applicant_phone") : "Chưa cập nhật");
-                    req.put("reviewerName", rs.getString("reviewer_name"));
-                    Timestamp cat = rs.getTimestamp("created_at");
-                    req.put("createdAtFormatted", cat != null ? DATE_FORMAT.format(cat) : "-");
-                    Timestamp rat = rs.getTimestamp("reviewed_at");
-                    req.put("reviewedAtFormatted", rat != null ? DATE_FORMAT.format(rat) : "-");
-                    list.add(req);
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.WARNING, "Error in getShopRequestsList: " + ex.getMessage());
-        }
-        return list;
+    /** Tạm khóa gian hàng đã duyệt + gửi thông báo (kèm lý do) tới chủ shop. */
+    public boolean suspendShop(int requestId, String reason, int adminId) {
+        String sqlShop = "UPDATE shops SET status = 'SUSPENDED', updated_at = GETDATE() "
+                + "WHERE owner_id = (SELECT user_id FROM shop_requests WHERE request_id = ?) "
+                + "AND status IN ('ACTIVE','PAUSED','CLOSED')";
+        String sqlNoti = "INSERT INTO notifications (user_id, title, message, type, reference_type, reference_id, is_read) "
+                + "SELECT sr.user_id, N'Gian hàng của bạn đã bị tạm khóa', "
+                + "CONCAT(N'Gian hàng \"', sr.shop_name, N'\" đã bị Ban quản trị sàn tạm khóa. Lý do: ', ?), "
+                + "'SHOP_SUSPENDED', 'SHOP_REQUEST', sr.request_id, 0 "
+                + "FROM shop_requests sr WHERE sr.request_id = ?";
+        return changeShopStatus(requestId, sqlShop, sqlNoti, reason);
     }
 
-    /**
-     * Get detail of a specific shop request.
-     */
-    public Map<String, Object> getShopRequestDetail(long requestId) {
-        String sql = "SELECT sr.request_id, sr.user_id, sr.shop_name, sr.business_type, sr.produce_specialty, "
-                   + "       sr.certification_name, sr.farm_address, sr.province, sr.id_card_number, sr.reason, "
-                   + "       sr.review_note, sr.status, sr.reviewed_by, sr.reviewed_at, sr.created_at, "
-                   + "       u.full_name as applicant_name, u.email as applicant_email, u.phone as applicant_phone, "
-                   + "       rev.full_name as reviewer_name "
-                   + "FROM shop_requests sr "
-                   + "JOIN users u ON sr.user_id = u.user_id "
-                   + "LEFT JOIN users rev ON sr.reviewed_by = rev.user_id "
-                   + "WHERE sr.request_id = ?";
-
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, requestId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Map<String, Object> req = new HashMap<>();
-                    req.put("requestId", rs.getLong("request_id"));
-                    req.put("userId", rs.getLong("user_id"));
-                    req.put("shopName", rs.getString("shop_name"));
-                    req.put("businessType", rs.getString("business_type"));
-                    req.put("produceSpecialty", rs.getString("produce_specialty"));
-                    req.put("certificationName", rs.getString("certification_name"));
-                    req.put("farmAddress", rs.getString("farm_address"));
-                    req.put("province", rs.getString("province"));
-                    req.put("idCardNumber", rs.getString("id_card_number"));
-                    req.put("reason", rs.getString("reason"));
-                    req.put("reviewNote", rs.getString("review_note"));
-                    req.put("status", rs.getString("status"));
-                    req.put("applicantName", rs.getString("applicant_name"));
-                    req.put("applicantEmail", rs.getString("applicant_email"));
-                    req.put("applicantPhone", rs.getString("applicant_phone") != null ? rs.getString("applicant_phone") : "Chưa cập nhật");
-                    req.put("reviewerName", rs.getString("reviewer_name"));
-                    Timestamp cat = rs.getTimestamp("created_at");
-                    req.put("createdAtFormatted", cat != null ? DATE_FORMAT.format(cat) : "-");
-                    Timestamp rat = rs.getTimestamp("reviewed_at");
-                    req.put("reviewedAtFormatted", rat != null ? DATE_FORMAT.format(rat) : "-");
-                    return req;
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in getShopRequestDetail for requestId=" + requestId, ex);
-        }
-        return null;
+    /** Mở khóa gian hàng đang bị tạm khóa + gửi thông báo. */
+    public boolean unlockShop(int requestId, int adminId) {
+        String sqlShop = "UPDATE shops SET status = 'ACTIVE', updated_at = GETDATE() "
+                + "WHERE owner_id = (SELECT user_id FROM shop_requests WHERE request_id = ?) "
+                + "AND status = 'SUSPENDED'";
+        String sqlNoti = "INSERT INTO notifications (user_id, title, message, type, reference_type, reference_id, is_read) "
+                + "SELECT sr.user_id, N'Gian hàng của bạn đã được mở khóa', "
+                + "CONCAT(N'Gian hàng \"', sr.shop_name, N'\" đã được mở khóa và có thể hoạt động trở lại.', ?), "
+                + "'SHOP_UNLOCKED', 'SHOP_REQUEST', sr.request_id, 0 "
+                + "FROM shop_requests sr WHERE sr.request_id = ?";
+        return changeShopStatus(requestId, sqlShop, sqlNoti, "");
     }
 
-    /**
-     * Approve shop request:
-     * 1. Update shop_requests to APPROVED with reviewer and note.
-     * 2. Create or activate shop in shops table with status ACTIVE.
-     * 3. Assign SHOP_OWNER role to user_roles.
-     */
-    public boolean approveShopRequest(long requestId, long reviewerUserId, String reviewNote, double commissionRate) {
-        String queryReqSql = "SELECT user_id, shop_name, business_type, produce_specialty, certification_name, farm_address, province, reason "
-                           + "FROM shop_requests WHERE request_id = ?";
-        String updateReqSql = "UPDATE shop_requests SET status = 'APPROVED', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, review_note = ? WHERE request_id = ?";
-        String checkShopSql = "SELECT shop_id FROM shops WHERE owner_id = ?";
-        String updateShopSql = "UPDATE shops SET shop_name = ?, business_type = ?, certification_name = ?, address = ?, province = ?, commission_rate = ?, status = 'ACTIVE', updated_at = CURRENT_TIMESTAMP WHERE owner_id = ?";
-        String insertShopSql = "INSERT INTO shops (owner_id, shop_name, slug, business_type, description, address, province, certification_name, commission_rate, rating, total_sales_amount, total_orders_count, status, created_at, updated_at) "
-                             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 5.0, 0, 0, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-        String checkRoleSql = "SELECT 1 FROM user_roles WHERE user_id = ? AND role_id = (SELECT role_id FROM roles WHERE role_name = 'SHOP_OWNER')";
-        String insertRoleSql = "INSERT INTO user_roles (user_id, role_id) VALUES (?, (SELECT role_id FROM roles WHERE role_name = 'SHOP_OWNER'))";
-
+    private boolean changeShopStatus(int requestId, String sqlShop, String sqlNoti, String notiParam) {
         try (Connection conn = getConnection()) {
+            if (conn == null) {
+                return false;
+            }
             conn.setAutoCommit(false);
-            long userId = 0;
-            String shopName = null, businessType = null, produceSpecialty = null, cert = null, farmAddress = null, province = null, reason = null;
-
-            try (PreparedStatement psReq = conn.prepareStatement(queryReqSql)) {
-                psReq.setLong(1, requestId);
-                try (ResultSet rs = psReq.executeQuery()) {
-                    if (rs.next()) {
-                        userId = rs.getLong("user_id");
-                        shopName = rs.getString("shop_name");
-                        businessType = rs.getString("business_type");
-                        produceSpecialty = rs.getString("produce_specialty");
-                        cert = rs.getString("certification_name");
-                        farmAddress = rs.getString("farm_address");
-                        province = rs.getString("province");
-                        reason = rs.getString("reason");
-                    } else {
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(sqlShop)) {
+                    ps.setInt(1, requestId);
+                    if (ps.executeUpdate() == 0) {
                         conn.rollback();
                         return false;
                     }
                 }
-            }
-
-            // 1. Update shop_requests
-            try (PreparedStatement psUpReq = conn.prepareStatement(updateReqSql)) {
-                psUpReq.setLong(1, reviewerUserId);
-                psUpReq.setString(2, reviewNote != null && !reviewNote.trim().isEmpty() ? reviewNote.trim() : "Hồ sơ hợp lệ, đã thẩm định và cấp phép mở gian hàng.");
-                psUpReq.setLong(3, requestId);
-                psUpReq.executeUpdate();
-            }
-
-            // 2. Insert or update shops
-            boolean shopExists = false;
-            try (PreparedStatement psCheckShop = conn.prepareStatement(checkShopSql)) {
-                psCheckShop.setLong(1, userId);
-                try (ResultSet rs = psCheckShop.executeQuery()) {
-                    if (rs.next()) shopExists = true;
+                try (PreparedStatement ps = conn.prepareStatement(sqlNoti)) {
+                    ps.setString(1, notiParam == null ? "" : notiParam);
+                    ps.setInt(2, requestId);
+                    ps.executeUpdate();
                 }
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
             }
-
-            if (shopExists) {
-                try (PreparedStatement psUpShop = conn.prepareStatement(updateShopSql)) {
-                    psUpShop.setString(1, shopName);
-                    psUpShop.setString(2, businessType);
-                    psUpShop.setString(3, cert);
-                    psUpShop.setString(4, farmAddress);
-                    psUpShop.setString(5, province);
-                    psUpShop.setDouble(6, commissionRate > 0 ? commissionRate : 8.0);
-                    psUpShop.setLong(7, userId);
-                    psUpShop.executeUpdate();
-                }
-            } else {
-                try (PreparedStatement psInShop = conn.prepareStatement(insertShopSql)) {
-                    psInShop.setLong(1, userId);
-                    psInShop.setString(2, shopName);
-                    psInShop.setString(3, generateSlug(shopName));
-                    psInShop.setString(4, businessType);
-                    psInShop.setString(5, produceSpecialty != null ? produceSpecialty : reason);
-                    psInShop.setString(6, farmAddress);
-                    psInShop.setString(7, province);
-                    psInShop.setString(8, cert);
-                    psInShop.setDouble(9, commissionRate > 0 ? commissionRate : 8.0);
-                    psInShop.executeUpdate();
-                }
-            }
-
-            // 3. Assign SHOP_OWNER role in user_roles
-            boolean hasRole = false;
-            try (PreparedStatement psCheckRole = conn.prepareStatement(checkRoleSql)) {
-                psCheckRole.setLong(1, userId);
-                try (ResultSet rs = psCheckRole.executeQuery()) {
-                    if (rs.next()) hasRole = true;
-                }
-            }
-
-            if (!hasRole) {
-                try (PreparedStatement psInRole = conn.prepareStatement(insertRoleSql)) {
-                    psInRole.setLong(1, userId);
-                    psInRole.executeUpdate();
-                }
-            }
-
-            conn.commit();
-            return true;
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in approveShopRequest for requestId=" + requestId, ex);
-            return false;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        return false;
     }
 
-    /**
-     * Reject shop request with review note / reason.
-     */
-    public boolean rejectShopRequest(long requestId, long reviewerUserId, String reviewNote) {
-        String updateReqSql = "UPDATE shop_requests SET status = 'REJECTED', reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP, review_note = ? WHERE request_id = ?";
-        String updateShopSql = "UPDATE shops SET status = 'INACTIVE', updated_at = CURRENT_TIMESTAMP WHERE owner_id = (SELECT user_id FROM shop_requests WHERE request_id = ?) AND status = 'PENDING_KYC'";
-
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement psReq = conn.prepareStatement(updateReqSql)) {
-                psReq.setLong(1, reviewerUserId);
-                psReq.setString(2, reviewNote);
-                psReq.setLong(3, requestId);
-                psReq.executeUpdate();
+    /** Duyệt tất cả hồ sơ đang chờ. Trả về số hồ sơ đã duyệt thành công. */
+    public int approveAllPending(int adminId) {
+        List<Integer> ids = new ArrayList<>();
+        String sql = "SELECT request_id FROM shop_requests WHERE status IN ('PENDING','PENDING_KYC') ORDER BY request_id";
+        try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                ids.add(rs.getInt(1));
             }
-            try (PreparedStatement psShop = conn.prepareStatement(updateShopSql)) {
-                psShop.setLong(1, requestId);
-                psShop.executeUpdate();
-            }
-            conn.commit();
-            return true;
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in rejectShopRequest for requestId=" + requestId, ex);
-            return false;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
+        int ok = 0;
+        for (int id : ids) {
+            if (updateRequestStatus(id, "APPROVED", null, adminId)) {
+                ok++;
+            }
+        }
+        return ok;
     }
 
-    /**
-     * Suspend or re-activate a shop.
-     */
-    public boolean updateShopStatus(long shopId, String newStatus, String suspendedReason) {
-        String sql;
-        if ("SUSPENDED".equalsIgnoreCase(newStatus)) {
-            sql = "UPDATE shops SET status = 'SUSPENDED', suspended_reason = ?, suspended_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE shop_id = ?";
-        } else {
-            sql = "UPDATE shops SET status = 'ACTIVE', suspended_reason = NULL, suspended_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE shop_id = ?";
-        }
-
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            if ("SUSPENDED".equalsIgnoreCase(newStatus)) {
-                ps.setString(1, suspendedReason != null ? suspendedReason : "Tạm ngưng do có khiếu nại chất lượng sản phẩm");
-                ps.setLong(2, shopId);
-            } else {
-                ps.setLong(1, shopId);
+    /** Gửi thông báo kết quả duyệt / từ chối hồ sơ cho chủ shop (cùng transaction với việc cập nhật). */
+    private void notifyRequestResult(Connection conn, int requestId, String status, String reason) throws SQLException {
+        boolean approved = "APPROVED".equalsIgnoreCase(status);
+        String sql = "INSERT INTO notifications (user_id, title, message, type, reference_type, reference_id, is_read) "
+                + "SELECT sr.user_id, "
+                + (approved ? "N'Gian hàng đã được duyệt', " : "N'Hồ sơ đăng ký gian hàng bị từ chối', ")
+                + (approved
+                    ? "CONCAT(N'Chúc mừng! Gian hàng \"', sr.shop_name, N'\" đã được phê duyệt và có thể bắt đầu kinh doanh trên sàn.'), "
+                    : "CONCAT(N'Hồ sơ đăng ký gian hàng \"', sr.shop_name, N'\" đã bị từ chối. Lý do: ', ?), ")
+                + "'KYC', 'SHOP_REQUEST', sr.request_id, 0 "
+                + "FROM shop_requests sr WHERE sr.request_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            int i = 1;
+            if (!approved) {
+                ps.setString(i++, reason == null ? "" : reason);
             }
-            return ps.executeUpdate() > 0;
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in updateShopStatus for shopId=" + shopId, ex);
-            return false;
+            ps.setInt(i, requestId);
+            ps.executeUpdate();
         }
     }
-
-    /**
-     * Get detail of a specific shop.
-     */
-    public Map<String, Object> getShopDetail(long shopId) {
-        String sql = "SELECT s.shop_id, s.shop_name, s.slug, s.business_type, s.description, s.logo_url, s.banner_url, "
-                   + "       s.phone, s.address, s.province, s.certification_name, s.commission_rate, s.rating, "
-                   + "       s.total_sales_amount, s.total_orders_count, s.status, s.suspended_reason, s.suspended_at, s.created_at, "
-                   + "       u.user_id as owner_id, u.full_name as owner_name, u.email as owner_email, u.phone as owner_phone "
-                   + "FROM shops s "
-                   + "JOIN users u ON s.owner_id = u.user_id "
-                   + "WHERE s.shop_id = ?";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, shopId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Map<String, Object> s = new HashMap<>();
-                    s.put("shopId", rs.getLong("shop_id"));
-                    s.put("shopName", rs.getString("shop_name"));
-                    s.put("slug", rs.getString("slug"));
-                    s.put("businessType", rs.getString("business_type"));
-                    s.put("description", rs.getString("description"));
-                    s.put("logoUrl", rs.getString("logo_url"));
-                    s.put("phone", rs.getString("phone") != null ? rs.getString("phone") : rs.getString("owner_phone"));
-                    s.put("address", rs.getString("address"));
-                    s.put("province", rs.getString("province"));
-                    s.put("certificationName", rs.getString("certification_name"));
-                    s.put("commissionRate", String.format("%.1f%%", rs.getDouble("commission_rate")));
-                    s.put("rating", String.format("%.2f", rs.getDouble("rating")));
-                    s.put("totalSalesFormatted", CURRENCY_FORMAT.format(rs.getDouble("total_sales_amount")));
-                    s.put("totalOrdersCount", rs.getInt("total_orders_count"));
-                    s.put("status", rs.getString("status"));
-                    s.put("suspendedReason", rs.getString("suspended_reason"));
-                    Timestamp st = rs.getTimestamp("suspended_at");
-                    s.put("suspendedAtFormatted", st != null ? DATE_FORMAT.format(st) : "-");
-                    Timestamp ct = rs.getTimestamp("created_at");
-                    s.put("createdAtFormatted", ct != null ? DATE_FORMAT.format(ct) : "-");
-                    s.put("ownerId", rs.getLong("owner_id"));
-                    s.put("ownerName", rs.getString("owner_name"));
-                    s.put("ownerEmail", rs.getString("owner_email"));
-                    s.put("ownerPhone", rs.getString("owner_phone"));
-                    return s;
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in getShopDetail for shopId=" + shopId, ex);
-        }
-        return null;
-    }
-
-    private String generateSlug(String input) {
-        if (input == null || input.trim().isEmpty()) {
-            return "shop-" + System.currentTimeMillis();
-        }
-        String normalized = java.text.Normalizer.normalize(input.toLowerCase().trim(), java.text.Normalizer.Form.NFD);
-        String slug = normalized.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
-                                .replaceAll("[đĐ]", "d")
-                                .replaceAll("[^a-z0-9\\s-]", "")
-                                .replaceAll("\\s+", "-")
-                                .replaceAll("-+", "-")
-                                .replaceAll("^-|-$", "");
-        return slug.isEmpty() ? "shop-" + System.currentTimeMillis() : (slug + "-" + (System.currentTimeMillis() % 10000));
-    }
-
-    // -------------------------------------------------------------------------
-    // 2. USERS & ROLES
-    // -------------------------------------------------------------------------
-    private static final SimpleDateFormat DATETIME_FORMAT = new SimpleDateFormat("dd/MM/yyyy HH:mm");
 
     // -------------------------------------------------------------------------
     // 2. USERS & ROLES
@@ -2497,6 +2334,54 @@ public class AdminManagementDAO extends DBContext {
         }
         return list;
     }
+    
+    public List<ShopRequest> getShopRequestsByStatus(String status) {
+        List<ShopRequest> list = new ArrayList<>();
+        String sql = "SELECT * FROM [dbo].[shop_requests]";
+        if (status != null && !status.equals("ALL")) {
+            sql += " WHERE status = ?";
+        }
+        sql += " ORDER BY created_at DESC";
+
+        try (Connection conn = this.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (status != null && !status.equals("ALL")) {
+                ps.setString(1, status);
+            }
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ShopRequest r = new ShopRequest();
+                    r.setRequestId(rs.getInt("request_id"));
+                    r.setUserId(rs.getInt("user_id"));
+                    r.setShopName(rs.getString("shop_name"));
+                    r.setBusinessType(rs.getString("business_type"));
+                    r.setProvince(rs.getString("province"));
+                    r.setDistrict(rs.getString("district"));
+                    r.setWard(rs.getString("ward"));
+                    r.setStreetAddress(rs.getString("street_address"));
+                    r.setPickupAddress(rs.getString("pickup_address"));
+                    r.setReturnAddress(rs.getString("return_address"));
+                    r.setIdCardNumber(rs.getString("id_card_number"));
+                    r.setTaxCode(rs.getString("tax_code"));
+                    r.setIdCardFrontUrl(rs.getString("id_card_front_url"));
+                    r.setIdCardBackUrl(rs.getString("id_card_back_url"));
+                    r.setShopDescription(rs.getString("shop_description"));
+                    r.setShopLogoUrl(rs.getString("shop_logo_url"));
+                    r.setShopBannerUrl(rs.getString("shop_banner_url"));
+                    r.setBankName(rs.getString("bank_name"));
+                    r.setBankAccountNumber(rs.getString("bank_account_number"));
+                    r.setBankAccountHolder(rs.getString("bank_account_holder"));
+                    r.setStatus(rs.getString("status"));
+                    r.setReason(rs.getString("reason"));
+                    r.setCreatedAt(rs.getTimestamp("created_at"));
+                    list.add(r);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
     /**
      * Get detailed order structure: master order + child sub_orders + items + deliveries + driver.
@@ -2881,7 +2766,99 @@ public class AdminManagementDAO extends DBContext {
         return list;
     }
 
-    /**
+ public boolean updateRequestStatus(int requestId, String status, String reason, int adminId) {
+    // 1. Cập nhật trạng thái đơn đăng ký (chỉ xử lý đơn đang chờ duyệt)
+    String sqlUpdateReq = "UPDATE [dbo].[shop_requests] "
+            + "SET status = ?, reason = ?, reviewed_by = ?, reviewed_at = GETDATE() "
+            + "WHERE request_id = ? AND status IN ('PENDING', 'PENDING_KYC')";
+
+    // 2a. Đổi role CUSTOMER -> SHOP_OWNER (nếu user đã có dòng trong user_roles)
+    String sqlUpdateRole = "UPDATE [dbo].[user_roles] "
+            + "SET role_id = (SELECT role_id FROM [dbo].[roles] WHERE role_name = 'SHOP_OWNER') "
+            + "WHERE user_id = (SELECT user_id FROM [dbo].[shop_requests] WHERE request_id = ?)";
+
+    // 2b. Nếu user chưa có dòng nào trong user_roles thì thêm mới
+    String sqlInsertRole = "INSERT INTO [dbo].[user_roles] (user_id, role_id) "
+            + "SELECT sr.user_id, r.role_id FROM [dbo].[shop_requests] sr, [dbo].[roles] r "
+            + "WHERE sr.request_id = ? AND r.role_name = 'SHOP_OWNER'";
+
+    // 3. Tạo shop thật trong bảng shops (bỏ qua nếu user đã có shop)
+    String sqlInsertShop = "INSERT INTO [dbo].[shops] "
+            + "(owner_id, shop_name, slug, description, business_type, logo_url, banner_url, phone, address, province, "
+            + " commission_rate, rating, total_sales_amount, total_orders_count, status, created_at, updated_at) "
+            + "SELECT sr.user_id, sr.shop_name, 'shop-' + CAST(sr.request_id AS VARCHAR(20)), sr.shop_description, "
+            + "       sr.business_type, sr.shop_logo_url, sr.shop_banner_url, u.phone, "
+            + "       CONCAT_WS(', ', sr.street_address, sr.ward, sr.district, sr.province), sr.province, "
+            + "       8.0, 0, 0, 0, 'ACTIVE', GETDATE(), GETDATE() "
+            + "FROM [dbo].[shop_requests] sr "
+            + "JOIN [dbo].[users] u ON u.user_id = sr.user_id "
+            + "WHERE sr.request_id = ? "
+            + "AND NOT EXISTS (SELECT 1 FROM [dbo].[shops] s WHERE s.owner_id = sr.user_id)";
+
+    try (Connection conn = this.getConnection()) {
+        if (conn == null) {
+            System.err.println(">>> Không thể kết nối tới Database!");
+            return false;
+        }
+        conn.setAutoCommit(false);
+
+        try {
+            // Bước 1: cập nhật shop_requests
+            try (PreparedStatement psReq = conn.prepareStatement(sqlUpdateReq)) {
+                psReq.setString(1, status);
+                psReq.setString(2, reason);
+                if (adminId > 0) {
+                    psReq.setInt(3, adminId);
+                } else {
+                    psReq.setNull(3, java.sql.Types.INTEGER);
+                }
+                psReq.setInt(4, requestId);
+
+                int affected = psReq.executeUpdate();
+                if (affected == 0) {
+                    conn.rollback();
+                    System.err.println(">>> Không tìm thấy đơn hoặc đơn đã được xử lý: " + requestId);
+                    return false;
+                }
+            }
+
+            // Gửi thông báo kết quả cho chủ shop
+            notifyRequestResult(conn, requestId, status, reason);
+
+            // Bước 2 + 3: chỉ khi APPROVED
+            if ("APPROVED".equalsIgnoreCase(status)) {
+                int updated;
+                try (PreparedStatement ps = conn.prepareStatement(sqlUpdateRole)) {
+                    ps.setInt(1, requestId);
+                    updated = ps.executeUpdate();
+                }
+                if (updated == 0) { // user chưa có dòng nào trong user_roles
+                    try (PreparedStatement ps = conn.prepareStatement(sqlInsertRole)) {
+                        ps.setInt(1, requestId);
+                        ps.executeUpdate();
+                    }
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(sqlInsertShop)) {
+                    ps.setInt(1, requestId);
+                    ps.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            conn.rollback(); // lỗi ở bất kỳ bước nào thì hủy toàn bộ
+            throw e;
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return false;
+}
+                    
+     /**
      * Fetch list of all active drivers for dispatch assignment.
      */
     public List<Map<String, Object>> getAllDrivers() {

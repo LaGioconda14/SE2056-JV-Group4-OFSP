@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.User;
 import service.IUserService;
 import service.impl.UserServiceImpl;
 
@@ -20,7 +21,7 @@ public class RegisterServlet extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute("user") != null) {
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            response.sendRedirect(request.getContextPath() + "/home");
             return;
         }
 
@@ -47,6 +48,23 @@ public class RegisterServlet extends HttpServlet {
             userService.register(fullName, email, phone, password, confirmPassword);
 
             HttpSession session = request.getSession(true);
+
+            // Đăng nhập luôn cho người vừa đăng ký, rồi chuyển sang màn hình chọn vai trò
+            // (Khách hàng / Người bán). Tài khoản mới luôn có vai trò CUSTOMER.
+            User newUser = null;
+            try {
+                newUser = userService.login(email.trim(), password);
+            } catch (Exception loginEx) {
+                // Không tự đăng nhập được thì quay về cách cũ: yêu cầu đăng nhập thủ công
+            }
+            if (newUser != null) {
+                session.setAttribute("user", newUser);
+                session.setAttribute("userfullname", newUser.getFullName());
+                session.setAttribute("email", newUser.getEmail());
+                response.sendRedirect(request.getContextPath() + "/choose-role");
+                return;
+            }
+
             session.setAttribute("successMessage", "Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.");
             response.sendRedirect(request.getContextPath() + "/login");
         } catch (Exception ex) {

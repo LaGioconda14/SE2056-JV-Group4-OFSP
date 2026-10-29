@@ -1,19 +1,17 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gốc Vườn - Thẩm Định & Quản Lý Gian Hàng</title>
+    <title>FreshFruit - Quản Lý Gian Hàng & Hồ Sơ Đăng Ký (Shops & Applications)</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css?v=16">
-    <meta name="context-path" content="${pageContext.request.contextPath}">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css?v=13">
 </head>
 <body class="admin-body">
 
@@ -26,100 +24,173 @@
         <jsp:include page="layout/header.jsp" />
 
         <main class="admin-page-content">
-            <!-- Alert Messages -->
-            <c:if test="${not empty successMessage}">
-                <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2 mb-3 shadow-sm" role="alert" style="border-radius: 10px; font-size: 0.88rem; background: #f0fdf4; border-color: #bbf7d0; color: #166534;">
-                    <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                    <div class="flex-grow-1">${successMessage}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </c:if>
-            <c:if test="${not empty errorMessage}">
-                <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2 mb-3 shadow-sm" role="alert" style="border-radius: 10px; font-size: 0.88rem; background: #fef2f2; border-color: #fecaca; color: #991b1b;">
-                    <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
-                    <div class="flex-grow-1">${errorMessage}</div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            </c:if>
-
             <!-- 1. Page Header & Actions -->
             <div class="users-page-header">
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge-kyc-hub">Trung tâm Thẩm định & Kiểm soát Đối tác</span>
-                        <span class="protocol-subtext">• Cập nhật liên tục</span>
+                        <span class="badge-kyc-hub">KYC & Compliance Hub</span>
+                        <span class="protocol-subtext">• Cập nhật tức thời</span>
                     </div>
-                    <h1 class="users-header-title">Thẩm Định & Quản Lý Gian Hàng</h1>
-                    <p class="users-header-desc">Xét duyệt hồ sơ mở shop mới (Seller Onboarding), thẩm định chứng chỉ VietGAP/GlobalGAP/HACCP/OCOP, và đình chỉ/mở lại hoạt động đối tác.</p>
+                    <h1 class="users-header-title">Quản Lý Gian Hàng & Hồ Sơ Đăng Ký (Shops & Applications)</h1>
+                    <p class="users-header-desc">Xét duyệt hồ sơ đối tác mở gian hàng, thẩm định chứng chỉ VietGAP/GlobalGAP và giám sát uy tín nhà vườn.</p>
                 </div>
                 <div class="users-header-actions">
-                    <a href="${pageContext.request.contextPath}/admin/shops?status=PENDING_KYC" class="btn-add-admin text-decoration-none">
-                        <i class="bi bi-file-earmark-check"></i>
-                        <span>Hàng đợi duyệt KYC (${not empty shopStats.pendingKyc ? shopStats.pendingKyc : 0})</span>
-                    </a>
+                    <button type="button" class="btn-export-list" onclick="alert('Đang tạo liên kết mời đối tác nhà vườn tham gia...');">
+                        <i class="bi bi-link-45deg"></i>
+                        <span>Mời Nhà vườn tham gia sàn</span>
+                    </button>
+                    <button type="button" class="btn-add-admin" ${shopStats.pendingKyc == 0 ? 'disabled style="opacity:.55;cursor:not-allowed;"' : ''}
+                            onclick="approveAllPending(${shopStats.pendingKyc})">
+                        <i class="bi bi-check2-all"></i>
+                        <span>Duyệt hàng loạt (${shopStats.pendingKyc})</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- 2. Segmented Navigation Tabs -->
+            <c:if test="${not empty flashMessage}">
+                <div class="alert alert-${flashType == 'success' ? 'success' : 'danger'} d-flex align-items-center gap-2 py-2" style="font-size:.82rem; border-radius:12px;">
+                    <i class="bi ${flashType == 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}"></i>
+                    <span><c:out value="${flashMessage}"/></span>
+                </div>
+            </c:if>
+
+            <!-- 2. 4 Summary Metric Cards -->
+            <div class="shops-summary-grid">
+                <!-- Card 1: Hồ sơ chờ thẩm định -->
+                <div class="user-summary-card">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="user-summary-title">Hồ sơ chờ thẩm định</span>
+                            <span class="badge-counter-orange" style="font-size: 0.65rem;">${shopStats.pendingKyc} Đang Chờ</span>
+                        </div>
+                        <div class="user-summary-val">${shopStats.pendingKyc} <span class="fs-6 fw-normal text-muted">đơn</span></div>
+                        <c:choose>
+                            <c:when test="${shopStats.pendingKyc > 0}">
+                                <div class="text-danger fw-bold d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                                    <i class="bi bi-exclamation-circle-fill"></i> Cần xử lý sớm
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="text-success d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                                    <i class="bi bi-check-circle-fill"></i> Không còn hồ sơ tồn đọng
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    <div class="shop-kpi-sub-row">
+                        <span class="text-uppercase" style="letter-spacing: 0.04em;">HỒ SƠ CHỜ LÂU NHẤT</span>
+                        <strong class="text-dark">${shopStats.oldestPendingDays >= 0 ? shopStats.oldestPendingDays : 0} ngày</strong>
+                    </div>
+                </div>
+
+                <!-- Card 2: Gian hàng đang hoạt động -->
+                <div class="user-summary-card">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="user-summary-title">Gian hàng đang hoạt động</span>
+                            <span class="badge-kpi-growth" style="font-size: 0.65rem;">Đã xác minh</span>
+                        </div>
+                        <div class="user-summary-val">${shopStats.activeShops} <span class="fs-6 fw-normal text-muted">shop</span></div>
+                        <div class="text-success d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                            <i class="bi bi-check-circle-fill"></i> Đang mở bán trên sàn
+                        </div>
+                    </div>
+                    <div class="shop-kpi-sub-row">
+                        <span class="text-uppercase" style="letter-spacing: 0.04em;">ĐÃ DUYỆT / TỔNG HỒ SƠ</span>
+                        <strong class="text-dark">${shopStats.approvedShops} / ${shopStats.totalShops}</strong>
+                    </div>
+                </div>
+
+                <!-- Card 3: Hoa hồng -->
+                <div class="user-summary-card">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="user-summary-title">Mức hoa hồng trung bình</span>
+                            <div class="user-summary-icon-box bg-green-subtle">
+                                <i class="bi bi-wallet2"></i>
+                            </div>
+                        </div>
+                        <div class="user-summary-val" style="font-size: 1.45rem;">${shopStats.avgComm}</div>
+                        <div class="text-success d-flex align-items-center gap-1" style="font-size: 0.72rem;">
+                            <i class="bi bi-graph-up-arrow"></i> Chiết khấu hoa hồng sàn
+                        </div>
+                    </div>
+                    <div class="shop-kpi-sub-row">
+                        <span class="text-uppercase" style="letter-spacing: 0.04em;">TỶ LỆ TAKE RATE</span>
+                        <strong class="text-success">Theo hợp đồng</strong>
+                    </div>
+                </div>
+
+                <!-- Card 4: Bị tạm khóa -->
+                <div class="user-summary-card">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="user-summary-title">Gian hàng bị tạm khóa</span>
+                            <span class="badge-counter-red" style="font-size: 0.65rem;">Giám sát</span>
+                        </div>
+                        <div class="user-summary-val text-danger">${shopStats.suspended} <span class="fs-6 fw-normal text-muted">shop</span></div>
+                        <div class="text-muted d-flex align-items-center gap-1" style="font-size: 0.7rem;">
+                            <i class="bi bi-exclamation-triangle-fill text-warning"></i> ${shopStats.openDisputes} khiếu nại đang xử lý trên sàn
+                        </div>
+                    </div>
+                    <div class="shop-kpi-sub-row">
+                        <span class="text-uppercase" style="letter-spacing: 0.04em;">TỈ LỆ BỊ KHÓA</span>
+                        <strong class="text-danger">${shopStats.suspendRate}% shop đã duyệt</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Segmented Navigation Tabs -->
             <div class="users-rbac-tabs">
                 <a href="${pageContext.request.contextPath}/admin/shops?status=ALL" class="rbac-tab-item ${selectedStatus == 'ALL' ? 'active' : ''}">
                     <i class="bi bi-shop"></i>
                     <span>Tất cả gian hàng</span>
-                    <span class="rbac-badge">${not empty shopStats.totalShops ? shopStats.totalShops : 0}</span>
+                    <span class="rbac-badge">${shopStats.totalShops}</span>
                 </a>
                 <a href="${pageContext.request.contextPath}/admin/shops?status=ACTIVE" class="rbac-tab-item ${selectedStatus == 'ACTIVE' ? 'active' : ''}">
                     <i class="bi bi-check-circle"></i>
                     <span>Đang hoạt động</span>
-                    <span class="rbac-badge">${not empty shopStats.activeShops ? shopStats.activeShops : 0}</span>
+                    <span class="rbac-badge">${shopStats.activeShops}</span>
                 </a>
                 <a href="${pageContext.request.contextPath}/admin/shops?status=PENDING_KYC" class="rbac-tab-item ${selectedStatus == 'PENDING_KYC' ? 'active' : ''}">
                     <i class="bi bi-file-earmark-check"></i>
-                    <span>Hồ sơ mở Shop (KYC)</span>
-                    <span class="rbac-badge" style="background: #fef08a; color: #854d0e;">${not empty shopStats.pendingKyc ? shopStats.pendingKyc : 0} chờ duyệt</span>
+                    <span>Chờ xét duyệt KYC</span>
+                    <span class="rbac-badge">${shopStats.pendingKyc}</span>
                 </a>
                 <a href="${pageContext.request.contextPath}/admin/shops?status=SUSPENDED" class="rbac-tab-item ${selectedStatus == 'SUSPENDED' ? 'active' : ''}">
-                    <i class="bi bi-exclamation-diamond"></i>
-                    <span>Bị đình chỉ / Tạm khóa</span>
-                    <span class="rbac-badge" style="background: #fecaca; color: #991b1b;">${not empty shopStats.suspended ? shopStats.suspended : 0}</span>
+                    <i class="bi bi-lock"></i>
+                    <span>Bị tạm khóa</span>
+                    <span class="rbac-badge">${shopStats.suspended}</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/admin/shops?status=REJECTED" class="rbac-tab-item ${selectedStatus == 'REJECTED' ? 'active' : ''}">
+                    <i class="bi bi-x-octagon"></i>
+                    <span>Đã từ chối</span>
+                    <span class="rbac-badge">${shopStats.rejected}</span>
                 </a>
             </div>
 
-            <!-- 3. Filter Toolbar -->
+            <!-- 4. Filter Toolbar -->
             <form method="GET" action="${pageContext.request.contextPath}/admin/shops" class="users-filter-card" id="shopFilterForm">
                 <input type="hidden" name="status" value="${selectedStatus}">
 
                 <div class="users-search-pill">
                     <i class="bi bi-search"></i>
-                    <input type="text" name="search" id="shopSearchInput" value="<c:out value='${searchKeyword}'/>" placeholder="Tìm tên nhà vườn, người nộp, email, sđt, tỉnh thành, mã số...">
+                    <input type="text" name="search" id="shopSearchInput" value="<c:out value='${searchKeyword}'/>" placeholder="Tìm tên nhà vườn, chủ sở hữu, email, tỉnh thành...">
                 </div>
 
                 <div class="users-dropdown-filters">
-                    <!-- Dropdown: Loại hình kinh doanh -->
                     <select name="type" id="typeFilterSelect" class="filter-select-btn" onchange="this.form.submit()">
-                        <option value="ALL" ${selectedType == 'ALL' ? 'selected' : ''}>Mô hình: Tất cả</option>
-                        <option value="Nhà vườn trực tiếp" ${selectedType == 'Nhà vườn trực tiếp' ? 'selected' : ''}>Nhà vườn trực tiếp</option>
-                        <option value="Hợp tác xã" ${selectedType == 'Hợp tác xã' ? 'selected' : ''}>Hợp tác xã</option>
-                        <option value="Hộ gia đình" ${selectedType == 'Hộ gia đình' ? 'selected' : ''}>Hộ gia đình</option>
-                        <option value="Doanh nghiệp bao tiêu" ${selectedType == 'Doanh nghiệp bao tiêu' ? 'selected' : ''}>Doanh nghiệp bao tiêu</option>
-                        <option value="Doanh nghiệp nhập khẩu" ${selectedType == 'Doanh nghiệp nhập khẩu' ? 'selected' : ''}>Doanh nghiệp nhập khẩu</option>
-                    </select>
-
-                    <!-- Dropdown: Tiêu chuẩn chứng nhận an toàn -->
-                    <select name="cert" id="certFilterSelect" class="filter-select-btn" onchange="this.form.submit()">
-                        <option value="ALL" ${selectedCert == 'ALL' ? 'selected' : ''}>Chứng nhận: Tất cả</option>
-                        <option value="VietGAP" ${selectedCert == 'VietGAP' ? 'selected' : ''}>VietGAP</option>
-                        <option value="GlobalGAP" ${selectedCert == 'GlobalGAP' ? 'selected' : ''}>GlobalGAP</option>
-                        <option value="Organic" ${selectedCert == 'Organic' ? 'selected' : ''}>Hữu cơ Organic</option>
-                        <option value="HACCP" ${selectedCert == 'HACCP' ? 'selected' : ''}>HACCP</option>
-                        <option value="OCOP" ${selectedCert == 'OCOP' ? 'selected' : ''}>OCOP</option>
-                        <option value="Kiểm dịch" ${selectedCert == 'Kiểm dịch' ? 'selected' : ''}>Kiểm dịch hải quan</option>
+                        <option value="ALL" ${selectedType == 'ALL' ? 'selected' : ''}>Loại hình: Tất cả</option>
+                        <c:forEach items="${businessTypes}" var="bt">
+                            <option value="<c:out value='${bt}'/>" ${selectedType == bt ? 'selected' : ''}><c:out value="${bt}"/></option>
+                        </c:forEach>
                     </select>
 
                     <button type="submit" class="btn btn-sm text-white d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px; background: #15803d; border: 1px solid #15803d; font-weight: 600;">
                         <i class="bi bi-funnel"></i> Lọc
                     </button>
 
-                    <c:if test="${(not empty selectedStatus && selectedStatus != 'ALL') || (not empty selectedType && selectedType != 'ALL') || (not empty selectedCert && selectedCert != 'ALL') || not empty searchKeyword}">
+                    <c:if test="${(not empty selectedType && selectedType != 'ALL') || not empty searchKeyword}">
                         <a href="${pageContext.request.contextPath}/admin/shops?status=${selectedStatus}" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" style="font-size: 0.75rem; padding: 0.38rem 0.85rem; border-radius: 8px;">
                             <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
                         </a>
@@ -127,660 +198,433 @@
                 </div>
             </form>
 
-            <c:choose>
-                <%-- ========================================================= --%>
-                <%-- VIEW A: HÀNG ĐỢI XÉT DUYỆT HỒ SƠ MỞ SHOP (PENDING_KYC)    --%>
-                <%-- ========================================================= --%>
-                <c:when test="${selectedStatus == 'PENDING_KYC'}">
-                    <div class="shops-table-container">
-                        <div class="shops-table-header">
-                            <div class="shops-table-title">
-                                <span>Hàng Đợi Thẩm Định Hồ Sơ Mở Shop Mới (Seller Onboarding)</span>
-                                <span class="badge-live-engine" style="background: #fef08a; color: #854d0e; padding: 3px 8px; border-radius: 9999px;">
-                                    ${not empty shopRequestsList ? shopRequestsList.size() : 0} Hồ Sơ
-                                </span>
-                            </div>
-                            <div class="text-muted small">Kiểm tra pháp lý, địa chỉ vườn/kho, hotline và cấp phép SHOP_OWNER</div>
-                        </div>
-
-                        <table class="shops-modern-table">
-                            <thead>
-                                <tr>
-                                    <th>MÃ HỒ SƠ & GIAN HÀNG XIN MỞ</th>
-                                    <th>MÔ HÌNH & NÔNG SẢN CHỦ LỰC</th>
-                                    <th>ĐỊA CHỈ TRANG TRẠI / VÙNG TRỒNG</th>
-                                    <th>PHÁP LÝ & CHỨNG NHẬN ATTP</th>
-                                    <th>TRẠNG THÁI</th>
-                                    <th class="text-end">THẨM ĐỊNH & THAO TÁC</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <c:forEach items="${shopRequestsList}" var="r">
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <div class="user-summary-icon-box" style="background: #fef9c3; border: 1px solid #fde047; width: 36px; height: 36px; font-size: 0.95rem; flex-shrink: 0; border-radius: 8px; display:flex; align-items:center; justify-content:center;">
-                                                    <i class="bi bi-file-earmark-person-fill text-warning-emphasis"></i>
-                                                </div>
-                                                <div>
-                                                    <strong class="text-dark fs-6" style="font-size: 0.85rem !important;">${r.shopName}</strong>
-                                                    <div class="text-muted" style="font-size: 0.72rem;">Người nộp: <strong>${r.applicantName}</strong> • ${r.applicantPhone}</div>
-                                                    <div class="text-muted" style="font-size: 0.68rem;">Email: ${r.applicantEmail} • Mã đơn: <strong>#REQ-${r.requestId}</strong></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="shop-model-pill">${r.businessType}</div>
-                                            <div class="text-muted mt-1" style="font-size: 0.7rem;" title="${fn:escapeXml(r.produceSpecialty)}">
-                                                <i class="bi bi-basket2 text-success"></i> ${r.produceSpecialty}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div><strong>${r.province}</strong></div>
-                                            <div class="text-muted text-truncate" style="font-size: 0.7rem; max-width: 220px;" title="${fn:escapeXml(r.farmAddress)}">
-                                                <i class="bi bi-geo-alt"></i> ${r.farmAddress}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <span class="badge bg-light text-dark border">
-                                                    <i class="bi bi-shield-check text-success"></i> ${r.certificationName}
-                                                </span>
-                                            </div>
-                                            <div class="text-muted mt-1" style="font-size: 0.7rem;">
-                                                <i class="bi bi-person-vcard text-primary"></i> CCCD: <strong>${r.idCardNumber}</strong>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <c:choose>
-                                                <c:when test="${r.status == 'PENDING'}">
-                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.7rem; font-weight: 700;">
-                                                        <i class="bi bi-hourglass-split me-1"></i> Chờ duyệt
-                                                    </span>
-                                                </c:when>
-                                                <c:when test="${r.status == 'APPROVED'}">
-                                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.7rem; font-weight: 700;">
-                                                        <i class="bi bi-check-circle-fill me-1"></i> Đã phê duyệt
-                                                    </span>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.7rem; font-weight: 700;">
-                                                        <i class="bi bi-x-circle-fill me-1"></i> Đã từ chối
-                                                    </span>
-                                                    <c:if test="${not empty r.reviewNote}">
-                                                        <div class="text-danger small mt-1" style="font-size: 0.65rem;" title="${fn:escapeXml(r.reviewNote)}">
-                                                            Lý do: ${fn:escapeXml(r.reviewNote)}
-                                                        </div>
-                                                    </c:if>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </td>
-                                        <td class="text-end text-nowrap">
-                                            <!-- Nút 1: Xem hồ sơ pháp lý chi tiết -->
-                                            <button type="button" class="btn-action-sm btn-action-inspect me-1" title="Xem toàn bộ hồ sơ pháp lý & chứng nhận"
-                                                    data-request-id="${r.requestId}"
-                                                    data-applicant-name="${fn:escapeXml(r.applicantName)}"
-                                                    data-applicant-phone="${fn:escapeXml(r.applicantPhone)}"
-                                                    data-applicant-email="${fn:escapeXml(r.applicantEmail)}"
-                                                    data-user-id="${r.userId}"
-                                                    data-shop-name="${fn:escapeXml(r.shopName)}"
-                                                    data-business-type="${fn:escapeXml(r.businessType)}"
-                                                    data-certification-name="${fn:escapeXml(r.certificationName)}"
-                                                    data-province="${fn:escapeXml(r.province)}"
-                                                    data-farm-address="${fn:escapeXml(r.farmAddress)}"
-                                                    data-produce-specialty="${fn:escapeXml(r.produceSpecialty)}"
-                                                    data-id-card-number="${fn:escapeXml(r.idCardNumber)}"
-                                                    data-reason="${fn:escapeXml(r.reason)}"
-                                                    data-status="${r.status}"
-                                                    data-reviewer-name="${fn:escapeXml(r.reviewerName)}"
-                                                    data-reviewed-at="${r.reviewedAtFormatted}"
-                                                    data-review-note="${fn:escapeXml(r.reviewNote)}"
-                                                    data-created-at="${r.createdAtFormatted}"
-                                                    onclick="openKycInspectModal(this)">
-                                                <i class="bi bi-eye"></i> Xem hồ sơ
-                                            </button>
-
-                                            <c:if test="${r.status == 'PENDING'}">
-                                                <!-- Nút 2: Phê duyệt (Approve) -->
-                                                <button type="button" class="btn-action-sm btn-action-approve me-1" title="Phê duyệt mở shop & cấp quyền SHOP_OWNER" onclick="openApproveModal('${r.requestId}', '${fn:escapeXml(r.shopName)}', '${fn:escapeXml(r.applicantName)}')">
-                                                    <i class="bi bi-check2"></i> Duyệt
-                                                </button>
-
-                                                <!-- Nút 3: Từ chối (Reject) -->
-                                                <button type="button" class="btn-action-sm btn-action-reject" title="Từ chối hồ sơ kèm lý do phản hồi" onclick="openRejectModal('${r.requestId}', '${fn:escapeXml(r.shopName)}', '${fn:escapeXml(r.applicantName)}')">
-                                                    <i class="bi bi-x"></i> Từ chối
-                                                </button>
-                                            </c:if>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                                <c:if test="${empty shopRequestsList}">
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-5">
-                                            <i class="bi bi-check2-circle fs-1 text-success d-block mb-2"></i>
-                                            Hiện không có hồ sơ đăng ký gian hàng nào đang chờ xử lý.
-                                        </td>
-                                    </tr>
-                                </c:if>
-                            </tbody>
-                        </table>
-
-                        <div class="users-table-footer">
-                            <span>Tổng cộng <strong>${not empty shopRequestsList ? shopRequestsList.size() : 0}</strong> hồ sơ thẩm định mở shop</span>
-                        </div>
+            <!-- 5. Applications Queue Table -->
+            <div class="shops-table-container">
+                <div class="shops-table-header">
+                    <div class="shops-table-title">
+                        <span>
+                            <c:choose>
+                                <c:when test="${selectedStatus == 'ACTIVE'}">Danh sách Gian hàng Đang hoạt động</c:when>
+                                <c:when test="${selectedStatus == 'PENDING_KYC'}">Danh sách Hồ sơ Đăng ký chờ xét duyệt (KYC Queue)</c:when>
+                                <c:when test="${selectedStatus == 'SUSPENDED'}">Danh sách Gian hàng Bị tạm khóa</c:when>
+                                <c:when test="${selectedStatus == 'REJECTED'}">Danh sách Hồ sơ Đã bị từ chối</c:when>
+                                <c:otherwise>Danh sách Toàn bộ Gian hàng Đối tác</c:otherwise>
+                            </c:choose>
+                        </span>
+                        <span class="badge-live-engine" style="background: #dcfce7; padding: 3px 8px; border-radius: 9999px;">${not empty shopsList ? shopsList.size() : 0} Gian Hàng</span>
                     </div>
-                </c:when>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Làm mới" onclick="location.reload();">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Tải xuống danh sách" onclick="alert('Đang tải danh sách hồ sơ (.CSV)...');">
+                            <i class="bi bi-download"></i>
+                        </button>
+                    </div>
+                </div>
 
-                <%-- ========================================================= --%>
-                <%-- VIEW B: DANH SÁCH GIAN HÀNG ĐỐI TÁC (ALL, ACTIVE, SUSPENDED) --%>
-                <%-- ========================================================= --%>
-                <c:otherwise>
-                    <div class="shops-table-container">
-                        <div class="shops-table-header">
-                            <div class="shops-table-title">
-                                <span>
-                                    <c:choose>
-                                        <c:when test="${selectedStatus == 'ACTIVE'}">Danh Sách Gian Hàng Đang Hoạt Động Trên Sàn</c:when>
-                                        <c:when test="${selectedStatus == 'SUSPENDED'}">Danh Sách Gian Hàng Bị Đình Chỉ / Tạm Khóa</c:when>
-                                        <c:otherwise>Danh Sách Toàn Bộ Gian Hàng Đối Tác</c:otherwise>
-                                    </c:choose>
-                                </span>
-                                <span class="badge-live-engine" style="background: #dcfce7; padding: 3px 8px; border-radius: 9999px;">
-                                    ${not empty shopsList ? shopsList.size() : 0} Gian Hàng
-                                </span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Làm mới" onclick="location.reload();">
-                                    <i class="bi bi-arrow-clockwise"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Tải xuống danh sách" onclick="alert('Đang tải danh sách hồ sơ (.CSV)...');">
-                                    <i class="bi bi-download"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <table class="shops-modern-table">
-                            <thead>
-                                <tr>
-                                    <th>THÔNG TIN GIAN HÀNG & CHỦ SỞ HỮU</th>
-                                    <th>MÔ HÌNH KINH DOANH</th>
-                                    <th>CHỨNG TỪ & TIÊU CHUẨN</th>
-                                    <th>DOANH SỐ / ĐƠN HÀNG</th>
-                                    <th>CHIẾT KHẤU</th>
-                                    <th>TRẠNG THÁI</th>
-                                    <th class="text-end">THAO TÁC</th>
-                                </tr>
-                            </thead>
-                            <tbody id="shopsTableBody">
-                                <c:forEach items="${shopsList}" var="s">
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
+                <table class="shops-modern-table">
+                    <thead>
+                        <tr>
+                            <th>THÔNG TIN GIAN HÀNG & CHỦ SỞ HỮU</th>
+                            <th>MÔ HÌNH KINH DOANH</th>
+                            <th>THÔNG TIN THANH TOÁN</th>
+                            <th>TRẠNG THÁI</th>
+                            <th style="min-width:230px;">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shopsTableBody">
+                        <c:forEach items="${shopsList}" var="s">
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <c:choose>
+                                            <c:when test="${not empty s.shopLogoUrl}">
+                                                <img src="${s.shopLogoUrl}" class="rounded-circle" width="36" height="36" style="object-fit: cover;">
+                                            </c:when>
+                                            <c:otherwise>
                                                 <div class="user-summary-icon-box bg-green-subtle" style="width: 36px; height: 36px; font-size: 0.95rem; flex-shrink: 0;">
                                                     <i class="bi bi-shop text-success"></i>
                                                 </div>
-                                                <div>
-                                                    <strong class="text-dark fs-6" style="font-size: 0.85rem !important;">${s.shopName}</strong>
-                                                    <div class="text-muted" style="font-size: 0.7rem;">Chủ: <strong>${s.ownerName}</strong> • ${s.phone}</div>
-                                                    <div class="text-muted" style="font-size: 0.68rem;"><i class="bi bi-geo-alt"></i> ${s.province}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="shop-model-pill">
-                                                ${s.businessType}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-light text-dark border">
-                                                <i class="bi bi-shield-check text-success"></i> ${s.certificationName}
-                                            </span>
-                                            <div class="text-muted mt-1" style="font-size: 0.68rem;">
-                                                <i class="bi bi-star-fill text-warning"></i> ${s.rating} / 5.0
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <strong class="text-success">${s.totalSalesFormatted}</strong>
-                                                <div class="text-muted" style="font-size: 0.68rem;">${s.totalOrdersCount} đơn hoàn tất</div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-dark">${s.commissionRate}</span>
-                                        </td>
-                                        <td>
-                                            <c:choose>
-                                                <c:when test="${s.status == 'ACTIVE'}">
-                                                    <span class="status-pill-green">
-                                                        <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i> Hoạt động
-                                                    </span>
-                                                </c:when>
-                                                <c:when test="${s.status == 'PENDING_KYC'}">
-                                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.68rem; font-weight: 700;">
-                                                        <i class="bi bi-hourglass-split me-1"></i> Chờ duyệt KYC
-                                                    </span>
-                                                </c:when>
-                                                <c:when test="${s.status == 'SUSPENDED'}">
-                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="border-radius: 9999px; font-size: 0.68rem; font-weight: 700;" title="Lý do: ${fn:escapeXml(s.suspendedReason)}">
-                                                        <i class="bi bi-exclamation-octagon-fill me-1"></i> Bị đình chỉ
-                                                    </span>
-                                                    <c:if test="${not empty s.suspendedReason}">
-                                                        <div class="text-danger small mt-1 text-truncate" style="font-size: 0.65rem; max-width: 140px;" title="${fn:escapeXml(s.suspendedReason)}">
-                                                            ${fn:escapeXml(s.suspendedReason)}
-                                                        </div>
-                                                    </c:if>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <span class="status-pill-warning">${s.status}</span>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </td>
-                                        <td class="text-end text-nowrap">
-                                            <!-- Nút 1: Xem chi tiết shop -->
-                                            <button type="button" class="btn-action-sm btn-action-inspect me-1" title="Xem hồ sơ gian hàng"
-                                                    data-shop-id="${s.shopId}"
-                                                    data-shop-name="${fn:escapeXml(s.shopName)}"
-                                                    data-business-type="${fn:escapeXml(s.businessType)}"
-                                                    data-status="${s.status}"
-                                                    data-owner-name="${fn:escapeXml(s.ownerName)}"
-                                                    data-phone="${fn:escapeXml(not empty s.phone ? s.phone : s.ownerPhone)}"
-                                                    data-email="${fn:escapeXml(s.ownerEmail)}"
-                                                    data-province="${fn:escapeXml(s.province)}"
-                                                    data-address="${fn:escapeXml(s.address)}"
-                                                    data-certification-name="${fn:escapeXml(s.certificationName)}"
-                                                    data-commission-rate="${s.commissionRate}"
-                                                    data-total-sales="${s.totalSalesFormatted}"
-                                                    data-total-orders="${s.totalOrdersCount}"
-                                                    data-suspended-reason="${fn:escapeXml(s.suspendedReason)}"
-                                                    data-suspended-date="${s.suspendedAtFormatted}"
-                                                    onclick="openShopDetailModal(this)">
-                                                <i class="bi bi-eye"></i> Chi tiết
+                                            </c:otherwise>
+                                        </c:choose>
+                                        <div>
+                                            <strong class="text-dark fs-6" style="font-size: 0.85rem !important;"><c:out value="${s.shopName}"/></strong>
+                                            <div class="text-muted" style="font-size: 0.7rem;">CCCD: ${s.idCardNumber} • MST: ${not empty s.taxCode ? s.taxCode : 'Không có'}</div>
+                                            <div class="text-muted" style="font-size: 0.68rem;"><i class="bi bi-geo-alt"></i> ${s.streetAddress}, ${s.ward}, ${s.district}, ${s.province}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="shop-model-pill">
+                                        ${s.businessType}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.75rem;">
+                                        <div><strong>Ngân hàng:</strong> ${s.bankName}</div>
+                                        <div><strong>STK:</strong> ${s.bankAccountNumber}</div>
+                                        <div><strong>Chủ TK:</strong> ${s.bankAccountHolder}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${s.status == 'ACTIVE'}"><span class="shop-state st-active"><i class="bi bi-check-circle-fill"></i> Đang hoạt động</span></c:when>
+                                        <c:when test="${s.status == 'PAUSED'}"><span class="shop-state st-paused"><i class="bi bi-pause-circle-fill"></i> Shop tạm ngưng</span></c:when>
+                                        <c:when test="${s.status == 'CLOSED'}"><span class="shop-state st-closed"><i class="bi bi-moon-fill"></i> Đóng cửa</span></c:when>
+                                        <c:when test="${s.status == 'SUSPENDED'}"><span class="shop-state st-suspended"><i class="bi bi-lock-fill"></i> Tạm khóa</span></c:when>
+                                        <c:when test="${s.status == 'PENDING'}"><span class="shop-state st-pending"><i class="bi bi-hourglass-split"></i> Chờ duyệt KYC</span></c:when>
+                                        <c:when test="${s.status == 'REJECTED'}"><span class="shop-state st-rejected"><i class="bi bi-x-circle-fill"></i> Đã từ chối</span></c:when>
+                                        <c:otherwise><span class="shop-state st-closed"><c:out value="${s.status}"/></span></c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center flex-wrap gap-2">
+                                        <button type="button" class="act-btn act-view" onclick="openDetail(${s.requestId})" title="Xem chi tiết hồ sơ">
+                                            <i class="bi bi-eye-fill"></i><span>Chi tiết</span>
+                                        </button>
+                                        <c:if test="${s.status == 'PENDING'}">
+                                            <button type="button" class="act-btn act-approve" onclick="approveShop(${s.requestId})" title="Duyệt gian hàng">
+                                                <i class="bi bi-check-lg"></i><span>Duyệt</span>
                                             </button>
+                                            <button type="button" class="act-btn act-reject" onclick="openRejectModal(${s.requestId})" title="Từ chối hồ sơ">
+                                                <i class="bi bi-x-lg"></i><span>Từ chối</span>
+                                            </button>
+                                        </c:if>
+                                        <c:if test="${s.status == 'ACTIVE' || s.status == 'PAUSED' || s.status == 'CLOSED'}">
+                                            <button type="button" class="act-btn act-suspend" onclick="openSuspendModal(${s.requestId})" title="Tạm khóa gian hàng">
+                                                <i class="bi bi-lock-fill"></i><span>Tạm khóa</span>
+                                            </button>
+                                        </c:if>
+                                        <c:if test="${s.status == 'SUSPENDED'}">
+                                            <button type="button" class="act-btn act-unlock" onclick="unlockShop(${s.requestId})" title="Mở khóa gian hàng">
+                                                <i class="bi bi-unlock-fill"></i><span>Mở khóa</span>
+                                            </button>
+                                        </c:if>
+                                    </div>
+                                </td>
+                            </tr>
+                        </c:forEach>
+                        <c:if test="${empty shopsList}">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Chưa có gian hàng nào trong danh sách.</td>
+                            </tr>
+                        </c:if>
+                    </tbody>
+                </table>
 
-                                            <!-- Nút 2: Đình chỉ hoặc Mở lại hoạt động -->
-                                            <c:choose>
-                                                <c:when test="${s.status == 'ACTIVE'}">
-                                                    <button type="button" class="btn-action-sm btn-action-suspend" title="Đình chỉ tạm ngưng gian hàng (vi phạm chất lượng / khiếu nại)" onclick="openSuspendShopModal('${s.shopId}', '${fn:escapeXml(s.shopName)}', '${fn:escapeXml(s.ownerName)}')">
-                                                        <i class="bi bi-pause-circle"></i> Đình chỉ
-                                                    </button>
-                                                </c:when>
-                                                <c:when test="${s.status == 'SUSPENDED'}">
-                                                    <button type="button" class="btn-action-sm btn-action-reactivate" title="Mở lại hoạt động bình thường cho gian hàng" onclick="openReactivateShopModal('${s.shopId}', '${fn:escapeXml(s.shopName)}', '${fn:escapeXml(s.ownerName)}')">
-                                                        <i class="bi bi-play-circle"></i> Mở lại
-                                                    </button>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <a href="${pageContext.request.contextPath}/admin/shops?status=PENDING_KYC" class="btn-action-sm btn-action-approve text-decoration-none">
-                                                        <i class="bi bi-file-earmark-check"></i> Duyệt KYC
-                                                    </a>
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </td>
-                                    </tr>
-                                </c:forEach>
-                                <c:if test="${empty shopsList}">
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-5">
-                                            <i class="bi bi-shop fs-1 text-secondary d-block mb-2"></i>
-                                            Không tìm thấy gian hàng nào phù hợp với bộ lọc tìm kiếm.
-                                        </td>
-                                    </tr>
-                                </c:if>
-                            </tbody>
-                        </table>
+                <!-- Pagination Footer -->
+                <div class="users-table-footer">
+                    <span>Tổng cộng <strong>${not empty shopsList ? shopsList.size() : 0}</strong> gian hàng đối tác</span>
+                </div>
+            </div>
 
-                        <div class="users-table-footer">
-                            <span>Tổng cộng <strong>${not empty shopsList ? shopsList.size() : 0}</strong> gian hàng đối tác trong danh mục</span>
+            <!-- 6. Bottom Split Section -->
+            <div class="bottom-split-grid" style="grid-template-columns: 1fr;">
+                <!-- Left (2/3): Quy trình chuẩn thẩm định 3 bước -->
+                <div class="sop-process-card">
+                    <div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="kpi-icon-box bg-green-subtle">
+                                    <i class="bi bi-file-earmark-check-fill text-success"></i>
+                                </div>
+                                <h3 class="role-matrix-title mb-0">Quy Trình Chuẩn Thẩm Định Đối Tác Nông Nghiệp (3 Bước)</h3>
+                            </div>
+                            <span class="table-pill-badge" style="background: #f1f5f9; font-size: 0.65rem;">SOP FRESHFRUIT 2024</span>
+                        </div>
+                        <p class="role-matrix-desc">Mỗi gian hàng trước khi được kích hoạt kinh doanh trái cây trên sàn đều phải trải qua quy trình kiểm soát chuỗi lạnh và chứng nhận nguồn gốc xuất xứ.</p>
+
+                        <!-- 3 Steps -->
+                        <div class="sop-steps-grid">
+                            <!-- Step 1 -->
+                            <div class="sop-step-box">
+                                <div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="step-num-circle">1</span>
+                                        <strong class="text-dark" style="font-size: 0.78rem;">Xác thực pháp lý</strong>
+                                    </div>
+                                    <p class="text-muted" style="font-size: 0.7rem; line-height: 1.45;">
+                                        Đối soát CCCD gắn chip chủ nhà vườn, kiểm tra Mã Số Thuế doanh nghiệp & giấy phép kinh doanh hợp lệ qua cổng CSDL Quốc gia.
+                                    </p>
+                                </div>
+                                <div class="mt-2 pt-2 border-top text-success fw-bold d-flex align-items-center gap-1" style="font-size: 0.68rem; border-color: #e2e8f0 !important;">
+                                    <i class="bi bi-check2-circle"></i> Tự động qua OCR AI
+                                </div>
+                            </div>
+
+                            <!-- Step 2 -->
+                            <div class="sop-step-box">
+                                <div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="step-num-circle">2</span>
+                                        <strong class="text-dark" style="font-size: 0.78rem;">Thẩm định chứng chỉ</strong>
+                                    </div>
+                                    <p class="text-muted" style="font-size: 0.7rem; line-height: 1.45;">
+                                        Tra cứu tính hợp lệ của giấy chứng nhận VietGAP, GlobalGAP, OCOP còn thời hạn; kiểm tra mã số vùng trồng cấp bởi Cục BVTV.
+                                    </p>
+                                </div>
+                                <div class="mt-2 pt-2 border-top text-primary fw-bold d-flex align-items-center gap-1" style="font-size: 0.68rem; border-color: #e2e8f0 !important;">
+                                    <i class="bi bi-person-check"></i> Cần chuyên viên duyệt
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            <div class="sop-step-box">
+                                <div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="step-num-circle">3</span>
+                                        <strong class="text-dark" style="font-size: 0.78rem;">Ký cam kết chất lượng</strong>
+                                    </div>
+                                    <p class="text-muted" style="font-size: 0.7rem; line-height: 1.45;">
+                                        Ký điện tử thỏa thuận bảo quản chuỗi lạnh (≤ 8°C cho trái cây tươi), cam kết bồi thường 100% nếu dập nát và kích hoạt mở bán.
+                                    </p>
+                                </div>
+                                <div class="mt-2 pt-2 border-top text-success fw-bold d-flex align-items-center gap-1" style="font-size: 0.68rem; border-color: #e2e8f0 !important;">
+                                    <i class="bi bi-lightning-charge"></i> Kích hoạt ngay lập tức
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </c:otherwise>
-            </c:choose>
+
+                    <div class="d-flex align-items-center justify-content-between pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                        <span class="text-muted" style="font-size: 0.72rem;">
+                            <i class="bi bi-headset text-success"></i> Đội ngũ Thẩm định Nông sản: Trực tuyến 08:00 - 22:00 hàng ngày
+                        </span>
+                        <a href="javascript:void(0)" onclick="alert('Đang mở sổ tay thẩm định VietGAP/GlobalGAP...');" class="text-success fw-bold text-decoration-none" style="font-size: 0.74rem;">
+                            Xem sổ tay hướng dẫn thẩm định VietGAP →
+                        </a>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- MODAL 1: THẨM ĐỊNH HỒ SƠ PHÁP LÝ & AN TOÀN THỰC PHẨM (KYC INSPECT)        -->
-<!-- ========================================================================= -->
-<div class="modal fade" id="kycInspectModal" tabindex="-1" aria-labelledby="kycInspectModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0;">
-            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
-                <div>
-                    <h5 class="modal-title fw-bold text-dark" id="kycInspectModalLabel" style="font-size: 1.05rem;">
-                        <i class="bi bi-file-earmark-medical-fill text-success me-1"></i> Thẩm Định Hồ Sơ Mở Gian Hàng (Seller Onboarding)
-                    </h5>
-                    <div class="text-muted small mt-1" id="kycModalSubTitle">Mã hồ sơ: #REQ-1</div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- MODAL CHI TIẾT GIAN HÀNG -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+        <div class="modal-content shop-detail-modal">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-success" style="font-size:.95rem;"><i class="bi bi-file-earmark-text"></i> Chi tiết hồ sơ gian hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                <div id="kycInspectBody">
-                    <div class="row g-3 mb-3">
-                        <!-- Thông tin chủ hộ & Pháp lý -->
-                        <div class="col-md-6">
-                            <div class="kyc-doc-card h-100">
-                                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-person-bounding-box text-primary me-1"></i> Pháp Lý & Chủ Sở Hữu</h6>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Người đại diện:</span>
-                                    <span class="kyc-info-value fw-bold" id="kycApplicantName">-</span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Số CCCD / CMND:</span>
-                                    <span class="kyc-info-value fw-bold text-primary" id="kycIdCard">-</span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Số điện thoại:</span>
-                                    <span class="kyc-info-value" id="kycApplicantPhone">-</span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Email liên hệ:</span>
-                                    <span class="kyc-info-value" id="kycApplicantEmail">-</span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Mã tài khoản:</span>
-                                    <span class="kyc-info-value" id="kycUserId">#</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Thông tin trang trại & Chứng nhận -->
-                        <div class="col-md-6">
-                            <div class="kyc-doc-card h-100">
-                                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-patch-check-fill text-success me-1"></i> Vùng Trồng & Chứng Nhận ATTP</h6>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Tên gian hàng:</span>
-                                    <span class="kyc-info-value fw-bold text-success" id="kycShopName">-</span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Mô hình:</span>
-                                    <span class="kyc-info-value" id="kycBusinessType">-</span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Chứng nhận ATTP:</span>
-                                    <span class="kyc-info-value"><span class="badge bg-success-subtle text-success border border-success-subtle" id="kycCertName">-</span></span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Tỉnh / Thành:</span>
-                                    <span class="kyc-info-value" id="kycProvince">-</span>
-                                </div>
-                                <div class="kyc-info-row">
-                                    <span class="kyc-info-label">Địa chỉ vườn/kho:</span>
-                                    <span class="kyc-info-value" id="kycFarmAddress">-</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Nông sản chủ lực & Giới thiệu -->
-                    <div class="kyc-doc-card mb-3">
-                        <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-card-text text-secondary me-1"></i> Nông Sản & Giới Thiệu Nguồn Gốc</h6>
-                        <div class="mb-2">
-                            <strong>Trái cây chủ lực:</strong> <span id="kycSpecialty" class="text-dark">-</span>
-                        </div>
-                        <div>
-                            <strong>Nguyện vọng / Giới thiệu:</strong>
-                            <p class="text-muted small mb-0 mt-1 fst-italic" id="kycReason">-</p>
-                        </div>
-                    </div>
-
-                    <!-- Kết quả thẩm định (nếu đã thẩm định) -->
-                    <div id="kycReviewResultBox" style="display: none;" class="p-3 border rounded-3 mb-2">
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <strong id="kycResultTitle">Kết quả thẩm định:</strong>
-                            <span id="kycResultBadge"></span>
-                        </div>
-                        <div class="small text-muted" id="kycReviewerMeta"></div>
-                        <div class="small text-dark mt-1" id="kycReviewNote"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer d-flex justify-content-between" style="border-top: 1px solid #f1f5f9; padding: 0.85rem 1.4rem;">
-                <button type="button" class="btn btn-light btn-sm fw-bold px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
-                <div id="kycInspectActionBtns">
-                    <!-- Populated by JS for PENDING requests -->
-                </div>
-            </div>
+            <div class="modal-body" id="detailBody"></div>
+            <div class="modal-footer" id="detailFooter"></div>
         </div>
     </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- MODAL 2: PHÊ DUYỆT HỒ SƠ MỞ SHOP (APPROVE REQUEST)                        -->
-<!-- ========================================================================= -->
-<div class="modal fade" id="approveRequestModal" tabindex="-1" aria-labelledby="approveRequestModalLabel" aria-hidden="true">
+<!-- MODAL TỪ CHỐI -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0;">
-            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
-                <h5 class="modal-title fw-bold text-success" id="approveRequestModalLabel" style="font-size: 1rem;">
-                    <i class="bi bi-check-circle-fill me-1"></i> Phê Duyệt Hồ Sơ & Cấp Phép Mở Gian Hàng
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <form action="${pageContext.request.contextPath}/admin/shops" method="POST">
+            <input type="hidden" name="action" value="reject">
+            <input type="hidden" name="tab" value="${selectedStatus}">
+            <input type="hidden" name="id" id="rejectRequestId">
+            <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" style="font-size:.95rem;"><i class="bi bi-x-octagon"></i> Từ chối hồ sơ: <span id="rejectShopName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label fw-bold" style="font-size:.82rem;">Lý do từ chối (sẽ gửi thông báo cho người bán) <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="reason" rows="4" placeholder="Ví dụ: Ảnh CCCD bị mờ, thông tin ngân hàng không hợp lệ..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger btn-sm">Xác nhận từ chối</button>
+                </div>
             </div>
-            <form action="${pageContext.request.contextPath}/admin/shops" method="POST">
-                <input type="hidden" name="action" value="approveRequest">
-                <input type="hidden" name="requestId" id="approveRequestId">
-                <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                    <div class="alert alert-success d-flex align-items-start gap-2 mb-3" style="font-size: 0.82rem; border-radius: 8px;">
-                        <i class="bi bi-info-circle-fill fs-5 text-success flex-shrink-0"></i>
-                        <div>
-                            <strong>TỰ ĐỘNG KÍCH HOẠT:</strong> Khi phê duyệt, hệ thống sẽ tự động <strong>kích hoạt Shop ở trạng thái ACTIVE</strong> và cấp quyền <strong>SHOP_OWNER</strong> vào tài khoản của người dùng.
-                        </div>
-                    </div>
-
-                    <div class="p-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div class="small text-muted mb-1">Gian hàng phê duyệt:</div>
-                        <div class="fw-bold text-dark fs-6" id="approveShopNameDisplay">Nông Trại Đà Lạt</div>
-                        <div class="text-muted small" id="approveApplicantDisplay">Nguyễn Văn An</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-dark">Tỷ lệ phí hoa hồng sàn (Commission Rate)</label>
-                        <div class="input-group">
-                            <input type="number" step="0.1" min="1" max="50" name="commissionRate" class="form-control" value="8.0" style="font-size: 0.82rem; border-radius: 8px 0 0 8px;">
-                            <span class="input-group-text small" style="border-radius: 0 8px 8px 0;">%</span>
-                        </div>
-                        <div class="form-text small text-muted">Mặc định hoa hồng sàn Gốc Vườn là 8.0%.</div>
-                    </div>
-
-                    <div class="mb-2">
-                        <label class="form-label small fw-bold text-dark">Ghi chú thẩm định / Quyết định duyệt</label>
-                        <textarea name="reviewNote" class="form-control" rows="2" style="font-size: 0.82rem; border-radius: 8px;" placeholder="Hồ sơ pháp lý và chứng nhận ATTP hợp lệ. Chấp thuận mở bán trên sàn."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 0.85rem 1.4rem;">
-                    <button type="button" class="btn btn-light btn-sm fw-bold px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-success btn-sm fw-bold px-3" style="background: #15803d; border-color: #15803d; border-radius: 8px;">
-                        <i class="bi bi-check2-circle me-1"></i> Xác Nhận Phê Duyệt & Mở Gian Hàng
-                    </button>
-                </div>
-            </form>
-        </div>
+        </form>
     </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- MODAL 3: TỪ CHỐI HỒ SƠ MỞ SHOP (REJECT REQUEST)                           -->
-<!-- ========================================================================= -->
-<div class="modal fade" id="rejectRequestModal" tabindex="-1" aria-labelledby="rejectRequestModalLabel" aria-hidden="true">
+<!-- MODAL TẠM KHÓA -->
+<div class="modal fade" id="suspendModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0;">
-            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
-                <h5 class="modal-title fw-bold text-danger" id="rejectRequestModalLabel" style="font-size: 1rem;">
-                    <i class="bi bi-x-circle-fill me-1"></i> Từ Chối Hồ Sơ Mở Gian Hàng
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <form action="${pageContext.request.contextPath}/admin/shops" method="POST">
+            <input type="hidden" name="action" value="suspend">
+            <input type="hidden" name="tab" value="${selectedStatus}">
+            <input type="hidden" name="id" id="suspendRequestId">
+            <div class="modal-content" style="border-radius:16px; overflow:hidden;">
+                <div class="modal-header text-white" style="background:#d97706;">
+                    <h5 class="modal-title" style="font-size:.95rem;"><i class="bi bi-lock-fill"></i> Tạm khóa gian hàng: <span id="suspendShopName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2" style="font-size:.78rem;">
+                        Shop sẽ bị ẩn khỏi sàn và không thể tự mở lại. Hệ thống sẽ gửi thông báo kèm lý do cho chủ shop.
+                    </div>
+                    <label class="form-label fw-bold" style="font-size:.82rem;">Lý do tạm khóa <span class="text-danger">*</span></label>
+                    <textarea class="form-control" name="reason" rows="4" placeholder="Ví dụ: Nhiều khiếu nại về chất lượng trái cây, vi phạm chính sách bảo quản lạnh..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-sm text-white" style="background:#d97706;">Xác nhận tạm khóa</button>
+                </div>
             </div>
-            <form action="${pageContext.request.contextPath}/admin/shops" method="POST">
-                <input type="hidden" name="action" value="rejectRequest">
-                <input type="hidden" name="requestId" id="rejectRequestId">
-                <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                    <div class="p-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div class="small text-muted mb-1">Hồ sơ từ chối:</div>
-                        <div class="fw-bold text-dark fs-6" id="rejectShopNameDisplay">Nông Trại Đà Lạt</div>
-                        <div class="text-muted small" id="rejectApplicantDisplay">Nguyễn Văn An</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-dark">
-                            Lý do từ chối phản hồi cho khách hàng <span class="text-danger">* Bắt buộc</span>
-                        </label>
-                        <textarea name="reviewNote" class="form-control" rows="3" required minlength="5" style="font-size: 0.82rem; border-radius: 8px;" placeholder="Ví dụ: Giấy chứng nhận VietGAP đã hết hiệu lực / Địa chỉ vùng trồng không xác minh được / Thiếu hình ảnh chụp giấy tờ thực tế..."></textarea>
-                        <div class="form-text small text-muted">Lý do này sẽ được gửi phản hồi trực tiếp để nhà vườn bổ sung hồ sơ.</div>
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 0.85rem 1.4rem;">
-                    <button type="button" class="btn btn-light btn-sm fw-bold px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-bold px-3" style="border-radius: 8px;">
-                        <i class="bi bi-x-circle me-1"></i> Xác Nhận Từ Chối Hồ Sơ
-                    </button>
-                </div>
-            </form>
-        </div>
+        </form>
     </div>
 </div>
 
-<!-- ========================================================================= -->
-<!-- MODAL 4: ĐÌNH CHỈ GIAN HÀNG VI PHẠM (SUSPEND SHOP)                       -->
-<!-- ========================================================================= -->
-<div class="modal fade" id="suspendShopModal" tabindex="-1" aria-labelledby="suspendShopModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0;">
-            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
-                <h5 class="modal-title fw-bold text-danger" id="suspendShopModalLabel" style="font-size: 1rem;">
-                    <i class="bi bi-exclamation-octagon-fill me-1"></i> Đình Chỉ Hoạt Động Gian Hàng (SUSPENDED)
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="${pageContext.request.contextPath}/admin/shops" method="POST">
-                <input type="hidden" name="action" value="suspendShop">
-                <input type="hidden" name="shopId" id="suspendShopId">
-                <input type="hidden" name="currentStatus" value="${selectedStatus}">
-                <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                    <div class="alert alert-danger d-flex align-items-start gap-2 mb-3" style="font-size: 0.82rem; border-radius: 8px;">
-                        <i class="bi bi-shield-x fs-5 text-danger flex-shrink-0"></i>
-                        <div>
-                            <strong>CẢNH BÁO ĐÌNH CHỈ:</strong> Gian hàng sẽ bị <strong>tạm ngưng kinh doanh ngay lập tức</strong>, ẩn toàn bộ sản phẩm trên sàn người mua và không thể tạo đơn hàng mới.
-                        </div>
-                    </div>
-
-                    <div class="p-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div class="small text-muted mb-1">Gian hàng bị đình chỉ:</div>
-                        <div class="fw-bold text-dark fs-6" id="suspendShopNameDisplay">Gian Hàng</div>
-                        <div class="text-muted small" id="suspendOwnerDisplay">Chủ sở hữu</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-dark">
-                            Lý do đình chỉ quản trị <span class="text-danger">* Bắt buộc</span>
-                        </label>
-                        <textarea name="reason" class="form-control" rows="3" required minlength="5" style="font-size: 0.82rem; border-radius: 8px;" placeholder="Ví dụ: Phát hiện bán trái cây dập nát, tỷ lệ khiếu nại chất lượng vượt mức 5.0% trong tuần qua / Không duy trì bảo quản lạnh đúng quy chuẩn..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 0.85rem 1.4rem;">
-                    <button type="button" class="btn btn-light btn-sm fw-bold px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-bold px-3" style="border-radius: 8px;">
-                        <i class="bi bi-slash-circle me-1"></i> Xác Nhận Đình Chỉ Gian Hàng
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- MODAL 5: MỞ LẠI HOẠT ĐỘNG GIAN HÀNG (REACTIVATE SHOP)                     -->
-<!-- ========================================================================= -->
-<div class="modal fade" id="reactivateShopModal" tabindex="-1" aria-labelledby="reactivateShopModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0;">
-            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
-                <h5 class="modal-title fw-bold text-success" id="reactivateShopModalLabel" style="font-size: 1rem;">
-                    <i class="bi bi-play-circle-fill me-1"></i> Mở Lại Hoạt Động Gian Hàng (Khôi phục ACTIVE)
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form action="${pageContext.request.contextPath}/admin/shops" method="POST">
-                <input type="hidden" name="action" value="reactivateShop">
-                <input type="hidden" name="shopId" id="reactivateShopId">
-                <input type="hidden" name="currentStatus" value="${selectedStatus}">
-                <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                    <div class="alert alert-success d-flex align-items-start gap-2 mb-3" style="font-size: 0.82rem; border-radius: 8px;">
-                        <i class="bi bi-check-circle-fill fs-5 text-success flex-shrink-0"></i>
-                        <div>
-                            <strong>KHÔI PHỤC HOẠT ĐỘNG:</strong> Gian hàng sẽ chuyển lại sang trạng thái <strong>ACTIVE</strong>, mở lại hiển thị sản phẩm và tiếp tục nhận đơn hàng bình thường.
-                        </div>
-                    </div>
-
-                    <div class="p-3 mb-2" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-                        <div class="small text-muted mb-1">Gian hàng mở lại:</div>
-                        <div class="fw-bold text-dark fs-6" id="reactivateShopNameDisplay">Gian Hàng</div>
-                        <div class="text-muted small" id="reactivateOwnerDisplay">Chủ sở hữu</div>
-                    </div>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 0.85rem 1.4rem;">
-                    <button type="button" class="btn btn-light btn-sm fw-bold px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-success btn-sm fw-bold px-3" style="background: #15803d; border-color: #15803d; border-radius: 8px;">
-                        <i class="bi bi-play-fill me-1"></i> Xác Nhận Mở Lại Gian Hàng
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================================================= -->
-<!-- MODAL 6: XEM CHI TIẾT GIAN HÀNG (SHOP DETAIL)                             -->
-<!-- ========================================================================= -->
-<div class="modal fade" id="shopDetailModal" tabindex="-1" aria-labelledby="shopDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0;">
-            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
-                <h5 class="modal-title fw-bold text-dark" id="shopDetailModalLabel" style="font-size: 1rem;">
-                    <i class="bi bi-shop text-success me-1"></i> Chi Tiết Gian Hàng Đối Tác
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="padding: 1.25rem 1.4rem;">
-                <div id="shopDetailBody">
-                    <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-3" style="background: #f0fdf4; border: 1px solid #dcfce7;">
-                        <div class="user-summary-icon-box bg-white text-success fs-4" style="width: 48px; height: 48px; border-radius: 10px; display:flex; align-items:center; justify-content:center;">
-                            <i class="bi bi-shop"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-0 fs-6" id="sdShopName">-</h6>
-                            <div class="text-muted small" id="sdBusinessType">-</div>
-                            <div class="mt-1" id="sdStatusBadge"></div>
-                        </div>
-                    </div>
-
-                    <div class="kyc-doc-card mb-2">
-                        <div class="kyc-info-row"><span class="kyc-info-label">Chủ sở hữu:</span><span class="kyc-info-value fw-bold" id="sdOwnerName">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Hotline:</span><span class="kyc-info-value" id="sdPhone">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Email:</span><span class="kyc-info-value" id="sdEmail">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Tỉnh / Thành:</span><span class="kyc-info-value" id="sdProvince">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Địa chỉ kho/vườn:</span><span class="kyc-info-value" id="sdAddress">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Chứng nhận ATTP:</span><span class="kyc-info-value fw-bold text-success" id="sdCert">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Chiết khấu sàn:</span><span class="kyc-info-value fw-bold" id="sdComm">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Tổng doanh số:</span><span class="kyc-info-value fw-bold text-success" id="sdSales">-</span></div>
-                        <div class="kyc-info-row"><span class="kyc-info-label">Tổng đơn bán:</span><span class="kyc-info-value" id="sdOrders">-</span></div>
-                    </div>
-
-                    <div id="sdSuspendedBox" style="display: none;" class="alert alert-danger mt-2 mb-0 small">
-                        <strong>Lý do đình chỉ:</strong> <span id="sdSuspendedReason">-</span>
-                        <div class="text-muted mt-1" id="sdSuspendedDate" style="font-size: 0.72rem;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 0.85rem 1.4rem;">
-                <button type="button" class="btn btn-light btn-sm fw-bold px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Form ẩn cho các thao tác đơn giản (duyệt / mở khóa / duyệt hàng loạt) -->
+<form id="quickActionForm" action="${pageContext.request.contextPath}/admin/shops" method="POST" style="display:none;">
+    <input type="hidden" name="action" id="qaAction">
+    <input type="hidden" name="id" id="qaId">
+    <input type="hidden" name="tab" value="${selectedStatus}">
+</form>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=16"></script>
-<script src="${pageContext.request.contextPath}/assets/js/admin-shops.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=13"></script>
+<script>
+    const CTX = '${pageContext.request.contextPath}';
+    const SHOPS = ${empty shopsJson ? '[]' : shopsJson};
+    const SHOP_MAP = {};
+    SHOPS.forEach(function (s) { SHOP_MAP[s.requestId] = s; });
+
+    function esc(v) {
+        if (v === null || v === undefined || v === '') return '';
+        return String(v).replace(/[&<>"']/g, function (c) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+        });
+    }
+    function val(v) { return v ? esc(v) : '<span class="text-muted fst-italic">Chưa cung cấp</span>'; }
+    function imgUrl(u) {
+        if (!u) return '';
+        if (/^(https?:|data:)/i.test(u)) return u;
+        return CTX + '/' + u.replace(/^\/+/, '');
+    }
+    function showModal(id) { bootstrap.Modal.getOrCreateInstance(document.getElementById(id)).show(); }
+    function hideModal(id) { bootstrap.Modal.getOrCreateInstance(document.getElementById(id)).hide(); }
+    function submitQuick(action, id) {
+        document.getElementById('qaAction').value = action;
+        document.getElementById('qaId').value = id || '';
+        document.getElementById('quickActionForm').submit();
+    }
+
+    function approveShop(id) {
+        var s = SHOP_MAP[id];
+        if (confirm('Duyệt gian hàng "' + (s ? s.shopName : '') + '"?')) submitQuick('approve', id);
+    }
+    function unlockShop(id) {
+        var s = SHOP_MAP[id];
+        if (confirm('Mở khóa gian hàng "' + (s ? s.shopName : '') + '"?')) submitQuick('unlock', id);
+    }
+    function approveAllPending(n) {
+        if (n > 0 && confirm('Duyệt tất cả ' + n + ' hồ sơ đang chờ?')) submitQuick('approveAll', '');
+    }
+    function openRejectModal(id) {
+        hideModal('detailModal');
+        var s = SHOP_MAP[id];
+        document.getElementById('rejectRequestId').value = id;
+        document.getElementById('rejectShopName').innerText = s ? s.shopName : '';
+        setTimeout(function () { showModal('rejectModal'); }, 200);
+    }
+    function openSuspendModal(id) {
+        hideModal('detailModal');
+        var s = SHOP_MAP[id];
+        document.getElementById('suspendRequestId').value = id;
+        document.getElementById('suspendShopName').innerText = s ? s.shopName : '';
+        setTimeout(function () { showModal('suspendModal'); }, 200);
+    }
+
+    var STATUS_VIEW = {
+        ACTIVE:    ['st-active', 'bi-check-circle-fill', 'Đang hoạt động'],
+        PAUSED:    ['st-paused', 'bi-pause-circle-fill', 'Shop tạm ngưng'],
+        CLOSED:    ['st-closed', 'bi-moon-fill', 'Đóng cửa'],
+        SUSPENDED: ['st-suspended', 'bi-lock-fill', 'Tạm khóa'],
+        PENDING:   ['st-pending', 'bi-hourglass-split', 'Chờ duyệt KYC'],
+        REJECTED:  ['st-rejected', 'bi-x-circle-fill', 'Đã từ chối']
+    };
+
+    function field(label, html) {
+        return '<div class="dt-field"><span class="dt-label">' + label + '</span><span class="dt-value">' + html + '</span></div>';
+    }
+    function idImage(label, url) {
+        var u = imgUrl(url);
+        return '<div class="dt-idimg"><span class="dt-label">' + label + '</span>' +
+            (u ? '<a href="' + esc(u) + '" target="_blank"><img src="' + esc(u) + '" alt="' + label + '"></a>'
+               : '<div class="dt-noimg"><i class="bi bi-image"></i> Chưa có ảnh</div>') + '</div>';
+    }
+
+    function openDetail(id) {
+        var s = SHOP_MAP[id];
+        if (!s) return;
+        var sv = STATUS_VIEW[s.status] || ['st-closed', 'bi-dot', s.status];
+        var banner = imgUrl(s.shopBannerUrl);
+        var logo = imgUrl(s.shopLogoUrl);
+        var address = [s.streetAddress, s.ward, s.district, s.province].filter(Boolean).join(', ');
+
+        var h = '';
+        // --- Banner + logo (kiểu trang profile) ---
+        h += '<div class="dt-banner" style="' + (banner ? "background-image:url('" + esc(banner) + "')" : '') + '"></div>';
+        h += '<div class="dt-head">';
+        h += (logo ? '<img class="dt-logo" src="' + esc(logo) + '" alt="logo">'
+                   : '<div class="dt-logo dt-logo-empty"><i class="bi bi-shop"></i></div>');
+        h += '<div class="dt-head-info"><h4>' + esc(s.shopName) + '</h4>' +
+             '<div class="d-flex flex-wrap align-items-center gap-2 mt-1">' +
+             '<span class="shop-state ' + sv[0] + '"><i class="bi ' + sv[1] + '"></i> ' + sv[2] + '</span>' +
+             (s.businessType ? '<span class="shop-model-pill">' + esc(s.businessType) + '</span>' : '') +
+             '<span class="text-muted" style="font-size:.7rem;">Mã hồ sơ #' + s.requestId + '</span></div></div></div>';
+
+        // --- Mô tả ---
+        h += '<div class="dt-section"><div class="dt-title"><i class="bi bi-card-text"></i> Giới thiệu gian hàng</div>' +
+             '<p class="dt-desc">' + (s.shopDescription ? esc(s.shopDescription) : '<span class="text-muted fst-italic">Chưa có mô tả</span>') + '</p></div>';
+
+        // --- Chủ sở hữu ---
+        h += '<div class="dt-section"><div class="dt-title"><i class="bi bi-person-badge"></i> Chủ sở hữu</div><div class="dt-grid">' +
+             field('Họ và tên', val(s.ownerName)) + field('Email', val(s.ownerEmail)) +
+             field('Số điện thoại', val(s.ownerPhone)) + field('Ngày sinh', val(s.ownerBirth)) + '</div></div>';
+
+        // --- Định danh ---
+        h += '<div class="dt-section"><div class="dt-title"><i class="bi bi-person-vcard"></i> Thông tin định danh</div><div class="dt-grid">' +
+             field('Số CCCD / CMND', val(s.idCardNumber)) + field('Mã số thuế', val(s.taxCode)) + '</div>' +
+             '<div class="dt-idrow">' + idImage('Ảnh CCCD mặt trước', s.idCardFrontUrl) + idImage('Ảnh CCCD mặt sau', s.idCardBackUrl) + '</div></div>';
+
+        // --- Địa chỉ ---
+        h += '<div class="dt-section"><div class="dt-title"><i class="bi bi-geo-alt"></i> Địa chỉ &amp; kho hàng</div><div class="dt-grid">' +
+             field('Tỉnh / Thành phố', val(s.province)) + field('Quận / Huyện', val(s.district)) +
+             field('Phường / Xã', val(s.ward)) + field('Địa chỉ chi tiết', val(s.streetAddress)) +
+             field('Địa chỉ lấy hàng', val(s.pickupAddress)) + field('Địa chỉ hoàn trả', val(s.returnAddress)) + '</div></div>';
+
+        // --- Ngân hàng ---
+        h += '<div class="dt-section"><div class="dt-title"><i class="bi bi-bank"></i> Ngân hàng &amp; thanh toán</div><div class="dt-grid">' +
+             field('Ngân hàng', val(s.bankName)) + field('Số tài khoản', val(s.bankAccountNumber)) +
+             field('Chủ tài khoản', val(s.bankAccountHolder)) +
+             (s.commissionRate ? field('Hoa hồng sàn', esc(s.commissionRate)) : '') + '</div></div>';
+
+        // --- Lịch sử hồ sơ ---
+        h += '<div class="dt-section"><div class="dt-title"><i class="bi bi-clock-history"></i> Lịch sử hồ sơ</div><div class="dt-grid">' +
+             field('Ngày nộp hồ sơ', val(s.createdAt)) +
+             field('Người xét duyệt', val(s.reviewerName)) +
+             field('Ngày xét duyệt', val(s.reviewedAt)) + '</div></div>';
+
+        // --- Lý do từ chối / tạm khóa (cuối modal) ---
+        if (s.status === 'REJECTED') {
+            h += '<div class="dt-reason dt-reason-red"><div class="dt-title text-danger"><i class="bi bi-x-octagon-fill"></i> Lý do từ chối hồ sơ</div>' +
+                 '<p>' + (s.rejectReason ? esc(s.rejectReason) : '<span class="fst-italic">Admin không ghi lý do.</span>') + '</p></div>';
+        }
+        if (s.status === 'SUSPENDED') {
+            h += '<div class="dt-reason dt-reason-amber"><div class="dt-title" style="color:#b45309;"><i class="bi bi-lock-fill"></i> Lý do tạm khóa' +
+                 (s.suspendedAt ? ' <small class="fw-normal">(' + esc(s.suspendedAt) + ')</small>' : '') + '</div>' +
+                 '<p>' + (s.suspendReason ? esc(s.suspendReason) : '<span class="fst-italic">Không có ghi chú lý do.</span>') + '</p></div>';
+        }
+        document.getElementById('detailBody').innerHTML = h;
+
+        // --- Footer: thao tác theo trạng thái ---
+        var f = '<button type="button" class="btn btn-light btn-sm me-auto" data-bs-dismiss="modal">Đóng</button>';
+        if (s.status === 'PENDING') {
+            f += '<button type="button" class="act-btn act-reject" onclick="openRejectModal(' + s.requestId + ')"><i class="bi bi-x-lg"></i><span>Từ chối</span></button>' +
+                 '<button type="button" class="act-btn act-approve" onclick="approveShop(' + s.requestId + ')"><i class="bi bi-check-lg"></i><span>Duyệt</span></button>';
+        } else if (s.status === 'ACTIVE' || s.status === 'PAUSED' || s.status === 'CLOSED') {
+            f += '<button type="button" class="act-btn act-suspend" onclick="openSuspendModal(' + s.requestId + ')"><i class="bi bi-lock-fill"></i><span>Tạm khóa</span></button>';
+        } else if (s.status === 'SUSPENDED') {
+            f += '<button type="button" class="act-btn act-unlock" onclick="unlockShop(' + s.requestId + ')"><i class="bi bi-unlock-fill"></i><span>Mở khóa</span></button>';
+        }
+        document.getElementById('detailFooter').innerHTML = f;
+        showModal('detailModal');
+    }
+</script>
 </body>
 </html>

@@ -118,4 +118,3 @@ public class Review implements Serializable {
         this.updatedAt = updatedAt;
     }
 }
-

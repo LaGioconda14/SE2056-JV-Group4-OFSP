@@ -1,9 +1,9 @@
 package controller.admin;
 
 import dao.AdminManagementDAO;
+import model.User;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,24 +11,30 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
 
+/**
+ * Quản lý gian hàng & hồ sơ đăng ký (Admin).
+ * GET  /admin/shops?status=ALL|ACTIVE|PENDING_KYC|SUSPENDED|REJECTED  -> hiển thị
+ * POST /admin/shops  action = approve | reject | suspend | unlock | approveAll
+ */
 @WebServlet(name = "AdminShopServlet", urlPatterns = {"/admin/shops"})
 public class AdminShopServlet extends HttpServlet {
+
     private final AdminManagementDAO dao = new AdminManagementDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String action = request.getParameter("action");
         // Handle flash session messages
         HttpSession session = request.getSession();
         if (session.getAttribute("successMessage") != null) {
-            request.setAttribute("successMessage", session.getAttribute("successMessage"));
+            request.setAttribute("flashMessage", session.getAttribute("successMessage"));
+            request.setAttribute("flashType", "success");
             session.removeAttribute("successMessage");
         }
         if (session.getAttribute("errorMessage") != null) {
-            request.setAttribute("errorMessage", session.getAttribute("errorMessage"));
+            request.setAttribute("flashMessage", session.getAttribute("errorMessage"));
+            request.setAttribute("flashType", "danger");
             session.removeAttribute("errorMessage");
         }
 
@@ -39,29 +45,41 @@ public class AdminShopServlet extends HttpServlet {
         if (status == null || status.trim().isEmpty()) {
             status = "ALL";
         }
+        status = status.trim().toUpperCase();
+        if ("PENDING".equals(status)) {
+            status = "PENDING_KYC";
+        }
 
         String type = request.getParameter("type");
         if (type == null || type.trim().isEmpty()) {
             type = "ALL";
         }
-
-        String cert = request.getParameter("cert");
-        if (cert == null || cert.trim().isEmpty()) {
-            cert = "ALL";
-        }
-
         String search = request.getParameter("search");
         if (search != null) {
             search = search.trim();
         }
 
-        request.setAttribute("selectedStatus", status.toUpperCase());
+        // Flash message sau thao tác
+        HttpSession session = request.getSession();
+        Object flash = session.getAttribute("shopAdminMsg");
+        if (flash != null) {
+            request.setAttribute("flashMessage", flash);
+            request.setAttribute("flashType", session.getAttribute("shopAdminMsgType"));
+            session.removeAttribute("shopAdminMsg");
+            session.removeAttribute("shopAdminMsgType");
+        }
+
+        List<Map<String, Object>> shops = dao.getShopsList(status, type, null, search);
+
+        request.setAttribute("selectedStatus", status);
         request.setAttribute("selectedType", type);
-        request.setAttribute("selectedCert", cert);
         request.setAttribute("searchKeyword", search != null ? search : "");
         request.setAttribute("shopStats", dao.getShopStats());
-        request.setAttribute("shopsList", dao.getShopsList(status, type, cert, search));
-        request.setAttribute("shopRequestsList", dao.getShopRequestsList(status.equals("PENDING_KYC") ? "ALL" : null, search));
+        request.setAttribute("businessTypes", dao.getShopBusinessTypes());
+        request.setAttribute("shopsList", shops);
+        // JSON cho modal chi tiết (Gson tự escape ký tự HTML nên nhúng vào <script> an toàn)
+        request.setAttribute("shopsJson", gson.toJson(shops));
+
         request.getRequestDispatcher("/views/admin/shops.jsp").forward(request, response);
     }
 
@@ -69,112 +87,77 @@ public class AdminShopServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession();
+        User admin = (User) session.getAttribute("account");
+        if (admin == null) {
+            admin = (User) session.getAttribute("user");
+        }
+        int adminId = (admin != null) ? admin.getId() : 1;
 
         String action = request.getParameter("action");
-        HttpSession session = request.getSession();
-
-        User currentUser = (User) session.getAttribute("user");
-        long adminId = currentUser != null ? currentUser.getId() : 1;
-
-        String currentStatus = request.getParameter("currentStatus");
-        if (currentStatus == null || currentStatus.trim().isEmpty()) {
-            currentStatus = "ALL";
+        String tab = request.getParameter("tab");
+        if (tab == null || !tab.matches("ALL|ACTIVE|PENDING_KYC|SUSPENDED|REJECTED")) {
+            tab = "ALL";
         }
 
-        if ("approveRequest".equalsIgnoreCase(action)) {
-            String reqIdStr = request.getParameter("requestId");
-            String reviewNote = request.getParameter("reviewNote");
-            String commRateStr = request.getParameter("commissionRate");
-            double commissionRate = 8.0;
-            if (commRateStr != null && !commRateStr.trim().isEmpty()) {
-                try {
-                    commissionRate = Double.parseDouble(commRateStr.trim());
-                } catch (NumberFormatException ignored) {}
-            }
+        boolean ok = false;
+        String message;
+        try {
+            if ("approveAll".equals(action)) {
+                int n = dao.approveAllPending(adminId);
+                ok = n > 0;
+                message = ok ? "Đã duyệt " + n + " hồ sơ đang chờ." : "Không có hồ sơ nào đang chờ duyệt.";
+            } else {
+                int reqId = Integer.parseInt(request.getParameter("id"));
+                String reason = request.getParameter("reason");
+                reason = reason == null ? "" : reason.trim();
 
-            if (reqIdStr != null && !reqIdStr.trim().isEmpty()) {
-                try {
-                    long reqId = Long.parseLong(reqIdStr.trim());
-                    boolean ok = dao.approveShopRequest(reqId, adminId, reviewNote, commissionRate);
-                    if (ok) {
-                        session.setAttribute("successMessage", "Phê duyệt hồ sơ #" + reqId + " thành công! Gian hàng đã được kích hoạt ở trạng thái ACTIVE và cấp quyền SHOP_OWNER cho chủ tài khoản.");
-                    } else {
-                        session.setAttribute("errorMessage", "Không thể phê duyệt hồ sơ mở shop. Vui lòng thử lại!");
-                    }
-                } catch (NumberFormatException e) {
-                    session.setAttribute("errorMessage", "Mã hồ sơ không hợp lệ!");
+                switch (action == null ? "" : action) {
+                    case "approve":
+                        ok = dao.updateRequestStatus(reqId, "APPROVED", null, adminId);
+                        message = ok ? "Đã duyệt gian hàng và gửi thông báo cho chủ shop."
+                                     : "Không duyệt được (hồ sơ đã được xử lý hoặc không tồn tại).";
+                        break;
+                    case "reject":
+                        if (reason.isEmpty()) {
+                            message = "Vui lòng nhập lý do từ chối.";
+                        } else {
+                            ok = dao.updateRequestStatus(reqId, "REJECTED", reason, adminId);
+                            message = ok ? "Đã từ chối hồ sơ và gửi lý do cho chủ shop."
+                                         : "Không từ chối được (hồ sơ đã được xử lý hoặc không tồn tại).";
+                        }
+                        break;
+                    case "suspend":
+                        if (reason.isEmpty()) {
+                            message = "Vui lòng nhập lý do tạm khóa.";
+                        } else {
+                            ok = dao.suspendShop(reqId, reason, adminId);
+                            message = ok ? "Đã tạm khóa gian hàng và gửi thông báo cho chủ shop."
+                                         : "Không tạm khóa được (shop chưa được duyệt hoặc đã bị khóa).";
+                            if (ok) {
+                                tab = "SUSPENDED";
+                            }
+                        }
+                        break;
+                    case "unlock":
+                        ok = dao.unlockShop(reqId, adminId);
+                        message = ok ? "Đã mở khóa gian hàng và gửi thông báo cho chủ shop."
+                                     : "Không mở khóa được (shop không ở trạng thái tạm khóa).";
+                        break;
+                    default:
+                        message = "Thao tác không hợp lệ.";
                 }
             }
-            response.sendRedirect(request.getContextPath() + "/admin/shops?status=PENDING_KYC");
-            return;
+        } catch (NumberFormatException e) {
+            message = "Mã hồ sơ không hợp lệ.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            message = "Có lỗi xảy ra: " + e.getMessage();
         }
 
-        if ("rejectRequest".equalsIgnoreCase(action)) {
-            String reqIdStr = request.getParameter("requestId");
-            String reviewNote = request.getParameter("reviewNote");
-
-            if (reviewNote == null || reviewNote.trim().isEmpty()) {
-                session.setAttribute("errorMessage", "Bắt buộc phải nhập lý do từ chối để phản hồi cho nhà vườn!");
-            } else if (reqIdStr != null && !reqIdStr.trim().isEmpty()) {
-                try {
-                    long reqId = Long.parseLong(reqIdStr.trim());
-                    boolean ok = dao.rejectShopRequest(reqId, adminId, reviewNote.trim());
-                    if (ok) {
-                        session.setAttribute("successMessage", "Đã từ chối hồ sơ #" + reqId + " và lưu lý do phản hồi thành công.");
-                    } else {
-                        session.setAttribute("errorMessage", "Không thể từ chối hồ sơ. Vui lòng thử lại!");
-                    }
-                } catch (NumberFormatException e) {
-                    session.setAttribute("errorMessage", "Mã hồ sơ không hợp lệ!");
-                }
-            }
-            response.sendRedirect(request.getContextPath() + "/admin/shops?status=PENDING_KYC");
-            return;
-        }
-
-        if ("suspendShop".equalsIgnoreCase(action)) {
-            String shopIdStr = request.getParameter("shopId");
-            String reason = request.getParameter("reason");
-
-            if (reason == null || reason.trim().isEmpty()) {
-                session.setAttribute("errorMessage", "Vui lòng nhập lý do đình chỉ hoạt động của gian hàng!");
-            } else if (shopIdStr != null && !shopIdStr.trim().isEmpty()) {
-                try {
-                    long shopId = Long.parseLong(shopIdStr.trim());
-                    boolean ok = dao.updateShopStatus(shopId, "SUSPENDED", reason.trim());
-                    if (ok) {
-                        session.setAttribute("successMessage", "Đã đình chỉ (SUSPENDED) hoạt động của gian hàng ID #" + shopId + " thành công!");
-                    } else {
-                        session.setAttribute("errorMessage", "Không thể đình chỉ gian hàng. Vui lòng thử lại!");
-                    }
-                } catch (NumberFormatException e) {
-                    session.setAttribute("errorMessage", "Mã gian hàng không hợp lệ!");
-                }
-            }
-            response.sendRedirect(request.getContextPath() + "/admin/shops?status=" + URLEncoder.encode(currentStatus, StandardCharsets.UTF_8));
-            return;
-        }
-
-        if ("reactivateShop".equalsIgnoreCase(action)) {
-            String shopIdStr = request.getParameter("shopId");
-            if (shopIdStr != null && !shopIdStr.trim().isEmpty()) {
-                try {
-                    long shopId = Long.parseLong(shopIdStr.trim());
-                    boolean ok = dao.updateShopStatus(shopId, "ACTIVE", null);
-                    if (ok) {
-                        session.setAttribute("successMessage", "Đã mở lại hoạt động (ACTIVE) cho gian hàng ID #" + shopId + " thành công!");
-                    } else {
-                        session.setAttribute("errorMessage", "Không thể mở lại hoạt động gian hàng. Vui lòng thử lại!");
-                    }
-                } catch (NumberFormatException e) {
-                    session.setAttribute("errorMessage", "Mã gian hàng không hợp lệ!");
-                }
-            }
-            response.sendRedirect(request.getContextPath() + "/admin/shops?status=" + URLEncoder.encode(currentStatus, StandardCharsets.UTF_8));
-            return;
-        }
-
-        response.sendRedirect(request.getContextPath() + "/admin/shops");
+        session.setAttribute("shopAdminMsg", message);
+        session.setAttribute("shopAdminMsgType", ok ? "success" : "danger");
+        response.sendRedirect(request.getContextPath() + "/admin/shops?status=" + tab);
     }
 }

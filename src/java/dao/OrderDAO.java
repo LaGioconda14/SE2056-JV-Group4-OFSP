@@ -271,6 +271,7 @@ public class OrderDAO extends DBContext {
             for (SubOrder sub : order.getSubOrders()) {
                 if (sub.getShopCouponId() != null) {
                     Coupon sc = couponDAO.findByIdForUpdate(conn, sub.getShopCouponId());
+                    couponDAO.assertPerUserLimit(conn, sub.getShopCouponId(), order.getCustomerId());
                     validateCouponForShop(sc, sub.getShopId(), sub.getShopSubtotal());
                     BigDecimal sDiscount = calculateCouponDiscount(sc, sub.getShopSubtotal());
                     sub.setShopDiscount(sDiscount);
@@ -286,6 +287,7 @@ public class OrderDAO extends DBContext {
 
             if (order.getCouponId() != null) {
                 Coupon coupon = couponDAO.findByIdForUpdate(conn, order.getCouponId());
+                couponDAO.assertPerUserLimit(conn, order.getCouponId(), order.getCustomerId());
                 validateCouponForOrder(coupon, order.getTotalGoodsAmount());
                 BigDecimal discount = calculateCouponDiscount(coupon, order.getTotalGoodsAmount());
                 order.setPlatformDiscount(discount);
@@ -433,10 +435,12 @@ public class OrderDAO extends DBContext {
             // Chá»‰ tÄƒng used_count náº¿u má»i bÆ°á»›c táº¡o Ä‘Æ¡n, trá»« kho vÃ  xÃ³a giá» Ä‘á»u thÃ nh cÃ´ng.
             if (order.getCouponId() != null) {
                 couponDAO.incrementUsage(conn, order.getCouponId());
+                couponDAO.recordUsage(conn, order.getCouponId(), orderId, order.getCustomerId(), order.getPlatformDiscount());
             }
             for (SubOrder sub : order.getSubOrders()) {
                 if (sub.getShopCouponId() != null) {
                     couponDAO.incrementUsage(conn, sub.getShopCouponId());
+                    couponDAO.recordUsage(conn, sub.getShopCouponId(), orderId, order.getCustomerId(), sub.getShopDiscount());
                 }
             }
 
@@ -1099,7 +1103,21 @@ public class OrderDAO extends DBContext {
                     psOrder.executeUpdate();
                 }
 
-                if (couponId != null) {
+                // Hoàn lượt cho TẤT CẢ voucher của đơn (voucher sàn + voucher shop) rồi xóa lịch sử dùng
+                String restoreUsedSql = "UPDATE c SET c.used_count = CASE WHEN c.used_count > 0 THEN c.used_count - 1 ELSE 0 END "
+                                      + "FROM coupons c INNER JOIN coupon_usages u ON u.coupon_id = c.coupon_id "
+                                      + "WHERE u.order_id = ?";
+                int restored;
+                try (PreparedStatement psRestore = conn.prepareStatement(restoreUsedSql)) {
+                    psRestore.setLong(1, matchedOrderId);
+                    restored = psRestore.executeUpdate();
+                }
+                try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM coupon_usages WHERE order_id = ?")) {
+                    psDel.setLong(1, matchedOrderId);
+                    psDel.executeUpdate();
+                }
+                // Đơn cũ (tạo trước khi có lịch sử dùng voucher): giữ cách hoàn lượt như trước
+                if (restored == 0 && couponId != null) {
                     String restoreCouponSql = "UPDATE coupons SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END "
                                             + "WHERE coupon_id = ?";
                     try (PreparedStatement psCoupon = conn.prepareStatement(restoreCouponSql)) {

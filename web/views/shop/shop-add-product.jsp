@@ -4,29 +4,24 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Thêm Mới Nông Sản - Kênh Người Bán</title>
+        <jsp:include page="/views/shop/layout/head.jsp" />
 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-        <script src="https://cdn.tailwindcss.com"></script>
+
     </head>
-    <body class="bg-[#f1f5f9] text-slate-800 font-['Plus_Jakarta_Sans',sans-serif] min-h-screen flex m-0">
+    <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-            <jsp:param name="activeMenu" value="add-product" />
+        <jsp:param name="active" value="add" />
         </jsp:include>
 
-        <div class="flex-1 min-w-0 flex flex-col">
+        <div class="shop-main-wrapper">
 
             <jsp:include page="/views/shop/layout/header.jsp" />
 
-            <main class="p-6 flex-1 overflow-y-auto">
-                <div class="max-w-7xl mx-auto space-y-6">
+            <main class="shop-content-container">
+                <div class="w-full max-w-7xl mx-auto space-y-6">
 
                     <c:if test="${not empty errorMessage}">
                         <div class="bg-rose-50 border border-rose-300 text-rose-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs">
@@ -380,8 +375,8 @@
                         </div>
                     </form>
 
-                </div>
-            </main>
+            </div>
+        </main>
         </div>
 
     </body>

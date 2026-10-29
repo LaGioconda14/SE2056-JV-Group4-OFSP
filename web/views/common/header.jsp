@@ -144,13 +144,23 @@
                             <span class="material-symbols-outlined text-gray-500 text-[18px]">expand_more</span>
                         </div>
                         <!-- Dropdown Menu -->
-                        <div class="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 hidden group-hover:block z-50">
-                            <c:if test="${currentUser.role eq 'SHOP_OWNER'}">
-                                <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-[#00652c] bg-emerald-50/50 hover:bg-emerald-50 transition-colors">
-                                    <span class="material-symbols-outlined text-[18px]">storefront</span> Kênh Người Bán
-                                </a>
-                                <div class="h-px bg-gray-100 my-1"></div>
-                            </c:if>
+                        <div class="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 hidden group-hover:block z-50">
+                            <c:choose>
+                                <c:when test="${currentUser.role eq 'SHOP_OWNER'}">
+                                    <a href="${pageContext.request.contextPath}/shop/dashboard" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50 transition-colors">
+                                        <span class="material-symbols-outlined text-[18px] text-emerald-600">sliders</span> Kênh Quản Lý Shop
+                                    </a>
+                                    <a href="${pageContext.request.contextPath}/store?id=${sessionScope.shopId != null ? sessionScope.shopId : 1}" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-amber-800 bg-amber-50/50 hover:bg-amber-50 transition-colors">
+                                        <span class="material-symbols-outlined text-[18px] text-amber-600">store</span> Gian Hàng Của Tôi
+                                    </a>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="${pageContext.request.contextPath}/seller/status" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-amber-800 bg-amber-50/50 hover:bg-amber-50 transition-colors">
+                                        <span class="material-symbols-outlined text-[18px] text-amber-600">store</span> Đăng Ký Trở Thành Seller
+                                    </a>
+                                </c:otherwise>
+                            </c:choose>
+                            <div class="h-px bg-gray-100 my-1"></div>
                             <c:if test="${currentUser.role eq 'DRIVER'}">
                                 <a href="${pageContext.request.contextPath}/shipper/deliveries" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-amber-700 bg-amber-50/50 hover:bg-amber-50 transition-colors">
                                     <span class="material-symbols-outlined text-[18px]">local_shipping</span> Cổng Giao Vận

@@ -6,25 +6,24 @@ import java.util.List;
 
 public class Product {
     private long id;
+    private String name;
+    private String categoryName;
+    private int categoryId;
+    private String image;
+    private BigDecimal price;
+    private BigDecimal oldPrice;
+    private int discountPercent;
+    private double rating;
+    private int reviewsCount; 
     private long shopId;
     private String shopName;
     private String shopStatus;
-    private int categoryId;
-    private String name;
-    private String categoryName;
     private String categorySlug;
     private String filterSlugs;
-    private String image;
     private String thumbnailUrl;
     private long defaultVariantId;
-    private BigDecimal price;
-    private BigDecimal oldPrice;
     private BigDecimal minPrice;
-    private int discountPercent;
-    private double rating;
-    private int reviewsCount;
     private boolean active = true;
-
     // Thuộc tính mở rộng chuẩn mẫu giao diện Shop Catalog & Detail
     private String origin;          // Xuất xứ: Yakima Valley Orchards, Washington State,...
     private String tag;             // Tag badge: LOCAL, ORGANIC, CRUNCHY, -17% SALE, SUPER SWEET
@@ -34,7 +33,7 @@ public class Product {
     private String description;
     private String storageTemp;
     private String certification;
-
+    
     // Thuộc tính phục vụ trang Product Detail
     private List<String> images;             // Thư viện ảnh chi tiết
     private List<ProductVariant> variants;   // Các phiên bản kích cỡ/gói (1lb, 3lb bag, 5lb family box)
@@ -67,6 +66,7 @@ public class Product {
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
+
 
     public long getProductId() { return id; }
     public void setProductId(long productId) { this.id = productId; }
@@ -117,11 +117,13 @@ public class Product {
     public BigDecimal getOldPrice() { return oldPrice; }
     public void setOldPrice(BigDecimal oldPrice) { this.oldPrice = oldPrice; }
 
+    public int getDiscountPercent() { return discountPercent; }
+    public void setDiscountPercent(int discountPercent) { this.discountPercent = discountPercent; }
+
     public BigDecimal getMinPrice() { return minPrice != null ? minPrice : price; }
     public void setMinPrice(BigDecimal minPrice) { this.minPrice = minPrice; }
 
-    public int getDiscountPercent() { return discountPercent; }
-    public void setDiscountPercent(int discountPercent) { this.discountPercent = discountPercent; }
+   
 
     public double getRating() { 
         return rating > 0 ? rating : 4.9; 

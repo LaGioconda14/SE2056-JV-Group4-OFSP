@@ -2,10 +2,6 @@
    Gốc Vườn Seller Center - Shop Orders Management Stylesheet
    ======================================================== */
 
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
 /* Custom shadow utilities matching Seller Center UI */
 .shadow-xs {
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

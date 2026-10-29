@@ -4,33 +4,26 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quản Lý Kho & Nông Sản - Kênh Người Bán</title>
+        <jsp:include page="/views/shop/layout/head.jsp" />
 
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-        <script src="https://cdn.tailwindcss.com"></script>
 
             </head>
-    <body class="bg-[#f1f5f9] text-slate-800 font-['Plus_Jakarta_Sans',sans-serif] min-h-screen flex m-0">
+    <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-            <jsp:param name="activeMenu" value="products" />
+        <jsp:param name="active" value="products" />
         </jsp:include>
 
-        <div class="flex-1 min-w-0 flex flex-col">
+        <div class="shop-main-wrapper">
 
             <jsp:include page="/views/shop/layout/header.jsp">
-                <jsp:param name="searchAction" value="${pageContext.request.contextPath}/shop/products" />
-                <jsp:param name="searchPlaceholder" value="Tìm nhanh theo SKU, tên nông sản..." />
+                <jsp:param name="searchAction" value="/shop/products" />
             </jsp:include>
 
-            <main class="p-6 flex-1 overflow-y-auto">
-                <div class="max-w-7xl mx-auto space-y-6">
+            <main class="shop-content-container">
+                <div class="w-full max-w-7xl mx-auto space-y-6">
 
                     <c:if test="${not empty sessionScope.successMessage}">
                         <div class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs">
@@ -404,8 +397,8 @@
                         </div>
                     </div>
 
-                </div>
-            </main>
+            </div>
+        </main>
         </div>
 
         <script>
