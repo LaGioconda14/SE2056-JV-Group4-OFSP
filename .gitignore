@@ -1,12 +1,13 @@
-# NetBeans private user-specific settings (DO NOT COMMIT to avoid breaking team members' paths)
-nbproject/private/
+# NetBeans project files & private settings
+nbproject/
 
-# VS Code local run scripts and tasks (keep local for VS Code users)
-.vscode/tasks.json
-.vscode/*.ps1
+# VS Code settings & scripts
+.vscode/
+
+# Eclipse settings
 .classpath
 .project
-
+.settings/
 
 # Build and distribution directories
 build/
@@ -25,10 +26,7 @@ web/assets/images/avatars/*
 !web/assets/images/avatars/.gitkeep
 
 docs/
-.vscode/
-src/java/oauth.properties
 
 # OAuth private credentials (keep secret)
 *oauth.properties
 !*oauth.properties.example
-.vscode/
