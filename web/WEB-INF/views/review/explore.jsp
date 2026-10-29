@@ -1,0 +1,13 @@
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Đánh giá xác thực • Gốc Vườn</title>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/reviews.css"></head><body style="margin:0">
+        <jsp:include page="/views/common/header.jsp"/>
+        <div class="rv-root rv-app" data-mode="explore" data-type="${reviewType}" data-target-id="${targetId}" data-ctx="${pageContext.request.contextPath}"><div class="rv-container">
+                <nav class="rv-crumb"><a href="${pageContext.request.contextPath}/products">Sản phẩm</a><span>›</span><span>Đánh giá từ người mua</span></nav>
+                <section class="rv-hero rv-hero-community"><div class="rv-hero-copy"><div class="rv-eyebrow"><span class="rv-dot"></span> CỘNG ĐỒNG GỐC VƯỜN</div><h1>Hàng ngon có chứng thực.<br><em>Lời thật từ người mua.</em></h1><p>Khám phá đánh giá và hình ảnh thực tế để an tâm chọn trái cây phù hợp.</p><div class="rv-hero-points"><span>★ Thang điểm 1–5 sao</span><span>✓ Người mua xác thực</span></div></div><div class="rv-hero-art" aria-hidden="true"><span class="rv-fruit rv-fruit-a">🍊</span><span class="rv-fruit rv-fruit-b">🍎</span><span class="rv-fruit rv-fruit-c">🍐</span><span class="rv-fruit-leaf">✦</span></div></section>
+                <div style="height:20px"></div><section class="rv-surface"><div class="rv-surface-header"><div><h2>Khách hàng nói gì về sản phẩm?</h2><p class="rv-sub">Đánh giá, nhận xét và ảnh thực tế từ khách đã mua hàng</p></div><span class="rv-pill green">✓ Đã xác thực mua hàng</span></div>
+                    <div class="rv-rating-panel"><div class="rv-rating-panel-top"><div><span class="rv-section-tag">TỔNG QUAN ĐÁNH GIÁ</span><h3>Đánh giá trung thực từ người mua</h3></div><span class="rv-pill green">✓ Đã mua hàng</span></div><div class="rv-rating-layout" data-score></div></div><div class="rv-toolbar" data-rating-filter></div>
+                    <div class="rv-card-list" data-list></div><div class="rv-pagination"><button class="rv-btn secondary" data-prev>← Trước</button><span data-page>Trang 1</span><button class="rv-btn secondary" data-next>Sau →</button></div></section>
+                <div class="rv-message" data-message role="status" aria-live="polite"></div><jsp:include page="dialog.jsp"/>
+            </div></div><script src="${pageContext.request.contextPath}/assets/js/reviews.js"></script></body></html>

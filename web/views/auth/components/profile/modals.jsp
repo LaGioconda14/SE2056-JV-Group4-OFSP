@@ -146,35 +146,71 @@
     </div>
 </div>
 
+<style>
+/* FE-10 popup styles scoped to profile, independent of review.css filenames */
+#reviewModal .fe10-review-header {background:linear-gradient(125deg,#f0fdf4,#fff); border-bottom:1px solid #dcfce7;}
+#reviewModal .fe10-review-icon {width:46px;height:46px;border-radius:16px;display:grid;place-items:center;background:#dcfce7;color:#00652c;font-size:24px;}
+#reviewModal .fe10-review-star {border:0;background:none;font-size:35px;color:#cbd5e1;line-height:1.2;cursor:pointer;padding:0 4px;transition:transform .15s,color .15s;}
+#reviewModal .fe10-review-star.selected {color:#f5ad22;}
+#reviewModal .fe10-review-star:hover {transform:translateY(-2px) scale(1.05);}
+#reviewModal .fe10-review-submit {border:0;border-radius:12px;padding:11px 22px;background:#00652c;color:white;font-weight:700;}
+#reviewModal .fe10-review-submit:disabled {background:#a5b8a8;cursor:not-allowed;}
+#reviewModal .fe10-review-message {font-size:13px;line-height:1.5;color:#64748b;min-height:20px;}
+#reviewModal .fe10-review-message.is-error {color:#b91c1c;}
+#reviewModal .fe10-review-product {border:1px dashed #b7ddc4;padding:11px 13px;border-radius:12px;background:#f4fbf6;font-size:13px;color:#166534;margin-top:10px;}
+#reviewModal .fe10-review-input {border:1px solid #d6e2d9;border-radius:12px;padding:12px 14px;}
+#reviewModal .fe10-review-input:focus {border-color:#15803d;box-shadow:0 0 0 3px #dcfce7;}
+</style>
 <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header border-bottom-0 pb-0">
-                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-star-fill text-warning me-2"></i>Đánh giá đơn hàng</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body pt-3">
-                <p class="text-muted small mb-3">Mã đơn: <strong id="reviewModalOrderCode" class="text-dark">#</strong></p>
-                <div class="mb-3 text-center">
-                    <div class="fs-2 text-warning mb-1">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header fe10-review-header px-4 py-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="fe10-review-icon"><i class="bi bi-star-fill"></i></div>
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-1">Đánh giá sản phẩm đã mua</h5>
+                        <div class="small text-secondary">Đơn hàng <strong id="reviewModalOrderCode">#</strong> · Gốc Vườn</div>
                     </div>
-                    <span class="small text-muted fw-semibold">Tuyệt vời (5/5 sao)</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-4">
+                    <label for="reviewPurchaseSelect" class="form-label fw-bold text-dark">1. Chọn sản phẩm trong đơn</label>
+                    <select id="reviewPurchaseSelect" class="form-select fe10-review-input" onchange="fe10ReviewProductChanged()" disabled>
+                        <option value="">Đang tải sản phẩm...</option>
+                    </select>
+                    <div id="reviewSelectedProduct" class="fe10-review-product">Chọn một sản phẩm đã giao để đánh giá.</div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark d-block mb-2">2. Chất lượng sản phẩm</label>
+                    <input type="hidden" id="reviewRating" value="5" />
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <div role="radiogroup" aria-label="Số sao đánh giá">
+                            <button type="button" class="fe10-review-star" data-rating="1" role="radio" onclick="setOrderReviewRating(1)" aria-label="1 sao">★</button>
+                            <button type="button" class="fe10-review-star" data-rating="2" role="radio" onclick="setOrderReviewRating(2)" aria-label="2 sao">★</button>
+                            <button type="button" class="fe10-review-star" data-rating="3" role="radio" onclick="setOrderReviewRating(3)" aria-label="3 sao">★</button>
+                            <button type="button" class="fe10-review-star" data-rating="4" role="radio" onclick="setOrderReviewRating(4)" aria-label="4 sao">★</button>
+                            <button type="button" class="fe10-review-star" data-rating="5" role="radio" onclick="setOrderReviewRating(5)" aria-label="5 sao">★</button>
+                        </div>
+                        <span id="reviewRatingCaption" class="small fw-bold text-success">Tuyệt vời</span>
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label-bold" for="reviewComment">Cảm nhận của bạn về chất lượng trái cây</label>
-                    <textarea class="form-control rounded-3" id="reviewComment" rows="3" placeholder="Chia sẻ cảm nhận về độ tươi ngon, chất lượng bảo quản hoa quả..."></textarea>
+                    <label class="form-label fw-bold text-dark" for="reviewComment">3. Chia sẻ trải nghiệm</label>
+                    <textarea class="form-control fe10-review-input" id="reviewComment" rows="4" maxlength="2000"
+                        placeholder="Độ tươi ngon, đóng gói, chất lượng hoa quả... (không bắt buộc)"></textarea>
                 </div>
+                <p id="reviewFormMessage" class="fe10-review-message" role="status"></p>
             </div>
-            <div class="modal-footer border-top-0 pt-0">
-                <button type="button" class="btn-pill-sec" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-fresh-green px-4" onclick="submitReview()">
-                    <i class="bi bi-send me-1"></i> Gửi đánh giá
-                </button>
+            <div class="modal-footer border-top px-4 py-3 justify-content-between bg-light">
+                <span class="small text-secondary"><i class="bi bi-shield-check text-success me-1"></i>Chỉ sản phẩm đã giao mới có thể đánh giá</span>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-3 px-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="fe10-review-submit" id="reviewSubmitButton" onclick="submitReview()" disabled>
+                        <i class="bi bi-send me-1"></i>Gửi đánh giá
+                    </button>
+                </div>
             </div>
         </div>
     </div>
