@@ -17,7 +17,7 @@
             </button>
         </div>
 
-        <form id="formManualWaste" action="${pageContext.request.contextPath}/shop/inventory" method="POST" class="p-5 space-y-4">
+        <form id="formManualWaste" action="${pageContext.request.contextPath}/shop/waste" method="POST" class="p-5 space-y-4">
             <input type="hidden" name="action" value="manual_waste">
 
             <div>

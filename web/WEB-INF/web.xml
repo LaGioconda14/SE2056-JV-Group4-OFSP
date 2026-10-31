@@ -108,6 +108,25 @@
         <url-pattern>/shop-detail</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>ShopWasteServlet</servlet-name>
+        <servlet-class>controller.shop.ShopWasteServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopWasteServlet</servlet-name>
+        <url-pattern>/shop/waste</url-pattern>
+        <url-pattern>/shop/inventory/waste</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ShopInventoryServlet</servlet-name>
+        <servlet-class>controller.shop.ShopInventoryServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ShopInventoryServlet</servlet-name>
+        <url-pattern>/shop/inventory</url-pattern>
+    </servlet-mapping>
+
     <!-- Session Configuration (30 minutes) -->
     <session-config>
         <session-timeout>30</session-timeout>

@@ -4,6 +4,7 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="sbShopName" value="${not empty sessionScope.shopName ? sessionScope.shopName : (not empty sessionScope.shopObj.shopName ? sessionScope.shopObj.shopName : 'Gian hàng của tôi')}" />
 <c:set var="sbLowStock" value="${not empty requestScope.sidebarLowStockCount ? requestScope.sidebarLowStockCount : 0}" />
+<c:set var="sbWasteCount" value="${not empty requestScope.sidebarWasteCount ? requestScope.sidebarWasteCount : 0}" />
 
 <div class="shop-sidebar-overlay" id="shopSidebarOverlay"></div>
 
@@ -61,6 +62,15 @@
                 </span>
                 <span class="badge-counter-red">${sbLowStock}</span>
             </a>
+            <a href="${ctx}/shop/waste" class="shop-sidebar-link ${param.active == 'waste' ? 'active' : ''}">
+                <span class="flex items-center gap-3">
+                    <i class="fa-solid fa-trash-can text-slate-400 text-sm w-4 text-center"></i>
+                    <span>Hàng hỏng & Tiêu hủy</span>
+                </span>
+                <c:if test="${sbWasteCount > 0}">
+                    <span class="badge-counter-red">${sbWasteCount}</span>
+                </c:if>
+            </a>
 
             <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">ĐƠN HÀNG & GIAO VẬN</div>
             <a href="${pageContext.request.contextPath}/shop/orders" 
@@ -88,6 +98,16 @@
             </a>
 
             <div class="shop-sidebar-group-title">TIẾP THỊ & KHÁCH HÀNG</div>
+            <a href="${pageContext.request.contextPath}/shop/chat" 
+               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'chat' or param.active eq 'chat' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
+                <span class="flex items-center gap-3">
+                    <i class="fa-solid fa-comments ${curMenu eq 'chat' or param.active eq 'chat' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
+                    <span>Chat Khách Hàng</span>
+                </span>
+                <c:if test="${not empty totalUnread and totalUnread > 0}">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500 text-white">${totalUnread}</span>
+                </c:if>
+            </a>
             <a href="${ctx}/shop/promotions" class="shop-sidebar-link ${param.active == 'promotions' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
                     <i class="fa-solid fa-bolt text-slate-400 text-sm w-4 text-center"></i>

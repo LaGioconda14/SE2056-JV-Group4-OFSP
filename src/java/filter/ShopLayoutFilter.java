@@ -10,7 +10,9 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import model.User;
+import service.IInventoryWasteService;
 import service.IShopProductService;
+import service.impl.InventoryWasteServiceImpl;
 import service.impl.ShopProductServiceImpl;
 
 /**
@@ -20,11 +22,13 @@ import service.impl.ShopProductServiceImpl;
  *
  * Request attribute được set:
  *   - sidebarLowStockCount : số SKU sắp hết hàng của shop (badge đỏ ở mục "Kho & Cảnh báo tồn")
+ *   - sidebarWasteCount    : số bản ghi hàng hỏng / tiêu hủy của shop
  */
 @WebFilter(filterName = "ShopLayoutFilter", urlPatterns = {"/shop/*"})
 public class ShopLayoutFilter implements Filter {
 
     private final IShopProductService shopProductService = new ShopProductServiceImpl();
+    private final IInventoryWasteService wasteService = new InventoryWasteServiceImpl();
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -44,6 +48,7 @@ public class ShopLayoutFilter implements Filter {
                     }
                     if (shopId != null && shopId > 0) {
                         req.setAttribute("sidebarLowStockCount", shopProductService.getLowStockCountByShopId(shopId));
+                        req.setAttribute("sidebarWasteCount", wasteService.countWasteLogsByShop(shopId, "ALL", null));
                     }
                 } catch (Exception e) {
                     // Không để lỗi đếm badge làm hỏng cả trang; sidebar sẽ hiện 0

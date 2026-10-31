@@ -75,11 +75,6 @@
 
             <div class="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-1.5 overflow-x-auto hide-scrollbar py-0.5">
-                    <a href="${pageContext.request.contextPath}/shop/inventory?viewTab=waste"
-                       class="inv-tab-btn ${viewTab == 'waste' ? 'active' : ''}">
-                        <i class="fa-solid fa-dumpster text-rose-500 text-xs"></i>
-                        <span>Hao hụt &amp; Tiêu hủy</span>
-                    </a>
                     <a href="${pageContext.request.contextPath}/shop/inventory?viewTab=alert"
                        class="inv-tab-btn ${viewTab == 'alert' ? 'active' : ''}">
                         <i class="fa-solid fa-triangle-exclamation text-red-500 text-xs"></i>
@@ -101,25 +96,17 @@
                 </div>
 
                 <div class="flex items-center gap-2 text-xs">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">LỌC THEO:</span>
-                    <a href="#" class="inv-filter-pill active">Tất cả kho lạnh</a>
-                    <a href="#" class="inv-filter-pill">Kho hái sáng (06:00)</a>
-                    <a href="#" class="inv-filter-pill">Kho hái chiều (14:00)</a>
+                    <a href="${pageContext.request.contextPath}/shop/waste" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold transition text-xs border border-rose-200/60">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                        <span>Sổ Hàng Hỏng &amp; Tiêu Hủy &rarr;</span>
+                    </a>
                 </div>
             </div>
 
-            <c:if test="${viewTab == 'waste'}">
-                <div class="flex justify-end mb-4">
-                    <button type="button" id="btnOpenManualWasteModal" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition shadow-sm cursor-pointer">
-                        <i class="fa-solid fa-trash-can"></i>
-                        <span>Báo Tiêu Hủy Nông Sản Kho</span>
-                    </button>
-                </div>
-            </c:if>
-
             <c:choose>
-                <c:when test="${viewTab == 'waste'}">
+                <c:when test="${viewTab == 'alert'}">
                     <jsp:include page="/views/shop/components/inventory/inventory-alerts-table.jsp" />
+                    <jsp:include page="/views/shop/components/inventory/inventory-main-table.jsp" />
                 </c:when>
                 <c:otherwise>
                     <jsp:include page="/views/shop/components/inventory/inventory-main-table.jsp" />

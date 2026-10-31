@@ -438,7 +438,7 @@ public class InventoryWasteDAO extends DBContext {
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR so.sub_order_code LIKE ?) ");
+            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR so.sub_order_code LIKE ? OR l.reason_note LIKE ?) ");
         }
 
         sql.append(" ORDER BY l.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
@@ -458,10 +458,11 @@ public class InventoryWasteDAO extends DBContext {
 
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String kw = "%" + keyword.trim() + "%";
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
             }
 
             int offset = Math.max(0, (page - 1) * pageSize);
@@ -518,7 +519,7 @@ public class InventoryWasteDAO extends DBContext {
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR so.sub_order_code LIKE ?) ");
+            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR so.sub_order_code LIKE ? OR l.reason_note LIKE ?) ");
         }
 
         Connection conn = getConnection();
@@ -536,10 +537,11 @@ public class InventoryWasteDAO extends DBContext {
 
             if (keyword != null && !keyword.trim().isEmpty()) {
                 String kw = "%" + keyword.trim() + "%";
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
+                ps.setNString(idx++, kw);
             }
 
             try (ResultSet rs = ps.executeQuery()) {
