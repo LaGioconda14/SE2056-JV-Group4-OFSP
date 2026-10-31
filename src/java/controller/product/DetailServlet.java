@@ -25,6 +25,9 @@ import model.Product;
 import model.Shop;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
+import model.Review;
+import service.IReviewService;
+import service.impl.ReviewServiceImpl;
 
 /**
  *
@@ -32,7 +35,8 @@ import service.impl.ProductServiceImpl;
  */
 @WebServlet(name="DetailServlet", urlPatterns={"/detail"})
 public class DetailServlet extends HttpServlet {
-    private IProductService productService = new ProductServiceImpl();
+    private final IProductService productService = new ProductServiceImpl();
+    private final IReviewService reviewService = new ReviewServiceImpl();
     /** 
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
      * @param request servlet request
@@ -159,6 +163,19 @@ public class DetailServlet extends HttpServlet {
                         imageList.add(image);
                     }
                     request.setAttribute("imageList", imageList);
+
+                    Integer ratingFilter = null;
+                    String ratingParam = request.getParameter("rating");
+                    if (ratingParam != null && !ratingParam.trim().isEmpty()) {
+                        try {
+                            ratingFilter = Integer.parseInt(ratingParam.trim());
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    List<Review> reviews = reviewService.getReviewsByProductId(productId, ratingFilter, 1, 30);
+                    Map<String, Object> ratingSummary = reviewService.getRatingSummary(productId);
+                    request.setAttribute("reviews", reviews);
+                    request.setAttribute("ratingSummary", ratingSummary);
+                    request.setAttribute("activeRatingFilter", ratingFilter);
 
                     
                     // 3. Forward dữ liệu sang trang detail.jsp đã tạo

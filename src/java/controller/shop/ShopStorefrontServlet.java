@@ -48,7 +48,6 @@ public class ShopStorefrontServlet extends HttpServlet {
             shop = shopDAO.getShopById(shopId);
         }
 
-        // If not specified, try to find user's own shop or default active shop
         if (shop == null && (idStr == null || idStr.trim().isEmpty()) && (slug == null || slug.trim().isEmpty())) {
             HttpSession session = request.getSession(false);
             if (session != null && session.getAttribute("user") != null) {

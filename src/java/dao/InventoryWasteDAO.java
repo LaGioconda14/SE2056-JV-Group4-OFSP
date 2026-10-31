@@ -203,7 +203,6 @@ public class InventoryWasteDAO extends DBContext {
                 return false;
             }
 
-            // 1. Update sub_order status to CANCELLED
             String updateStatusSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
                     + "cancelled_by = ?, cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
                     + "WHERE sub_order_id = ?";
@@ -218,7 +217,6 @@ public class InventoryWasteDAO extends DBContext {
                 psUp.executeUpdate();
             }
 
-            // 2. Synchronize parent order if all sub_orders are CANCELLED
             String syncParentSql = "UPDATE o SET o.order_status = 'CANCELLED', o.updated_at = CURRENT_TIMESTAMP "
                     + "FROM orders o "
                     + "WHERE o.order_id = ? "
@@ -232,7 +230,6 @@ public class InventoryWasteDAO extends DBContext {
                 psSync.executeUpdate();
             }
 
-            // 3. Process each item: damaged fruit to waste log, good fruit restored to stock
             String insertWasteSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, "
                     + "quantity, unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
                     + "VALUES (?, ?, ?, 'QC_PACKING', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
@@ -259,7 +256,6 @@ public class InventoryWasteDAO extends DBContext {
                     }
                     int goodQty = Math.max(0, totalOrderedQty - wastedQty);
 
-                    // Insert waste log for damaged portion
                     if (wastedQty > 0) {
                         BigDecimal loss = price.multiply(BigDecimal.valueOf(wastedQty));
                         psWaste.setLong(1, shopId);
@@ -279,7 +275,6 @@ public class InventoryWasteDAO extends DBContext {
                         hasWaste = true;
                     }
 
-                    // Restore good fruit to stock
                     if (goodQty > 0) {
                         psRestore.setInt(1, goodQty);
                         psRestore.setLong(2, varId);

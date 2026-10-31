@@ -28,7 +28,6 @@ import service.impl.ShopProductServiceImpl;
 
 @WebServlet(name = "ShopInventoryServlet", urlPatterns = {"/shop/inventory", "/shop/inventory/waste"})
 public class ShopInventoryServlet extends HttpServlet {
-
     private static final Logger LOGGER = Logger.getLogger(ShopInventoryServlet.class.getName());
     private static final int DEFAULT_PAGE_SIZE = 15;
 
@@ -41,20 +40,17 @@ public class ShopInventoryServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
-        // 1. Kiểm tra đăng nhập và phân quyền chủ shop
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        // 2. Lấy shopId
         Long shopId = (Long) session.getAttribute("shopId");
         if (shopId == null) {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
@@ -82,7 +78,6 @@ public class ShopInventoryServlet extends HttpServlet {
             request.setAttribute("activeMenu", "inventory");
 
             if ("waste".equals(viewTab)) {
-                // --- Xử lý tab Hao hụt nông sản (Waste log) ---
                 String stage = request.getParameter("stage");
                 if (stage == null || stage.trim().isEmpty()) {
                     stage = "ALL";
@@ -124,9 +119,7 @@ public class ShopInventoryServlet extends HttpServlet {
                 request.setAttribute("currentPage", page);
                 request.setAttribute("totalPages", Math.max(1, totalPages));
                 request.setAttribute("totalItems", totalItems);
-
             } else {
-                // --- Xử lý tab Tồn kho & Cảnh báo độ tươi ---
                 String keyword = request.getParameter("keyword");
                 if (keyword != null) {
                     keyword = keyword.trim();
@@ -176,7 +169,6 @@ public class ShopInventoryServlet extends HttpServlet {
                 request.setAttribute("totalInventoryValue", totalInventoryValue);
                 request.setAttribute("totalSkus", totalSkus > 0 ? totalSkus : 115);
             }
-
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi tải quản lý tồn kho", e);
             request.setAttribute("errorMessage", "Lỗi tải quản lý tồn kho: " + e.getMessage());
@@ -188,7 +180,6 @@ public class ShopInventoryServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 

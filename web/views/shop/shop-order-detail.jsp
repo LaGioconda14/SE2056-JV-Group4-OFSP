@@ -9,10 +9,6 @@
         <title>Chi Tiết Đơn Hàng Con #${subOrder.subOrderCode} | Gốc Vườn Seller Center</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
 
-
-
-
-
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-order-detail.css">
         <script src="${pageContext.request.contextPath}/assets/js/shop-order-detail.js"></script>
     </head>
@@ -29,7 +25,6 @@
 
             <main class="shop-content-container">
 
-                <!-- 1. Header & Breadcrumb -->
                 <div class="flex items-center justify-between text-xs text-slate-500">
                     <div class="flex items-center gap-2">
                         <a href="${pageContext.request.contextPath}/shop/products" class="hover:text-emerald-700 transition">Kênh Người Bán</a>
@@ -43,7 +38,6 @@
                     </a>
                 </div>
 
-                <!-- 2. Page Title & Meta Badges -->
                 <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -64,24 +58,19 @@
                     </div>
                 </div>
 
-                <!-- 3. Status Stepper Tracker (Component) -->
                 <jsp:include page="/views/shop/components/order/order-stepper.jsp" />
 
-                <!-- 4. Main Content Grid (8 Columns Main : 4 Columns Side) -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-                    <!-- Left Column: Operations & Products -->
                     <div class="lg:col-span-8 space-y-5">
-                        <!-- Operations & Fulfillment Actions (Component) -->
+
                         <jsp:include page="/views/shop/components/order/order-fulfillment-actions.jsp" />
 
-                        <!-- Products List & Order Summary (Component) -->
                         <jsp:include page="/views/shop/components/order/order-items-card.jsp" />
                     </div>
 
-                    <!-- Right Column: Recipient & Shipping Info -->
                     <div class="lg:col-span-4 space-y-5">
-                        <!-- Recipient Details & Driver Info (Component) -->
+
                         <jsp:include page="/views/shop/components/order/order-customer-info.jsp" />
                     </div>
 
@@ -90,10 +79,8 @@
             </div>
         </main>
 
-        <!-- 5. Modal Hủy Đơn Hàng Con (Component) -->
         <jsp:include page="/views/shop/components/order/modal-cancel-order.jsp" />
 
-        <!-- 6. Modal Báo Hỏng Do Vận Chuyển / Hàng Hoàn (Component) -->
         <jsp:include page="/views/shop/components/order/modal-return-waste.jsp" />
 
     </body>

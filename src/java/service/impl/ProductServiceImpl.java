@@ -29,12 +29,10 @@ public class ProductServiceImpl implements IProductService {
         return productDAO.countProductsByStatusTab(shopId, tab);
     }
 
-
-    
     private final ProductDAO productDAO = new ProductDAO();
     private final CategoryDAO categoryDAO = new CategoryDAO();
 
-    @Override//lấy danh sách sản phẩm theo shopID 
+    @Override
     public List<Product> getProductSummariesByShopId(long shopId) {
         return productDAO.getProductSummariesByShopId(shopId);
     }
@@ -51,7 +49,7 @@ public class ProductServiceImpl implements IProductService {
     
     @Override
     public List<Category> getAllCategories() {
-        return categoryDAO.getAllCategories(); // Gọi qua DAO lấy toàn bộ danh mục
+        return categoryDAO.getAllCategories(); 
     }
     
     @Override
@@ -75,8 +73,6 @@ public class ProductServiceImpl implements IProductService {
                                   String sku, String variantName, String unit, BigDecimal price, 
                                   BigDecimal originalPrice, int stockQuantity, int lowStockThreshold,
                                   boolean isActive, String coverImageUrl, List<String> detailImages, String batchCode) throws IllegalArgumentException {
-        
-        // --- 1. VALIDATION NGHIỆP VỤ TẠI TẦNG SERVICE ---
         
         if (shopId <= 0) {
             throw new IllegalArgumentException("Mã cửa hàng không hợp lệ!");
@@ -102,22 +98,19 @@ public class ProductServiceImpl implements IProductService {
             throw new IllegalArgumentException("Đơn vị tính không được để trống!");
         }
 
-        // Kiểm tra nếu SKU do người dùng tự nhập nhưng đã tồn tại trong hệ thống
         if (sku != null && !sku.trim().isEmpty() && productDAO.isSkuExists(sku.trim())) {
             throw new IllegalArgumentException("Mã SKU '" + sku.trim() + "' đã tồn tại trên hệ thống, vui lòng nhập mã khác!");
         }
 
-        // --- 2. XỬ LÝ MẶC ĐỊNH DỮ LIỆU NẾU THIẾU ---
         if (originalPrice == null || originalPrice.compareTo(BigDecimal.ZERO) == 0) {
-            // Nếu không nhập giá gốc, mặc định để bằng giá bán lẻ nhân 1.2 (+20%)
+            
             originalPrice = price.multiply(new BigDecimal("1.2"));
         }
 
         if (lowStockThreshold <= 0) {
-            lowStockThreshold = 10; // Ngưỡng cảnh báo tồn kho thấp mặc định là 10
+            lowStockThreshold = 10; 
         }
 
-        // --- 3. GỌI DAO ĐỂ THỰC THI TRANSACTION ---
         return productDAO.insertFullProduct(
                 shopId, name.trim(), categoryId, origin, storageTemp, certification, description,
                 sku, variantName, unit, price, originalPrice, stockQuantity, lowStockThreshold,
@@ -288,7 +281,6 @@ public class ProductServiceImpl implements IProductService {
                                      BigDecimal originalPrice, int stockQuantity, boolean isActive, 
                                      String coverImageUrl) {
         
-        // 1. Validate dữ liệu đầu vào cơ bản
         if (variantId <= 0) {
             return false;
         }
@@ -296,16 +288,15 @@ public class ProductServiceImpl implements IProductService {
             return false;
         }
         if (price == null || price.compareTo(BigDecimal.ZERO) < 0) {
-            return false; // Không cho phép giá bán âm
+            return false; 
         }
         if (stockQuantity < 0) {
-            return false; // Không cho phép tồn kho âm
+            return false; 
         }
         if (unit == null || unit.trim().isEmpty()) {
-            unit = "kg"; // Gán mặc định nếu người dùng lỡ để trống
+            unit = "kg"; 
         }
 
-        // 2. Gọi DAO thực thi sau khi đã qua cửa kiểm duyệt
         return productDAO.updateFullProduct(shopId, variantId, name, categoryId, origin, storageTemp, certification, description, sku, variantName, unit, price, originalPrice, stockQuantity, isActive, coverImageUrl);
     }
 
@@ -324,7 +315,6 @@ public class ProductServiceImpl implements IProductService {
         return productDAO.getHierarchyCategories();
     }
     
-
     @Override
     public List<Product> getProductsByCategorySlug(String categorySlug) {
         return productDAO.getProductsByCategorySlug(categorySlug);

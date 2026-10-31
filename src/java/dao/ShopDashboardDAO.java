@@ -11,18 +11,13 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import util.DBContext;
 
-/**
- * Truy vấn số liệu tổng hợp cho trang Tổng quan Shop (Seller Dashboard).
- * Bảng dùng: sub_orders, orders, order_items, product_variants, products, product_images,
- *            reviews, disputes, vendor_payouts, users.
- *
- * Quy ước:
- *  - Doanh thu = tổng shop_total của sub_orders có status = 'DELIVERED'.
- *  - Số đơn    = sub_orders KHÔNG ở trạng thái CANCELLED / REFUNDED.
- */
 public class ShopDashboardDAO extends DBContext {
+
+    private static final Logger LOGGER = Logger.getLogger(ShopDashboardDAO.class.getName());
 
     private static final String NOT_CANCELLED = "('CANCELLED','REFUNDED')";
 
@@ -30,7 +25,6 @@ public class ShopDashboardDAO extends DBContext {
         return Timestamp.valueOf(d.atStartOfDay());
     }
 
-    /** Chỉ số tổng hợp trong khoảng [from, to). */
     public Map<String, Object> getSummary(long shopId, LocalDate from, LocalDate to) {
         Map<String, Object> m = new HashMap<>();
         m.put("revenue", 0.0);
@@ -76,12 +70,11 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return m;
     }
 
-    /** Ngày của đơn hàng đầu tiên (dùng cho chế độ "Toàn thời gian"); null nếu chưa có đơn. */
     public LocalDate getFirstOrderDate(long shopId) {
         String sql = "SELECT MIN(created_at) FROM sub_orders WHERE shop_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -92,21 +85,16 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return null;
     }
 
-    /**
-     * Chuỗi doanh thu + số đơn theo thời gian (đã điền đủ các mốc rỗng bằng 0).
-     * monthly = false: theo ngày; true: theo tháng.
-     * Trả về: labels (List<String>), revenue (List<Double>), orders (List<Integer>).
-     */
     public Map<String, List<?>> getTrend(long shopId, LocalDate from, LocalDate to, boolean monthly) {
         Map<String, double[]> data = new HashMap<>();
         String keyExpr = monthly
-                ? "CONVERT(VARCHAR(7), so.created_at, 120)"      // yyyy-MM
-                : "CONVERT(VARCHAR(10), so.created_at, 120)";    // yyyy-MM-dd
+                ? "CONVERT(VARCHAR(7), so.created_at, 120)"      
+                : "CONVERT(VARCHAR(10), so.created_at, 120)";    
         String sql = "SELECT " + keyExpr + " AS k, "
                 + "COALESCE(SUM(CASE WHEN so.status = 'DELIVERED' THEN so.shop_total END), 0) AS revenue, "
                 + "COALESCE(SUM(CASE WHEN so.status NOT IN " + NOT_CANCELLED + " THEN 1 ELSE 0 END), 0) AS orders "
@@ -122,7 +110,7 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
 
         List<String> labels = new ArrayList<>();
@@ -157,7 +145,6 @@ public class ShopDashboardDAO extends DBContext {
         return out;
     }
 
-    /** Số đơn theo từng trạng thái trong kỳ. */
     public Map<String, Integer> getStatusBreakdown(long shopId, LocalDate from, LocalDate to) {
         Map<String, Integer> map = new LinkedHashMap<>();
         String sql = "SELECT status, COUNT(*) AS c FROM sub_orders "
@@ -170,12 +157,11 @@ public class ShopDashboardDAO extends DBContext {
                 while (rs.next()) map.put(rs.getString("status"), rs.getInt("c"));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return map;
     }
 
-    /** Top sản phẩm bán chạy trong kỳ (gộp các biến thể theo tên sản phẩm). */
     public List<Map<String, Object>> getBestSellers(long shopId, LocalDate from, LocalDate to, int limit) {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT TOP (" + limit + ") oi.product_name_snapshot AS name, "
@@ -205,12 +191,11 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return list;
     }
 
-    /** Đơn hàng gần đây của shop. */
     public List<Map<String, Object>> getRecentOrders(long shopId, int limit) {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT TOP (" + limit + ") so.sub_order_code, o.order_code, so.shop_total, so.status, so.created_at, "
@@ -236,33 +221,28 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return list;
     }
 
-    /** Số đơn đang chờ shop xử lý (NEW / CONFIRMED / PACKING), không phụ thuộc kỳ lọc. */
     public int countPendingOrders(long shopId) {
         return scalarInt("SELECT COUNT(*) FROM sub_orders WHERE shop_id = ? AND status IN ('NEW','CONFIRMED','PACKING')", shopId);
     }
 
-    /** Số đơn đang giao. */
     public int countShippingOrders(long shopId) {
         return scalarInt("SELECT COUNT(*) FROM sub_orders WHERE shop_id = ? AND status = 'SHIPPING'", shopId);
     }
 
-    /** Số khiếu nại đang mở (OPEN / MEDIATING). */
     public int countOpenDisputes(long shopId) {
         return scalarInt("SELECT COUNT(*) FROM disputes WHERE shop_id = ? AND status IN ('OPEN','MEDIATING')", shopId);
     }
 
-    /** Số SKU sắp hết hàng. */
     public int countLowStock(long shopId) {
         return scalarInt("SELECT COUNT(*) FROM product_variants v JOIN products p ON p.product_id = v.product_id "
                 + "WHERE p.shop_id = ? AND v.is_active = 1 AND v.stock_quantity <= v.low_stock_threshold", shopId);
     }
 
-    /** Số đánh giá chưa phản hồi. */
     public int countUnrepliedReviews(long shopId) {
         return scalarInt("SELECT COUNT(*) FROM reviews WHERE shop_id = ? AND status = 'APPROVED' "
                 + "AND (reply_comment IS NULL OR LTRIM(RTRIM(reply_comment)) = '')", shopId);
@@ -275,12 +255,11 @@ public class ShopDashboardDAO extends DBContext {
                 if (rs.next()) return rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return 0;
     }
 
-    /** Danh sách SKU sắp hết hàng (ít nhất trước). */
     public List<Map<String, Object>> getLowStockItems(long shopId, int limit) {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT TOP (" + limit + ") p.name, v.variant_name, v.sku, v.stock_quantity, v.low_stock_threshold "
@@ -301,14 +280,11 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return list;
     }
 
-    /**
-     * Thống kê đánh giá: avg, total, c1..c5, newInPeriod.
-     */
     public Map<String, Object> getRatingStats(long shopId, LocalDate from, LocalDate to) {
         Map<String, Object> m = new HashMap<>();
         int[] dist = new int[6];
@@ -340,7 +316,7 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
             m.putIfAbsent("newInPeriod", 0);
         }
         m.put("total", total);
@@ -352,7 +328,6 @@ public class ShopDashboardDAO extends DBContext {
         return m;
     }
 
-    /** Đánh giá mới nhất. */
     public List<Map<String, Object>> getLatestReviews(long shopId, int limit) {
         List<Map<String, Object>> list = new ArrayList<>();
         String sql = "SELECT TOP (" + limit + ") r.rating, r.comment, r.reply_comment, r.created_at, "
@@ -376,12 +351,11 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return list;
     }
 
-    /** Kỳ quyết toán gần nhất (ưu tiên kỳ đang xử lý). */
     public Map<String, Object> getLatestPayout(long shopId) {
         String sql = "SELECT TOP 1 cycle_name, net_payout, gross_sales, commission_withheld, status, paid_at, period_end "
                 + "FROM vendor_payouts WHERE shop_id = ? "
@@ -401,7 +375,7 @@ public class ShopDashboardDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ShopDashboardDAO", e);
         }
         return null;
     }

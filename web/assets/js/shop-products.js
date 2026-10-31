@@ -63,3 +63,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const rowCheckboxes = document.querySelectorAll('.variant-row-checkbox');
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            rowCheckboxes.forEach(cb => cb.checked = selectAll.checked);
+        });
+    }
+});
+
+function toggleShopUserDropdown(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('shopUserDropdownMenu');
+    const arrow = document.getElementById('shopUserDropdownArrow');
+    if (!menu) return;
+    menu.classList.toggle('hidden');
+    if (arrow) arrow.classList.toggle('rotate-180');
+}
+
+document.addEventListener('click', function(e) {
+    const container = document.getElementById('shopUserDropdownContainer');
+    const menu = document.getElementById('shopUserDropdownMenu');
+    const arrow = document.getElementById('shopUserDropdownArrow');
+    if (container && menu && !container.contains(e.target)) {
+        menu.classList.add('hidden');
+        if (arrow) arrow.classList.remove('rotate-180');
+    }
+});

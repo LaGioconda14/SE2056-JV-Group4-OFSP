@@ -1,7 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<!-- 5. Modal Hủy Đơn Hàng Con -->
 <div id="cancelModalBackdrop" class="modal-backdrop hidden"></div>
 <div id="cancelOrderModal" class="modal-dialog hidden">
     <div class="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -45,7 +44,6 @@
             </div>
         </div>
 
-        <!-- Section: Chi tiết số lượng hỏng khi QC không đạt chuẩn -->
         <div id="qcWasteBreakdown" class="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200 space-y-3">
             <div class="flex items-center justify-between pb-2 border-b border-rose-200/60">
                 <div class="text-xs font-bold text-rose-900 flex items-center gap-1.5">
@@ -70,7 +68,6 @@
             </c:forEach>
         </div>
 
-        <!-- Section: Thông báo khi chọn Lý do khác -->
         <div id="restockNotice" class="hidden p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-start gap-2">
             <i class="fa-solid fa-rotate-left text-blue-600 mt-0.5 text-sm"></i>
             <div class="leading-relaxed">
@@ -95,4 +92,3 @@
         </div>
     </form>
 </div>
-

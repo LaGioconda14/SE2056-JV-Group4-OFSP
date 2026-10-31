@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%-- Thông báo kết quả thao tác (lưu trong session bởi servlet) --%>
+
 <c:if test="${not empty sessionScope.successMessage}">
     <div data-autohide class="mb-4 bg-emerald-50 border border-emerald-300 text-emerald-800 px-4 py-3 rounded-xl flex items-center gap-3 shadow-sm">
         <i class="fa-solid fa-circle-check text-emerald-600 text-lg"></i>

@@ -24,6 +24,9 @@ import service.IOrderService;
 import service.IUserService;
 import service.impl.CustomerAddressServiceImpl;
 import service.impl.OrderServiceImpl;
+import model.Notification;
+import service.INotificationService;
+import service.impl.NotificationServiceImpl;
 import service.impl.UserServiceImpl;
 
 @WebServlet(name = "ProfileServlet", urlPatterns = { "/profile" })
@@ -33,6 +36,7 @@ public class ProfileServlet extends HttpServlet {
     private final IUserService userService = new UserServiceImpl();
     private final ICustomerAddressService addressService = new CustomerAddressServiceImpl();
     private final IOrderService orderService = new OrderServiceImpl();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -72,6 +76,15 @@ public class ProfileServlet extends HttpServlet {
         } catch (Exception ex) {
             request.setAttribute("orders", Collections.emptyList());
             request.setAttribute("ordersCount", 0);
+        }
+
+        try {
+            List<Notification> notifications = notificationService.getUserNotifications(targetUserId, 1, 30);
+            request.setAttribute("notifications", notifications != null ? notifications : Collections.emptyList());
+            request.setAttribute("unreadNotiCount", notificationService.getUnreadCount(targetUserId));
+        } catch (Exception ex) {
+            request.setAttribute("notifications", Collections.emptyList());
+            request.setAttribute("unreadNotiCount", 0);
         }
 
         if (session != null) {

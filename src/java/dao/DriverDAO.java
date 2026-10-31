@@ -17,9 +17,6 @@ public class DriverDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(DriverDAO.class.getName());
 
-    /**
-     * Retrieve Driver Profile by User ID (used when logged in driver accesses the system)
-     */
     public DriverProfile getDriverProfileByUserId(long userId) {
         String sql = "SELECT dp.driver_id, dp.user_id, dp.shop_id, s.shop_name, u.full_name, u.email, u.phone, u.avatar_url, "
                 + "       dp.license_number, dp.vehicle_type, dp.vehicle_plate, dp.cold_storage_type, "
@@ -52,9 +49,6 @@ public class DriverDAO extends DBContext {
         return null;
     }
 
-    /**
-     * Retrieve Driver Profile by Driver ID (primary key of driver_profiles)
-     */
     public DriverProfile getDriverProfile(long driverId) {
         String sql = "SELECT dp.driver_id, dp.user_id, dp.shop_id, s.shop_name, u.full_name, u.email, u.phone, u.avatar_url, "
                 + "       dp.license_number, dp.vehicle_type, dp.vehicle_plate, dp.cold_storage_type, "
@@ -87,9 +81,6 @@ public class DriverDAO extends DBContext {
         return null;
     }
 
-    /**
-     * List all Driver Profiles belonging to a specific Shop (with optional status filter and keyword search)
-     */
     public List<DriverProfile> getDriversByShopId(long shopId, String statusFilter, String keyword) {
         List<DriverProfile> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -150,16 +141,10 @@ public class DriverDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Get list of currently AVAILABLE drivers belonging to a specific Shop, ready for dispatch
-     */
     public List<DriverProfile> getAvailableDriversByShopId(long shopId) {
         return getDriversByShopId(shopId, "AVAILABLE", null);
     }
 
-    /**
-     * Create a new Shipper / Delivery Staff belonging to a Shop
-     */
     public boolean createShopShipper(long shopId, String fullName, String email, String phone, String password,
             String vehicleType, String vehiclePlate, String coldStorageType, String operatingDistricts) {
         Connection conn = getConnection();
@@ -169,7 +154,6 @@ public class DriverDAO extends DBContext {
             conn.setAutoCommit(false);
             long targetUserId = -1;
 
-            // 1. Check if user already exists with email or phone
             String findUserSql = "SELECT user_id FROM users WHERE email = ? OR (phone = ? AND phone IS NOT NULL AND phone <> '')";
             try (PreparedStatement psFind = conn.prepareStatement(findUserSql)) {
                 psFind.setString(1, email);
@@ -182,7 +166,7 @@ public class DriverDAO extends DBContext {
             }
 
             if (targetUserId == -1) {
-                // Insert new user
+                
                 String insertUserSql = "INSERT INTO users (email, phone, password_hash, full_name, avatar_url, gender, birth_date, status) "
                         + "VALUES (?, ?, ?, ?, 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop', 'MALE', '1995-01-01', 'ACTIVE')";
                 try (PreparedStatement psUser = conn.prepareStatement(insertUserSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
@@ -204,7 +188,6 @@ public class DriverDAO extends DBContext {
                 return false;
             }
 
-            // 2. Ensure role DRIVER (4) in user_roles
             String checkRoleSql = "SELECT 1 FROM user_roles WHERE user_id = ? AND role_id = 4";
             boolean hasRole = false;
             try (PreparedStatement psRoleCheck = conn.prepareStatement(checkRoleSql)) {
@@ -221,7 +204,6 @@ public class DriverDAO extends DBContext {
                 }
             }
 
-            // 3. Upsert driver_profiles with shop_id
             String checkDpSql = "SELECT driver_id FROM driver_profiles WHERE user_id = ?";
             long existingDriverId = -1;
             try (PreparedStatement psDpCheck = conn.prepareStatement(checkDpSql)) {
@@ -262,7 +244,6 @@ public class DriverDAO extends DBContext {
                 }
             }
 
-            // Sync full_name and phone to users table
             if (targetUserId > 0) {
                 String syncUserSql = "UPDATE users SET full_name = ?, phone = ? WHERE user_id = ?";
                 try (PreparedStatement psSync = conn.prepareStatement(syncUserSql)) {
@@ -281,9 +262,6 @@ public class DriverDAO extends DBContext {
         return false;
     }
 
-    /**
-     * Update details of an existing Shop Shipper
-     */
     public boolean updateShopShipper(long driverId, long shopId, String fullName, String phone,
             String vehicleType, String vehiclePlate, String coldStorageType, String operatingDistricts, String availabilityStatus) {
         Connection conn = getConnection();
@@ -320,7 +298,6 @@ public class DriverDAO extends DBContext {
                 psU.executeUpdate();
             }
 
-
             conn.commit();
             return true;
         } catch (SQLException ex) {
@@ -329,9 +306,6 @@ public class DriverDAO extends DBContext {
         return false;
     }
 
-    /**
-     * Toggle availability status of a Shop Shipper (AVAILABLE <-> OFFLINE)
-     */
     public boolean toggleShipperStatus(long driverId, long shopId, String newStatus) {
         String sql = "UPDATE driver_profiles SET availability_status = ?, updated_at = GETDATE() WHERE driver_id = ? AND shop_id = ?";
         Connection conn = getConnection();
@@ -348,15 +322,12 @@ public class DriverDAO extends DBContext {
         return false;
     }
 
-    /**
-     * Remove / Unlink Shipper from Shop (only if no active delivering orders)
-     */
     public boolean deleteShopShipper(long driverId, long shopId) {
         Connection conn = getConnection();
         if (conn == null) return false;
 
         try (conn) {
-            // Check active deliveries
+            
             String checkActiveSql = "SELECT COUNT(*) FROM deliveries d "
                     + "JOIN driver_profiles dp ON d.driver_id = dp.user_id "
                     + "WHERE dp.driver_id = ? AND d.delivery_status IN ('ASSIGNED', 'DELIVERING', 'IN_TRANSIT', 'PICKED_UP')";
@@ -383,9 +354,6 @@ public class DriverDAO extends DBContext {
         return false;
     }
 
-    /**
-     * Explicitly assign a Shop's Shipper (by driver user_id) to a Sub-Order
-     */
     public boolean assignDriverToSubOrder(long subOrderId, long driverUserId) {
         Connection conn = getConnection();
         if (conn == null) return false;
@@ -422,21 +390,18 @@ public class DriverDAO extends DBContext {
                 }
             }
 
-            // Sync SubOrder status to SHIPPING
             String updateSubSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.SHIPPING.name() + "', updated_at = GETDATE() WHERE sub_order_id = ?";
             try (PreparedStatement psSub = conn.prepareStatement(updateSubSql)) {
                 psSub.setLong(1, subOrderId);
                 psSub.executeUpdate();
             }
 
-            // Sync Parent Order status to SHIPPING
             String updateOrdSql = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = GETDATE() "
                     + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_id = ?";
             try (PreparedStatement psOrd = conn.prepareStatement(updateOrdSql)) {
                 psOrd.setLong(1, subOrderId);
                 psOrd.executeUpdate();
             }
-
 
             conn.commit();
             return true;
@@ -446,9 +411,6 @@ public class DriverDAO extends DBContext {
         return false;
     }
 
-    /**
-     * List all Driver Profiles for Admin Review (supports status filter and keyword search)
-     */
     public List<DriverProfile> getAllDriverProfiles(String approvalStatus, String keyword) {
         List<DriverProfile> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -506,7 +468,6 @@ public class DriverDAO extends DBContext {
         }
         return list;
     }
-
 
     private DriverProfile extractDriverProfile(ResultSet rs) throws SQLException {
         DriverProfile dp = new DriverProfile();

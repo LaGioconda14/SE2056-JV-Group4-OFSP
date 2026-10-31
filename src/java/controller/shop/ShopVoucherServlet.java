@@ -12,17 +12,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.Voucher;
 
-/**
- * Quản lý Voucher của shop (FE-08).
- *   GET  /shop/vouchers                      danh sách + lọc tab + tìm kiếm
- *   GET  /shop/vouchers?action=new           form tạo mới
- *   GET  /shop/vouchers?action=edit&id=      form sửa
- *   GET  /shop/vouchers?action=usage&id=     lịch sử sử dụng
- *   POST /shop/vouchers  action=save|toggle|terminate
- */
 @WebServlet(name = "ShopVoucherServlet", urlPatterns = {"/shop/vouchers"})
 public class ShopVoucherServlet extends BaseShopServlet {
-
     private final VoucherDAO voucherDAO = new VoucherDAO();
     private final PromotionDAO promotionDAO = new PromotionDAO();
 
@@ -66,7 +57,6 @@ public class ShopVoucherServlet extends BaseShopServlet {
             return;
         }
 
-        // ---- Danh sách ----
         String tab = request.getParameter("tab");
         if (tab == null || !tab.matches("ALL|ONGOING|UPCOMING|PAUSED|FINISHED")) {
             tab = "ALL";
@@ -120,7 +110,6 @@ public class ShopVoucherServlet extends BaseShopServlet {
             return;
         }
 
-        // ---- Lưu (tạo mới / cập nhật) ----
         Integer id = parseInt(request.getParameter("couponId"));
         boolean editing = id != null && id > 0;
 
@@ -158,8 +147,6 @@ public class ShopVoucherServlet extends BaseShopServlet {
         response.sendRedirect(request.getContextPath() + "/shop/vouchers");
     }
 
-    // ------------------------------------------------------------------
-
     private void showForm(HttpServletRequest request, HttpServletResponse response, long shopId, Voucher v, String mode)
             throws ServletException, IOException {
         request.setAttribute("voucher", v);
@@ -172,7 +159,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
         Voucher v = new Voucher();
         if (existing != null) {
             v.setCouponId(existing.getCouponId());
-            v.setCode(existing.getCode());           // không đổi mã khi sửa
+            v.setCode(existing.getCode());
             v.setUsedCount(existing.getUsedCount());
         } else {
             String code = req.getParameter("code");
@@ -197,7 +184,6 @@ public class ShopVoucherServlet extends BaseShopServlet {
         return v;
     }
 
-    /** Trả về thông báo lỗi đầu tiên, hoặc null nếu hợp lệ. */
     private String validate(Voucher v, boolean editing, Voucher existing) {
         if (!editing) {
             if (!v.getCode().matches("^[A-Z0-9_-]{4,20}$")) {

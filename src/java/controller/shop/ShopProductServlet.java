@@ -20,7 +20,6 @@ import service.impl.ProductServiceImpl;
 
 @WebServlet(name = "ShopProductServlet", urlPatterns = {"/shop/products"})
 public class ShopProductServlet extends HttpServlet {
-
     private final ShopDAO shopDAO = new ShopDAO();
     private final IProductService productService = new ProductServiceImpl();
     private final IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
@@ -28,8 +27,6 @@ public class ShopProductServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
-        // 1. Kiểm tra session đăng nhập
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
@@ -38,7 +35,6 @@ public class ShopProductServlet extends HttpServlet {
             return;
         }
 
-        // 2. Lấy thông tin shopId của user hiện tại
         Long shopId = (Long) session.getAttribute("shopId");
         if (shopId == null) {
             Shop shop = shopDAO.getShopByOwnerId(user.getId());
@@ -49,7 +45,6 @@ public class ShopProductServlet extends HttpServlet {
             }
         }
 
-        // 3. Xử lý thông báo chuyển tiếp (Flash message) nếu có
         String message = request.getParameter("message");
         if (message != null) {
             switch (message) {
@@ -67,9 +62,7 @@ public class ShopProductServlet extends HttpServlet {
             }
         }
 
-        // 4. Lấy danh sách sản phẩm và biến thể của shop
         if (shopId != null) {
-            // Lấy danh sách tóm tắt Product (kèm biến thể count, giá min-max, tổng tồn kho)
             List<Product> products = productService.getProductSummariesByShopId(shopId);
             request.setAttribute("products", products);
             request.setAttribute("totalProductsCount", productService.countProductsByShopId(shopId));
@@ -80,7 +73,6 @@ public class ShopProductServlet extends HttpServlet {
             request.setAttribute("tabHiddenProductCount", productService.countProductsByStatusTab(shopId, "hidden"));
             request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
 
-            // Hỗ trợ tương thích ngược cho các tab variant
             List<ProductVariant> listVariants = productService.getVariantsByShopId(shopId);
             request.setAttribute("listVariants", listVariants);
             request.setAttribute("totalVariantsCount", listVariants != null ? listVariants.size() : 0);
@@ -110,7 +102,6 @@ public class ShopProductServlet extends HttpServlet {
             request.setAttribute("lowStockCount", lowStockCount);
         }
 
-        // 5. Forward sang trang JSP
         request.getRequestDispatcher("/views/shop/shop-products.jsp").forward(request, response);
     }
 

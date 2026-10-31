@@ -3,7 +3,6 @@
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <fmt:setLocale value="vi_VN" />
 
-                        <!-- Products List Card -->
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                             <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                                 <div class="flex items-center gap-2.5">
@@ -76,7 +75,6 @@
                                 </table>
                             </div>
 
-                            <!-- Simplified Order Summary -->
                             <div class="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
                                 <div class="flex justify-between text-slate-600">
                                     <span>Tiền hàng (Tạm tính ${not empty subOrder.items ? subOrder.items.size() : 0} sản phẩm):</span>

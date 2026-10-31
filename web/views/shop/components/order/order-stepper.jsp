@@ -3,12 +3,11 @@
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <fmt:setLocale value="vi_VN" />
 
-                <!-- 3. Status Stepper Tracker -->
                 <c:set var="isFailedOrder" value="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}" />
                 <c:set var="isDeliveredOrder" value="${subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED'}" />
                 <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
                     <div class="flex items-start justify-between relative">
-                        
+
                         <div class="flex flex-col items-center text-center w-36 z-10">
                             <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-sm ring-4 ring-emerald-50">
                                 <i class="fa-solid fa-check"></i>

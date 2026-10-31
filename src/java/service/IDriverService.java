@@ -11,7 +11,6 @@ public interface IDriverService {
 
     List<DriverProfile> getAllDriverProfiles(String approvalStatus, String keyword);
 
-    // Shop Delivery Staff (Shippers) Management
     List<DriverProfile> getDriversByShopId(long shopId, String statusFilter, String keyword);
 
     List<DriverProfile> getAvailableDriversByShopId(long shopId);

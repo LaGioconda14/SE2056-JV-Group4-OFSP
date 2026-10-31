@@ -39,7 +39,6 @@
                 </a>
             </div>
 
-            <!-- Thống kê -->
             <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 <div class="mk-card mk-stat">
                     <span class="mk-stat-icon bg-emerald-50 text-emerald-600"><i class="fa-solid fa-ticket"></i></span>
@@ -59,7 +58,6 @@
                 </div>
             </div>
 
-            <!-- Tabs + tìm kiếm -->
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div class="mk-tabs">
                     <a href="${ctx}/shop/vouchers?tab=ALL" class="mk-tab ${tab == 'ALL' ? 'active' : ''}">Tất cả <span class="cnt">${tabCounts.all}</span></a>
@@ -75,7 +73,6 @@
                 </form>
             </div>
 
-            <!-- Bảng voucher -->
             <div class="mk-card overflow-hidden">
                 <c:choose>
                     <c:when test="${not empty vouchers}">

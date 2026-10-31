@@ -3,7 +3,6 @@
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <fmt:setLocale value="vi_VN" />
 
-                        <!-- Recipient Details -->
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                                 <div class="flex items-center gap-2">
@@ -60,7 +59,6 @@
                             </div>
                         </div>
 
-                        <!-- Driver Info Card (when driver is already assigned) -->
                         <c:if test="${not empty subOrder.driverName}">
                             <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">

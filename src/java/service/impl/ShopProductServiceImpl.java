@@ -251,7 +251,7 @@ public class ShopProductServiceImpl implements IShopProductService {
     }
 
     @Override
-    public java.math.BigDecimal getTotalInventoryValueByShopId(long shopId) {
+    public BigDecimal getTotalInventoryValueByShopId(long shopId) {
         return shopDAO.getTotalInventoryValueByShopId(shopId);
     }
 
@@ -282,17 +282,16 @@ public class ShopProductServiceImpl implements IShopProductService {
 
     @Override
     public List<Product> getProductsByShopId(long shopId, Integer categoryId, String sort) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return productDAO.getProductsByShop(shopId, categoryId, null, sort);
     }
 
     @Override
     public List<Category> getCategoriesWithCountByShopId(long shopId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return productDAO.getCategoriesByShopId(shopId);
     }
 
     @Override
     public List<Review> getReviewsByShopId(long shopId) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        return shopDAO.getReviewsByShopId(shopId);
     }
-
 }

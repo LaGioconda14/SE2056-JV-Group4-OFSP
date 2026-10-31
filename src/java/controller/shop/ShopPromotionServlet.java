@@ -11,16 +11,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.Promotion;
 
-/**
- * Quản lý Promotion (khuyến mãi tự động theo sản phẩm) của shop (FE-08).
- *   GET  /shop/promotions                    danh sách + lọc tab + tìm kiếm
- *   GET  /shop/promotions?action=new         form tạo mới
- *   GET  /shop/promotions?action=edit&id=    form sửa
- *   POST /shop/promotions  action=save|toggle|terminate
- */
 @WebServlet(name = "ShopPromotionServlet", urlPatterns = {"/shop/promotions"})
 public class ShopPromotionServlet extends BaseShopServlet {
-
     private final PromotionDAO promotionDAO = new PromotionDAO();
 
     @Override
@@ -56,7 +48,6 @@ public class ShopPromotionServlet extends BaseShopServlet {
             return;
         }
 
-        // ---- Danh sách ----
         String tab = request.getParameter("tab");
         if (tab == null || !tab.matches("ALL|ONGOING|UPCOMING|PAUSED|FINISHED")) {
             tab = "ALL";
@@ -110,7 +101,6 @@ public class ShopPromotionServlet extends BaseShopServlet {
             return;
         }
 
-        // ---- Lưu (tạo mới / cập nhật) ----
         Integer id = parseInt(request.getParameter("promotionId"));
         boolean editing = id != null && id > 0;
         if (editing) {
@@ -139,8 +129,6 @@ public class ShopPromotionServlet extends BaseShopServlet {
         flash(request, true, editing ? "Đã cập nhật chương trình \"" + p.getName() + "\"." : "Đã tạo chương trình \"" + p.getName() + "\".");
         response.sendRedirect(request.getContextPath() + "/shop/promotions");
     }
-
-    // ------------------------------------------------------------------
 
     private void showForm(HttpServletRequest request, HttpServletResponse response, long shopId, Promotion p, String mode)
             throws ServletException, IOException {

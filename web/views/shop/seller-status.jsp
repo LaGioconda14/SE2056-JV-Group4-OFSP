@@ -2,12 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
-<%--
-    Trang theo dõi hồ sơ đăng ký bán hàng. sellerState (do SellerPortalServlet set):
-        PENDING  : đang chờ admin duyệt (tài khoản vẫn là khách hàng)
-        REJECTED : bị từ chối -> sửa và gửi lại
-        APPROVED : đã được duyệt -> nút "Vào trang người bán"
---%>
+
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth">
 <head>
@@ -40,7 +35,7 @@
         </c:if>
 
         <div class="rsu-card">
-            <!-- Hero theo trạng thái -->
+
             <c:choose>
                 <c:when test="${sellerState == 'APPROVED'}">
                     <div class="rsu-hero">
@@ -73,7 +68,6 @@
 
             <div class="px-6 sm:px-10 pb-8 pt-2 flex flex-col gap-7">
 
-                <!-- Thông tin hồ sơ -->
                 <c:if test="${not empty shopRequest}">
                     <div>
                         <h2 class="text-sm font-extrabold text-gray-900 uppercase tracking-wide mb-3"><i class="fa-solid fa-file-lines text-emerald-600 mr-1"></i> Thông tin hồ sơ</h2>
@@ -112,7 +106,6 @@
                     </div>
                 </c:if>
 
-                <!-- Lý do từ chối -->
                 <c:if test="${sellerState == 'REJECTED'}">
                     <div class="rsu-tip" style="background:#fef2f2;border-color:#fecaca;color:#991b1b">
                         <i class="fa-solid fa-circle-exclamation mt-0.5"></i>
@@ -123,7 +116,6 @@
                     </div>
                 </c:if>
 
-                <!-- Quy trình -->
                 <c:if test="${sellerState != 'REJECTED'}">
                     <div>
                         <h2 class="text-sm font-extrabold text-gray-900 uppercase tracking-wide mb-4"><i class="fa-solid fa-route text-emerald-600 mr-1"></i> Tiến trình</h2>
@@ -147,7 +139,6 @@
                     </div>
                 </c:if>
 
-                <!-- Hành động -->
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
                     <c:choose>
                         <c:when test="${sellerState == 'APPROVED'}">

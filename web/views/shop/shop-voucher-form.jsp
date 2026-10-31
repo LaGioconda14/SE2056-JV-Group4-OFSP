@@ -44,7 +44,6 @@
 
                 <div class="xl:col-span-8 flex flex-col gap-6">
 
-                    <!-- 1. Thông tin cơ bản -->
                     <div class="mk-card mk-card-pad flex flex-col gap-4">
                         <h2 class="mk-h2"><i class="fa-solid fa-circle-info"></i> Thông tin cơ bản</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -66,7 +65,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. Mức giảm -->
                     <div class="mk-card mk-card-pad flex flex-col gap-4">
                         <h2 class="mk-h2"><i class="fa-solid fa-percent"></i> Mức giảm giá</h2>
                         <div class="mk-seg self-start">
@@ -101,7 +99,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. Giới hạn & thời gian -->
                     <div class="mk-card mk-card-pad flex flex-col gap-4">
                         <h2 class="mk-h2"><i class="fa-solid fa-calendar-days"></i> Thời gian &amp; giới hạn sử dụng</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,7 +123,6 @@
                         </div>
                     </div>
 
-                    <!-- 4. Phạm vi -->
                     <div class="mk-card mk-card-pad flex flex-col gap-4">
                         <h2 class="mk-h2"><i class="fa-solid fa-bullseye"></i> Phạm vi áp dụng</h2>
                         <div class="mk-seg self-start">
@@ -139,7 +135,6 @@
                     </div>
                 </div>
 
-                <!-- Cột phải: xem trước + lưu -->
                 <div class="xl:col-span-4">
                     <div class="xl:sticky xl:top-24 flex flex-col gap-4">
                         <div class="mk-card mk-card-pad flex flex-col gap-3">

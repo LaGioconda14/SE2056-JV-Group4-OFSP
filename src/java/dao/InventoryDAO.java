@@ -6,10 +6,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.InventoryBatchItem;
 import util.DBContext;
 
 public class InventoryDAO extends DBContext {
+
+    private static final Logger LOGGER = Logger.getLogger(InventoryDAO.class.getName());
 
     public List<InventoryBatchItem> getInventoryAlertItems(long shopId, String keyword, String riskLevel, 
                                                           String sortBy, String viewTab, int page, int pageSize) {
@@ -46,7 +50,6 @@ public class InventoryDAO extends DBContext {
         List<Object> params = new ArrayList<>();
         params.add(shopId);
 
-        // Keyword filter
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (p.name LIKE ? OR pv.sku LIKE ? OR pb.batch_code LIKE ?) ");
             String kw = "%" + keyword.trim() + "%";
@@ -55,7 +58,6 @@ public class InventoryDAO extends DBContext {
             params.add(kw);
         }
 
-        // Risk Level filter
         if (riskLevel != null && !riskLevel.trim().isEmpty() && !"all".equalsIgnoreCase(riskLevel)) {
             if ("critical".equalsIgnoreCase(riskLevel)) {
                 sql.append(" AND (COALESCE(pb.current_quantity, pv.stock_quantity) <= 5 OR (COALESCE(pb.current_quantity, pv.stock_quantity) - pv.low_stock_threshold) <= -5) ");
@@ -66,7 +68,6 @@ public class InventoryDAO extends DBContext {
             }
         }
 
-        // View Tab filter
         if (viewTab != null && !viewTab.trim().isEmpty()) {
             if ("alert".equalsIgnoreCase(viewTab)) {
                 sql.append(" AND (COALESCE(pb.current_quantity, pv.stock_quantity) <= pv.low_stock_threshold) ");
@@ -75,7 +76,6 @@ public class InventoryDAO extends DBContext {
             }
         }
 
-        // Sorting
         if ("stock_desc".equalsIgnoreCase(sortBy)) {
             sql.append(" ORDER BY COALESCE(pb.current_quantity, pv.stock_quantity) DESC ");
         } else if ("freshness_asc".equalsIgnoreCase(sortBy)) {
@@ -83,11 +83,9 @@ public class InventoryDAO extends DBContext {
         } else if ("freshness_desc".equalsIgnoreCase(sortBy)) {
             sql.append(" ORDER BY COALESCE(pb.freshness_score, 95) DESC ");
         } else {
-            // Default: Tồn kho ít nhất trước (hàng khẩn cấp ưu tiên đầu)
             sql.append(" ORDER BY (CASE WHEN COALESCE(pb.current_quantity, pv.stock_quantity) <= pv.low_stock_threshold THEN 0 ELSE 1 END), COALESCE(pb.current_quantity, pv.stock_quantity) ASC ");
         }
 
-        // Pagination
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
         int offset = (page - 1) * pageSize;
@@ -135,7 +133,7 @@ public class InventoryDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting inventory alert items for shopId: " + shopId, e);
         }
 
         return list;
@@ -188,7 +186,7 @@ public class InventoryDAO extends DBContext {
                 if (rs.next()) count = rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error counting inventory alert items for shopId: " + shopId, e);
         }
 
         return count;
@@ -205,7 +203,7 @@ public class InventoryDAO extends DBContext {
                 if (rs.next()) count = rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting critical stock count for shopId: " + shopId, e);
         }
         return count;
     }
@@ -228,7 +226,7 @@ public class InventoryDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting critical item names for shopId: " + shopId, e);
         }
         if (names.isEmpty()) return "Dâu Tochi, Nho Hạ Đen, Bơ Booth";
         return String.join(", ", names);
@@ -245,7 +243,7 @@ public class InventoryDAO extends DBContext {
                 if (rs.next()) count = rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting expiring freshness count for shopId: " + shopId, e);
         }
         return count > 0 ? count : 2;
     }
@@ -265,7 +263,7 @@ public class InventoryDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting total inventory value for shopId: " + shopId, e);
         }
         return total.compareTo(BigDecimal.ZERO) > 0 ? total : new BigDecimal("84650000");
     }
@@ -275,21 +273,26 @@ public class InventoryDAO extends DBContext {
         String sqlBatch = "UPDATE product_batches SET current_quantity = current_quantity + ?, initial_quantity = initial_quantity + ? WHERE variant_id = ?";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
-            try (PreparedStatement ps1 = conn.prepareStatement(sqlVariant)) {
-                ps1.setInt(1, addedQuantity);
-                ps1.setLong(2, variantId);
-                ps1.executeUpdate();
+            try {
+                try (PreparedStatement ps1 = conn.prepareStatement(sqlVariant)) {
+                    ps1.setInt(1, addedQuantity);
+                    ps1.setLong(2, variantId);
+                    ps1.executeUpdate();
+                }
+                try (PreparedStatement ps2 = conn.prepareStatement(sqlBatch)) {
+                    ps2.setInt(1, addedQuantity);
+                    ps2.setInt(2, addedQuantity);
+                    ps2.setLong(3, variantId);
+                    ps2.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } catch (Exception ex) {
+                conn.rollback();
+                throw ex;
             }
-            try (PreparedStatement ps2 = conn.prepareStatement(sqlBatch)) {
-                ps2.setInt(1, addedQuantity);
-                ps2.setInt(2, addedQuantity);
-                ps2.setLong(3, variantId);
-                ps2.executeUpdate();
-            }
-            conn.commit();
-            return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error restocking variant: " + variantId, e);
         }
         return false;
     }
@@ -301,9 +304,8 @@ public class InventoryDAO extends DBContext {
             ps.setLong(2, variantId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error applying fresh sale discount for variant: " + variantId, e);
         }
         return false;
     }
 }
-

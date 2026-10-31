@@ -14,15 +14,9 @@ import model.User;
 import service.IShopProductService;
 import service.impl.ShopProductServiceImpl;
 
-/**
- * Lớp cha cho các servlet của Kênh Người Bán: kiểm tra đăng nhập/role SHOP_OWNER,
- * lấy shopId, và các hàm đọc dữ liệu form dùng chung.
- */
 public abstract class BaseShopServlet extends HttpServlet {
-
     private final IShopProductService shopProductService = new ShopProductServiceImpl();
 
-    /** Trả về shopId của chủ shop đang đăng nhập; null nếu đã chuyển hướng (chưa đăng nhập / chưa có shop). */
     protected Long requireShop(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         req.setCharacterEncoding("UTF-8");
         resp.setCharacterEncoding("UTF-8");
@@ -52,7 +46,6 @@ public abstract class BaseShopServlet extends HttpServlet {
         req.getSession().setAttribute(success ? "successMessage" : "errorMessage", message);
     }
 
-    /** Đọc số tiền: chấp nhận "1.000", "1,000", "1000"; trả về null nếu rỗng hoặc sai định dạng. */
     protected static BigDecimal parseMoney(String s) {
         if (s == null) return null;
         String t = s.trim().replace(".", "").replace(",", "").replace(" ", "");
@@ -64,7 +57,6 @@ public abstract class BaseShopServlet extends HttpServlet {
         }
     }
 
-    /** Đọc phần trăm (cho phép số thập phân, dấu , hoặc .). */
     protected static BigDecimal parsePercent(String s) {
         if (s == null) return null;
         String t = s.trim().replace(',', '.');
@@ -85,7 +77,6 @@ public abstract class BaseShopServlet extends HttpServlet {
         }
     }
 
-    /** Đọc giá trị của thẻ datetime-local (yyyy-MM-ddTHH:mm). */
     protected static Timestamp parseDateTime(String s) {
         if (s == null || s.trim().isEmpty()) return null;
         try {
@@ -103,7 +94,6 @@ public abstract class BaseShopServlet extends HttpServlet {
                     Long id = Long.valueOf(v.trim());
                     if (!ids.contains(id)) ids.add(id);
                 } catch (NumberFormatException ignored) {
-                    // bỏ qua giá trị không hợp lệ
                 }
             }
         }

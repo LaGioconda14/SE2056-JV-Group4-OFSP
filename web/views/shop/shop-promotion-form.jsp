@@ -124,28 +124,5 @@
         </div>
     </main>
 
-    <script>
-        // Ví dụ trực quan: sản phẩm giá 100.000đ sẽ còn bao nhiêu sau khi giảm
-        document.addEventListener('DOMContentLoaded', function () {
-            var box = document.getElementById('promoExample');
-            function num(id, money) {
-                var el = document.getElementById(id);
-                if (!el) return 0;
-                var v = (el.value || '').trim();
-                return money ? (parseInt(v.replace(/[^\d]/g, ''), 10) || 0) : (parseFloat(v.replace(',', '.')) || 0);
-            }
-            function render() {
-                var type = (document.querySelector('input[name="promotionType"]:checked') || {}).value;
-                var base = 100000, v = num('discountValue', type === 'FIXED_AMOUNT'), max = num('maxDiscountAmount', true), d;
-                if (type === 'FIXED_AMOUNT') { d = v; } else { d = Math.round(base * v / 100); if (max > 0 && d > max) d = max; }
-                d = Math.max(0, Math.min(d, base));
-                var f = function (n) { return new Intl.NumberFormat('vi-VN').format(n) + '₫'; };
-                box.innerHTML = '<i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> Ví dụ: sản phẩm giá <b>' + f(base) + '</b> → khách trả <b class="text-emerald-700">' + f(base - d) + '</b> (giảm ' + f(d) + ')';
-            }
-            ['discountValue', 'maxDiscountAmount'].forEach(function (id) { var el = document.getElementById(id); if (el) el.addEventListener('input', render); });
-            document.querySelectorAll('input[name="promotionType"]').forEach(function (r) { r.addEventListener('change', render); });
-            render();
-        });
-    </script>
 </body>
 </html>

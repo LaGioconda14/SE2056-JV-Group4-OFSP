@@ -15,22 +15,13 @@ import java.util.List;
 import java.util.Map;
 import model.Voucher;
 import model.VoucherCheckResult;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import util.DBContext;
 
-/**
- * Voucher = bảng coupons (khách nhập mã khi checkout).
- * Voucher của shop có coupons.shop_id = shop_id, sponsor_type = 'VENDOR'.
- * Voucher sàn có shop_id = NULL.
- *
- * Trạng thái (tính từ dữ liệu, không lưu cứng):
- *   ENDED    - shop kết thúc sớm (terminated_at != NULL)
- *   PAUSED   - đang tắt (is_active = 0)
- *   EXPIRED  - quá end_date
- *   UPCOMING - chưa tới start_date
- *   SOLD_OUT - đã dùng hết số lượt
- *   ONGOING  - đang áp dụng được
- */
 public class VoucherDAO extends DBContext {
+
+    private static final Logger LOGGER = Logger.getLogger(VoucherDAO.class.getName());
 
     private static final String STATUS_EXPR =
             "CASE WHEN c.terminated_at IS NOT NULL THEN 'ENDED' "
@@ -75,11 +66,6 @@ public class VoucherDAO extends DBContext {
         return v;
     }
 
-    // ------------------------------------------------------------------
-    // DANH SÁCH / THỐNG KÊ CHO SHOP OWNER
-    // ------------------------------------------------------------------
-
-    /** tab: ALL | ONGOING | UPCOMING | PAUSED | FINISHED (ENDED, EXPIRED, SOLD_OUT) */
     public List<Voucher> listByShop(long shopId, String tab, String keyword) {
         List<Voucher> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(SELECT_COLS).append("WHERE c.shop_id = ? ");
@@ -109,12 +95,11 @@ public class VoucherDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return list;
     }
 
-    /** Số voucher theo từng nhóm trạng thái: all, ongoing, upcoming, paused, finished. */
     public Map<String, Integer> countByTab(long shopId) {
         Map<String, Integer> m = new LinkedHashMap<>();
         m.put("all", 0);
@@ -137,12 +122,11 @@ public class VoucherDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return m;
     }
 
-    /** Tổng lượt dùng, tổng tiền đã giảm, số khách đã dùng voucher của shop. */
     public Map<String, Object> getShopSummary(long shopId) {
         Map<String, Object> m = new HashMap<>();
         m.put("totalUsed", 0);
@@ -161,16 +145,11 @@ public class VoucherDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return m;
     }
 
-    // ------------------------------------------------------------------
-    // CHI TIẾT / TẠO / SỬA
-    // ------------------------------------------------------------------
-
-    /** Lấy voucher của đúng shop (kèm danh sách sản phẩm áp dụng). */
     public Voucher findByIdAndShop(int couponId, long shopId) {
         String sql = SELECT_COLS + "WHERE c.coupon_id = ? AND c.shop_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -184,7 +163,7 @@ public class VoucherDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return null;
     }
@@ -202,7 +181,6 @@ public class VoucherDAO extends DBContext {
         return ids;
     }
 
-    /** Mã voucher là duy nhất toàn sàn. excludeId = null khi tạo mới. */
     public boolean codeExists(String code, Integer excludeId) {
         String sql = "SELECT COUNT(*) FROM coupons WHERE code = ?" + (excludeId != null ? " AND coupon_id <> ?" : "");
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -214,12 +192,11 @@ public class VoucherDAO extends DBContext {
                 return rs.next() && rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
-        return true; // lỗi DB -> chặn để an toàn
+        return true; 
     }
 
-    /** Tạo voucher của shop. Trả về coupon_id mới hoặc -1 nếu lỗi. */
     public int create(Voucher v, long shopId) {
         String sql = "INSERT INTO coupons (shop_id, code, title, description, discount_type, discount_value, min_order_value, "
                 + "max_discount_amount, usage_limit, used_count, per_user_limit, applies_to, sponsor_type, start_date, end_date, is_active) "
@@ -260,12 +237,11 @@ public class VoucherDAO extends DBContext {
                 throw e;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return -1;
     }
 
-    /** Cập nhật voucher (chỉ của đúng shop). Không đổi mã và không đổi used_count. */
     public boolean update(Voucher v, long shopId) {
         String sql = "UPDATE coupons SET title = ?, description = ?, discount_type = ?, discount_value = ?, min_order_value = ?, "
                 + "max_discount_amount = ?, usage_limit = ?, per_user_limit = ?, applies_to = ?, start_date = ?, end_date = ?, "
@@ -303,7 +279,7 @@ public class VoucherDAO extends DBContext {
                 throw e;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return false;
     }
@@ -312,7 +288,7 @@ public class VoucherDAO extends DBContext {
         if (!"PRODUCTS".equals(v.getAppliesTo()) || v.getProductIds() == null) {
             return;
         }
-        // Chỉ nhận sản phẩm thuộc đúng shop của voucher (chống gửi product_id của shop khác)
+        
         String sql = "INSERT INTO coupon_products (coupon_id, product_id) "
                 + "SELECT ?, p.product_id FROM products p JOIN coupons c ON c.shop_id = p.shop_id "
                 + "WHERE c.coupon_id = ? AND p.product_id = ?";
@@ -327,17 +303,12 @@ public class VoucherDAO extends DBContext {
         }
     }
 
-    // ------------------------------------------------------------------
-    // KÍCH HOẠT / TẠM DỪNG / KẾT THÚC SỚM
-    // ------------------------------------------------------------------
-
     public boolean setActive(int couponId, long shopId, boolean active) {
         String sql = "UPDATE coupons SET is_active = ?, updated_at = GETDATE() "
                 + "WHERE coupon_id = ? AND shop_id = ? AND terminated_at IS NULL";
         return exec(sql, active, couponId, shopId);
     }
 
-    /** Kết thúc sớm: ngừng hẳn, không kích hoạt lại được; lịch sử sử dụng vẫn giữ nguyên. */
     public boolean terminate(int couponId, long shopId) {
         String sql = "UPDATE coupons SET terminated_at = GETDATE(), is_active = 0, updated_at = GETDATE(), "
                 + "end_date = CASE WHEN end_date > GETDATE() THEN GETDATE() ELSE end_date END "
@@ -352,14 +323,10 @@ public class VoucherDAO extends DBContext {
             }
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return false;
     }
-
-    // ------------------------------------------------------------------
-    // LỊCH SỬ SỬ DỤNG
-    // ------------------------------------------------------------------
 
     public List<Map<String, Object>> getUsageHistory(int couponId, int limit) {
         List<Map<String, Object>> list = new ArrayList<>();
@@ -384,12 +351,11 @@ public class VoucherDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return list;
     }
 
-    /** totalUsed, totalDiscount, uniqueCustomers, avgDiscount của 1 voucher. */
     public Map<String, Object> getUsageStats(int couponId) {
         Map<String, Object> m = new HashMap<>();
         m.put("totalUsed", 0);
@@ -411,25 +377,11 @@ public class VoucherDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
         }
         return m;
     }
 
-    // ------------------------------------------------------------------
-    // DÙNG Ở BƯỚC CHECKOUT
-    // ------------------------------------------------------------------
-
-    /**
-     * Kiểm tra một mã voucher có dùng được cho đơn con của shop không và tính số tiền giảm.
-     *
-     * @param code        mã khách nhập (không phân biệt hoa thường)
-     * @param shopId      shop của đơn con đang tính (voucher shop chỉ dùng cho đúng shop; voucher sàn dùng được mọi shop)
-     * @param customerId  khách đang mua
-     * @param subtotal    tiền hàng của đơn con (đã trừ promotion nếu có)
-     * @param lineTotals  (tuỳ chọn) productId -> thành tiền của dòng; cần khi voucher chỉ áp cho một số sản phẩm.
-     *                    Truyền null thì coi toàn bộ subtotal là hợp lệ.
-     */
     public VoucherCheckResult validate(String code, long shopId, long customerId, BigDecimal subtotal,
                                        Map<Long, BigDecimal> lineTotals) {
         if (code == null || code.trim().isEmpty()) {
@@ -479,7 +431,6 @@ public class VoucherDAO extends DBContext {
                     }
                 }
 
-                // Phần tiền hàng đủ điều kiện được giảm
                 BigDecimal eligible = subtotal;
                 if ("PRODUCTS".equals(rs.getString("applies_to"))) {
                     List<Long> allowed = loadProductIds(conn, couponId);
@@ -507,7 +458,7 @@ public class VoucherDAO extends DBContext {
                         discount = maxDisc;
                     }
                 } else if ("FREESHIP".equals(type)) {
-                    discount = value;   // trần giảm phí ship; checkout tự min với phí ship thực tế
+                    discount = value;   
                 } else {
                     discount = value.min(eligible);
                 }
@@ -525,17 +476,11 @@ public class VoucherDAO extends DBContext {
                 return ok;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in VoucherDAO", e);
             return VoucherCheckResult.fail("Không kiểm tra được voucher, vui lòng thử lại.");
         }
     }
 
-    /**
-     * Ghi nhận đã dùng voucher: tăng used_count (có chặn vượt usage_limit) và lưu lịch sử.
-     * Gọi TRONG cùng transaction tạo đơn hàng ở checkout (truyền conn của transaction đó).
-     *
-     * @return true nếu ghi nhận thành công; false nếu voucher vừa hết lượt (checkout nên rollback/báo lỗi)
-     */
     public boolean redeem(Connection conn, int couponId, long orderId, long customerId, BigDecimal discount) throws SQLException {
         try (PreparedStatement up = conn.prepareStatement(
                 "UPDATE coupons SET used_count = used_count + 1 WHERE coupon_id = ? AND used_count < usage_limit")) {

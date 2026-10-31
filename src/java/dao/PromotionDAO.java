@@ -14,14 +14,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import model.Promotion;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import util.DBContext;
 
-/**
- * Promotion = chương trình khuyến mãi tự động áp lên sản phẩm của shop trong một khoảng thời gian
- * (khác voucher: khách không cần nhập mã).
- * Bảng: promotions, promotion_products.
- */
 public class PromotionDAO extends DBContext {
+
+    private static final Logger LOGGER = Logger.getLogger(PromotionDAO.class.getName());
 
     private static final String STATUS_EXPR =
             "CASE WHEN p.terminated_at IS NOT NULL THEN 'ENDED' "
@@ -56,11 +55,6 @@ public class PromotionDAO extends DBContext {
         return p;
     }
 
-    // ------------------------------------------------------------------
-    // DANH SÁCH / THỐNG KÊ
-    // ------------------------------------------------------------------
-
-    /** tab: ALL | ONGOING | UPCOMING | PAUSED | FINISHED (ENDED, EXPIRED) */
     public List<Promotion> listByShop(long shopId, String tab, String keyword) {
         List<Promotion> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(SELECT_COLS).append("WHERE p.shop_id = ? ");
@@ -86,12 +80,12 @@ public class PromotionDAO extends DBContext {
                     list.add(map(rs));
                 }
             }
-            // Tên vài sản phẩm đầu để xem nhanh trong danh sách
+            
             for (Promotion p : list) {
                 p.setProductNames(loadProductNames(conn, p.getPromotionId(), 3));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return list;
     }
@@ -118,12 +112,11 @@ public class PromotionDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return m;
     }
 
-    /** Số sản phẩm đang được khuyến mãi + số lượng đã bán / tiền đã giảm nhờ promotion (từ order_items). */
     public Map<String, Object> getShopSummary(long shopId) {
         Map<String, Object> m = new HashMap<>();
         m.put("productsOnPromo", 0);
@@ -150,7 +143,7 @@ public class PromotionDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return m;
     }
@@ -167,10 +160,6 @@ public class PromotionDAO extends DBContext {
         }
         return names;
     }
-
-    // ------------------------------------------------------------------
-    // CHI TIẾT / TẠO / SỬA
-    // ------------------------------------------------------------------
 
     public Promotion findByIdAndShop(long promotionId, long shopId) {
         String sql = SELECT_COLS + "WHERE p.promotion_id = ? AND p.shop_id = ?";
@@ -190,15 +179,11 @@ public class PromotionDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return null;
     }
 
-    /**
-     * Tên các sản phẩm đã nằm trong promotion khác trùng khoảng thời gian (mỗi sản phẩm chỉ tham gia
-     * 1 promotion tại một thời điểm). excludeId = 0 khi tạo mới.
-     */
     public List<String> findConflictingProducts(long shopId, List<Long> productIds, Timestamp start, Timestamp end, long excludeId) {
         List<String> names = new ArrayList<>();
         if (productIds == null || productIds.isEmpty()) {
@@ -226,12 +211,11 @@ public class PromotionDAO extends DBContext {
                 while (rs.next()) names.add(rs.getString(1));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return names;
     }
 
-    /** Tạo promotion. Trả về promotion_id mới hoặc -1 nếu lỗi. */
     public long create(Promotion p) {
         String sql = "INSERT INTO promotions (shop_id, name, description, promotion_type, discount_value, max_discount_amount, "
                 + "start_date, end_date, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -264,7 +248,7 @@ public class PromotionDAO extends DBContext {
                 throw e;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return -1;
     }
@@ -302,14 +286,14 @@ public class PromotionDAO extends DBContext {
                 throw e;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return false;
     }
 
     private void saveProducts(Connection conn, long promotionId, long shopId, List<Long> productIds) throws SQLException {
         if (productIds == null) return;
-        // Chỉ nhận sản phẩm thuộc đúng shop
+        
         String sql = "INSERT INTO promotion_products (promotion_id, product_id) "
                 + "SELECT ?, p.product_id FROM products p WHERE p.product_id = ? AND p.shop_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -322,10 +306,6 @@ public class PromotionDAO extends DBContext {
             ps.executeBatch();
         }
     }
-
-    // ------------------------------------------------------------------
-    // KÍCH HOẠT / TẠM DỪNG / KẾT THÚC SỚM
-    // ------------------------------------------------------------------
 
     public boolean setActive(long promotionId, long shopId, boolean active) {
         return exec("UPDATE promotions SET is_active = ?, updated_at = GETDATE() "
@@ -345,14 +325,10 @@ public class PromotionDAO extends DBContext {
             }
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return false;
     }
-
-    // ------------------------------------------------------------------
-    // DANH SÁCH SẢN PHẨM ĐỂ CHỌN (dùng chung cho form Promotion và Voucher)
-    // ------------------------------------------------------------------
 
     public List<Map<String, Object>> getShopProductsForPicker(long shopId) {
         List<Map<String, Object>> list = new ArrayList<>();
@@ -374,20 +350,11 @@ public class PromotionDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return list;
     }
 
-    // ------------------------------------------------------------------
-    // DÙNG Ở TRANG SẢN PHẨM / GIỎ HÀNG / CHECKOUT
-    // ------------------------------------------------------------------
-
-    /**
-     * Promotion đang chạy cho từng sản phẩm: productId -> Promotion.
-     * Dùng Promotion.calcDiscount(unitPrice) / calcDiscountedPrice(unitPrice) để tính giá sau giảm.
-     * (Mỗi sản phẩm chỉ có tối đa 1 promotion tại một thời điểm do đã chặn trùng lịch khi tạo.)
-     */
     public Map<Long, Promotion> getActivePromotionsByProducts(Collection<Long> productIds) {
         Map<Long, Promotion> result = new HashMap<>();
         if (productIds == null || productIds.isEmpty()) {
@@ -422,7 +389,7 @@ public class PromotionDAO extends DBContext {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in PromotionDAO", e);
         }
         return result;
     }

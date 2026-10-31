@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <fmt:setLocale value="vi_VN"/>
-<%-- Bộ chọn sản phẩm dùng chung. Cần request attribute: pickerProducts (danh sách), selectedIds (List<Long> đã chọn) --%>
+
 <div class="mk-picker" id="productPicker">
     <div class="mk-picker-head">
         <div class="relative flex-1 min-w-[160px]">

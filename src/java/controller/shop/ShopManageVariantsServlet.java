@@ -16,7 +16,6 @@ import service.impl.ProductServiceImpl;
 
 @WebServlet(name = "ShopManageVariantsServlet", urlPatterns = {"/shop/product/variants"})
 public class ShopManageVariantsServlet extends HttpServlet {
-
     private final IProductService productService = new ProductServiceImpl();
 
     @Override

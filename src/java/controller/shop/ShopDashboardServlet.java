@@ -17,13 +17,8 @@ import model.User;
 import service.IShopProductService;
 import service.impl.ShopProductServiceImpl;
 
-/**
- * Trang "Tổng quan Shop": doanh thu, số đơn, sản phẩm bán chạy, đánh giá, thống kê theo kỳ.
- * URL: /shop/dashboard?range=7|30|90|365|all
- */
 @WebServlet(name = "ShopDashboardServlet", urlPatterns = {"/shop/dashboard"})
 public class ShopDashboardServlet extends HttpServlet {
-
     private final ShopDashboardDAO dashboardDAO = new ShopDashboardDAO();
     private final IShopProductService shopProductService = new ShopProductServiceImpl();
     private final Gson gson = new Gson();
@@ -31,7 +26,6 @@ public class ShopDashboardServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -42,7 +36,6 @@ public class ShopDashboardServlet extends HttpServlet {
             return;
         }
 
-        // 1. shopId
         Long shopId = (Long) session.getAttribute("shopId");
         if (shopId == null) {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
@@ -55,7 +48,6 @@ public class ShopDashboardServlet extends HttpServlet {
             return;
         }
 
-        // 2. Khoảng thời gian lọc: [from, to) với to = ngày mai
         String range = request.getParameter("range");
         if (!"7".equals(range) && !"90".equals(range) && !"365".equals(range) && !"all".equals(range)) {
             range = "30";
@@ -80,7 +72,6 @@ public class ShopDashboardServlet extends HttpServlet {
         }
 
         try {
-            // 3. KPI kỳ hiện tại + kỳ trước (để tính % tăng giảm)
             Map<String, Object> cur = dashboardDAO.getSummary(shopId, from, to);
             double revenue = (Double) cur.get("revenue");
             double commission = (Double) cur.get("commission");
@@ -111,14 +102,12 @@ public class ShopDashboardServlet extends HttpServlet {
             int allOrders = orders + (Integer) cur.get("cancelled");
             request.setAttribute("cancelRate", allOrders > 0 ? (Integer) cur.get("cancelled") * 100.0 / allOrders : 0.0);
 
-            // 4. Biểu đồ doanh thu / đơn hàng
             boolean monthly = "365".equals(range) || "all".equals(range);
             Map<String, List<?>> trend = dashboardDAO.getTrend(shopId, from, to, monthly);
             request.setAttribute("trendLabelsJson", gson.toJson(trend.get("labels")));
             request.setAttribute("trendRevenueJson", gson.toJson(trend.get("revenue")));
             request.setAttribute("trendOrdersJson", gson.toJson(trend.get("orders")));
 
-            // 5. Cơ cấu trạng thái đơn
             Map<String, Integer> statusMap = dashboardDAO.getStatusBreakdown(shopId, from, to);
             Map<String, Integer> statusView = new LinkedHashMap<>();
             String[][] statusDefs = {
@@ -139,7 +128,6 @@ public class ShopDashboardServlet extends HttpServlet {
             request.setAttribute("statusValuesJson", gson.toJson(sValues));
             request.setAttribute("hasStatusData", !sValues.isEmpty());
 
-            // 6. Danh sách / thống kê khác
             request.setAttribute("bestSellers", dashboardDAO.getBestSellers(shopId, from, to, 5));
             request.setAttribute("recentOrders", dashboardDAO.getRecentOrders(shopId, 6));
             request.setAttribute("ratingStats", dashboardDAO.getRatingStats(shopId, from, to));
@@ -164,7 +152,6 @@ public class ShopDashboardServlet extends HttpServlet {
         request.getRequestDispatcher("/views/shop/shop-dashboard.jsp").forward(request, response);
     }
 
-    /** % thay đổi so với kỳ trước; null nếu kỳ trước = 0 (không so sánh được). */
     private Double pct(double current, double previous) {
         if (previous <= 0) {
             return current > 0 ? null : 0.0;

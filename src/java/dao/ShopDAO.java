@@ -6,21 +6,20 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Review;
 import model.Shop;
 import util.DBContext;
 
 public class ShopDAO extends DBContext {
 
-    /**
-     * Lấy shop_id dựa vào owner_id (chính là user_id của chủ shop)
-     */
+    private static final Logger LOGGER = Logger.getLogger(ShopDAO.class.getName());
+
     public long getShopIdByOwnerId(long ownerId) {
         long shopId = -1;
         String sql = "SELECT shop_id FROM shops WHERE owner_id = ?";
-
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setLong(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -28,18 +27,13 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting shopId by ownerId: " + ownerId, e);
         }
-
         return shopId;
     }
 
-    /**
-     * Lấy toàn bộ thông tin Shop theo ownerId để lưu vào Session khi đăng nhập
-     */
     public Shop getShopByOwnerId(long ownerId) {
         String sql = "SELECT * FROM shops WHERE owner_id = ?";
-
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, ownerId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -48,18 +42,13 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting shop by ownerId: " + ownerId, e);
         }
-
         return null;
     }
 
-    /**
-     * Lấy thông tin Shop theo shop_id
-     */
     public Shop getShopById(long shopId) {
         String sql = "SELECT * FROM shops WHERE shop_id = ?";
-
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -68,18 +57,13 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting shop by shopId: " + shopId, e);
         }
-
         return null;
     }
 
-    /**
-     * Lấy thông tin Shop theo slug
-     */
     public Shop getShopBySlug(String slug) {
         String sql = "SELECT * FROM shops WHERE slug = ?";
-
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, slug);
             try (ResultSet rs = ps.executeQuery()) {
@@ -88,15 +72,11 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting shop by slug: " + slug, e);
         }
-
         return null;
     }
 
-    /**
-     * Lấy shop đầu tiên đang hoạt động trong hệ thống
-     */
     public Shop getFirstActiveShop() {
         String sql = "SELECT TOP 1 * FROM shops WHERE status = 'ACTIVE' ORDER BY shop_id ASC";
         try (Connection conn = getConnection();
@@ -106,7 +86,7 @@ public class ShopDAO extends DBContext {
                 return mapResultSetToShop(rs);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting first active shop", e);
         }
         return null;
     }
@@ -135,9 +115,6 @@ public class ShopDAO extends DBContext {
         return shop;
     }
 
-    /**
-     * Tìm kiếm shop theo tên, mô tả hoặc tỉnh thành
-     */
     public List<Shop> searchShops(String keyword) {
         List<Shop> list = new ArrayList<>();
         String sql = "SELECT * FROM shops WHERE status = 'ACTIVE' ";
@@ -161,7 +138,7 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error searching shops with keyword: " + keyword, e);
         }
         return list;
     }
@@ -181,7 +158,7 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting total SKUs for shopId: " + shopID, e);
         }
         return total;
     }
@@ -205,7 +182,7 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting total inventory value for shopId: " + shopId, e);
         }
         return totalValue;
     }
@@ -219,7 +196,6 @@ public class ShopDAO extends DBContext {
                 + "WHERE s.shop_id = ? AND pv.stock_quantity <= 10";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -227,7 +203,7 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting low stock count for shopId: " + shopId, e);
         }
         return total;
     }
@@ -245,7 +221,7 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting total products count for shopId: " + shopId, e);
         }
         return total;
     }
@@ -264,7 +240,7 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting active SKUs count for shopId: " + shopId, e);
         }
         return total;
     }
@@ -283,7 +259,7 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting OCOP/VietGAP count for shopId: " + shopId, e);
         }
         return total;
     }
@@ -309,13 +285,11 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting tab count for shopId: " + shopId + ", tab: " + tab, e);
         }
         return total;
     }
-    /**
-     * Cập nhật logo/banner của shop (bảng shops). Tham số null = giữ nguyên.
-     */
+
     public boolean updateShopMedia(long ownerId, String logoUrl, String bannerUrl) {
         String sql = "UPDATE shops SET logo_url = COALESCE(?, logo_url), "
                 + "banner_url = COALESCE(?, banner_url), updated_at = GETDATE() WHERE owner_id = ?";
@@ -325,15 +299,11 @@ public class ShopDAO extends DBContext {
             ps.setLong(3, ownerId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error updating shop media for ownerId: " + ownerId, e);
         }
         return false;
     }
 
-    /**
-     * Đổi trạng thái shop (ACTIVE / PAUSED / CLOSED).
-     * Chỉ đổi khi shop đang ở một trong 3 trạng thái này, tránh seller tự gỡ SUSPENDED / PENDING do Admin đặt.
-     */
     public boolean updateShopStatusBySeller(long ownerId, String newStatus) {
         String sql = "UPDATE shops SET status = ?, updated_at = GETDATE() "
                 + "WHERE owner_id = ? AND status IN ('ACTIVE', 'PAUSED', 'CLOSED')";
@@ -342,10 +312,11 @@ public class ShopDAO extends DBContext {
             ps.setLong(2, ownerId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error updating shop status for ownerId: " + ownerId, e);
         }
         return false;
     }
+
     public List<Review> getReviewsByShopId(long shopId) {
         List<Review> list = new ArrayList<>();
         String sql = "SELECT r.review_id, r.order_item_id, r.customer_id, r.shop_id, r.rating, "
@@ -379,10 +350,8 @@ public class ShopDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting reviews for shopId: " + shopId, e);
         }
         return list;
     }
-
-    
 }

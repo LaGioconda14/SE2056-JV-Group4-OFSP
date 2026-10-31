@@ -1,7 +1,6 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
-<!-- 6. Modal Báo Hỏng Do Vận Chuyển / Hàng Hoàn -->
 <div id="returnWasteModalBackdrop" class="modal-backdrop hidden"></div>
 <div id="returnWasteModal" class="modal-dialog hidden max-w-lg w-full">
     <div class="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -65,4 +64,3 @@
         </div>
     </form>
 </div>
-

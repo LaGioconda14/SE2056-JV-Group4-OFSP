@@ -13,13 +13,14 @@ import java.util.LinkedHashMap;
 import model.Product;
 import model.ProductVariant;
 import model.Category;
-import service.IProductService;
-import service.impl.ProductServiceImpl;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import util.DBContext;
 
 public class ProductDAO extends DBContext {
 
-    // 1. Lấy danh sách sản phẩm/biến thể theo shopId
+    private static final Logger LOGGER = Logger.getLogger(ProductDAO.class.getName());
+
     public List<ProductVariant> getVariantsByShopId(long shopId) {
         List<ProductVariant> list = new ArrayList<>();
         String sql = "SELECT "
@@ -76,12 +77,11 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-    // 2. Đếm tổng số sản phẩm gốc của shop
     public int countProductsByShopId(long shopId) {
         String sql = "SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -92,12 +92,11 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return 0;
     }
 
-    // 3. Đếm tổng số biến thể (SKUs) của shop
     public int countVariantsByShopId(long shopId) {
         String sql = "SELECT COUNT(pv.variant_id) FROM product_variants pv "
                 + "JOIN products p ON pv.product_id = p.product_id "
@@ -110,7 +109,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return 0;
     }
@@ -157,7 +156,6 @@ public class ProductDAO extends DBContext {
                     }
                     v.setImage(cover);
 
-                    // Fetch detail images
                     List<String> detailImages = new ArrayList<>();
                     String sqlImgs = "SELECT image_url FROM product_images WHERE product_id = ? AND is_thumbnail = 0 ORDER BY display_order ASC";
                     try (PreparedStatement psImg = conn.prepareStatement(sqlImgs)) {
@@ -173,7 +171,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return null;
     }
@@ -201,7 +199,6 @@ public class ProductDAO extends DBContext {
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
 
-            // 1. Update product
             try (PreparedStatement ps = conn.prepareStatement(sqlProduct)) {
                 ps.setString(1, name);
                 if (categoryId > 0) {
@@ -219,7 +216,6 @@ public class ProductDAO extends DBContext {
                 ps.executeUpdate();
             }
 
-            // 2. Update variant
             try (PreparedStatement ps = conn.prepareStatement(sqlVariant)) {
                 ps.setString(1, sku != null && !sku.trim().isEmpty() ? sku.trim() : "SKU-" + variantId);
                 ps.setString(2, variantName != null && !variantName.trim().isEmpty() ? variantName.trim() : "Tiêu chuẩn");
@@ -234,7 +230,6 @@ public class ProductDAO extends DBContext {
                 ps.executeUpdate();
             }
 
-            // 3. Update images: clear and re-insert if cover image provided
             if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
                 try (PreparedStatement psDel = conn.prepareStatement(sqlDeleteImages)) {
                     psDel.setLong(1, productId);
@@ -265,7 +260,6 @@ public class ProductDAO extends DBContext {
                 }
             }
 
-            // 4. Update batch
             try (PreparedStatement psBatch = conn.prepareStatement(sqlUpdateBatch)) {
                 psBatch.setInt(1, stockQuantity);
                 psBatch.setLong(2, variantId);
@@ -275,13 +269,11 @@ public class ProductDAO extends DBContext {
             conn.commit();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
 
-
-    // 4. Kiểm tra SKU đã tồn tại chưa
     public boolean isSkuExists(String sku) {
         String sql = "SELECT 1 FROM product_variants WHERE sku = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -290,7 +282,7 @@ public class ProductDAO extends DBContext {
                 return rs.next();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
@@ -364,12 +356,11 @@ public class ProductDAO extends DBContext {
             conn.commit();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
 
-    // 5. Bật/Tắt trạng thái hoạt động của biến thể
     public boolean toggleVariantActiveStatus(long variantId, long shopId) {
         String sql = "UPDATE pv SET pv.is_active = CASE WHEN pv.is_active = 1 THEN 0 ELSE 1 END "
                 + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
@@ -379,12 +370,11 @@ public class ProductDAO extends DBContext {
             ps.setLong(2, shopId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
 
-    // Xóa biến thể theo id và shopid
     public boolean deleteVariantById(long variantId, long shopId) {
         String sql = "DELETE pv FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
                 + "WHERE pv.variant_id = ? AND p.shop_id = ?";
@@ -393,12 +383,11 @@ public class ProductDAO extends DBContext {
             ps.setLong(2, shopId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
 
-    // Xóa mềm biến thể (Chuyển trạng thái is_active về 0 thay vì xóa vĩnh viễn)
     public boolean softDeleteVariant(long variantId, long shopId) {
         String sql = "UPDATE pv SET pv.is_active = 0 "
                 + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
@@ -408,12 +397,11 @@ public class ProductDAO extends DBContext {
             ps.setLong(2, shopId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
 
-    // Đếm số lượng biến thể theo từng tab trạng thái của shop
     public List<ProductVariant> getFilteredVariantsByShop(long shopId, String keyword, String categoryId, String certification, String stockLevel, String statusTab, int page, int pageSize) {
         List<ProductVariant> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
@@ -525,7 +513,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -600,13 +588,12 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
 
         return count;
     }   
 
-    // Đếm số lượng biến thể theo từng tab trạng thái của shop
     public int countVariantsByStatusTab(long shopId, String statusTab) {
         StringBuilder sql = new StringBuilder(
                 "SELECT COUNT(pv.variant_id) "
@@ -635,12 +622,11 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return 0;
     }
 
-    // Lấy danh sách các chứng nhận (certification) phân biệt từ bảng products
     public List<String> getAllCertifications() {
         List<String> list = new ArrayList<>();
         String sql = "SELECT DISTINCT certification FROM products WHERE certification IS NULL OR certification != '' ORDER BY certification ASC";
@@ -652,12 +638,11 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-    // Lấy danh sách nhiệt độ bảo quản gợi ý     từ DB
     public List<String> getAllStorageTemps() {
         List<String> list = new ArrayList<>();
         String sql = "SELECT DISTINCT storage_temp FROM products WHERE storage_temp IS NULL OR storage_temp != '' ORDER BY storage_temp ASC";
@@ -669,7 +654,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -698,17 +683,14 @@ public class ProductDAO extends DBContext {
                 list.add(cat);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-
-    //lấy unit đưa lên form để người dùng chọn chính xác
     public List<String> getAllUnits() {
         List<String> list = new ArrayList<>();
 
-        // 1. Thêm các đơn vị tiêu chuẩn lên đầu
         list.add("hộp");
         list.add("kg");
         list.add("túi");
@@ -718,27 +700,25 @@ public class ProductDAO extends DBContext {
         list.add("nải");
         list.add("quả");
 
-        // 2. Lấy thêm từ Database, nếu chưa có trong list thì mới thêm vào
         String sql = "SELECT DISTINCT unit FROM product_variants WHERE unit IS NOT NULL AND unit != '' ORDER BY unit ASC";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 String u = rs.getString("unit");
                 if (u != null && !u.trim().isEmpty()) {
                     String unitLower = u.trim().toLowerCase();
-                    // Nếu list chưa chứa đơn vị này thì mới add vào để tránh bị trùng
+                    
                     if (!list.contains(unitLower)) {
                         list.add(unitLower);
                     }
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
 
         return list;
     }
 
-    // 7. Thêm mới đầy đủ sản phẩm, biến thể, hình ảnh và lô hàng
     public long insertFullProduct(long shopId, String name, int categoryId, String origin,
             String storageTemp, String certification, String description,
             String sku, String variantName, String unit, BigDecimal price,
@@ -762,7 +742,6 @@ public class ProductDAO extends DBContext {
 
             String slug = generateProductSlug(name);
 
-            // 1. Insert product
             try (PreparedStatement ps = conn.prepareStatement(sqlProduct, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setLong(1, shopId);
                 if (categoryId > 0) {
@@ -790,14 +769,12 @@ public class ProductDAO extends DBContext {
                 return -1;
             }
 
-            // 2. Validate/generate SKU
             String finalSku = (sku != null && !sku.trim().isEmpty()) ? sku.trim() : ("SKU-" + (System.currentTimeMillis() % 1000000));
             int skuRetry = 1;
             while (isSkuExists(finalSku)) {
                 finalSku = "SKU-" + (System.currentTimeMillis() % 1000000) + "-" + (skuRetry++);
             }
 
-            // 3. Insert variant
             try (PreparedStatement ps = conn.prepareStatement(sqlVariant, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setLong(1, productId);
                 ps.setString(2, finalSku);
@@ -821,7 +798,6 @@ public class ProductDAO extends DBContext {
                 return -1;
             }
 
-            // 4. Insert images
             if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
                 try (PreparedStatement ps = conn.prepareStatement(sqlImage)) {
                     ps.setLong(1, productId);
@@ -855,7 +831,6 @@ public class ProductDAO extends DBContext {
                 }
             }
 
-            // 5. Insert batch
             String batchCode = "LH-" + java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyMMdd")) + "-" + (char) ('A' + (productId % 26));
             try (PreparedStatement ps = conn.prepareStatement(sqlBatch)) {
                 ps.setString(1, batchCode);
@@ -866,18 +841,17 @@ public class ProductDAO extends DBContext {
                 ps.setBigDecimal(6, originalPrice != null ? originalPrice.multiply(new BigDecimal("0.65")) : BigDecimal.ZERO);
                 ps.executeUpdate();
             } catch (Exception batchEx) {
-                batchEx.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Batch execution error in ProductDAO", batchEx);
             }
 
             conn.commit();
             return productId;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return -1;
     }
 
-    // Helper: Tạo Slug chuẩn không dấu
     public static String generateProductSlug(String input) {
         if (input == null || input.trim().isEmpty()) {
             return "san-pham-" + System.currentTimeMillis();
@@ -899,9 +873,6 @@ public class ProductDAO extends DBContext {
         return slug + "-" + (System.currentTimeMillis() % 100000);
     }
 
-    // =========================================================================
-    // 1. LẤY THÔNG TIN CHI TIẾT SẢN PHẨM & BIẾN THỂ ĐỂ ĐỔ RA FORM SỬA
-    // =========================================================================
     public ProductVariant getVariantById(long variantId) {
         ProductVariant pv = null;
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, "
@@ -920,7 +891,7 @@ public class ProductDAO extends DBContext {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     pv = new ProductVariant();
-                    // Thông tin biến thể (Variant)
+                    
                     pv.setVariantId(rs.getLong("variant_id"));
                     pv.setProductId(rs.getLong("product_id"));
                     pv.setSku(rs.getString("sku"));
@@ -931,25 +902,21 @@ public class ProductDAO extends DBContext {
                     pv.setStockQuantity(rs.getInt("stock_quantity"));
                     pv.setIsActive(rs.getBoolean("is_active"));
 
-                    // Thông tin chung sản phẩm (Product)
                     pv.setProductName(rs.getString("product_name"));
                     pv.setCategoryId(rs.getInt("category_id"));
                     pv.setOrigin(rs.getString("origin"));
                     pv.setStorageTemp(rs.getString("storage_temp"));
                     pv.setCertification(rs.getString("certification"));
                     pv.setDescription(rs.getString("description"));
-                    pv.setImage(rs.getString("image_url")); // Map đúng vào trường ảnh qua LEFT JOIN
+                    pv.setImage(rs.getString("image_url")); 
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return pv;
     }
 
-    // =========================================================================
-    // 8. CẬP NHẬT ĐẦY ĐỦ THÔNG TIN SẢN PHẨM, BIẾN THỂ VÀ ẢNH BÌA
-    // =========================================================================
     public boolean updateFullProduct(long variantId, String name, int categoryId, String origin,
             String storageTemp, String certification, String description,
             String sku, String variantName, String unit, BigDecimal price,
@@ -967,7 +934,6 @@ public class ProductDAO extends DBContext {
             conn.setAutoCommit(false);
             long productId = -1;
 
-            // 1. Lấy product_id tương ứng với variantId đang sửa
             try (PreparedStatement ps = conn.prepareStatement(sqlGetProductId)) {
                 ps.setLong(1, variantId);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -982,7 +948,6 @@ public class ProductDAO extends DBContext {
                 return false;
             }
 
-            // 2. Cập nhật thông tin chung ở bảng products
             try (PreparedStatement ps = conn.prepareStatement(sqlUpdateProduct)) {
                 ps.setString(1, name);
                 if (categoryId > 0) {
@@ -999,7 +964,6 @@ public class ProductDAO extends DBContext {
                 ps.executeUpdate();
             }
 
-            // 3. Cập nhật thông tin biến thể ở bảng product_variants
             try (PreparedStatement ps = conn.prepareStatement(sqlUpdateVariant)) {
                 ps.setString(1, sku != null && !sku.trim().isEmpty() ? sku.trim() : ("SKU-" + variantId));
                 ps.setString(2, variantName != null && !variantName.trim().isEmpty() ? variantName.trim() : "Tiêu chuẩn");
@@ -1012,7 +976,6 @@ public class ProductDAO extends DBContext {
                 ps.executeUpdate();
             }
 
-            // 4. Cập nhật hoặc thêm mới ảnh bìa (thumbnail) trong product_images
             if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
                 boolean hasThumbnail = false;
                 try (PreparedStatement ps = conn.prepareStatement(sqlCheckImage)) {
@@ -1042,7 +1005,7 @@ public class ProductDAO extends DBContext {
             conn.commit();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
@@ -1088,7 +1051,7 @@ public class ProductDAO extends DBContext {
             ps.close();
             conn.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -1116,7 +1079,7 @@ public class ProductDAO extends DBContext {
                 list.add(c);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -1171,7 +1134,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -1239,12 +1202,11 @@ public class ProductDAO extends DBContext {
                 list.add(p);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-    // 9. Lấy danh sách sản phẩm theo category slug (Dùng cho trang danh mục sản phẩm)
     public List<Product> getProductsByCategorySlug(String categorySlug) {
         List<Product> list = new ArrayList<>();
         String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
@@ -1310,12 +1272,11 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-    // 1. Lấy thông tin chi tiết sản phẩm theo ID chuẩn theo model Product
     public Product getProductById(int productId) {
         Product p = null;
         String sql = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
@@ -1347,17 +1308,15 @@ public class ProductDAO extends DBContext {
 
                     p.setName(rs.getString("name"));
 
-                    // Lấy ảnh chuẩn
                     String img = rs.getString("image_url");
                     if (img == null || img.trim().isEmpty()) {
                         img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
                     }
                     p.setImage(img);
 
-                    // Lấy giá chuẩn từ product_variants
                     java.math.BigDecimal price = rs.getBigDecimal("price");
                     if (price == null) {
-                        price = new java.math.BigDecimal("750000"); // Giá mặc định nếu DB trống
+                        price = new java.math.BigDecimal("750000"); 
                     }
                     p.setPrice(price);
 
@@ -1381,7 +1340,6 @@ public class ProductDAO extends DBContext {
                     p.setStockQuantity(totalStock > 0 ? totalStock : 45);
                     p.setInStock(totalStock > 0);
 
-                    // Gắn danh sách biến thể
                     List<ProductVariant> variants = getVariantsByProductId(productId);
                     p.setVariants(variants);
 
@@ -1407,7 +1365,6 @@ public class ProductDAO extends DBContext {
                     p.setReviewsCount(128);
                     p.setTag("-" + p.getDiscountPercent() + "% SALE");
 
-                    // Gắn danh sách ảnh chi tiết (đảm bảo đủ 4 ảnh minh họa như mẫu FreshFruit)
                     List<String> imgs = getImagesByProductId(productId);
                     if (imgs == null) {
                         imgs = new ArrayList<>();
@@ -1417,9 +1374,9 @@ public class ProductDAO extends DBContext {
                     }
                     if (imgs.size() < 4) {
                         String[] complementaries = {
-                            "https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=700&fit=crop", // Quả bổ đôi tươi giòn
-                            "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=700&fit=crop", // Thu hoạch thùng gỗ
-                            "https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=700&fit=crop"  // Đóng hộp carton quà tặng
+                            "https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=700&fit=crop", 
+                            "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=700&fit=crop", 
+                            "https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=700&fit=crop"  
                         };
                         for (String comp : complementaries) {
                             if (imgs.size() < 4 && !imgs.contains(comp)) {
@@ -1431,13 +1388,12 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Lỗi tại getProductById:");
-            e.printStackTrace();
+            
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return p;
     }
 
-    // 2. Lấy danh sách biến thể (variants) khớp chuẩn model ProductVariant
     public List<ProductVariant> getVariantsByProductId(long productId) {
         List<ProductVariant> list = new ArrayList<>();
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, "
@@ -1480,12 +1436,11 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-    // 3. Lấy danh sách ảnh chi tiết của sản phẩm (List<String>)
     public List<String> getImagesByProductId(long productId) {
         List<String> list = new ArrayList<>();
         String sql = "SELECT image_url FROM Product_images WHERE product_id = ? ORDER BY display_order ASC";
@@ -1502,7 +1457,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -1527,7 +1482,6 @@ public class ProductDAO extends DBContext {
 
         List<Object> params = new ArrayList<>();
 
-        // 1. Lọc theo từ khóa tìm kiếm (tên sản phẩm hoặc xuất xứ)
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (p.name LIKE ? OR p.origin LIKE ?) ");
             String kw = "%" + keyword.trim() + "%";
@@ -1535,7 +1489,6 @@ public class ProductDAO extends DBContext {
             params.add(kw);
         }
 
-        // 2. Lọc theo danh mục
         if (categoryId != null && !categoryId.trim().isEmpty() && !categoryId.equals("0")) {
             try {
                 int catId = Integer.parseInt(categoryId.trim());
@@ -1545,7 +1498,6 @@ public class ProductDAO extends DBContext {
             }
         }
 
-        // 3. Lọc theo khoảng giá (dựa vào giá nhỏ nhất của biến thể sản phẩm)
         if (minPriceStr != null && !minPriceStr.trim().isEmpty()) {
             try {
                 BigDecimal minPrice = new BigDecimal(minPriceStr.trim());
@@ -1609,14 +1561,10 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
-
-    // =========================================================================
-    // ADVANCED CATALOG FILTER & PAGINATION METHODS
-    // =========================================================================
 
     public Map<String, Integer> getOriginsWithCount() {
         Map<String, Integer> map = new LinkedHashMap<>();
@@ -1633,7 +1581,7 @@ public class ProductDAO extends DBContext {
                 map.put(origin, rs.getInt("cnt"));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return map;
     }
@@ -1650,7 +1598,7 @@ public class ProductDAO extends DBContext {
                 return rs.getInt(1);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return 0;
     }
@@ -1671,7 +1619,7 @@ public class ProductDAO extends DBContext {
                 if (maxP != null) minMax[1] = maxP;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return minMax;
     }
@@ -1700,7 +1648,6 @@ public class ProductDAO extends DBContext {
         List<Object> params = new ArrayList<>();
         appendCatalogFilters(sql, params, keyword, categoryParams, minPrice, maxPrice, origins, inStockOnly);
 
-        // Sorting
         if ("price_asc".equalsIgnoreCase(sortBy)) {
             sql.append(" ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) ASC, p.product_id DESC");
         } else if ("price_desc".equalsIgnoreCase(sortBy)) {
@@ -1710,11 +1657,10 @@ public class ProductDAO extends DBContext {
         } else if ("rating".equalsIgnoreCase(sortBy)) {
             sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
         } else {
-            // "featured" default
+            
             sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
         }
 
-        // Pagination
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 12;
         sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
@@ -1733,7 +1679,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -1762,7 +1708,7 @@ public class ProductDAO extends DBContext {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return 0;
     }
@@ -1870,7 +1816,6 @@ public class ProductDAO extends DBContext {
         }
         p.setPrice(price);
 
-        // Lấy chính xác giá gốc từ Database
         if (originalPrice != null && originalPrice.compareTo(price) > 0) {
             p.setOldPrice(originalPrice);
             int disc = (int) Math.round((originalPrice.subtract(price).doubleValue() * 100.0) / originalPrice.doubleValue());
@@ -1969,7 +1914,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
@@ -1997,17 +1942,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-
-    // =========================================================================
-    // SHOP PRODUCT & VARIANT MANAGEMENT METHODS (from feature/shop_product)
-    // =========================================================================
-
-    // Return one summary per product with totals derived from its variants.
     public List<Product> getProductSummariesByShopId(long shopId) {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT p.product_id, p.name, p.origin, p.certification, "
@@ -2051,28 +1990,24 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return products;
     }
 
-
-    // Soft-delete a product and its variants in one transaction.
     public boolean softDeleteProductAndVariants(long productId, long shopId) {
-        // Deactivate the product record.
+        
         String updateProductSql = "UPDATE products SET is_active = 0, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE product_id = ? AND shop_id = ?";
 
-        // Deactivate all variants belonging to the product.
         String updateVariantsSql = "UPDATE product_variants SET is_active = 0, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE product_id = ?";
 
-        // Update both tables atomically.
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
 
             try {
-                // Verify shop ownership while deactivating the product.
+                
                 try (PreparedStatement psProd = conn.prepareStatement(updateProductSql)) {
                     psProd.setLong(1, productId);
                     psProd.setLong(2, shopId);
@@ -2083,7 +2018,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     }
                 }
 
-                // Deactivate the product variants.
                 try (PreparedStatement psVar = conn.prepareStatement(updateVariantsSql)) {
                     psVar.setLong(1, productId);
                     psVar.executeUpdate();
@@ -2093,17 +2027,14 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 return true;
             } catch (Exception e) {
                 conn.rollback();
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
 
-
-
-    // Count products matching a status tab in shop management.
     public int countProductsByStatusTab(long shopId, String statusTab) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?");
 
@@ -2127,14 +2058,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return 0;
     }
 
-
-
-    // Find a variant only when it belongs to the specified shop.
     public ProductVariant getShopVariantById(long variantId, long shopId) {
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, pv.original_price, "
                 + "pv.stock_quantity, pv.low_stock_threshold, pv.is_active, p.name AS product_name, p.origin, "
@@ -2172,14 +2100,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 return variant;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
             return null;
         }
     }
 
-
-
-    // Check whether another variant already uses the SKU.
     public boolean isSkuUsedByAnotherVariant(String sku, long variantId) {
         String sql = "SELECT 1 FROM product_variants WHERE sku = ? AND variant_id <> ?";
         try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -2189,18 +2114,14 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 return rs.next();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
             return false;
         }
     }
 
-
-
-    // Return the latest active products for home page tabs.
     public List<Product> getHomeFeaturedTabs() {
         List<Product> list = new ArrayList<>();
-        // Select product details, category, thumbnail, and active variant prices.
-
+        
         String query = "SELECT p.product_id, p.name, p.origin, c.category_name, "
                 + "(SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id AND is_thumbnail = 1) AS image_url, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
@@ -2219,7 +2140,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 String categoryName = rs.getString("category_name");
                 String image = rs.getString("image_url");
                 if (image == null || image.isEmpty()) {
-                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf"; // Fallback image.
+                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf"; 
                 }
 
                 BigDecimal price = rs.getBigDecimal("price");
@@ -2227,30 +2148,24 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     price = BigDecimal.ZERO;
                 }
 
-                // Use the selling price when no original price is stored.
                 BigDecimal oldPrice = rs.getBigDecimal("original_price");
                 if (oldPrice == null) {
                     oldPrice = price;
                 }
 
-                // This home page query does not include review statistics.
                 int discountPercent = 0;
 
-                // Map the selected fields to a Product.
                 Product product = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 0.0, 0);
-                product.setOrigin(origin); // Set the product origin.
+                product.setOrigin(origin); 
 
                 list.add(product);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-
-
-    // Return variants for a product owned by the specified shop.
     public List<ProductVariant> getShopVariantsByProductId(long shopId, long productId) {
         List<ProductVariant> list = new ArrayList<>();
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, "
@@ -2277,13 +2192,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }
 
-
-    // Search and filter active products belonging to a shop.
     public List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId,
             String certification, String stockLevel) {
         List<Product> products = new ArrayList<>();
@@ -2404,15 +2317,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return products;
     }
 
-
-
-
-    // Add a variant to a product owned by the shop.
     public long addVariantToProduct(long shopId, long productId, String sku, String variantName, String unit,
             BigDecimal price, BigDecimal originalPrice, int stockQuantity, int lowStockThreshold, boolean isActive) {
         String sql = "INSERT INTO product_variants (product_id, sku, variant_name, unit, price, original_price, stock_quantity, low_stock_threshold, is_active, created_at, updated_at) "
@@ -2443,14 +2352,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 return keys.next() ? keys.getLong(1) : -1;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
             return -1;
         }
     }
 
-
-
-    // Update a variant after verifying that it belongs to the shop.
     public boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName,
             String unit, BigDecimal price, BigDecimal originalPrice, int stockQuantity,
             int lowStockThreshold, boolean isActive) {
@@ -2471,13 +2377,10 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             statement.setLong(10, shopId);
             return statement.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
             return false;
         }
     }
-
-
-    // Find a variant by ID and include its related product details.
 
     public boolean updateFullProduct(long shopId, long variantId, String name, int categoryId, String origin,
             String storageTemp, String certification, String description,
@@ -2485,7 +2388,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             BigDecimal originalPrice, int stockQuantity, boolean isActive,
             String coverImageUrl) {
 
-        // Resolve the product through its variant and verify shop ownership.
         String sqlGetProductId = "SELECT pv.product_id FROM product_variants pv "
                 + "JOIN products p ON pv.product_id = p.product_id "
                 + "WHERE pv.variant_id = ? AND p.shop_id = ?";
@@ -2499,7 +2401,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             conn.setAutoCommit(false);
             long productId = -1;
 
-            // Verify ownership and resolve the product ID.
             try (PreparedStatement ps = conn.prepareStatement(sqlGetProductId)) {
                 ps.setLong(1, variantId);
                 ps.setLong(2, shopId);
@@ -2510,13 +2411,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
 
-            // Reject a missing variant or one owned by another shop.
             if (productId == -1) {
                 conn.rollback();
                 return false;
             }
 
-            // Update shared product fields.
             try (PreparedStatement ps = conn.prepareStatement(sqlUpdateProduct)) {
                 ps.setString(1, name);
                 if (categoryId > 0) {
@@ -2533,7 +2432,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 ps.executeUpdate();
             }
 
-            // Update the thumbnail or insert one when none exists.
             if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
                 boolean hasThumbnail = false;
                 try (PreparedStatement ps = conn.prepareStatement(sqlCheckImage)) {
@@ -2563,7 +2461,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             conn.commit();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return false;
     }
@@ -2579,7 +2477,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
                 .append("p.origin, p.certification, pi.image_url, ")
-                // Read the selling and original prices from the lowest-priced variant.
+                
                 .append("(SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS price, ")
                 .append("(SELECT TOP 1 original_price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS original_price, ")
                 .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
@@ -2604,7 +2502,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
 
         List<Object> params = new ArrayList<>();
 
-        // Filter by product name or origin.
         if (keyword != null && !keyword.trim().isEmpty()) {
             sql.append(" AND (p.name LIKE ? OR p.origin LIKE ?) ");
             String kw = "%" + keyword.trim() + "%";
@@ -2612,7 +2509,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             params.add(kw);
         }
 
-        // Filter by category.
         if (categoryId != null && !categoryId.trim().isEmpty() && !categoryId.equals("0")) {
             try {
                 int catId = Integer.parseInt(categoryId.trim());
@@ -2624,7 +2520,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             }
         }
 
-        // Filter by the active variant price range.
         if (minPriceStr != null && !minPriceStr.trim().isEmpty()) {
             try {
                 BigDecimal minPrice = new BigDecimal(minPriceStr.trim());
@@ -2643,7 +2538,6 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             }
         }
 
-        // Filter by minimum rating.
         if (ratingStr != null && !ratingStr.trim().isEmpty()) {
             try {
                 BigDecimal minRating = new BigDecimal(ratingStr.trim());
@@ -2656,14 +2550,12 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             }
         }
 
-        // Filter by stock availability.
         if (availability != null && availability.equals("in_stock")) {
             sql.append(" AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
         } else if (availability != null && availability.equals("out_of_stock")) {
             sql.append(" AND NOT EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
         }
 
-        // Filter by origin.
         if (origin != null && !origin.trim().isEmpty()) {
             sql.append(" AND p.origin LIKE ? ");
             params.add("%" + origin.trim() + "%");
@@ -2710,14 +2602,12 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     }
                     p.setPrice(price);
 
-                    // Read the original price from the database.
                     BigDecimal oldPrice = rs.getBigDecimal("original_price");
                     if (oldPrice == null || oldPrice.compareTo(price) < 0) {
-                        oldPrice = price; // Nếu giá gốc rỗng hoặc nhỏ hơn giá bán thì mặc định bằng giá bán
+                        oldPrice = price; 
                     }
                     p.setOldPrice(oldPrice);
 
-                    // Calculate the actual discount percentage.
                     int discountPercent = 0;
                     if (oldPrice.compareTo(price) > 0) {
                         BigDecimal discountAmount = oldPrice.subtract(price);
@@ -2742,7 +2632,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Database error in ProductDAO", e);
         }
         return list;
     }

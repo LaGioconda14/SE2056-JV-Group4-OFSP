@@ -18,14 +18,12 @@ import service.impl.DriverServiceImpl;
 
 @WebServlet(name = "ShopShippersServlet", urlPatterns = {"/shop/shippers", "/shop/delivery-staff"})
 public class ShopShippersServlet extends HttpServlet {
-
     private static final Logger LOGGER = Logger.getLogger(ShopShippersServlet.class.getName());
     private final IDriverService driverService = new DriverServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
@@ -51,7 +49,6 @@ public class ShopShippersServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
@@ -61,7 +58,6 @@ public class ShopShippersServlet extends HttpServlet {
         Long shopId = (session != null && session.getAttribute("shopId") != null)
                 ? ((Number) session.getAttribute("shopId")).longValue() : null;
 
-        // Bắt buộc đăng nhập và có quyền SHOP_OWNER
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
@@ -149,7 +145,6 @@ public class ShopShippersServlet extends HttpServlet {
                 }
                 return;
             }
-
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Error handling shop shipper post action", ex);
             response.sendRedirect(request.getContextPath() + "/shop/shippers?error=system_error");

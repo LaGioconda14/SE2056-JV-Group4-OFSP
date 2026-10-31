@@ -22,7 +22,6 @@
 
     <main class="max-w-3xl mx-auto px-4 py-6 sm:py-8">
 
-        <!-- Breadcrumb -->
         <nav class="rs-breadcrumb mb-6" aria-label="Breadcrumb">
             <a href="${ctx}/home"><i class="fa-solid fa-house text-xs"></i> Trang chủ</a>
             <i class="fa-solid fa-chevron-right sep"></i>
@@ -32,7 +31,7 @@
         </nav>
 
         <div class="rsu-card">
-            <!-- Hero -->
+
             <div class="rsu-hero">
                 <div class="rsu-check"><i class="fa-solid fa-check"></i></div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold mt-5">Gửi đăng ký thành công!</h1>
@@ -43,7 +42,6 @@
 
             <div class="px-6 sm:px-10 pb-8 pt-2 flex flex-col gap-7">
 
-                <!-- Thông tin hồ sơ -->
                 <div>
                     <h2 class="text-sm font-extrabold text-gray-900 uppercase tracking-wide mb-3"><i class="fa-solid fa-file-lines text-emerald-600 mr-1"></i> Thông tin hồ sơ đã gửi</h2>
                     <div class="rsu-info">
@@ -75,7 +73,6 @@
                     </div>
                 </div>
 
-                <!-- Quy trình tiếp theo -->
                 <div>
                     <h2 class="text-sm font-extrabold text-gray-900 uppercase tracking-wide mb-4"><i class="fa-solid fa-route text-emerald-600 mr-1"></i> Quy trình tiếp theo</h2>
                     <div class="rsu-timeline">
@@ -97,7 +94,6 @@
                     </div>
                 </div>
 
-                <!-- Lưu ý -->
                 <div class="rsu-tip">
                     <i class="fa-solid fa-lightbulb text-amber-500 mt-0.5"></i>
                     <div>
@@ -105,7 +101,6 @@
                     </div>
                 </div>
 
-                <!-- Hành động -->
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
                     <a href="${ctx}/home" class="rs-btn-next w-full sm:w-auto justify-center"><i class="fa-solid fa-house text-xs"></i> Về trang chủ</a>
                     <a href="${ctx}/profile" class="rs-btn-back w-full sm:w-auto justify-center"><i class="fa-regular fa-bell text-xs"></i> Xem thông báo của tôi</a>

@@ -109,3 +109,41 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+
+function openRestockModal() {
+    const m = document.getElementById('restockModal');
+    if (m) m.classList.remove('hidden');
+}
+function closeRestockModal() {
+    const m = document.getElementById('restockModal');
+    if (m) m.classList.add('hidden');
+}
+function quickRestockItem(variantId, name, unit) {
+    const select = document.getElementById('modalVariantSelect');
+    if (select) select.value = variantId;
+    const unitLabel = document.getElementById('modalUnitLabel');
+    if (unitLabel && unit) unitLabel.textContent = unit;
+    openRestockModal();
+}
+
+function openDiscountModal() {
+    const m = document.getElementById('discountModal');
+    if (m) m.classList.remove('hidden');
+}
+function closeDiscountModal() {
+    const m = document.getElementById('discountModal');
+    if (m) m.classList.add('hidden');
+}
+function quickDiscountItem(variantId, name) {
+    const idInput = document.getElementById('discountVariantId');
+    const nameInput = document.getElementById('discountProductName');
+    if (idInput) idInput.value = variantId;
+    if (nameInput) nameInput.value = name;
+    openDiscountModal();
+}
+
+setTimeout(function () {
+    const f = document.getElementById('flashMsg');
+    if (f) f.remove();
+}, 4000);

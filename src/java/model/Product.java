@@ -70,7 +70,6 @@ public class Product {
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
 
-
     public long getProductId() { return id; }
     public void setProductId(long productId) { this.id = productId; }
 
@@ -204,7 +203,6 @@ public class Product {
 
     public boolean isActiveForSale() { return activeForSale; }
     public void setActiveForSale(boolean activeForSale) { this.activeForSale = activeForSale; }
-
 
     public long getShopId() { return shopId; }
     public void setShopId(long shopId) { this.shopId = shopId; }

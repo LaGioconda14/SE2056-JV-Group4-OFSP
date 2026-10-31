@@ -1,5 +1,4 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
-<%-- Hai modal điều khoản (nội dung cuộn được) cho trang đăng ký shop --%>
 
 <div id="modal-tos" class="tm-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-tos-title" hidden>
   <div class="tm-dialog">
