@@ -13,6 +13,7 @@ public class SubOrder {
 
     private long subOrderId;
     private long orderId;
+    private Long customerId;
     private long shopId;
     private String shopName;
     private String deliverySlot;
@@ -187,6 +188,15 @@ public class SubOrder {
 
     public void setSubOrderId(long subOrderId) {
         this.subOrderId = subOrderId;
+    }
+
+    
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
     }
 
     public long getOrderId() {

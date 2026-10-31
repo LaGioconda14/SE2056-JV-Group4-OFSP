@@ -182,9 +182,18 @@
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
                                             </button>
-                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${order.id}')">
-                                                Đánh Giá
-                                            </button>
+                                            <c:choose>
+                                                <c:when test="${order.hasItems()}">
+                                                    <a href="${pageContext.request.contextPath}/review?orderItemId=${order.items[0].orderItemId}" class="btn-shopee-review text-decoration-none">
+                                                        Đánh Giá
+                                                    </a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${pageContext.request.contextPath}/review?orderItemId=${order.id}" class="btn-shopee-review text-decoration-none">
+                                                        Đánh Giá
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </c:when>
                                         <c:when test="${statusUpper == 'SHIPPING' or statusUpper == 'DELIVERING' or statusUpper == 'IN_TRANSIT'}">
                                             <button type="button" class="btn-shopee-primary" onclick="confirmReceivedOrder('${order.id}')">

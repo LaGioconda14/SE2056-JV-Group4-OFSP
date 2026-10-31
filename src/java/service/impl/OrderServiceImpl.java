@@ -2,6 +2,9 @@ package service.impl;
 
 import dao.CouponDAO;
 import dao.OrderDAO;
+import dao.ShopDAO;
+import service.INotificationService;
+import service.impl.NotificationServiceImpl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -26,6 +29,8 @@ public class OrderServiceImpl implements IOrderService {
 
     private final OrderDAO orderDAO;
     private final CouponDAO couponDAO;
+    private final ShopDAO shopDAO = new ShopDAO();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     public OrderServiceImpl() {
         this.orderDAO = new OrderDAO();
@@ -320,8 +325,24 @@ public class OrderServiceImpl implements IOrderService {
         }
         order.setPaymentStatus("PENDING");
 
-        return orderDAO.createOrder(order, address, cartItemIds,
+        long orderId = orderDAO.createOrder(order, address, cartItemIds,
                 normalizedPayment, saveAddress);
+        if (orderId > 0) {
+            try {
+                notificationService.createNotification(customerId, "🎉 Đặt hàng thành công #" + order.getOrderCode(),
+                        "Đơn hàng của bạn đã được tiếp nhận và chuyển đến nhà vườn chuẩn bị nông sản.", "ORDER", "ORDER", orderId);
+
+                for (SubOrder sub : order.getSubOrders()) {
+                    model.Shop s = shopDAO.getShopById(sub.getShopId());
+                    if (s != null && s.getOwnerId() > 0) {
+                        notificationService.notifyNewOrder(s.getOwnerId(), sub.getSubOrderCode(),
+                                sub.getShopTotal() != null ? sub.getShopTotal().doubleValue() : 0.0);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return orderId;
     }
 
     @Override

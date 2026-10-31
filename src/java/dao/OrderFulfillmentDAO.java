@@ -23,7 +23,7 @@ public class OrderFulfillmentDAO extends DBContext {
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.cancelled_at, so.created_at, so.updated_at, "
-                + "       s.shop_name, "
+                + "       s.shop_name, o.customer_id, "
                 + "       o.order_code, o.payment_status, o.payment_method, o.created_at AS order_created_at, "
                 + "       u.full_name AS customer_name, u.phone AS customer_phone, "
                 + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city, "
@@ -57,6 +57,7 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setOrderCode(rs.getString("order_code"));
                     so.setShopId(rs.getLong("shop_id"));
                     so.setShopName(rs.getString("shop_name"));
+                    so.setCustomerId(rs.getObject("customer_id") != null ? rs.getLong("customer_id") : null);
                     so.setDeliverySlot(rs.getString("delivery_slot"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
@@ -78,7 +79,6 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setDriverName(rs.getString("driver_name"));
                     so.setDriverPhone(rs.getString("driver_phone"));
 
-                    // Shipping Address
                     ShippingAddress addr = new ShippingAddress();
                     addr.setOrderId(rs.getLong("order_id"));
                     addr.setRecipientName(rs.getString("recipient_name"));
@@ -162,7 +162,7 @@ public class OrderFulfillmentDAO extends DBContext {
             ps.setString(2, subOrderCode);
             int updated = ps.executeUpdate();
             if (updated > 0) {
-                // Synchronize parent order status
+                
                 if (newStatus == SubOrderStatus.SHIPPING) {
                     String syncShipping = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_code = ?";
@@ -248,7 +248,7 @@ public class OrderFulfillmentDAO extends DBContext {
 
                     BigDecimal total = rs.getBigDecimal("shop_total");
                     if (total != null) {
-                        // so.setShopTotal(total.add(new BigDecimal("10000")));
+                        
                         so.setShopTotal(rs.getBigDecimal("shop_total"));
                     }
 
@@ -346,7 +346,7 @@ public class OrderFulfillmentDAO extends DBContext {
             ps.setString(3, subOrderCode);
             int rows = ps.executeUpdate();
             if (rows > 0) {
-                // Synchronize parent order status if all sub_orders are CANCELLED
+                
                 String syncSql = "UPDATE o SET o.order_status = '" + SubOrderStatus.CANCELLED.name()
                         + "', o.updated_at = CURRENT_TIMESTAMP "
                         + "FROM orders o "
@@ -406,7 +406,6 @@ public class OrderFulfillmentDAO extends DBContext {
                 psSync.executeUpdate();
             }
 
-            // Hoan tra 100% ton kho ban vi hoa qua con tuoi nguyen
             String restoreSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, pv.updated_at = CURRENT_TIMESTAMP "
                     + "FROM product_variants pv "
                     + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
@@ -461,7 +460,6 @@ public class OrderFulfillmentDAO extends DBContext {
                 psSync.executeUpdate();
             }
 
-            // Dong bo ton kho thuc te ve 0 de chan dat mua tiep
             String zeroSql = "UPDATE pv SET pv.stock_quantity = 0, pv.updated_at = CURRENT_TIMESTAMP "
                     + "FROM product_variants pv "
                     + "JOIN order_items oi ON pv.variant_id = oi.variant_id "

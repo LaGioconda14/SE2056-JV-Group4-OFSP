@@ -23,19 +23,20 @@ import service.IInventoryWasteService;
 import service.impl.OrderFulfillmentServiceImpl;
 import service.impl.DriverServiceImpl;
 import service.impl.InventoryWasteServiceImpl;
+import service.INotificationService;
+import service.impl.NotificationServiceImpl;
 
 @WebServlet(name = "ShopOrderDetailServlet", urlPatterns = {"/shop/order-detail", "/shop/orders/detail"})
 public class ShopOrderDetailServlet extends HttpServlet {
-
     private static final Logger LOGGER = Logger.getLogger(ShopOrderDetailServlet.class.getName());
     private final IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
     private final IDriverService driverService = new DriverServiceImpl();
     private final IInventoryWasteService wasteService = new InventoryWasteServiceImpl();
+    private final INotificationService notificationService = new NotificationServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
@@ -71,7 +72,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
         session.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
         request.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
 
-        // Lấy danh sách nhân viên giao hàng của Shop
         List<DriverProfile> shopShippers = driverService.getDriversByShopId(shopId, null, null);
         request.setAttribute("shopShippers", shopShippers);
 
@@ -83,7 +83,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
@@ -93,7 +92,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
         Long shopId = (session != null && session.getAttribute("shopId") != null)
                 ? ((Number) session.getAttribute("shopId")).longValue() : null;
 
-        // Bắt buộc đăng nhập và có quyền SHOP_OWNER
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
@@ -119,7 +117,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
 
         Long currentUserId = (long) user.getId();
 
-        // Hủy đơn hàng con
         if ("cancel_sub_order".equals(action)) {
             String category = request.getParameter("cancelReasonCategory");
             String note = request.getParameter("cancelReasonNote");
@@ -136,9 +133,9 @@ public class ShopOrderDetailServlet extends HttpServlet {
             String reason = sb.length() > 0 ? sb.toString() : "Shop hủy đơn do không đủ điều kiện cung cấp nông sản đạt chuẩn.";
 
             boolean ok;
-            // Khớp với FE: Tùy chọn 1 là "Nông sản không đạt chuẩn chất lượng (dập nát, thâm úng)"
-            if (category != null && (category.toLowerCase().contains("chất lượng") 
-                    || category.toLowerCase().contains("dập") 
+
+            if (category != null && (category.toLowerCase().contains("chất lượng")
+                    || category.toLowerCase().contains("dập")
                     || category.toLowerCase().contains("hỏng"))) {
                 Map<Long, Integer> wastedQtyMap = new HashMap<>();
                 if (targetOrder.getItems() != null) {
@@ -148,7 +145,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
                             if (paramVal != null && !paramVal.trim().isEmpty()) {
                                 try {
                                     int wQty = Integer.parseInt(paramVal.trim());
-                                    // Đảm bảo số lượng hỏng hợp lệ trong khoảng [0, it.getQuantity()]
+
                                     wQty = Math.max(0, Math.min(wQty, it.getQuantity()));
                                     wastedQtyMap.put(it.getVariantId(), wQty);
                                 } catch (NumberFormatException ignored) {
@@ -162,7 +159,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
                 }
                 ok = wasteService.logOrderCancellationWaste(targetOrder.getSubOrderId(), reason, currentUserId, wastedQtyMap);
             } else {
-                // Khớp với FE: Tùy chọn 2 là "Lý do khác" (Quả còn tươi nguyên) -> Hoàn lại 100% kho bán
                 ok = fulfillmentService.cancelSubOrderWithRestock(code, reason, currentUserId);
             }
             if (ok) {
@@ -173,7 +169,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
             return;
         }
 
-        // Xử lý hàng hoàn: Nhập lại kho hoa quả tươi
         if ("return_restock".equals(action)) {
             String note = request.getParameter("restockNote");
             boolean ok = fulfillmentService.processReturnedOrderRestock(code, note, currentUserId);
@@ -185,7 +180,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
             return;
         }
 
-        // Xử lý hàng hoàn: Báo hỏng do vận chuyển / đứt chuỗi lạnh
         if ("return_waste".equals(action)) {
             String note = request.getParameter("wasteNote");
             Map<Long, Integer> wastedQtyMap = new HashMap<>();
@@ -215,14 +209,13 @@ public class ShopOrderDetailServlet extends HttpServlet {
             return;
         }
 
-        // Xác nhận đơn -> bắt đầu đóng gói
         if ("confirm".equals(action)) {
             fulfillmentService.updateSubOrderStatus(code, SubOrderStatus.PACKING);
+            notifyCustomerStatus(code, SubOrderStatus.PACKING);
             response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + SubOrderStatus.PACKING.name() + "&success=1");
             return;
         }
 
-        // Phân công shipper của Shop
         if ("assign_shipper".equals(action)) {
             String driverUserIdStr = request.getParameter("driverUserId");
             if (driverUserIdStr == null || driverUserIdStr.trim().isEmpty()) {
@@ -247,7 +240,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
             return;
         }
 
-        // Sẵn sàng giao: chuyển sang SHIPPING & gán driver nếu có
         if ("ready_to_ship".equals(action)) {
             String driverUserIdStr = request.getParameter("driverUserId");
             SubOrder so = fulfillmentService.getSubOrderDetails(code);
@@ -260,6 +252,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
                 }
             } else {
                 fulfillmentService.updateSubOrderStatus(code, SubOrderStatus.SHIPPING);
+            notifyCustomerStatus(code, SubOrderStatus.SHIPPING);
             }
             response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + SubOrderStatus.SHIPPING.name() + "&success=1");
             return;
@@ -270,11 +263,22 @@ public class ShopOrderDetailServlet extends HttpServlet {
             SubOrderStatus statusEnum = SubOrderStatus.from(newStatus);
             if (statusEnum != null) {
                 fulfillmentService.updateSubOrderStatus(code, statusEnum);
+                notifyCustomerStatus(code, statusEnum);
                 response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&status=" + statusEnum.name() + "&success=1");
                 return;
             }
         }
 
         response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code);
+    }
+
+    private void notifyCustomerStatus(String code, SubOrderStatus status) {
+        try {
+            SubOrder so = fulfillmentService.getSubOrderDetails(code);
+            if (so != null && so.getCustomerId() != null && so.getCustomerId() > 0) {
+                notificationService.notifyOrderStatusChange(so.getCustomerId(), code, status.name(), so.getShopName());
+            }
+        } catch (Exception ignored) {
+        }
     }
 }

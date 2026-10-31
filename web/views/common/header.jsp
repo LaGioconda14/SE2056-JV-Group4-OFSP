@@ -76,8 +76,8 @@
                         class="relative flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#00652c] transition-colors cursor-pointer"
                         title="Thông báo">
                     <span class="material-symbols-outlined text-[22px]">notifications</span>
-                    <span id="header-noti-badge" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
-                        1
+                    <span id="header-noti-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                        0
                     </span>
                 </button>
 
@@ -228,12 +228,74 @@
         }
     }
 
+    function fetchHeaderNotifications() {
+        fetch(window.contextPath + '/api/notifications')
+            .then(res => res.json())
+            .then(data => {
+                if (!data || !data.logged) return;
+                const badge = document.getElementById('header-noti-badge');
+                if (badge) {
+                    if (data.unread > 0) {
+                        badge.textContent = data.unread > 99 ? '99+' : data.unread;
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
+                }
+                const list = document.getElementById('header-noti-list');
+                if (list && data.notifications && data.notifications.length > 0) {
+                    list.innerHTML = data.notifications.map(function(n) {
+                        var bgClass = n.isRead ? 'bg-white hover:bg-gray-50 border border-gray-100' : 'bg-emerald-50/70 border border-emerald-100';
+                        var iconColor = n.type === 'ORDER' ? 'text-blue-600' : (n.type === 'REVIEW' ? 'text-amber-500' : 'text-emerald-600');
+                        var iconName = n.type === 'ORDER' ? 'local_shipping' : (n.type === 'REVIEW' ? 'star' : 'notifications');
+                        var targetUrl = n.targetUrl ? n.targetUrl : 'javascript:void(0)';
+                        var title = n.title ? n.title : '';
+                        var timeAgo = n.timeAgo ? n.timeAgo : '';
+                        var message = n.message ? n.message : '';
+                        return '<a href="' + targetUrl + '" onclick="markNotiRead(' + n.id + ')" ' +
+                               'class="flex items-start gap-2.5 p-2.5 rounded-xl transition ' + bgClass + ' text-xs text-gray-700 block text-decoration-none">' +
+                               '<span class="material-symbols-outlined ' + iconColor + ' text-[18px] shrink-0 mt-0.5">' + iconName + '</span>' +
+                               '<div class="flex-1 min-w-0">' +
+                                   '<div class="flex items-center justify-between gap-1">' +
+                                       '<p class="font-bold text-gray-900 truncate">' + title + '</p>' +
+                                       '<span class="text-[10px] text-gray-400 shrink-0">' + timeAgo + '</span>' +
+                                   '</div>' +
+                                   '<p class="text-gray-600 text-[11px] mt-0.5 line-clamp-2">' + message + '</p>' +
+                               '</div>' +
+                               '</a>';
+                    }).join('');
+                } else if (list) {
+                    list.innerHTML = '<div class="py-6 text-center text-xs text-gray-400">Không có thông báo mới</div>';
+                }
+            })
+            .catch(() => {});
+    }
+
+    function markNotiRead(id) {
+        fetch(window.contextPath + '/api/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=read&id=' + id
+        });
+    }
+
     function clearAllNotifications(e) {
         if (e) e.stopPropagation();
-        const badge = document.getElementById('header-noti-badge');
-        if (badge) badge.classList.add('hidden');
-        localStorage.setItem('gocvuon_noti_read', 'true');
+        fetch(window.contextPath + '/api/notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'action=read_all'
+        }).then(() => {
+            const badge = document.getElementById('header-noti-badge');
+            if (badge) badge.classList.add('hidden');
+            fetchHeaderNotifications();
+        });
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchHeaderNotifications();
+        setInterval(fetchHeaderNotifications, 45000);
+    });
 
     window.showToast = function(message, type = 'success') {
         const container = document.getElementById('global-toast-container');

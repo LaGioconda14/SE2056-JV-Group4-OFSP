@@ -2,6 +2,8 @@ package model;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Review implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -12,12 +14,18 @@ public class Review implements Serializable {
     private String customerName;
     private String customerAvatar;
     private long shopId;
+    private long productId;
+    private String productName;
+    private String productImage;
+    private String variantName;
     private int rating;
     private String comment;
     private String replyComment;
+    private Timestamp replyAt;
     private String status = "APPROVED";
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private List<String> images = new ArrayList<>();
 
     public Review() {
     }
@@ -70,6 +78,38 @@ public class Review implements Serializable {
         this.shopId = shopId;
     }
 
+    public long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(long productId) {
+        this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getProductImage() {
+        return productImage;
+    }
+
+    public void setProductImage(String productImage) {
+        this.productImage = productImage;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
     public int getRating() {
         return rating;
     }
@@ -94,6 +134,14 @@ public class Review implements Serializable {
         this.replyComment = replyComment;
     }
 
+    public Timestamp getReplyAt() {
+        return replyAt;
+    }
+
+    public void setReplyAt(Timestamp replyAt) {
+        this.replyAt = replyAt;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -116,5 +164,24 @@ public class Review implements Serializable {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<String> getImages() {
+        return images;
+    }
+
+    public void setImages(List<String> images) {
+        this.images = images != null ? images : new ArrayList<>();
+    }
+
+    public String getMaskedCustomerName() {
+        if (customerName == null || customerName.trim().isEmpty()) {
+            return "Khách hàng";
+        }
+        String name = customerName.trim();
+        if (name.length() <= 2) {
+            return name.charAt(0) + "***";
+        }
+        return name.substring(0, 1) + "***" + name.substring(name.length() - 1);
     }
 }
