@@ -29,6 +29,7 @@ public class Product {
     private long primaryVariantId;
     private int variantCount;
     private boolean activeForSale;
+    private boolean active;
     private String categorySlug;
     private String filterSlugs;
     
@@ -130,6 +131,9 @@ public class Product {
 
     public boolean isActiveForSale() { return activeForSale; }
     public void setActiveForSale(boolean activeForSale) { this.activeForSale = activeForSale; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
     public String getCategorySlug() { return categorySlug; }
     public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }

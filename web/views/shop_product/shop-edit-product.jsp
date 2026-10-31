@@ -145,10 +145,6 @@
             <!-- TOP HEADER NAVBAR -->
             <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
                 <div class="relative w-96">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <form action="${pageContext.request.contextPath}/shop/products" method="GET">
-                        <input type="text" name="keyword" value="${param.keyword}" placeholder="Tìm nhanh theo SKU, tên nông sản..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                    </form>
                 </div>
 
                 <div class="flex items-center gap-4">
@@ -233,8 +229,7 @@
 
                     <!-- FORM CONTAINER CARD -->
                     <form action="${pageContext.request.contextPath}/shop/product/edit" method="POST" class="bg-white p-8 rounded-2xl border border-slate-200 shadow-2xs space-y-8">
-                        <!-- Hidden Variant ID -->
-                        <input type="hidden" name="variantId" value="${product.variantId}">
+                        <input type="hidden" name="productId" value="${product.id}">
                         
                         <!-- Section 1: Thông tin chung -->
                         <div class="space-y-4">
@@ -246,7 +241,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Tên nông sản <span class="text-rose-500">*</span></label>
-                                    <input type="text" name="name" value="${product.productName}" required placeholder="Ví dụ: Dâu Tây Hana Đà Lạt Loại A1" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
+                                    <input type="text" name="name" value="${product.name}" required placeholder="Ví dụ: Dâu Tây Hana Đà Lạt Loại A1" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Danh mục quả <span class="text-rose-500">*</span></label>
@@ -294,51 +289,11 @@
                             </div>
                         </div>
 
-                        <!-- Section 2: Quy cách đóng gói & Giá bán (SKU) -->
-                        <div class="space-y-4 pt-4">
-                            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-                                <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">2</span>
-                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Quy cách đóng gói & Giá bán (SKU)</h3>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Mã SKU</label>
-                                    <input type="text" name="sku" value="${product.sku}" placeholder="Tự sinh nếu để trống" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Tên phiên bản / Quy cách</label>
-                                    <input type="text" name="variantName" value="${product.variantName}" placeholder="Ví dụ: Hộp 500g (Loại 1)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Đơn vị tính <span class="text-rose-500">*</span></label>
-                                    <select name="unit" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer">
-                                        <option value="">-- Chọn đơn vị tính --</option>
-                                        <c:forEach var="u" items="${units}">
-                                            <option value="${u}" ${product.unit == u ? 'selected' : ''}>${u}</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Giá bán lẻ (VNĐ) <span class="text-rose-500">*</span></label>
-                                    <input type="number" name="price" value="${product.price}" required placeholder="160000" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Giá gốc niêm yết (VNĐ)</label>
-                                    <input type="number" name="originalPrice" value="${product.originalPrice}" placeholder="180000" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Số lượng tồn kho thực tế <span class="text-rose-500">*</span></label>
-                                    <input type="number" name="stockQuantity" value="${product.stockQuantity}" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Section 3: Hình ảnh nông sản (5 Ô Upload đầy đủ) -->
+                        <!-- Section 2: Hình ảnh nông sản (5 Ô Upload đầy đủ) -->
                         <div class="space-y-4 pt-4">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">3</span>
+                                    <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">2</span>
                                     <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Hình ảnh nông sản (Tối đa 5 ảnh)</h3>
                                 </div>
                                 <span class="text-xs text-slate-400 font-semibold">Ô 1 là Ảnh chính diện | Hỗ trợ kéo thả hoặc dán URL</span>
@@ -465,7 +420,7 @@
 
                             <div class="flex items-center gap-2.5 pt-2">
                                 <input type="checkbox" name="isActive" id="isActive" value="true" ${product.active ? 'checked' : ''} class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                <label for="isActive" class="text-xs font-bold text-slate-700 cursor-pointer">Sửa thông tin nông sản ngay lập tức trên sàn</label>
+                                <label for="isActive" class="text-xs font-bold text-slate-700 cursor-pointer">Kích hoạt trạng thái bán hàng</label>
                             </div>
                         </div>
 

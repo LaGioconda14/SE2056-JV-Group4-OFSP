@@ -72,6 +72,25 @@
                 margin: 1.5rem auto;
                 max-width: 80rem;
             }
+            .hero-image {
+                position: absolute;
+                top: 10%;
+                right: 4%;
+                width: 40%;
+                height: 80%;
+                object-fit: cover;
+                object-position: center;
+                border: 5px solid rgba(255, 255, 255, 0.85);
+                border-radius: 1.75rem;
+                box-shadow: 0 24px 60px rgba(2, 44, 34, 0.35);
+                transform: rotate(2deg);
+            }
+            @media (min-width: 768px) {
+                .hero-copy { max-width: 54%; }
+            }
+            @media (max-width: 767px) {
+                .hero-image { display: none; }
+            }
             .hero-badge {
                 display: inline-flex;
                 align-items: center;
@@ -259,12 +278,12 @@
                             <c:otherwise>
                                 <div class="flex items-center gap-3 relative group">
                                     <div class="flex items-center gap-2.5 cursor-pointer py-1">
-                                        <img src="${not empty currentUser.avatar ? currentUser.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}" 
+                                        <img src="${not empty currentUser.avatarUrl ? currentUser.avatarUrl : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}" 
                                              alt="Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500 shadow-sm">
                                         <div class="hidden md:block text-left">
                                             <span class="block text-[10px] text-gray-400 font-medium leading-none">Xin chào,</span>
                                             <span class="text-sm font-bold text-gray-800 group-hover:text-emerald-600 transition leading-tight">
-                                                ${not empty currentUser.fullName ? currentUser.fullName : currentUser.username}
+                                                ${not empty currentUser.fullName ? currentUser.fullName : currentUser.email}
                                             </span>
                                         </div>
                                     </div>
@@ -278,14 +297,6 @@
                             <span id="cartBadge" class="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold shadow-md border-2 border-white">${sessionScope.cartSize != null ? sessionScope.cartSize : 0}</span>
                         </a>
                     </div>
-                </div>
-                <div class="home-search-mobile md:hidden">
-                    <form action="${pageContext.request.contextPath}/search" method="GET" class="relative">
-                        <input type="text" name="query" placeholder="Tìm kiếm hoa quả tươi sạch, táo, cam..." class="home-search-input" aria-label="Tìm kiếm sản phẩm">
-                        <button type="submit" class="home-search-btn" title="Tìm kiếm" aria-label="Tìm kiếm">
-                            <i class="fa-solid fa-magnifying-glass text-xs" aria-hidden="true"></i>
-                        </button>
-                    </form>
                 </div>
             </div>
         </header>
@@ -311,8 +322,10 @@
 
         <!-- Hero Banner Section -->
         <section class="hero-banner">
+            <img class="hero-image" src="https://s.24.hu/app/uploads/sites/11/2018/10/orchard-1872997_960_720-e1540928259979.jpg"
+                 alt="Những thùng táo đỏ vừa thu hoạch giữa vườn táo" loading="eager">
             <div class="max-w-7xl mx-auto px-4 relative z-10">
-                <div class="relative z-10 max-w-3xl">
+                <div class="hero-copy relative z-10 max-w-3xl">
                     <div class="hero-badge">
                         <i class="fa-solid fa-award text-amber-300"></i> 100% Organic Đạt Chuẩn VietGAP & GlobalGAP
                     </div>

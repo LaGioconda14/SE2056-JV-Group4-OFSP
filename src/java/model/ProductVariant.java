@@ -1,6 +1,4 @@
 package model;
-
-import java.text.DecimalFormat;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -89,45 +87,4 @@ public class ProductVariant {
 
     public int getTotalVariantsCount() { return totalVariantsCount; }
     public void setTotalVariantsCount(int totalVariantsCount) { this.totalVariantsCount = totalVariantsCount; }
-
-    // Helpers for UI display
-    public String getFormattedPrice() {
-        if (price == null) return "0";
-        DecimalFormat df = new DecimalFormat("#,###");
-        return df.format(price).replace(',', '.');
-    }
-
-    public String getFormattedOriginalPrice() {
-        if (originalPrice == null || originalPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            return "";
-        }
-        DecimalFormat df = new DecimalFormat("#,###");
-        return df.format(originalPrice).replace(',', '.');
-    }
-
-    public String getStockStatusText() {
-        if (stockQuantity <= 5) return "Nguy cấp";
-        if (stockQuantity <= 15) return "Sắp hết";
-        if (stockQuantity <= 40) return "Ổn định";
-        return "Dồi dào";
-    }
-
-    public int getStockProgressPercent() {
-        if (stockQuantity <= 5) return 15;
-        if (stockQuantity <= 15) return 32;
-        if (stockQuantity <= 40) return 60;
-        return 88;
-    }
-
-    public String getStockStatusColor() {
-        if (stockQuantity <= 5) return "text-red-600";
-        if (stockQuantity <= 15) return "text-amber-600";
-        return "text-emerald-600";
-    }
-
-    public String getStockBarColor() {
-        if (stockQuantity <= 5) return "bg-red-500";
-        if (stockQuantity <= 15) return "bg-amber-500";
-        return "bg-emerald-600";
-    }
 }

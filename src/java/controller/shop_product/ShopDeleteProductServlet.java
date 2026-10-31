@@ -61,10 +61,14 @@ public class ShopDeleteProductServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         Long shopId = (Long) session.getAttribute("shopId");
 
+        // Kiểm tra quyền chủ shop
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
@@ -72,26 +76,28 @@ public class ShopDeleteProductServlet extends HttpServlet {
 
         try {
             String productIdStr = request.getParameter("productId");
-            String idStr = request.getParameter("id");
-            boolean success = false;
             if (productIdStr != null && !productIdStr.trim().isEmpty()) {
                 long productId = Long.parseLong(productIdStr);
-                success = productService.softDeleteProduct(productId, shopId);
-            } else if (idStr != null && !idStr.trim().isEmpty()) {
-                long variantId = Long.parseLong(idStr);
-                success = productService.softDeleteVariant(variantId, shopId);
-            }
+                
+                // Gọi hàm xóa mềm đồng thời sản phẩm cha và toàn bộ biến thể con
+                boolean success = productService.softDeleteProductAndVariants(productId, shopId);
 
-            if (success) {
-                session.setAttribute("successMessage", "Đã ẩn/xóa sản phẩm thành công!");
+                if (success) {
+                    session.setAttribute("successMessage", "Đã ngừng bán sản phẩm và toàn bộ biến thể thành công!");
+                } else {
+                    session.setAttribute("errorMessage", "Thao tác thất bại hoặc bạn không có quyền chỉnh sửa sản phẩm này!");
+                }
             } else {
-                session.setAttribute("errorMessage", "Thao tác thất bại hoặc bạn không có quyền!");
+                session.setAttribute("errorMessage", "Mã sản phẩm không hợp lệ!");
             }
+        } catch (NumberFormatException e) {
+            session.setAttribute("errorMessage", "Định dạng mã sản phẩm không hợp lệ!");
         } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
         }
 
+        // Điều hướng về lại trang danh sách sản phẩm của shop
         response.sendRedirect(request.getContextPath() + "/shop/products");
     }
 

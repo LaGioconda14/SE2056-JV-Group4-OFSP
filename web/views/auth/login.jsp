@@ -140,7 +140,6 @@
                                id="password" 
                                name="password" 
                                placeholder="••••••••••••••••" 
-                               value="${not empty rememberPassword ? rememberPassword : ''}" 
                                required 
                                autocomplete="current-password">
                         <span class="trailing-action" onclick="togglePasswordVisibility('password', this)" title="Show/Hide password">
@@ -157,7 +156,7 @@
                                id="remember" 
                                value="1" 
                                ${not empty rememberChecked ? 'checked' : ''}>
-                        <span>Remember me on this device</span>
+                        <span>Remember email on this device</span>
                     </label>
                     <a href="${pageContext.request.contextPath}/forgot-password" class="forgot-link">Forgot password?</a>
                 </div>

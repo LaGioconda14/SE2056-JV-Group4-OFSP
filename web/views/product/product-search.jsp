@@ -103,12 +103,6 @@
                         </a>
                     </div>
                 </div>
-                    <div class="home-search-mobile md:hidden">
-                        <form action="${pageContext.request.contextPath}/search" method="GET" class="relative">
-                            <input type="text" name="query" value="${txtSearch}" placeholder="Tìm kiếm hoa quả tươi sạch, táo, cam..." class="home-search-input" aria-label="Tìm kiếm sản phẩm">
-                            <button type="submit" class="home-search-btn" title="Tìm kiếm" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass text-xs" aria-hidden="true"></i></button>
-                        </form>
-                    </div>
             </div>
         </header>
 
@@ -139,7 +133,7 @@
 
     <form action="${pageContext.request.contextPath}/search" method="GET" class="space-y-6">
         <!-- Giữ nguyên từ khóa tìm kiếm khi lọc -->
-        <input type="hidden" name="query" value="${txtSearch}" />
+        <input type="hidden" name="query"/>
 
         <!-- Theo Danh Mục (Đổ dữ liệu động từ Database) -->
         <div>

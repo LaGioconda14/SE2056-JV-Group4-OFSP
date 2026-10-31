@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.util.List;
 import model.Category;
+import model.Product;
 import model.ProductVariant;
 import model.Shop;
 import model.User;
@@ -27,7 +28,7 @@ import service.impl.ProductServiceImpl;
  * @author ADMIN
  */
 @WebServlet(name="ShopEditProductServlet", urlPatterns={"/shop/product/edit"})
-public class ShopEditProductServlet extends HttpServlet {
+public class    ShopEditProductServlet extends HttpServlet {
     private final IProductService productService = new ProductServiceImpl();
     /** 
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
@@ -75,12 +76,22 @@ public class ShopEditProductServlet extends HttpServlet {
             return;
         }
 
+        Long shopId = (Long) session.getAttribute("shopId");
+        if (shopId == null) {
+            response.sendRedirect(request.getContextPath() + "/shop/products");
+            return;
+        }
+
         try {
             // 1. Bắt linh hoạt mọi loại tên tham số truyền lên từ URL
-            String idStr = request.getParameter("id");
+            String idStr = request.getParameter("productId");
             if (idStr != null && !idStr.trim().isEmpty()) {
-                long variantId = Long.parseLong(idStr.trim());
-                ProductVariant product = productService.getVariantById(variantId);
+                long productId = Long.parseLong(idStr.trim());
+                Product product = productService.getShopProductForEdit(productId, shopId);
+                if (product == null) {
+                    response.sendRedirect(request.getContextPath() + "/shop/products");
+                    return;
+                }
                 request.setAttribute("product", product);
             }
 
@@ -128,38 +139,32 @@ public class ShopEditProductServlet extends HttpServlet {
         }
         
         Long shopId = (Long) session.getAttribute("shopId");
+        if (shopId == null) {
+            response.sendRedirect(request.getContextPath() + "/shop/products");
+            return;
+        }
 
         try {
             // 2. Lấy tất cả các tham số từ form gửi lên
-            String variantIdStr = request.getParameter("variantId");
+            String productIdStr = request.getParameter("productId");
             String name = request.getParameter("name");
             String categoryIdStr = request.getParameter("categoryId");
             String origin = request.getParameter("origin");
             String storageTemp = request.getParameter("storageTemp");
             String certification = request.getParameter("certification");
             String description = request.getParameter("description");
-            String sku = request.getParameter("sku");
-            String variantName = request.getParameter("variantName");
-            String unit = request.getParameter("unit");
-            String priceStr = request.getParameter("price");
-            String originalPriceStr = request.getParameter("originalPrice");
-            String stockQuantityStr = request.getParameter("stockQuantity");
             String isActiveStr = request.getParameter("isActive");
             String coverImageUrl = request.getParameter("coverImageUrl");
 
             // 3. Ép kiểu dữ liệu an toàn
-            long variantId = Long.parseLong(variantIdStr);
+            long productId = Long.parseLong(productIdStr);
             int categoryId = (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) ? Integer.parseInt(categoryIdStr) : 0;
-            BigDecimal price = (priceStr != null && !priceStr.trim().isEmpty()) ? new BigDecimal(priceStr) : BigDecimal.ZERO;
-            BigDecimal originalPrice = (originalPriceStr != null && !originalPriceStr.trim().isEmpty()) ? new BigDecimal(originalPriceStr) : price;
-            int stockQuantity = (stockQuantityStr != null && !stockQuantityStr.trim().isEmpty()) ? Integer.parseInt(stockQuantityStr) : 0;
             boolean isActive = "true".equalsIgnoreCase(isActiveStr) || "on".equalsIgnoreCase(isActiveStr);
 
             // 4. Gọi Service thực hiện cập nhật
             boolean success = productService.updateFullProduct(shopId,
-                variantId, name, categoryId, origin, storageTemp, certification, 
-                description, sku, variantName, unit, price, originalPrice, 
-                stockQuantity, isActive, coverImageUrl
+                productId, name, categoryId, origin, storageTemp, certification,
+                description, isActive, coverImageUrl
             );
 
             if (success) {
@@ -170,7 +175,7 @@ public class ShopEditProductServlet extends HttpServlet {
                 request.setAttribute("errorMessage", "Cập nhật thông tin nông sản thất bại. Vui lòng kiểm tra lại dữ liệu!");
                 
                 // Load lại dữ liệu để form không bị rỗng khi render lại
-                ProductVariant product = productService.getVariantById(variantId);
+                Product product = productService.getShopProductForEdit(productId, shopId);
                 request.setAttribute("product", product);
                 request.setAttribute("categories", productService.getAllCategories());
                 request.setAttribute("certifications", productService.getAllCertifications());

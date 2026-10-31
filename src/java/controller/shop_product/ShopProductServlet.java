@@ -12,6 +12,7 @@ import model.User;
 import model.Shop;
 import model.Product;
 import dao.ShopDAO;
+import model.Category;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -24,7 +25,7 @@ public class ShopProductServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -73,7 +74,10 @@ public class ShopProductServlet extends HttpServlet {
             request.setAttribute("tabHiddenProductCount", productService.countProductsByStatusTab(shopId, "hidden"));
             request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
         }
-
+        List<Category> categoryList = productService.getAllCategories();
+        request.setAttribute("categories", categoryList);
+        List<String> certificationList = productService.getAllCertifications();
+        request.setAttribute("certifications", certificationList);
         // 5. Forward sang trang JSP
         request.getRequestDispatcher("/views/shop_product/shop-products.jsp").forward(request, response);
     }

@@ -42,7 +42,6 @@ public class DetailServlet extends HttpServlet {
         
         // 1. Lấy tham số id từ URL gửi lên
         String idStr = request.getParameter("id");
-        System.out.println(">>> [DEBUG DETAIL] ID nhận được từ URL: " + idStr);
 
         try {
             if (idStr != null && !idStr.trim().isEmpty()) {
@@ -53,7 +52,6 @@ public class DetailServlet extends HttpServlet {
                 Product product = productDAO.getProductById(productId); // (Hoặc qua Service nếu nhóm ông dùng Service)
 
                 if (product != null) {
-                    System.out.println(">>> [DEBUG DETAIL] Đã tìm thấy sản phẩm: " + product.getName());
                     request.setAttribute("product", product);
                     request.setAttribute("variants", product.getVariants());
 
@@ -75,15 +73,11 @@ public class DetailServlet extends HttpServlet {
                     // 3. Forward dữ liệu sang trang detail.jsp đã tạo
                     request.getRequestDispatcher("/views/product/product-detail.jsp").forward(request, response);
                     return;
-                } else {
-                    System.out.println(">>> [DEBUG DETAIL] Không tìm thấy sản phẩm với ID = " + productId);
                 }
             }
         } catch (Exception e) {
-            System.out.println(">>> [DEBUG DETAIL] Lỗi ngoại lệ trong DetailServlet:");
             e.printStackTrace();
         }
-
         // Nếu ID không hợp lệ hoặc không tìm thấy sản phẩm thì mới chuyển hướng về trang danh sách
         response.sendRedirect(request.getContextPath() + "/products");
     } 

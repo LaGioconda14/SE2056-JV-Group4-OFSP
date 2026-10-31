@@ -69,12 +69,6 @@
                             <span>Tất cả sản phẩm</span>
                         </span>
                     </a>
-                    <a href="${pageContext.request.contextPath}/shop/product/add" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
-                        <span class="flex items-center gap-3">
-                            <i class="fa-solid fa-circle-plus text-slate-400 text-sm w-4 text-center"></i>
-                            <span>Thêm mới nông sản</span>
-                        </span>
-                    </a>
                     <a href="${pageContext.request.contextPath}/shop/inventory" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all">
                         <span class="flex items-center gap-3">
                             <i class="fa-solid fa-warehouse text-slate-400 text-sm w-4 text-center"></i>
@@ -148,10 +142,6 @@
             <!-- TOP HEADER NAVBAR -->
             <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
                 <div class="relative w-96">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <form action="${pageContext.request.contextPath}/shop/products" method="GET">
-                        <input type="text" name="keyword" value="${param.keyword}" placeholder="Tìm theo tên sản phẩm..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                    </form>
                 </div>
 
                 <div class="flex items-center gap-4">
@@ -224,7 +214,7 @@
                                     <h1 class="text-2xl font-black text-slate-900 tracking-tight">Danh sách sản phẩm nông sản</h1>
                                     <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-extrabold rounded-full shadow-2xs">
                                         <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-                                        ${not empty totalProducts ? totalProducts : 0} SẢN PHẨM
+                                        ${not empty totalProductsCount ? totalProductsCount : 0} SẢN PHẨM
                                     </span>
                                 </div>
                                 <p class="text-xs text-slate-500 font-medium mt-1">
@@ -252,31 +242,31 @@
 
                     <!-- STATUS TABS -->
                     <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=all" 
+                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=all"
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${empty statusTab || statusTab == 'all' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Tất cả</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] ${empty statusTab || statusTab == 'all' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabAllProductCount ? tabAllProductCount : 0}</span>
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=active" 
+                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=active"
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'active' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Đang mở bán</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] ${statusTab == 'active' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabActiveProductCount ? tabActiveProductCount : 0}</span>
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=vietgap" 
+                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=vietgap"
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'vietgap' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Chờ duyệt VietGAP</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] bg-amber-100 text-amber-800 font-extrabold">${not empty tabVietgapProductCount ? tabVietgapProductCount : 0}</span>
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=hidden" 
+                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=hidden"
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'hidden' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Hết hàng / Tạm ẩn</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] bg-rose-100 text-rose-700 font-extrabold">${not empty tabHiddenProductCount ? tabHiddenProductCount : 0}</span>
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=warning" 
+                        <a href="${pageContext.request.contextPath}/shop/products?statusTab=warning"
                            class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'warning' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                             <span>Vi phạm / Cảnh báo</span>
                             <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 text-slate-600">${not empty tabWarningProductCount ? tabWarningProductCount : 0}</span>
@@ -456,11 +446,14 @@
                                                     <td class="py-4 px-4 align-middle">
                                                         <div class="flex flex-col items-start gap-1">
                                                             <c:choose>
-                                                                <c:when test="${product.activeForSale}">
+                                                                <c:when test="${product.active && product.stockQuantity > 0}">
                                                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold">
                                                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                                                         Đang mở bán
                                                                     </span>
+                                                                </c:when>
+                                                                <c:when test="${product.active}">
+                                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-extrabold">Hết hàng</span>
                                                                 </c:when>
                                                                 <c:otherwise>
                                                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold">
@@ -470,7 +463,7 @@
                                                                 </c:otherwise>
                                                             </c:choose>
                                                             <span class="text-[10px] font-semibold text-slate-400 pl-1">
-                                                                ${product.variantCount > 0 ? product.variantCount : 1} phân loại
+                                                                ${product.variantCount} phân loại
                                                             </span>
                                                         </div>
                                                     </td>
@@ -508,10 +501,13 @@
                                                                 <i class="fa-solid fa-layer-group text-[11px]"></i><span>Biến thể</span>
                                                             </a>
                                                             <c:choose>
-                                                                <c:when test="${product.primaryVariantId > 0}">
-                                                                    <a href="${pageContext.request.contextPath}/shop/product/edit?id=${product.primaryVariantId}" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Sửa thông tin sản phẩm">
+                                                                <c:when test="${product.id > 0}">
+                                                                    <a href="${pageContext.request.contextPath}/shop/product/edit?productId=${product.id}" class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-300 hover:shadow-2xs flex items-center justify-center transition-all" title="Sửa thông tin sản phẩm">
                                                                         <i class="fa-solid fa-pen-to-square text-[11px]"></i>
                                                                     </a>
+                                                                </c:when>
+                                                                <c:when test="${product.active}">
+                                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-extrabold">&#272;ã bật / Hết hàng</span>
                                                                 </c:when>
                                                                 <c:otherwise>
                                                                     <button type="button" disabled class="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 text-slate-300 flex items-center justify-center cursor-not-allowed" title="Chưa có thông tin sửa">

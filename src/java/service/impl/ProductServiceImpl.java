@@ -257,41 +257,30 @@ public class ProductServiceImpl implements IProductService {
     }
     
     @Override
-    public boolean updateFullProduct(long shopId,long variantId, String name, int categoryId, String origin, 
-                                     String storageTemp, String certification, String description, 
-                                     String sku, String variantName, String unit, BigDecimal price, 
-                                     BigDecimal originalPrice, int stockQuantity, boolean isActive, 
-                                     String coverImageUrl) {
+    public model.Product getShopProductForEdit(long productId, long shopId) {
+        if (productId <= 0 || shopId <= 0) return null;
+        return productDAO.getShopProductForEdit(productId, shopId);
+    }
+
+    @Override
+    public boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
+                                     String storageTemp, String certification, String description,
+                                     boolean isActive, String coverImageUrl) {
         
         // 1. Validate dữ liệu đầu vào cơ bản
-        if (variantId <= 0) {
+        if (productId <= 0 || shopId <= 0) {
             return false;
         }
         if (name == null || name.trim().isEmpty()) {
             return false;
         }
-        if (price == null || price.compareTo(BigDecimal.ZERO) < 0) {
-            return false; // Không cho phép giá bán âm
-        }
-        if (stockQuantity < 0) {
-            return false; // Không cho phép tồn kho âm
-        }
-        if (unit == null || unit.trim().isEmpty()) {
-            unit = "kg"; // Gán mặc định nếu người dùng lỡ để trống
-        }
-
         // 2. Gọi DAO thực thi sau khi đã qua cửa kiểm duyệt
-        return productDAO.updateFullProduct(shopId, variantId, name, categoryId, origin, storageTemp, certification, description, sku, variantName, unit, price, originalPrice, stockQuantity, isActive, coverImageUrl);
+        return productDAO.updateFullProduct(shopId, productId, name, categoryId, origin, storageTemp, certification, description, isActive, coverImageUrl);
     }
 
     @Override
     public List<Product> getHomeProducts() {
         return productDAO.getHomeProducts();
-    }
-
-    @Override
-    public List<Product> getHomeFeaturedTabs() {
-        return productDAO.getHomeFeaturedTabs();
     }
 
     @Override

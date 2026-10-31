@@ -40,20 +40,15 @@ public interface IProductService {
                                  String price, String originalPrice, String stockQuantity,
                                  String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     //sửa
-    public boolean updateFullProduct(long shopId,long variantId, String name, int categoryId, String origin, 
-                                     String storageTemp, String certification, String description, 
-                                     String sku, String variantName, String unit, BigDecimal price, 
-                                     BigDecimal originalPrice, int stockQuantity, boolean isActive, 
-                                     String coverImageUrl);
+    model.Product getShopProductForEdit(long productId, long shopId);
+    boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
+                              String storageTemp, String certification, String description,
+                              boolean isActive, String coverImageUrl);
     
     /**
      * Lấy danh sách sản phẩm nổi bật hiển thị trên trang chủ.
      */
     List<Product> getHomeProducts();
-    /**
-     * Lấy danh sách các tab danh mục hiển thị trên trang chủ.
-     */
-    List<Product> getHomeFeaturedTabs();
 
     /**
      * Lấy danh sách danh mục theo cấu trúc phân cấp đa tầng (cha - con).

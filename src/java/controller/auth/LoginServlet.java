@@ -26,20 +26,14 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+        clearRememberPasswordCookie(request, response);
         HttpSession session = request.getSession(false);
-        // If already logged in, redirect based on role or home page
         if (session != null && session.getAttribute("user") != null) {
             User loggedUser = (User) session.getAttribute("user");
-            if (loggedUser != null && "SHOP_OWNER".equalsIgnoreCase(loggedUser.getRole())) {
-                response.sendRedirect(request.getContextPath() + "/shop/products");
-                return;
-            }
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            redirectByRole(loggedUser, request, response);
             return;
         }
 
-        // Check for any flash message from session (e.g. from Filter or Reset Pass)
         if (session != null) {
             String errorMsg = (String) session.getAttribute("errorMessage");
             if (errorMsg != null) {
@@ -53,17 +47,14 @@ public class LoginServlet extends HttpServlet {
             }
         }
 
-        // Check Remember Me cookies to auto-fill login form
+        // Remember the email only; never store a password in a cookie.
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie c : cookies) {
                 if ("c_email".equals(c.getName())) {
                     request.setAttribute("rememberEmail", c.getValue());
                 }
-                if ("c_pass".equals(c.getName())) {
-                    request.setAttribute("rememberPassword", c.getValue());
-                }
-                if ("c_rem".equals(c.getName())) {
+                if ("c_rem".equals(c.getName()) && "1".equals(c.getValue())) {
                     request.setAttribute("rememberChecked", "checked");
                 }
             }
@@ -75,7 +66,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
+        clearRememberPasswordCookie(request, response);
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -93,55 +84,58 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        // Authentication Successful -> Store session
+        // Rotate an existing session ID after authentication to prevent session fixation.
+        if (request.getSession(false) != null) {
+            request.changeSessionId();
+        }
         HttpSession session = request.getSession(true);
         session.setAttribute("user", user);
         session.setAttribute("userfullname", user.getFullName());
         session.setAttribute("email", user.getEmail());
 
-        // Process Remember Me Cookies (Expires in 7 days)
+        // Remember the email for seven days; do not persist the password.
         int cookieMaxAge = (remember != null) ? (7 * 24 * 60 * 60) : 0;
+        addCookie(request, response, "c_email", user.getEmail(), cookieMaxAge);
+        addCookie(request, response, "c_rem", remember != null ? "1" : "", cookieMaxAge);
+        // CUSTOMER (and any default role) is redirected once through the shared role handler.
+        redirectByRole(user, request, response);
+    }
 
-        Cookie cookieEmail = new Cookie("c_email", (remember != null) ? email : "");
-        cookieEmail.setMaxAge(cookieMaxAge);
-        cookieEmail.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
-        response.addCookie(cookieEmail);
-
-        Cookie cookiePassword = new Cookie("c_pass", (remember != null) ? password : "");
-        cookiePassword.setMaxAge(cookieMaxAge);
-        cookiePassword.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
-        response.addCookie(cookiePassword);
-
-        Cookie cookieRem = new Cookie("c_rem", (remember != null) ? "checked" : "");
-        cookieRem.setMaxAge(cookieMaxAge);
-        cookieRem.setPath(request.getContextPath().isEmpty() ? "/" : request.getContextPath());
-        response.addCookie(cookieRem);
-
-        // Role-based redirection & Session enrichment
-        String role = user.getRole();
+    private void redirectByRole(User user, HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String role = user == null ? null : user.getRole();
+        String destination;
         if ("SHOP_OWNER".equalsIgnoreCase(role)) {
-            // Lấy thông tin Shop của chủ shop theo ID user
-            try {
-                Shop shop = shopDAO.getShopByOwnerId(user.getId()); // Hoặc user.getId() tùy model User của ông
-                if (shop != null) {
-                    session.setAttribute("shopId", shop.getShopId());
-                    session.setAttribute("shopName", shop.getShopName());
-                    session.setAttribute("shopLogo", shop.getLogoUrl());
-                    session.setAttribute("shopObj", shop);
-                    session.setAttribute("shopStatus", shop.getStatus());
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            // Đăng nhập chủ shop xong -> Chuyển hướng thẳng vào trang Quản lý sản phẩm
-            response.sendRedirect(request.getContextPath() + "/shop/products");
-            return;
+            destination = "/shop/products";
         } else if ("ADMIN".equalsIgnoreCase(role)) {
-            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-            return;
+            destination = "/admin/dashboard";
+        } else {
+            destination = "/home";
         }
+        response.sendRedirect(request.getContextPath() + destination);
+    }
 
-        // Khách hàng thông thường -> Redirect về trang chủ mua sắm
-        response.sendRedirect(request.getContextPath() + "/home");
+    private void clearRememberPasswordCookie(HttpServletRequest request, HttpServletResponse response) {
+        Cookie passwordCookie = new Cookie("c_pass", "");
+        passwordCookie.setMaxAge(0);
+        passwordCookie.setPath(cookiePath(request));
+        passwordCookie.setHttpOnly(true);
+        passwordCookie.setSecure(request.isSecure());
+        response.addCookie(passwordCookie);
+    }
+
+    private void addCookie(HttpServletRequest request, HttpServletResponse response,
+            String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value == null ? "" : value);
+        cookie.setMaxAge(maxAge);
+        cookie.setPath(cookiePath(request));
+        cookie.setHttpOnly(true);
+        cookie.setSecure(request.isSecure());
+        response.addCookie(cookie);
+    }
+
+    private String cookiePath(HttpServletRequest request) {
+        String contextPath = request.getContextPath();
+        return contextPath == null || contextPath.isEmpty() ? "/" : contextPath;
     }
 }
