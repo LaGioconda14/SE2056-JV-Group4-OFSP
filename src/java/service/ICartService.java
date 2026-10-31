@@ -1,20 +1,20 @@
 package service;
 
 import model.Cart;
+import model.CartItem;
+import model.CartMutationResult;
 
-/**
- *
- * @author Bac
- */
 public interface ICartService {
 
-    Cart getCart(long customerId);
+    Cart loadCartAndReconcile(long customerId);
 
-    void addItem(long customerId, long variantId, int quantity) throws Exception;
+    int getCartItemCount(long customerId);
 
-    void updateQuantity(long customerId, long cartItemId, int quantity) throws Exception;
+    CartMutationResult addItem(long customerId, long variantId, int quantity);
 
-    void removeItem(long customerId, long cartItemId) throws Exception;
+    void updateQuantity(long customerId, long cartItemId, int quantity);
 
-    void changeVariant(long customerId, long cartItemId, long variantId) throws Exception;
+    void removeItem(long customerId, long cartItemId);
+
+    void changeVariant(long customerId, long cartItemId, long variantId);
 }

@@ -206,13 +206,28 @@
                                             <div class="text-muted" style="font-size: 0.68rem;">sản phẩm liên kết</div>
                                         </td>
                                         <td>
-                                            <div class="form-check form-switch m-0" title="Bật/Tắt hiển thị danh mục ngoài sàn">
-                                                <input class="form-check-input" type="checkbox" ${c.isActive ? 'checked' : ''} style="cursor: pointer;" onchange="toggleCategoryActive(${c.categoryId}, this.checked)">
-                                            </div>
+                                            <form method="POST" action="${pageContext.request.contextPath}/admin/categories" class="m-0 d-inline">
+                                                <input type="hidden" name="action" value="toggleCategoryStatus">
+                                                <input type="hidden" name="categoryId" value="${c.categoryId}">
+                                                <input type="hidden" name="isActive" value="${c.isActive ? '0' : '1'}">
+                                                <div class="form-check form-switch m-0" title="Bật/Tắt hiển thị danh mục ngoài sàn">
+                                                    <input class="form-check-input" type="checkbox" ${c.isActive ? 'checked' : ''} style="cursor: pointer;" onchange="this.form.submit()">
+                                                </div>
+                                            </form>
                                         </td>
                                         <td class="text-end">
                                             <div class="d-inline-flex align-items-center gap-1">
-                                                <button type="button" class="btn btn-sm btn-outline-primary p-1 px-2" title="Chỉnh sửa danh mục & slug" onclick="openEditCategoryModal(${c.categoryId})">
+                                                <button type="button" class="btn btn-sm btn-outline-primary p-1 px-2" title="Chỉnh sửa danh mục & slug"
+                                                        data-category-id="${c.categoryId}"
+                                                        data-category-name="${fn:escapeXml(c.categoryName)}"
+                                                        data-slug="${c.slug}"
+                                                        data-description="${fn:escapeXml(c.description)}"
+                                                        data-parent-id="${empty c.parentId ? '0' : c.parentId}"
+                                                        data-display-order="${empty c.displayOrder ? '0' : c.displayOrder}"
+                                                        data-icon-class="${empty c.iconClass ? 'bi-tag' : c.iconClass}"
+                                                        data-image-url="${c.imageUrl}"
+                                                        data-is-active="${c.isActive ? '1' : '0'}"
+                                                        onclick="openEditCategoryModal(this)">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </button>
                                                 <button type="button" class="btn btn-sm btn-outline-danger p-1 px-2" title="Xóa danh mục" onclick="openDeleteCategoryModal(${c.categoryId}, '${c.categoryName}', ${c.activeSkus})">

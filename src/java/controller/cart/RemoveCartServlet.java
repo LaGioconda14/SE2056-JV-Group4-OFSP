@@ -1,52 +1,65 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package controller.cart;
 
-import java.io.IOException;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.User;
 import service.ICartService;
 import service.impl.CartServiceImpl;
 
-/**
- *
- * @author Bac
- */
 @WebServlet(name = "RemoveCartServlet", urlPatterns = {"/cart/remove"})
 public class RemoveCartServlet extends HttpServlet {
 
-    private final ICartService cartService = new CartServiceImpl();
+    private static final Logger LOGGER = Logger.getLogger(RemoveCartServlet.class.getName());
+    private transient ICartService cartService;
+
+    public RemoveCartServlet() {
+        this(new CartServiceImpl());
+    }
+
+    RemoveCartServlet(ICartService cartService) {
+        this.cartService = cartService;
+    }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        HttpSession session = request.getSession(false);
-        User user = (session != null) ? (User) session.getAttribute("user") : null;
+    public void init() {
+        if (cartService == null) {
+            cartService = new CartServiceImpl();
+        }
+    }
 
-        if (user == null) {
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        Object sessionUser = session != null ? session.getAttribute("user") : null;
+        User user = sessionUser instanceof User ? (User) sessionUser : null;
+        if (user == null || user.getId() <= 0 || !user.isActive()) {
             request.getSession(true).setAttribute("errorMessage", "Vui lòng đăng nhập!");
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
-
         try {
-            long cartItemId = Long.parseLong(request.getParameter("cartItemId"));
-
-            cartService.removeItem((long) user.getId(), cartItemId);
+            cartService.removeItem(user.getId(),
+                    Long.parseLong(request.getParameter("cartItemId")));
+            session.setAttribute("cartSize", cartService.getCartItemCount(user.getId()));
             session.setAttribute("cartSuccess", "Đã xóa sản phẩm khỏi giỏ hàng!");
-        } catch (NumberFormatException e) {
+            session.removeAttribute("cartError");
+        } catch (NumberFormatException ex) {
             session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
-        } catch (Exception e) {
-            session.setAttribute("cartError", e.getMessage());
+            session.removeAttribute("cartSuccess");
+        } catch (IllegalArgumentException ex) {
+            session.setAttribute("cartError", ex.getMessage());
+            session.removeAttribute("cartSuccess");
+        } catch (RuntimeException ex) {
+            LOGGER.log(Level.SEVERE, "Cannot remove cart item", ex);
+            session.setAttribute("cartError", "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!");
+            session.removeAttribute("cartSuccess");
         }
-
         response.sendRedirect(request.getContextPath() + "/cart");
     }
 }

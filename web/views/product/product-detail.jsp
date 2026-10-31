@@ -331,7 +331,9 @@
                                 </div>
 
                                 <!-- Hàng 2: Nút Mua Ngay -->
-                                <button type="submit" name="action" value="buyNow" class="w-full bg-[#9a3412] hover:bg-[#7c2d12] text-white font-extrabold py-3.5 px-6 rounded-2xl transition shadow-md shadow-orange-900/20 flex items-center justify-center gap-2 text-sm tracking-wide">
+                                <button type="submit" name="checkoutMode" value="buyNow"
+                                        formaction="${pageContext.request.contextPath}/checkout"
+                                        class="w-full bg-[#9a3412] hover:bg-[#7c2d12] text-white font-extrabold py-3.5 px-6 rounded-2xl transition shadow-md shadow-orange-900/20 flex items-center justify-center gap-2 text-sm tracking-wide">
                                     <i class="fa-solid fa-bolt text-amber-300"></i>
                                     Mua Ngay
                                 </button>

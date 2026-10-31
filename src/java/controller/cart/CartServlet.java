@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package controller.cart;
 
 import java.io.IOException;
@@ -11,23 +7,40 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Cart;
 import model.User;
 import service.ICartService;
 import service.impl.CartServiceImpl;
 
-/**
- *
- * @author Bac
- */
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
 
-    private final ICartService cartService = new CartServiceImpl();
+    private static final Logger LOGGER = Logger.getLogger(CartServlet.class.getName());
+    private transient ICartService cartService;
+
+    public CartServlet() {
+        this(new CartServiceImpl());
+    }
+
+    CartServlet(ICartService cartService) {
+        this.cartService = cartService;
+    }
+
+    @Override
+    public void init() {
+        if (cartService == null) {
+            cartService = new CartServiceImpl();
+        }
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("text/html; charset=UTF-8");
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
@@ -38,7 +51,19 @@ public class CartServlet extends HttpServlet {
             return;
         }
 
-        Cart cart = cartService.getCart((long) user.getId());
+        Cart cart;
+        try {
+            cart = cartService.loadCartAndReconcile((long) user.getId());
+        } catch (IllegalArgumentException ex) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            request.setAttribute("errorMessage", ex.getMessage());
+            cart = new Cart();
+        } catch (RuntimeException ex) {
+            LOGGER.log(Level.SEVERE, "Cannot load cart", ex);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            request.setAttribute("errorMessage", "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!");
+            cart = new Cart();
+        }
         request.setAttribute("cart", cart);
         if (cart.getItems().stream().anyMatch(model.CartItem::isQuantityAdjusted)) {
             request.setAttribute("stockNotice",

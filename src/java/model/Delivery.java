@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import enums.DeliveryStatus;
+import enums.DeliverySlot;
 import enums.PaymentStatus;
 import enums.PaymentMethod;
 
@@ -18,7 +19,7 @@ public class Delivery {
     private String driverName;
     private String driverPhone;
     private String trackingNumber;
-    private String deliveryStatus = DeliveryStatus.ASSIGNING.name(); // ASSIGNING, DELIVERING, DELIVERED, FAILED
+    private String deliveryStatus = DeliveryStatus.ASSIGNING.name();
     private String proofImageUrl;
     private String failureReason;
     private Timestamp assignedAt;
@@ -117,12 +118,8 @@ public class Delivery {
     }
 
     public DeliveryStatus getDeliveryStatusEnum() {
-        if (deliveryStatus == null) return DeliveryStatus.ASSIGNING;
-        try {
-            return DeliveryStatus.valueOf(deliveryStatus.trim().toUpperCase());
-        } catch (Exception e) {
-            return DeliveryStatus.ASSIGNING;
-        }
+        DeliveryStatus status = DeliveryStatus.from(deliveryStatus);
+        return status != null ? status : DeliveryStatus.ASSIGNING;
     }
 
     public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
@@ -249,6 +246,14 @@ public class Delivery {
         this.deliverySlot = deliverySlot;
     }
 
+    public DeliverySlot getDeliverySlotEnum() {
+        return DeliverySlot.from(deliverySlot);
+    }
+
+    public void setDeliverySlot(DeliverySlot deliverySlot) {
+        this.deliverySlot = deliverySlot != null ? deliverySlot.name() : null;
+    }
+
     public String getDeliveryNote() {
         return deliveryNote;
     }
@@ -274,12 +279,8 @@ public class Delivery {
     }
 
     public PaymentMethod getPaymentMethodEnum() {
-        if (paymentMethod == null) return PaymentMethod.COD;
-        try {
-            return PaymentMethod.valueOf(paymentMethod.trim().toUpperCase());
-        } catch (Exception e) {
-            return PaymentMethod.COD;
-        }
+        PaymentMethod method = PaymentMethod.from(paymentMethod);
+        return method != null ? method : PaymentMethod.COD;
     }
 
     public void setPaymentMethod(PaymentMethod paymentMethod) {
@@ -295,12 +296,8 @@ public class Delivery {
     }
 
     public PaymentStatus getPaymentStatusEnum() {
-        if (paymentStatus == null) return PaymentStatus.PENDING;
-        try {
-            return PaymentStatus.valueOf(paymentStatus.trim().toUpperCase());
-        } catch (Exception e) {
-            return PaymentStatus.PENDING;
-        }
+        PaymentStatus status = PaymentStatus.from(paymentStatus);
+        return status != null ? status : PaymentStatus.PENDING;
     }
 
     public void setPaymentStatus(PaymentStatus paymentStatus) {
@@ -323,7 +320,7 @@ public class Delivery {
     }
 
     public boolean isCOD() {
-        return "COD".equalsIgnoreCase(paymentMethod);
+        return getPaymentMethodEnum() == PaymentMethod.COD;
     }
 
     public String getFullDeliveryAddress() {

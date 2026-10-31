@@ -117,7 +117,7 @@
             <a href="<c:out value='${cartUrl}'/>" class="flex items-center gap-2.5 py-1.5 px-3.5 rounded-full border border-[#00652c]/30 bg-[#00652c]/5 hover:bg-[#00652c]/10 transition-colors" data-path="cart" title="Giỏ hàng">
                 <div class="relative flex items-center justify-center">
                     <span class="material-symbols-outlined text-[#00652c] text-[22px]">shopping_cart</span>
-                    <span class="absolute -top-2 -right-2.5 min-w-[18px] h-4 px-1 bg-red-600 text-white rounded-full font-bold text-[10px] flex items-center justify-center border border-white shadow-xs" id="nav-cart-badge">
+                    <span class="${cartSize gt 0 ? 'flex' : 'hidden'} absolute -top-2 -right-2.5 min-w-[18px] h-4 px-1 bg-red-600 text-white rounded-full font-bold text-[10px] items-center justify-center border border-white shadow-xs" id="nav-cart-badge">
                         <c:out value="${cartSize gt 99 ? '99+' : cartSize}"/>
                     </span>
                 </div>
@@ -233,26 +233,6 @@
         const badge = document.getElementById('header-noti-badge');
         if (badge) badge.classList.add('hidden');
         localStorage.setItem('gocvuon_noti_read', 'true');
-    }
-
-    function addHeaderNotification(title, message) {
-        const list = document.getElementById('header-noti-list');
-        const badge = document.getElementById('header-noti-badge');
-        if (badge) {
-            badge.classList.remove('hidden');
-            let count = parseInt(badge.textContent.trim()) || 0;
-            badge.textContent = count + 1;
-        }
-        if (list) {
-            const item = document.createElement('div');
-            item.className = 'flex items-start gap-3 p-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 text-xs text-gray-800 shadow-2xs';
-            item.innerHTML = '<span class="material-symbols-outlined text-emerald-600 text-[18px] shrink-0 mt-0.5">check_circle</span>'
-                + '<div class="flex-1">'
-                + '<p class="font-bold text-gray-900">' + title + '</p>'
-                + '<p class="text-gray-600 text-[11px] mt-0.5">' + message + '</p>'
-                + '</div>';
-            list.insertBefore(item, list.firstChild);
-        }
     }
 
     window.showToast = function(message, type = 'success') {

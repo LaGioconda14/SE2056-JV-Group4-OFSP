@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import enums.SubOrderStatus;
 import enums.DeliveryStatus;
+import enums.DeliverySlot;
 import enums.PaymentStatus;
 import enums.PaymentMethod;
 
@@ -57,12 +58,7 @@ public class SubOrder {
     }
 
     public DeliveryStatus getDeliveryStatusEnum() {
-        if (deliveryStatus == null) return null;
-        try {
-            return DeliveryStatus.valueOf(deliveryStatus.trim().toUpperCase());
-        } catch (Exception e) {
-            return null;
-        }
+        return DeliveryStatus.from(deliveryStatus);
     }
 
     public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
@@ -137,12 +133,8 @@ public class SubOrder {
     }
 
     public PaymentMethod getPaymentMethodEnum() {
-        if (paymentMethod == null) return PaymentMethod.COD;
-        try {
-            return PaymentMethod.valueOf(paymentMethod.trim().toUpperCase());
-        } catch (Exception e) {
-            return PaymentMethod.COD;
-        }
+        PaymentMethod method = PaymentMethod.from(paymentMethod);
+        return method != null ? method : PaymentMethod.COD;
     }
 
     public void setPaymentMethod(PaymentMethod method) {
@@ -158,12 +150,8 @@ public class SubOrder {
     }
 
     public PaymentStatus getPaymentStatusEnum() {
-        if (paymentStatus == null) return PaymentStatus.PENDING;
-        try {
-            return PaymentStatus.valueOf(paymentStatus.trim().toUpperCase());
-        } catch (Exception e) {
-            return PaymentStatus.PENDING;
-        }
+        PaymentStatus status = PaymentStatus.from(paymentStatus);
+        return status != null ? status : PaymentStatus.PENDING;
     }
 
     public void setPaymentStatus(PaymentStatus paymentStatus) {
@@ -232,6 +220,14 @@ public class SubOrder {
 
     public void setDeliverySlot(String deliverySlot) {
         this.deliverySlot = deliverySlot;
+    }
+
+    public DeliverySlot getDeliverySlotEnum() {
+        return DeliverySlot.from(deliverySlot);
+    }
+
+    public void setDeliverySlot(DeliverySlot deliverySlot) {
+        this.deliverySlot = deliverySlot != null ? deliverySlot.name() : null;
     }
 
     public BigDecimal getShopSubtotal() {

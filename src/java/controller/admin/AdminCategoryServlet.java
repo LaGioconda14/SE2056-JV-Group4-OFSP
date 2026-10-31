@@ -1,6 +1,5 @@
 package controller.admin;
 
-import com.google.gson.Gson;
 import dao.AdminManagementDAO;
 import java.io.IOException;
 import java.util.List;
@@ -16,31 +15,11 @@ import jakarta.servlet.http.HttpSession;
 public class AdminCategoryServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final AdminManagementDAO dao = new AdminManagementDAO();
-    private final Gson gson = new Gson();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String action = request.getParameter("action");
-
-        // AJAX: Lấy chi tiết danh mục để nạp vào Form Sửa
-        if ("categoryDetail".equalsIgnoreCase(action)) {
-            response.setContentType("application/json; charset=UTF-8");
-            String catIdStr = request.getParameter("categoryId");
-            if (catIdStr != null && !catIdStr.trim().isEmpty()) {
-                try {
-                    int catId = Integer.parseInt(catIdStr.trim());
-                    Map<String, Object> detail = dao.getCategoryDetail(catId);
-                    if (detail != null) {
-                        response.getWriter().write(gson.toJson(detail));
-                        return;
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("{\"error\": \"Không tìm thấy thông tin danh mục!\"}");
-            return;
-        }
+        
 
         // Handle flash session messages
         HttpSession session = request.getSession();
@@ -192,19 +171,12 @@ public class AdminCategoryServlet extends HttpServlet {
         if ("toggleCategoryStatus".equalsIgnoreCase(action)) {
             String catIdStr = request.getParameter("categoryId");
             String isActiveStr = request.getParameter("isActive");
-            boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With")) || "1".equals(request.getParameter("ajax"));
 
             if (catIdStr != null && !catIdStr.trim().isEmpty()) {
                 try {
                     int catId = Integer.parseInt(catIdStr.trim());
                     boolean targetActive = "1".equals(isActiveStr) || "true".equalsIgnoreCase(isActiveStr);
                     boolean ok = dao.toggleCategoryStatus(catId, targetActive);
-
-                    if (isAjax) {
-                        response.setContentType("application/json; charset=UTF-8");
-                        response.getWriter().write("{\"success\": " + ok + ", \"categoryId\": " + catId + ", \"isActive\": " + targetActive + "}");
-                        return;
-                    }
 
                     if (ok) {
                         session.setAttribute("successMessage", "Đã " + (targetActive ? "bật hiển thị" : "tắt hiển thị") + " danh mục #" + catId + "!");

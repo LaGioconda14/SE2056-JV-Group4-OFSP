@@ -1304,6 +1304,12 @@ body {
     color: #ffffff;
 }
 
+.stepper-step.returned .stepper-circle {
+    background: #d97706;
+    border-color: #d97706;
+    color: #ffffff;
+}
+
 .stepper-circle.pulse {
     animation: stepperPulse 1.8s infinite ease-in-out;
 }

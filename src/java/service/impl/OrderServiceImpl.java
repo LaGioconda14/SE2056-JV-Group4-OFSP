@@ -2,6 +2,9 @@ package service.impl;
 
 import dao.CouponDAO;
 import dao.OrderDAO;
+import enums.DeliverySlot;
+import enums.PaymentMethod;
+import enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Timestamp;
@@ -43,7 +46,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds) throws Exception {
+    public List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
         }
@@ -61,7 +64,25 @@ public class OrderServiceImpl implements IOrderService {
             throw new IllegalArgumentException("Có sản phẩm không thuộc giỏ hàng của bạn hoặc đã bị xóa!");
         }
 
-        for (CartItem item : selected) {
+        validateCheckoutItems(selected);
+        return selected;
+    }
+
+    @Override
+    public CartItem getBuyNowItemForCheckout(long variantId, int quantity) {
+        if (variantId <= 0 || quantity <= 0) {
+            throw new IllegalArgumentException("Sản phẩm mua ngay không hợp lệ!");
+        }
+        CartItem item = orderDAO.getBuyNowItem(variantId, quantity);
+        if (item == null) {
+            throw new IllegalArgumentException("Không tìm thấy sản phẩm mua ngay!");
+        }
+        validateCheckoutItems(List.of(item));
+        return item;
+    }
+
+    private void validateCheckoutItems(List<CartItem> items) {
+        for (CartItem item : items) {
             if (item.getVariant() == null || !item.getVariant().isActive()
                     || item.getVariant().getProduct() == null
                     || !item.getVariant().getProduct().isActive()) {
@@ -83,7 +104,6 @@ public class OrderServiceImpl implements IOrderService {
             }
         }
 
-        return selected;
     }
 
     @Override
@@ -269,7 +289,26 @@ public class OrderServiceImpl implements IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes,
             boolean saveAddress) throws Exception {
+        List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
+        Order order = prepareOrder(customerId, selectedItems, address, deliverySlot,
+                paymentMethod, couponCode, shopCouponCodes);
+        return orderDAO.createOrder(order, address, cartItemIds,
+                order.getPaymentMethod(), saveAddress);
+    }
 
+    @Override
+    public long placeBuyNowOrder(long customerId, long variantId, int quantity,
+            ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception {
+        CartItem item = getBuyNowItemForCheckout(variantId, quantity);
+        Order order = prepareOrder(customerId, List.of(item), address, deliverySlot,
+                paymentMethod, couponCode, shopCouponCodes);
+        return orderDAO.createBuyNowOrder(order, address, order.getPaymentMethod(), saveAddress);
+    }
+
+    private Order prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes) {
         if (address == null || address.getRecipientName() == null
                 || address.getRecipientName().trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập họ tên người nhận!");
@@ -291,19 +330,15 @@ public class OrderServiceImpl implements IOrderService {
                     "Vui lòng nhập đầy đủ phường/xã, quận/huyện và tỉnh/thành phố!");
         }
 
-        String normalizedSlot = deliverySlot == null ? ""
-                : deliverySlot.trim().toUpperCase(Locale.ROOT);
-        if (!("MORNING".equals(normalizedSlot)
-                || "AFTERNOON".equals(normalizedSlot)
-                || "EVENING".equals(normalizedSlot))) {
+        DeliverySlot selectedSlot = DeliverySlot.from(deliverySlot);
+        if (selectedSlot == null) {
             throw new IllegalArgumentException("Khung giờ giao hàng không hợp lệ!");
         }
 
-        String normalizedPayment = paymentMethod == null ? ""
-                : paymentMethod.trim().toUpperCase(Locale.ROOT);
-        if (!"COD".equals(normalizedPayment)) {
+        PaymentMethod selectedPayment = PaymentMethod.from(paymentMethod);
+        if (selectedPayment != PaymentMethod.COD && selectedPayment != PaymentMethod.CARD) {
             throw new IllegalArgumentException(
-                    "Hiện tại hệ thống chỉ hỗ trợ thanh toán khi nhận hàng (COD)!");
+                    "Phương thức thanh toán không hợp lệ!");
         }
 
         address.setRecipientName(address.getRecipientName().trim());
@@ -313,15 +348,14 @@ public class OrderServiceImpl implements IOrderService {
         address.setDistrict(address.getDistrict().trim());
         address.setCity(address.getCity().trim());
 
-        List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
         Order order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
         for (SubOrder sub : order.getSubOrders()) {
-            sub.setDeliverySlot(normalizedSlot);
+            sub.setDeliverySlot(selectedSlot);
         }
-        order.setPaymentStatus("PENDING");
+        order.setPaymentStatus(PaymentStatus.PENDING);
+        order.setPaymentMethod(selectedPayment);
 
-        return orderDAO.createOrder(order, address, cartItemIds,
-                normalizedPayment, saveAddress);
+        return order;
     }
 
     @Override

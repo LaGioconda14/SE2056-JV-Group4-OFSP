@@ -206,9 +206,9 @@
                                 </td>
                                 <td class="text-end text-nowrap">
                                     <!-- Nút 1: Xem hồ sơ & lịch sử -->
-                                    <button type="button" class="btn-action-view me-1" title="Kiểm tra hồ sơ & lịch sử giao dịch" onclick="openUserDetailModal('${u.userId}')">
+                                    <a href="${pageContext.request.contextPath}/admin/users?role=${selectedRole}&status=${selectedStatus}&search=${searchKeyword}&viewUserId=${u.userId}" class="btn-action-view me-1 text-decoration-none" title="Kiểm tra hồ sơ & lịch sử giao dịch">
                                         <i class="bi bi-eye"></i> Hồ sơ
-                                    </button>
+                                    </a>
 
                                     <!-- Nút 2: Khóa / Mở khóa tài khoản (Soft Delete) -->
                                     <c:choose>
@@ -252,254 +252,311 @@
 </div>
 
 <!-- ========================================================================= -->
-<!-- MODAL: KIỂM TRA HỒ SƠ & LỊCH SỬ GIAO DỊCH / MUA BÁN                       -->
+<!-- MODAL: KIỂM TRA HỒ SƠ & LỊCH SỬ GIAO DỊCH / MUA BÁN (SERVER RENDER)       -->
 <!-- ========================================================================= -->
 <div class="modal fade" id="viewUserDetailModal" tabindex="-1" aria-labelledby="viewUserDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content" style="border-radius: 14px; border: 1px solid #e2e8f0;">
-            <div class="modal-header d-flex align-items-center justify-content-between" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
-                <div class="d-flex align-items-center gap-3">
-                    <div id="modalUserAvatarWrap">
-                        <!-- Populated by JS -->
-                    </div>
-                    <div>
-                        <div class="d-flex align-items-center gap-2">
-                            <h5 class="modal-title fw-bold mb-0 text-dark" id="modalUserFullName" style="font-size: 1.05rem;">Nguyễn Văn An</h5>
-                            <span id="modalUserRoleBadge"></span>
-                            <span id="modalUserStatusBadge"></span>
-                        </div>
-                        <div class="text-muted small mt-1" id="modalUserSubMeta">ID: #1 • email@gocvuon.com</div>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <!-- Modal Nav Tabs -->
-            <div style="border-bottom: 1px solid #e2e8f0; background: #fafafa; padding: 0 1.25rem;">
-                <ul class="nav modal-detail-nav" role="tablist">
-                    <li class="nav-item">
-                        <button class="nav-link active" id="tab-profile-btn" data-bs-toggle="tab" data-bs-target="#tab-profile" type="button" role="tab">
-                            <i class="bi bi-person-lines-fill me-1"></i> Hồ sơ cá nhân & Địa chỉ
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" id="tab-orders-btn" data-bs-toggle="tab" data-bs-target="#tab-orders" type="button" role="tab">
-                            <i class="bi bi-receipt me-1"></i> Lịch sử giao dịch & Mua bán
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" id="tab-audit-btn" data-bs-toggle="tab" data-bs-target="#tab-audit" type="button" role="tab">
-                            <i class="bi bi-shield-check me-1"></i> Nhật ký Quản trị (Audit Log)
-                        </button>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="modal-body" style="padding: 1.25rem 1.4rem; min-height: 280px;">
-                <!-- Loading Spinner -->
-                <div id="modalDetailLoading" class="text-center py-5">
-                    <div class="spinner-border text-success" role="status">
-                        <span class="visually-hidden">Đang tải...</span>
-                    </div>
-                    <div class="text-muted small mt-2">Đang tải hồ sơ và trích xuất lịch sử giao dịch...</div>
-                </div>
-
-                <!-- Detail Content Container -->
-                <div id="modalDetailContent" style="display: none;">
-                    <div class="tab-content">
-                        <!-- TAB 1: THÔNG TIN CÁ NHÂN & ĐỊA CHỈ -->
-                        <div class="tab-pane fade show active" id="tab-profile" role="tabpanel">
-                            <!-- Alert lý do quản trị gần nhất (nếu có) -->
-                            <div id="modalDecisionAlert" style="display: none;" class="alert alert-warning d-flex align-items-start gap-2 mb-3" style="border-radius: 8px;">
-                                <i class="bi bi-exclamation-triangle-fill text-warning fs-5 flex-shrink-0"></i>
-                                <div class="small">
-                                    <strong>Ghi chú quản trị viên (Decision Reason):</strong>
-                                    <div id="modalDecisionReasonText" class="mt-1"></div>
-                                    <div id="modalDecisionDateText" class="text-muted mt-1" style="font-size: 0.72rem;"></div>
-                                </div>
+            <c:choose>
+                <c:when test="${not empty userDetail}">
+                    <c:set var="u" value="${userDetail.user}" />
+                    <c:set var="s" value="${userDetail.shop}" />
+                    <c:set var="stats" value="${userDetail.stats}" />
+                    <div class="modal-header d-flex align-items-center justify-content-between" style="border-bottom: 1px solid #f1f5f9; padding: 1.15rem 1.4rem;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div id="modalUserAvatarWrap">
+                                <c:choose>
+                                    <c:when test="${not empty u.avatarUrl}">
+                                        <img src="${u.avatarUrl}" class="user-avatar-circle" style="width: 44px; height: 44px;">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="user-avatar-placeholder" style="width: 44px; height: 44px; font-size: 1.1rem;">
+                                            ${fn:toUpperCase(fn:substring(not empty u.fullName ? u.fullName : 'U', 0, 1))}
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <div class="detail-card-stat h-100">
-                                        <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-person-vcard text-success me-1"></i> Thông Tin Cơ Bản</h6>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Mã tài khoản:</span>
-                                            <span class="detail-info-value fw-bold text-success" id="infoUserId">#1</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Họ và tên:</span>
-                                            <span class="detail-info-value" id="infoFullName">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Email:</span>
-                                            <span class="detail-info-value" id="infoEmail">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Số điện thoại:</span>
-                                            <span class="detail-info-value" id="infoPhone">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Giới tính:</span>
-                                            <span class="detail-info-value" id="infoGender">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Ngày sinh:</span>
-                                            <span class="detail-info-value" id="infoBirthDate">-</span>
-                                        </div>
-                                    </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <h5 class="modal-title fw-bold mb-0 text-dark" id="modalUserFullName" style="font-size: 1.05rem;">${u.fullName}</h5>
+                                    <span id="modalUserRoleBadge">
+                                        <c:choose>
+                                            <c:when test="${u.roleName == 'ADMIN'}"><span class="role-pill-super">QUẢN TRỊ</span></c:when>
+                                            <c:when test="${u.roleName == 'STAFF'}"><span class="role-pill-mod">NHÂN VIÊN</span></c:when>
+                                            <c:when test="${u.roleName == 'SHOP_OWNER'}"><span class="role-pill-shopmgr">CHỦ SHOP</span></c:when>
+                                            <c:when test="${u.roleName == 'DRIVER'}"><span class="role-pill-cskh">TÀI XẾ</span></c:when>
+                                            <c:otherwise><span class="role-pill-accountant">${u.roleName}</span></c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                    <span id="modalUserStatusBadge">
+                                        <c:choose>
+                                            <c:when test="${u.status == 'ACTIVE'}">
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i> Hoạt động</span>
+                                            </c:when>
+                                            <c:when test="${u.status == 'BLOCKED'}">
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1"><i class="bi bi-slash-circle-fill me-1"></i> Bị khóa (BLOCKED)</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge bg-secondary-subtle text-secondary border px-2 py-1"><i class="bi bi-clock-history me-1"></i> ${u.status}</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </span>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="detail-card-stat h-100">
-                                        <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-shield-shaded text-primary me-1"></i> Phân Cấp & Tài Khoản</h6>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Vai trò:</span>
-                                            <span class="detail-info-value fw-bold" id="infoRoleTitle">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Hạng thành viên:</span>
-                                            <span class="detail-info-value" id="infoMembershipTier">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Trạng thái:</span>
-                                            <span class="detail-info-value" id="infoStatus">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Ngày đăng ký:</span>
-                                            <span class="detail-info-value" id="infoCreatedAt">-</span>
-                                        </div>
-                                        <div class="detail-info-row">
-                                            <span class="detail-info-label">Cập nhật cuối:</span>
-                                            <span class="detail-info-value" id="infoUpdatedAt">-</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Shop Info (nếu là chủ gian hàng) -->
-                            <div id="modalShopInfoSection" class="p-3 mb-3 border rounded-3" style="background: #f0fdf4; border-color: #dcfce7 !important; display: none;">
-                                <h6 class="fw-bold text-success mb-2" style="font-size: 0.85rem;"><i class="bi bi-shop me-1"></i> Thông Tin Gian Hàng / Nhà Vườn Sở Hữu</h6>
-                                <div class="row g-2 small">
-                                    <div class="col-md-4"><strong>Tên gian hàng:</strong> <span id="shopInfoName">-</span></div>
-                                    <div class="col-md-4"><strong>Loại hình:</strong> <span id="shopInfoType">-</span></div>
-                                    <div class="col-md-4"><strong>Tỉnh / Thành:</strong> <span id="shopInfoProvince">-</span></div>
-                                    <div class="col-md-4"><strong>Chứng nhận:</strong> <span class="badge bg-success-subtle text-success" id="shopInfoCert">-</span></div>
-                                    <div class="col-md-4"><strong>Hoa hồng sàn:</strong> <span id="shopInfoComm">-</span></div>
-                                    <div class="col-md-4"><strong>Tổng doanh thu:</strong> <strong class="text-success" id="shopInfoSales">-</strong></div>
-                                </div>
-                            </div>
-
-                            <!-- Danh sách sổ địa chỉ nhận hàng -->
-                            <div class="mt-3">
-                                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Sổ Địa Chỉ Giao Hàng</h6>
-                                <div id="modalAddressList">
-                                    <!-- Populated by JS -->
-                                </div>
+                                <div class="text-muted small mt-1" id="modalUserSubMeta">ID: #${u.userId} • ${u.email} • ${u.phone}</div>
                             </div>
                         </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
 
-                        <!-- TAB 2: LỊCH SỬ GIAO DỊCH & MUA BÁN -->
-                        <div class="tab-pane fade" id="tab-orders" role="tabpanel">
-                            <!-- 4 KPI thống kê giao dịch -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-3">
-                                    <div class="p-2 border rounded-2 text-center bg-light">
-                                        <div class="text-muted" style="font-size: 0.7rem;">TỔNG GIAO DỊCH</div>
-                                        <div class="fw-bold text-success fs-6" id="statTotalSpent">0 ₫</div>
+                    <!-- Modal Nav Tabs -->
+                    <div style="border-bottom: 1px solid #e2e8f0; background: #fafafa; padding: 0 1.25rem;">
+                        <ul class="nav modal-detail-nav" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="tab-profile-btn" data-bs-toggle="tab" data-bs-target="#tab-profile" type="button" role="tab">
+                                    <i class="bi bi-person-lines-fill me-1"></i> Hồ sơ cá nhân & Địa chỉ
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="tab-orders-btn" data-bs-toggle="tab" data-bs-target="#tab-orders" type="button" role="tab">
+                                    <i class="bi bi-receipt me-1"></i> Lịch sử giao dịch & Mua bán
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="tab-audit-btn" data-bs-toggle="tab" data-bs-target="#tab-audit" type="button" role="tab">
+                                    <i class="bi bi-shield-check me-1"></i> Nhật ký Quản trị (Audit Log)
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="modal-body" style="padding: 1.25rem 1.4rem; min-height: 280px;">
+                        <div class="tab-content">
+                            <!-- TAB 1: THÔNG TIN CÁ NHÂN & ĐỊA CHỈ -->
+                            <div class="tab-pane fade show active" id="tab-profile" role="tabpanel">
+                                <c:if test="${not empty u.decisionReason}">
+                                    <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" style="border-radius: 8px;">
+                                        <i class="bi bi-exclamation-triangle-fill text-warning fs-5 flex-shrink-0"></i>
+                                        <div class="small">
+                                            <strong>Ghi chú quản trị viên (Decision Reason):</strong>
+                                            <div class="mt-1">${u.decisionReason}</div>
+                                            <div class="text-muted mt-1" style="font-size: 0.72rem;">Ghi nhận lúc: ${u.decisionAtFormatted}</div>
+                                        </div>
+                                    </div>
+                                </c:if>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <div class="detail-card-stat h-100">
+                                            <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-person-vcard text-success me-1"></i> Thông Tin Cơ Bản</h6>
+                                            <div class="detail-info-row"><span class="detail-info-label">Mã tài khoản:</span><span class="detail-info-value fw-bold text-success">#${u.userId}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Họ và tên:</span><span class="detail-info-value">${u.fullName}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Email:</span><span class="detail-info-value">${u.email}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Số điện thoại:</span><span class="detail-info-value">${u.phone}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Giới tính:</span><span class="detail-info-value">${u.gender}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Ngày sinh:</span><span class="detail-info-value">${u.birthDate}</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="detail-card-stat h-100">
+                                            <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-shield-shaded text-primary me-1"></i> Phân Cấp & Tài Khoản</h6>
+                                            <div class="detail-info-row"><span class="detail-info-label">Vai trò:</span><span class="detail-info-value fw-bold">${u.roleTitle}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Hạng thành viên:</span><span class="detail-info-value">${u.membershipTier}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Trạng thái:</span><span class="detail-info-value">${u.status}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Ngày đăng ký:</span><span class="detail-info-value">${u.createdAtFormatted}</span></div>
+                                            <div class="detail-info-row"><span class="detail-info-label">Cập nhật cuối:</span><span class="detail-info-value">${u.updatedAtFormatted}</span></div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-3">
-                                    <div class="p-2 border rounded-2 text-center bg-light">
-                                        <div class="text-muted" style="font-size: 0.7rem;">TỔNG SỐ ĐƠN</div>
-                                        <div class="fw-bold text-dark fs-6" id="statTotalOrders">0</div>
+
+                                <c:if test="${not empty s}">
+                                    <div class="p-3 mb-3 border rounded-3" style="background: #f0fdf4; border-color: #dcfce7 !important;">
+                                        <h6 class="fw-bold text-success mb-2" style="font-size: 0.85rem;"><i class="bi bi-shop me-1"></i> Thông Tin Gian Hàng / Nhà Vườn Sở Hữu</h6>
+                                        <div class="row g-2 small">
+                                            <div class="col-md-4"><strong>Tên gian hàng:</strong> <span>${s.shopName}</span></div>
+                                            <div class="col-md-4"><strong>Loại hình:</strong> <span>${s.businessType}</span></div>
+                                            <div class="col-md-4"><strong>Tỉnh / Thành:</strong> <span>${s.province}</span></div>
+                                            <div class="col-md-4"><strong>Chứng nhận:</strong> <span class="badge bg-success-subtle text-success">${s.certificationName}</span></div>
+                                            <div class="col-md-4"><strong>Hoa hồng sàn:</strong> <span>${s.commissionRate}</span></div>
+                                            <div class="col-md-4"><strong>Tổng doanh thu:</strong> <strong class="text-success">${s.totalSalesFormatted}</strong></div>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="p-2 border rounded-2 text-center bg-light">
-                                        <div class="text-muted" style="font-size: 0.7rem;">ĐƠN HOÀN TẤT</div>
-                                        <div class="fw-bold text-primary fs-6" id="statCompletedOrders">0</div>
-                                    </div>
-                                </div>
-                                <div class="col-3">
-                                    <div class="p-2 border rounded-2 text-center bg-light">
-                                        <div class="text-muted" style="font-size: 0.7rem;">ĐANG XỬ LÝ / HỦY</div>
-                                        <div class="fw-bold text-danger fs-6" id="statOtherOrders">0</div>
-                                    </div>
+                                </c:if>
+
+                                <div class="mt-3">
+                                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-geo-alt-fill text-danger me-1"></i> Sổ Địa Chỉ Giao Hàng</h6>
+                                    <c:choose>
+                                        <c:when test="${empty userDetail.addresses}">
+                                            <div class="text-muted small py-2 fst-italic">Tài khoản này chưa lưu địa chỉ nhận hàng nào.</div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:forEach items="${userDetail.addresses}" var="a">
+                                                <div class="address-box ${a.default ? 'is-default' : ''}">
+                                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                                        <strong><i class="bi bi-person-fill text-muted me-1"></i>${fn:escapeXml(a.recipientName)} • ${fn:escapeXml(a.recipientPhone)}</strong>
+                                                        <c:if test="${a.default}">
+                                                            <span class="badge bg-success" style="font-size: 0.65rem;"><i class="bi bi-check2"></i> Mặc định</span>
+                                                        </c:if>
+                                                    </div>
+                                                    <div class="text-muted small"><i class="bi bi-geo-alt me-1"></i>${fn:escapeXml(a.fullAddress)}</div>
+                                                </div>
+                                            </c:forEach>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </div>
 
-                            <!-- Bảng đơn hàng đã mua -->
-                            <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-bag-check-fill text-primary me-1"></i> Danh Sách Đơn Hàng Đã Mua (Buyer Orders)</h6>
-                            <div class="table-responsive border rounded-3 mb-3">
-                                <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.78rem;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>MÃ ĐƠN</th>
-                                            <th>THỜI GIAN ĐẶT</th>
-                                            <th>SỐ MÓN</th>
-                                            <th>TỔNG THANH TOÁN</th>
-                                            <th>PT THANH TOÁN</th>
-                                            <th>TRẠNG THÁI</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="modalOrdersTableBody">
-                                        <!-- Populated by JS -->
-                                    </tbody>
-                                </table>
+                            <!-- TAB 2: LỊCH SỬ GIAO DỊCH & MUA BÁN -->
+                            <div class="tab-pane fade" id="tab-orders" role="tabpanel">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-3">
+                                        <div class="p-2 border rounded-2 text-center bg-light">
+                                            <div class="text-muted" style="font-size: 0.7rem;">TỔNG GIAO DỊCH</div>
+                                            <div class="fw-bold text-success fs-6">${not empty stats.totalSpentFormatted ? stats.totalSpentFormatted : '0 ₫'}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="p-2 border rounded-2 text-center bg-light">
+                                            <div class="text-muted" style="font-size: 0.7rem;">TỔNG SỐ ĐƠN</div>
+                                            <div class="fw-bold text-dark fs-6">${not empty stats.totalOrdersCount ? stats.totalOrdersCount : 0}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="p-2 border rounded-2 text-center bg-light">
+                                            <div class="text-muted" style="font-size: 0.7rem;">ĐƠN HOÀN TẤT</div>
+                                            <div class="fw-bold text-primary fs-6">${not empty stats.completedOrdersCount ? stats.completedOrdersCount : 0}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="p-2 border rounded-2 text-center bg-light">
+                                            <div class="text-muted" style="font-size: 0.7rem;">ĐANG XỬ LÝ / HỦY</div>
+                                            <div class="fw-bold text-danger fs-6">${not empty stats.otherOrdersCount ? stats.otherOrdersCount : 0}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-bag-check-fill text-primary me-1"></i> Danh Sách Đơn Hàng Đã Mua (Buyer Orders)</h6>
+                                <div class="table-responsive border rounded-3 mb-3">
+                                    <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.78rem;">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>MÃ ĐƠN</th>
+                                                <th>THỜI GIAN ĐẶT</th>
+                                                <th>SỐ MÓN</th>
+                                                <th>TỔNG THANH TOÁN</th>
+                                                <th>PT THANH TOÁN</th>
+                                                <th>TRẠNG THÁI</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach items="${userDetail.orders}" var="ord">
+                                                <tr>
+                                                    <td><strong>#${ord.orderCode}</strong></td>
+                                                    <td>${ord.createdAtFormatted}</td>
+                                                    <td>${ord.itemCount} món</td>
+                                                    <td class="fw-bold text-success">${ord.finalAmountFormatted}</td>
+                                                    <td>${ord.paymentMethod}</td>
+                                                    <td><span class="badge bg-light text-dark border">${ord.status}</span></td>
+                                                </tr>
+                                            </c:forEach>
+                                            <c:if test="${empty userDetail.orders}">
+                                                <tr><td colspan="6" class="text-center text-muted py-3">Chưa có đơn hàng nào được đặt.</td></tr>
+                                            </c:if>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <c:if test="${not empty userDetail.vendorOrders}">
+                                    <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-shop text-success me-1"></i> Danh Sách Đơn Bán Của Gian Hàng (Vendor Orders)</h6>
+                                    <div class="table-responsive border rounded-3">
+                                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.78rem;">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>MÃ ĐƠN CON</th>
+                                                    <th>NGÀY ĐẶT</th>
+                                                    <th>NGƯỜI MUA</th>
+                                                    <th>GIÁ TRỊ SHOP</th>
+                                                    <th>HOA HỒNG SÀN</th>
+                                                    <th>TRẠNG THÁI</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <c:forEach items="${userDetail.vendorOrders}" var="vo">
+                                                    <tr>
+                                                        <td><strong>#${vo.subOrderCode}</strong></td>
+                                                        <td>${vo.createdAtFormatted}</td>
+                                                        <td>${vo.customerName}</td>
+                                                        <td class="fw-bold text-success">${vo.shopTotalFormatted}</td>
+                                                        <td>${vo.commissionFormatted}</td>
+                                                        <td><span class="badge bg-light text-dark border">${vo.status}</span></td>
+                                                    </tr>
+                                                </c:forEach>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </c:if>
                             </div>
 
-                            <!-- Bảng đơn hàng bán của shop (nếu có) -->
-                            <div id="modalVendorOrdersSection" style="display: none;">
-                                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-shop text-success me-1"></i> Danh Sách Đơn Bán Của Gian Hàng (Vendor Orders)</h6>
+                            <!-- TAB 3: NHẬT KÝ QUẢN TRỊ (AUDIT LOG) -->
+                            <div class="tab-pane fade" id="tab-audit" role="tabpanel">
+                                <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-clock-history text-secondary me-1"></i> Lịch Sử Quyết Định Khóa / Mở Khóa Tài Khoản</h6>
                                 <div class="table-responsive border rounded-3">
                                     <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.78rem;">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>MÃ ĐƠN CON</th>
-                                                <th>NGÀY ĐẶT</th>
-                                                <th>NGƯỜI MUA</th>
-                                                <th>GIÁ TRỊ SHOP</th>
-                                                <th>HOA HỒNG SÀN</th>
+                                                <th>THỜI GIAN</th>
                                                 <th>TRẠNG THÁI</th>
+                                                <th>NGƯỜI QUYẾT ĐỊNH</th>
+                                                <th>LÝ DO QUẢN TRỊ (DECISION REASON)</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="modalVendorOrdersTableBody">
-                                            <!-- Populated by JS -->
+                                        <tbody>
+                                            <c:forEach items="${userDetail.statusLogs}" var="log">
+                                                <tr>
+                                                    <td class="text-nowrap">${log.createdAtFormatted}</td>
+                                                    <td>
+                                                        <c:choose>
+                                                            <c:when test="${log.newStatus == 'BLOCKED'}"><span class="badge bg-danger">BLOCKED</span></c:when>
+                                                            <c:when test="${log.newStatus == 'ACTIVE'}"><span class="badge bg-success">ACTIVE</span></c:when>
+                                                            <c:otherwise><span class="badge bg-secondary">${log.newStatus}</span></c:otherwise>
+                                                        </c:choose>
+                                                    </td>
+                                                    <td>${log.changedBy}</td>
+                                                    <td>${log.decisionReason}</td>
+                                                </tr>
+                                            </c:forEach>
+                                            <c:if test="${empty userDetail.statusLogs}">
+                                                <tr><td colspan="4" class="text-center text-muted py-3">Chưa có nhật ký thay đổi trạng thái nào.</td></tr>
+                                            </c:if>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- TAB 3: NHẬT KÝ QUẢN TRỊ (AUDIT LOG) -->
-                        <div class="tab-pane fade" id="tab-audit" role="tabpanel">
-                            <h6 class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-clock-history text-secondary me-1"></i> Lịch Sử Quyết Định Khóa / Mở Khóa Tài Khoản</h6>
-                            <div class="table-responsive border rounded-3">
-                                <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.78rem;">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>THỜI GIAN</th>
-                                            <th>TRẠNG THÁI</th>
-                                            <th>NGƯỜI QUYẾT ĐỊNH</th>
-                                            <th>LÝ DO QUẢN TRỊ (DECISION REASON)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="modalAuditLogsTableBody">
-                                        <!-- Populated by JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
                     </div>
-                </div>
-            </div>
-
+                </c:when>
+                <c:otherwise>
+                    <div class="modal-body text-center py-5">
+                        <div class="text-muted">Vui lòng chọn một người dùng từ danh sách để xem hồ sơ.</div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
             <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 0.85rem 1.4rem;">
                 <button type="button" class="btn btn-light btn-sm fw-bold px-3" data-bs-dismiss="modal" style="border-radius: 8px;">Đóng</button>
             </div>
         </div>
     </div>
 </div>
+
+<c:if test="${not empty userDetail}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var modalEl = document.getElementById('viewUserDetailModal');
+            if (modalEl && window.bootstrap) {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            }
+        });
+    </script>
+</c:if>
 
 <!-- ========================================================================= -->
 <!-- MODAL: KHÓA / MỞ KHÓA TÀI KHOẢN (SOFT DELETE / RECOVERY)                  -->

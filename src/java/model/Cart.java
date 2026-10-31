@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package model;
 
 import java.math.BigDecimal;
@@ -10,10 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- *
- * @author Bac
- */
 public class Cart {
     private long cartId;
     private long customerId;
@@ -48,7 +40,7 @@ public class Cart {
     }
 
     public void setItems(List<CartItem> items) {
-        this.items = items;
+        this.items = items != null ? items : new ArrayList<>();
     }
 
     public BigDecimal getTotalAmount() {
@@ -72,7 +64,7 @@ public class Cart {
     }
 
     public int getVariantCount() {
-        return items != null ? items.size() : 0;
+        return items.size();
     }
 
     public Map<Long, List<CartItem>> getItemsByShop() {
@@ -85,6 +77,6 @@ public class Cart {
     }
 
     public boolean isEmpty() {
-        return items == null || items.isEmpty();
+        return items.isEmpty();
     }
 }

@@ -317,8 +317,7 @@ public class DriverProfile implements Serializable {
     }
 
     public ApprovalStatus getApprovalStatusEnum() {
-        if (approvalStatus == null) return null;
-        try { return ApprovalStatus.valueOf(approvalStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
+        return ApprovalStatus.from(approvalStatus);
     }
 
     public void setApprovalStatus(ApprovalStatus status) {
@@ -334,8 +333,7 @@ public class DriverProfile implements Serializable {
     }
 
     public AvailabilityStatus getAvailabilityStatusEnum() {
-        if (availabilityStatus == null) return null;
-        try { return AvailabilityStatus.valueOf(availabilityStatus.trim().toUpperCase()); } catch (Exception e) { return null; }
+        return AvailabilityStatus.from(availabilityStatus);
     }
 
     public void setAvailabilityStatus(AvailabilityStatus status) {

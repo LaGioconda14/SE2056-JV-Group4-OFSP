@@ -1,41 +1,42 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package model;
 
+import enums.CartItemAvailability;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author Bac
- */
 public class CartItem {
-    private long cartItemID;
+    private long cartItemId;
     private ProductVariant variant;
     private int quantity;
     private int previousQuantity;
     private boolean quantityAdjusted;
-    private String availabilityStatus = "AVAILABLE";
+    private CartItemAvailability availability = CartItemAvailability.AVAILABLE;
     private List<ProductVariant> alternativeVariants = new ArrayList<>();
 
     public CartItem() {
     }
 
-    public CartItem(long cartItemID, ProductVariant variant, int quantity) {
-        this.cartItemID = cartItemID;
+    public CartItem(long cartItemId, ProductVariant variant, int quantity) {
+        this.cartItemId = cartItemId;
         this.variant = variant;
         this.quantity = quantity;
     }
 
     public long getCartItemID() {
-        return cartItemID;
+        return cartItemId;
     }
 
-    public void setCartItemID(long cartItemID) {
-        this.cartItemID = cartItemID;
+    public void setCartItemID(long cartItemId) {
+        this.cartItemId = cartItemId;
+    }
+
+    public long getCartItemId() {
+        return cartItemId;
+    }
+
+    public void setCartItemId(long cartItemId) {
+        this.cartItemId = cartItemId;
     }
 
     public ProductVariant getVariant() {
@@ -71,11 +72,19 @@ public class CartItem {
     }
 
     public String getAvailabilityStatus() {
-        return availabilityStatus;
+        return availability.name();
     }
 
     public void setAvailabilityStatus(String availabilityStatus) {
-        this.availabilityStatus = availabilityStatus;
+        this.availability = CartItemAvailability.from(availabilityStatus);
+    }
+
+    public CartItemAvailability getAvailability() {
+        return availability;
+    }
+
+    public void setAvailability(CartItemAvailability availability) {
+        this.availability = availability != null ? availability : CartItemAvailability.NOT_FOUND;
     }
 
     public List<ProductVariant> getAlternativeVariants() {
@@ -88,7 +97,7 @@ public class CartItem {
     }
 
     public boolean isPurchasable() {
-        return "AVAILABLE".equals(availabilityStatus);
+        return availability == CartItemAvailability.AVAILABLE;
     }
 
     public BigDecimal getSubtotal() {
