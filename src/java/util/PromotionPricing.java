@@ -145,8 +145,6 @@ public final class PromotionPricing {
         c.setPromotionType(src.getPromotionType());
         c.setDiscountValue(src.getDiscountValue());
         c.setMaxDiscountAmount(src.getMaxDiscountAmount());
-        c.setBuyQuantity(src.getBuyQuantity());
-        c.setGetQuantity(src.getGetQuantity());
         c.setMinQuantity(src.getMinQuantity());
         if (remaining != Integer.MAX_VALUE) {
             c.setQuota(remaining);

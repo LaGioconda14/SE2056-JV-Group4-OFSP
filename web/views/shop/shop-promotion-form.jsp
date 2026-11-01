@@ -66,7 +66,6 @@
                         </c:if>
                         <div class="mk-seg mk-seg-wrap self-start">
                             <label><input type="radio" name="promotionType" value="FIXED_PRICE" ${promotion.promotionType == 'FIXED_PRICE' or promotion.legacyType ? 'checked' : ''}><span><i class="fa-solid fa-tag"></i> Đồng giá</span></label>
-                            <label><input type="radio" name="promotionType" value="BUY_X_GET_Y" ${promotion.promotionType == 'BUY_X_GET_Y' ? 'checked' : ''}><span><i class="fa-solid fa-gift"></i> Mua X tặng Y</span></label>
                             <label><input type="radio" name="promotionType" value="VOLUME" ${promotion.promotionType == 'VOLUME' ? 'checked' : ''}><span><i class="fa-solid fa-layer-group"></i> Mua nhiều giảm sâu</span></label>
                             <label><input type="radio" name="promotionType" value="TIME_WINDOW" ${promotion.promotionType == 'TIME_WINDOW' ? 'checked' : ''}><span><i class="fa-solid fa-clock"></i> Giảm tiền theo giờ / ngày</span></label>
                         </div>
@@ -88,21 +87,6 @@
                                            value="<c:if test='${not empty promotion.maxDiscountAmount}'><fmt:formatNumber value='${promotion.maxDiscountAmount}' groupingUsed='false' maxFractionDigits='0'/></c:if>">
                                     <span>₫</span>
                                 </div>
-                            </div>
-                            <div data-types="BUY_X_GET_Y">
-                                <label class="mk-label">Khách mua (X) <span class="text-red-500">*</span></label>
-                                <div class="mk-suffix">
-                                    <input type="text" id="buyQuantity" name="buyQuantity" class="mk-input" inputmode="numeric" placeholder="VD: 2" value="${promotion.buyQuantity}">
-                                    <span>sản phẩm</span>
-                                </div>
-                            </div>
-                            <div data-types="BUY_X_GET_Y">
-                                <label class="mk-label">Được tặng thêm (Y) <span class="text-red-500">*</span></label>
-                                <div class="mk-suffix">
-                                    <input type="text" id="getQuantity" name="getQuantity" class="mk-input" inputmode="numeric" placeholder="VD: 1" value="${promotion.getQuantity}">
-                                    <span>sản phẩm</span>
-                                </div>
-                                <p class="mk-hint">Tặng cùng sản phẩm khách đã chọn; khách phải thêm đủ (X + Y) vào giỏ, hệ thống tự trừ phần được tặng.</p>
                             </div>
                             <div data-types="VOLUME">
                                 <label class="mk-label">Mua từ (số lượng tối thiểu) <span class="text-red-500">*</span></label>
@@ -209,7 +193,6 @@
             var groups = Array.prototype.slice.call(document.querySelectorAll('[data-types]'));
             var HINTS = {
                 FIXED_PRICE: 'Bán đồng giá: giá mới phải thấp hơn giá bán hiện tại của sản phẩm.',
-                BUY_X_GET_Y: 'Mua đủ X sản phẩm được tặng thêm Y sản phẩm cùng loại. Tự động tính trong giỏ hàng.',
                 VOLUME: 'Mua từ N sản phẩm trở lên thì mọi sản phẩm đều được giảm theo phần trăm.',
                 TIME_WINDOW: 'Giảm một số tiền cho mỗi sản phẩm, chỉ vào những ngày trong tuần / khung giờ bạn chọn ở mục "Lịch áp dụng" bên dưới. Ngoài khung giờ đó giá về bình thường.'
             };
@@ -244,10 +227,6 @@
                 var v = num('discountValue', isMoney), max = num('maxDiscountAmount', true);
                 if (t === 'FIXED_PRICE') {
                     html = 'sản phẩm giá <b>' + f(base) + '</b> → đồng giá <b class="text-emerald-700">' + f(Math.min(v, base)) + '</b>';
-                } else if (t === 'BUY_X_GET_Y') {
-                    var x = num('buyQuantity', true), y = num('getQuantity', true);
-                    if (x > 0 && y > 0) html = 'khách mua <b>' + (x + y) + '</b> sản phẩm giá ' + f(base) + ' → chỉ trả <b class="text-emerald-700">' + f(base * x) + '</b> (tặng ' + y + ' sản phẩm)';
-                    else html = 'nhập X và Y để xem ví dụ.';
                 } else if (t === 'VOLUME') {
                     var m = num('minQuantity', true);
                     var d3 = Math.round(base * v / 100); if (max > 0 && d3 > max) d3 = max; d3 = Math.max(0, Math.min(d3, base));
@@ -269,7 +248,7 @@
                     g.style.display = show ? '' : 'none';
                     Array.prototype.forEach.call(g.querySelectorAll('input'), function (i) { i.disabled = !show; });
                 });
-                ['discountValue', 'buyQuantity', 'getQuantity', 'minQuantity'].forEach(function (id) {
+                ['discountValue', 'minQuantity'].forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el) el.required = !el.disabled;
                 });
@@ -286,7 +265,7 @@
                 render();
             }
 
-            ['discountValue', 'maxDiscountAmount', 'buyQuantity', 'getQuantity', 'minQuantity', 'dailyStartTime', 'dailyEndTime'].forEach(function (id) {
+            ['discountValue', 'maxDiscountAmount', 'minQuantity', 'dailyStartTime', 'dailyEndTime'].forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el) { el.addEventListener('input', render); el.addEventListener('change', render); }
             });

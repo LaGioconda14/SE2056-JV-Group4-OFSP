@@ -13,7 +13,7 @@ import model.Promotion;
 
 /**
  * Quản lý Promotion (khuyến mãi tự động theo sản phẩm) của shop (FE-08).
- * Các loại: FIXED_PRICE (đồng giá), BUY_X_GET_Y (mua X tặng Y), VOLUME (mua nhiều giảm sâu),
+ * Các loại: FIXED_PRICE (đồng giá), VOLUME (mua nhiều giảm sâu),
  * TIME_WINDOW (giảm tiền theo khung giờ / ngày cố định) + suất ưu đãi (quota) và lịch áp dụng tuỳ chọn.
  * (PERCENTAGE / FIXED_AMOUNT là loại cũ trùng voucher nên không cho tạo mới.)
  *   GET  /shop/promotions                    danh sách + lọc tab + tìm kiếm
@@ -160,7 +160,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         p.setName(trimToNull(req.getParameter("name")));
         p.setDescription(trimToNull(req.getParameter("description")));
         String type = req.getParameter("promotionType");
-        if (type == null || !type.matches("FIXED_PRICE|BUY_X_GET_Y|VOLUME|TIME_WINDOW")) {
+        if (type == null || !type.matches("FIXED_PRICE|VOLUME|TIME_WINDOW")) {
             type = Promotion.FIXED_PRICE;
         }
         p.setPromotionType(type);
@@ -170,12 +170,6 @@ public class ShopPromotionServlet extends BaseShopServlet {
             p.setMaxDiscountAmount(parseMoney(req.getParameter("maxDiscountAmount")));
         } else if (p.isTimeWindow() || p.isFixedPrice()) {
             p.setDiscountValue(parseMoney(req.getParameter("discountValue")));
-        } else { // BUY_X_GET_Y: không có mức giảm tiền, giá trị = 0 để thoả NOT NULL
-            p.setDiscountValue(BigDecimal.ZERO);
-        }
-        if (p.isBuyXGetY()) {
-            p.setBuyQuantity(parseInt(req.getParameter("buyQuantity")));
-            p.setGetQuantity(parseInt(req.getParameter("getQuantity")));
         }
         if (p.isVolume()) {
             p.setMinQuantity(parseInt(req.getParameter("minQuantity")));
@@ -273,16 +267,6 @@ public class ShopPromotionServlet extends BaseShopServlet {
         String scheduleError = validateSchedule(p);
         if (scheduleError != null) {
             return scheduleError;
-        }
-        if (p.isBuyXGetY()) {
-            Integer buy = p.getBuyQuantity(), get = p.getGetQuantity();
-            if (buy == null || buy < 1 || buy > 20) {
-                return "Số lượng cần mua (X) phải từ 1 đến 20.";
-            }
-            if (get == null || get < 1 || get > 20) {
-                return "Số lượng được tặng (Y) phải từ 1 đến 20.";
-            }
-            return null;
         }
         if (p.getDiscountValue() == null || p.getDiscountValue().signum() <= 0) {
             return p.isFixedPrice() ? "Vui lòng nhập giá đồng giá hợp lệ (lớn hơn 0)."

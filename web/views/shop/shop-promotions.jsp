@@ -105,7 +105,6 @@
                                                         </c:if>
                                                         <c:if test="${p.volume}"><div class="text-[11px] text-slate-500">cho mọi sản phẩm khi mua từ ${p.minQuantity}</div></c:if>
                                                     </c:when>
-                                                    <c:when test="${p.buyXGetY}"><div class="text-[11px] text-slate-500">cùng sản phẩm, tính tự động trong giỏ</div></c:when>
                                                     <c:otherwise><div class="text-[11px] text-slate-500">trên mỗi sản phẩm</div></c:otherwise>
                                                 </c:choose>
                                                 <c:if test="${p.scheduled}">

@@ -48,10 +48,7 @@
             return Math.max(0, Math.min(d, price));
         };
         let discount = 0;
-        if (type === 'BUY_X_GET_Y') {
-            const buy = numberValue(row.dataset.promoBuy), get = numberValue(row.dataset.promoGet);
-            if (buy > 0 && get > 0) discount = Math.floor(units / (buy + get)) * get * price;
-        } else if (type === 'VOLUME') {
+        if (type === 'VOLUME') {
             if (qty >= numberValue(row.dataset.promoMin)) discount = perUnit() * units;
         } else {
             discount = perUnit() * units;

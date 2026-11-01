@@ -33,7 +33,7 @@ public class PromotionDAO extends DBContext {
 
     private static final String SELECT_COLS =
             "SELECT p.promotion_id, p.shop_id, p.name, p.description, p.promotion_type, p.discount_value, "
-          + "p.max_discount_amount, p.buy_quantity, p.get_quantity, p.min_quantity, p.quota, p.sold_quantity, "
+          + "p.max_discount_amount, p.min_quantity, p.quota, p.sold_quantity, "
           + "p.active_days, CONVERT(VARCHAR(5), p.daily_start_time, 108) AS daily_start_time, CONVERT(VARCHAR(5), p.daily_end_time, 108) AS daily_end_time, "
           + "p.start_date, p.end_date, p.is_active, p.terminated_at, p.created_at, "
           + STATUS_EXPR + " AS status, "
@@ -65,10 +65,8 @@ public class PromotionDAO extends DBContext {
         return rs.wasNull() ? null : v;
     }
 
-    /** Đọc các cột mở rộng (buy/get/min/quota/sold). */
+    /** Đọc các cột mở rộng (min/quota/sold/lịch). */
     private static void readExtra(ResultSet rs, Promotion p) throws SQLException {
-        p.setBuyQuantity(intOrNull(rs, "buy_quantity"));
-        p.setGetQuantity(intOrNull(rs, "get_quantity"));
         p.setMinQuantity(intOrNull(rs, "min_quantity"));
         p.setQuota(intOrNull(rs, "quota"));
         p.setSoldQuantity(rs.getInt("sold_quantity"));
@@ -284,9 +282,9 @@ public class PromotionDAO extends DBContext {
     /** Tạo promotion. Trả về promotion_id mới hoặc -1 nếu lỗi. */
     public long create(Promotion p) {
         String sql = "INSERT INTO promotions (shop_id, name, description, promotion_type, discount_value, max_discount_amount, "
-                + "buy_quantity, get_quantity, min_quantity, quota, active_days, daily_start_time, daily_end_time, "
+                + "min_quantity, quota, active_days, daily_start_time, daily_end_time, "
                 + "start_date, end_date, is_active) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -296,16 +294,14 @@ public class PromotionDAO extends DBContext {
                 ps.setString(4, p.getPromotionType());
                 ps.setBigDecimal(5, p.getDiscountValue());
                 ps.setBigDecimal(6, p.getMaxDiscountAmount());
-                setIntOrNull(ps, 7, p.getBuyQuantity());
-                setIntOrNull(ps, 8, p.getGetQuantity());
-                setIntOrNull(ps, 9, p.getMinQuantity());
-                setIntOrNull(ps, 10, p.getQuota());
-                ps.setString(11, p.getActiveDays());
-                setTimeOrNull(ps, 12, p.getDailyStartTime());
-                setTimeOrNull(ps, 13, p.getDailyEndTime());
-                ps.setTimestamp(14, p.getStartDate());
-                ps.setTimestamp(15, p.getEndDate());
-                ps.setBoolean(16, p.isActive());
+                setIntOrNull(ps, 7, p.getMinQuantity());
+                setIntOrNull(ps, 8, p.getQuota());
+                ps.setString(9, p.getActiveDays());
+                setTimeOrNull(ps, 10, p.getDailyStartTime());
+                setTimeOrNull(ps, 11, p.getDailyEndTime());
+                ps.setTimestamp(12, p.getStartDate());
+                ps.setTimestamp(13, p.getEndDate());
+                ps.setBoolean(14, p.isActive());
                 ps.executeUpdate();
                 long id = -1;
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -330,7 +326,7 @@ public class PromotionDAO extends DBContext {
 
     public boolean update(Promotion p) {
         String sql = "UPDATE promotions SET name = ?, description = ?, promotion_type = ?, discount_value = ?, max_discount_amount = ?, "
-                + "buy_quantity = ?, get_quantity = ?, min_quantity = ?, quota = ?, "
+                + "min_quantity = ?, quota = ?, "
                 + "active_days = ?, daily_start_time = ?, daily_end_time = ?, "
                 + "start_date = ?, end_date = ?, is_active = ?, updated_at = GETDATE() "
                 + "WHERE promotion_id = ? AND shop_id = ? AND terminated_at IS NULL";
@@ -342,18 +338,16 @@ public class PromotionDAO extends DBContext {
                 ps.setString(3, p.getPromotionType());
                 ps.setBigDecimal(4, p.getDiscountValue());
                 ps.setBigDecimal(5, p.getMaxDiscountAmount());
-                setIntOrNull(ps, 6, p.getBuyQuantity());
-                setIntOrNull(ps, 7, p.getGetQuantity());
-                setIntOrNull(ps, 8, p.getMinQuantity());
-                setIntOrNull(ps, 9, p.getQuota());
-                ps.setString(10, p.getActiveDays());
-                setTimeOrNull(ps, 11, p.getDailyStartTime());
-                setTimeOrNull(ps, 12, p.getDailyEndTime());
-                ps.setTimestamp(13, p.getStartDate());
-                ps.setTimestamp(14, p.getEndDate());
-                ps.setBoolean(15, p.isActive());
-                ps.setLong(16, p.getPromotionId());
-                ps.setLong(17, p.getShopId());
+                setIntOrNull(ps, 6, p.getMinQuantity());
+                setIntOrNull(ps, 7, p.getQuota());
+                ps.setString(8, p.getActiveDays());
+                setTimeOrNull(ps, 9, p.getDailyStartTime());
+                setTimeOrNull(ps, 10, p.getDailyEndTime());
+                ps.setTimestamp(11, p.getStartDate());
+                ps.setTimestamp(12, p.getEndDate());
+                ps.setBoolean(13, p.isActive());
+                ps.setLong(14, p.getPromotionId());
+                ps.setLong(15, p.getShopId());
                 if (ps.executeUpdate() == 0) {
                     conn.rollback();
                     return false;
@@ -466,12 +460,12 @@ public class PromotionDAO extends DBContext {
             in.append(i == 0 ? "?" : ",?");
         }
         String sql = "SELECT pp.product_id, p.promotion_id, p.shop_id, p.name, p.promotion_type, p.discount_value, p.max_discount_amount, "
-                + "p.buy_quantity, p.get_quantity, p.min_quantity, p.quota, p.sold_quantity, "
+                + "p.min_quantity, p.quota, p.sold_quantity, "
                 + "p.active_days, CONVERT(VARCHAR(5), p.daily_start_time, 108) AS daily_start_time, "
                 + "CONVERT(VARCHAR(5), p.daily_end_time, 108) AS daily_end_time, "
                 + "p.start_date, p.end_date FROM promotions p JOIN promotion_products pp ON pp.promotion_id = p.promotion_id "
                 + "WHERE p.is_active = 1 AND p.terminated_at IS NULL AND p.start_date <= GETDATE() AND p.end_date >= GETDATE() "
-                + "AND (p.quota IS NULL OR p.sold_quantity < p.quota) AND " + scheduleOk("p") + " "
+                + "AND (p.quota IS NULL OR p.sold_quantity < p.quota) AND p.promotion_type <> 'BUY_X_GET_Y' AND " + scheduleOk("p") + " "
                 + "AND pp.product_id IN (" + in + ") ORDER BY p.start_date";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             int i = 1;
