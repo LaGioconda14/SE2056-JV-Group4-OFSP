@@ -26,7 +26,7 @@ import service.impl.InventoryWasteServiceImpl;
 import service.impl.ProductServiceImpl;
 import service.impl.ShopProductServiceImpl;
 
-@WebServlet(name = "ShopInventoryServlet", urlPatterns = {"/shop/inventory", "/shop/inventory/waste"})
+@WebServlet(name = "ShopInventoryServlet", urlPatterns = {"/shop/inventory"})
 public class ShopInventoryServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ShopInventoryServlet.class.getName());
@@ -70,9 +70,11 @@ public class ShopInventoryServlet extends HttpServlet {
         try {
             String servletPath = request.getServletPath();
             String viewTab = request.getParameter("viewTab");
-            if ("/shop/inventory/waste".equalsIgnoreCase(servletPath)) {
-                viewTab = "waste";
-            } else if (viewTab == null || viewTab.trim().isEmpty()) {
+            if ("/shop/inventory/waste".equalsIgnoreCase(servletPath) || "waste".equalsIgnoreCase(viewTab)) {
+                response.sendRedirect(request.getContextPath() + "/shop/waste");
+                return;
+            }
+            if (viewTab == null || viewTab.trim().isEmpty()) {
                 viewTab = "alert";
             } else {
                 viewTab = viewTab.trim().toLowerCase();

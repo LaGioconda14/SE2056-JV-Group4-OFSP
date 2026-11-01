@@ -46,7 +46,7 @@
         <!-- Notification Bell -->
         <a href="${pageContext.request.contextPath}/admin/orders" class="btn-notification-bell ms-1" title="Thông báo hệ thống">
             <i class="bi bi-bell"></i>
-            <span class="badge-dot">3</span>
+            <span class="badge-dot"></span>
         </a>
 
         <!-- User Avatar & Profile -->

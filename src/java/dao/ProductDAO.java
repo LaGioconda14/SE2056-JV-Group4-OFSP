@@ -13,11 +13,73 @@ import java.util.LinkedHashMap;
 import model.Product;
 import model.ProductVariant;
 import model.Category;
+import model.Review;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 import util.DBContext;
 
 public class ProductDAO extends DBContext {
+    private static final Logger LOGGER = Logger.getLogger(ProductDAO.class.getName());
+
+    public double[] getProductRatingStats(long productId) {
+        String sql = "SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) AS avg_rating, "
+                + "       COUNT(r.review_id) AS reviews_count "
+                + "FROM reviews r "
+                + "JOIN order_items oi ON oi.order_item_id = r.order_item_id "
+                + "JOIN product_variants pv ON pv.variant_id = oi.variant_id "
+                + "WHERE pv.product_id = ? AND r.status = 'APPROVED'";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    double avg = rs.getDouble("avg_rating");
+                    int count = rs.getInt("reviews_count");
+                    return new double[]{avg, count};
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting rating stats for product " + productId, ex);
+        }
+        return new double[]{0.0, 0};
+    }
+
+    public List<Review> getReviewsByProductId(long productId) {
+        List<Review> list = new ArrayList<>();
+        String sql = "SELECT r.review_id, r.order_item_id, r.customer_id, r.shop_id, r.rating, "
+                + "       r.comment, r.reply_comment, r.status, r.created_at, "
+                + "       u.full_name, u.avatar_url "
+                + "FROM reviews r "
+                + "JOIN order_items oi ON oi.order_item_id = r.order_item_id "
+                + "JOIN product_variants rv ON rv.variant_id = oi.variant_id "
+                + "LEFT JOIN users u ON r.customer_id = u.user_id "
+                + "WHERE rv.product_id = ? AND r.status = 'APPROVED' "
+                + "ORDER BY r.created_at DESC";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Review rev = new Review();
+                    rev.setReviewId(rs.getLong("review_id"));
+                    rev.setCustomerId(rs.getLong("customer_id"));
+                    rev.setShopId(rs.getLong("shop_id"));
+                    rev.setRating(rs.getInt("rating"));
+                    rev.setComment(rs.getString("comment"));
+                    rev.setReplyComment(rs.getString("reply_comment"));
+                    rev.setStatus(rs.getString("status"));
+                    rev.setCreatedAt(rs.getTimestamp("created_at"));
+                    rev.setCustomerName(rs.getString("full_name"));
+                    rev.setCustomerAvatar(rs.getString("avatar_url"));
+                    list.add(rev);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting reviews for product " + productId, ex);
+        }
+        return list;
+    }
+
 
     // 1. Lấy danh sách sản phẩm/biến thể theo shopId
     public List<ProductVariant> getVariantsByShopId(long shopId) {
@@ -1183,7 +1245,15 @@ public class ProductDAO extends DBContext {
                 + "dv.variant_id AS default_variant_id, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
                 + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
-                + "(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock "
+                + "(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, "
+                + "(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r "
+                + " JOIN order_items oi ON oi.order_item_id = r.order_item_id "
+                + " JOIN product_variants rv ON rv.variant_id = oi.variant_id "
+                + " WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, "
+                + "(SELECT COUNT(*) FROM reviews r "
+                + " JOIN order_items oi ON oi.order_item_id = r.order_item_id "
+                + " JOIN product_variants rv ON rv.variant_id = oi.variant_id "
+                + " WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count "
                 + "FROM products p "
                 + "LEFT JOIN categories c ON p.category_id = c.category_id "
                 + "OUTER APPLY ("
@@ -1225,7 +1295,9 @@ public class ProductDAO extends DBContext {
                 BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
                 int discountPercent = 20;
 
-                Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 32);
+                double avgRating = rs.getDouble("avg_rating");
+                int revCount = rs.getInt("reviews_count");
+                Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, avgRating, revCount);
                 p.setCategoryId(catId);
                 p.setCategorySlug(categorySlug);
                 p.setOrigin(rs.getString("origin"));
@@ -1403,8 +1475,9 @@ public class ProductDAO extends DBContext {
                         p.setDiscountPercent(17);
                     }
 
-                    p.setRating(4.9);
-                    p.setReviewsCount(128);
+                    double[] rStats = getProductRatingStats(productId);
+                    p.setRating(rStats[0]);
+                    p.setReviewsCount((int) rStats[1]);
                     p.setTag("-" + p.getDiscountPercent() + "% SALE");
 
                     // Gắn danh sách ảnh chi tiết (đảm bảo đủ 4 ảnh minh họa như mẫu FreshFruit)
@@ -1514,7 +1587,15 @@ public class ProductDAO extends DBContext {
                 .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
                 .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
                 .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
-                .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock ")
+                .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
+                .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
+                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
+                .append("(SELECT COUNT(*) FROM reviews r ")
+                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
                 .append("FROM products p ")
                 .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
                 .append("OUTER APPLY ( ")
@@ -1592,8 +1673,8 @@ public class ProductDAO extends DBContext {
                     p.setPrice(price);
                     p.setOldPrice(price.multiply(new BigDecimal("1.25")));
                     p.setDiscountPercent(20);
-                    p.setRating(4.9);
-                    p.setReviewsCount(15);
+                    p.setRating(rs.getDouble("avg_rating"));
+                    p.setReviewsCount(rs.getInt("reviews_count"));
 
                     p.setOrigin(rs.getString("origin"));
                     p.setCertification(rs.getString("certification"));
@@ -1686,7 +1767,15 @@ public class ProductDAO extends DBContext {
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
            .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
            .append("dv.price AS price, dv.original_price AS original_price, dv.unit AS unit, ")
-           .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock ")
+           .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
+           .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
+           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
+           .append("(SELECT COUNT(*) FROM reviews r ")
+           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
            .append("FROM products p ")
            .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
            .append("OUTER APPLY ( ")
@@ -1886,11 +1975,14 @@ public class ProductDAO extends DBContext {
             }
         }
 
-        long pid = p.getId();
-        double calcRating = 4.7 + ((pid % 4) * 0.1);
-        if (calcRating > 5.0) calcRating = 5.0;
-        p.setRating(calcRating);
-        p.setReviewsCount((int) (28 + (pid * 19) % 150));
+        try {
+            p.setRating(rs.getDouble("avg_rating"));
+            p.setReviewsCount(rs.getInt("reviews_count"));
+        } catch (SQLException ignored) {
+            double[] rStats = getProductRatingStats(p.getId());
+            p.setRating(rStats[0]);
+            p.setReviewsCount((int) rStats[1]);
+        }
 
         p.setOrigin(rs.getString("origin"));
         p.setCertification(rs.getString("certification"));
@@ -1913,7 +2005,15 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
            .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
            .append("(SELECT MIN(original_price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS original_price, ")
            .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
-           .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock ")
+           .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
+           .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
+           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
+           .append("(SELECT COUNT(*) FROM reviews r ")
+           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
            .append("FROM products p ")
            .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
            .append("OUTER APPLY (")

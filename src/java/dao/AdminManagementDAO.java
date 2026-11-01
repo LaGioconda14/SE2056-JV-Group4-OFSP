@@ -123,13 +123,13 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     public List<Map<String, Object>> getShopsList(String statusFilter, String typeFilter, String certFilter, String searchKeyword) {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT sr.request_id, sr.user_id, sr.shop_name, sr.business_type, sr.province, sr.district, sr.ward, ")
-           .append("       sr.street_address, sr.pickup_address, sr.return_address, sr.id_card_number, sr.tax_code, ")
-           .append("       sr.id_card_front_url, sr.id_card_back_url, sr.shop_description, sr.shop_logo_url, sr.shop_banner_url, ")
-           .append("       sr.bank_name, sr.bank_account_number, sr.bank_account_holder, sr.reason, sr.created_at, sr.reviewed_at, ")
+        sql.append("SELECT sr.request_id, sr.user_id, sr.shop_name, sr.business_type, sr.province, sr.farm_address, ")
+           .append("       sr.id_card_number, sr.reason, sr.produce_specialty, sr.certification_name, ")
+           .append("       sr.created_at, sr.reviewed_at, ")
            .append("       ").append(EFF_STATUS).append(" AS eff_status, ")
            .append("       u.full_name AS owner_name, u.email AS owner_email, u.phone AS owner_phone, u.birth_date AS owner_birth, ")
            .append("       rv.full_name AS reviewer_name, s.commission_rate, s.rating, ")
+           .append("       s.logo_url as shop_logo_url, s.banner_url as shop_banner_url, s.description as shop_description, s.address as shop_address, ")
            .append("       sus.message AS suspend_message, sus.created_at AS suspended_at ")
            .append("FROM shop_requests sr ")
            .append("JOIN users u ON sr.user_id = u.user_id ")
@@ -192,21 +192,24 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("shopName", rs.getString("shop_name"));
                     item.put("businessType", rs.getString("business_type"));
                     item.put("province", rs.getString("province"));
-                    item.put("district", rs.getString("district"));
-                    item.put("ward", rs.getString("ward"));
-                    item.put("streetAddress", rs.getString("street_address"));
-                    item.put("pickupAddress", rs.getString("pickup_address"));
-                    item.put("returnAddress", rs.getString("return_address"));
+                    String farmAddr = rs.getString("farm_address");
+                    String shopAddr = rs.getString("shop_address");
+                    String addr = farmAddr != null ? farmAddr : (shopAddr != null ? shopAddr : "");
+                    item.put("district", "");
+                    item.put("ward", "");
+                    item.put("streetAddress", addr);
+                    item.put("pickupAddress", addr);
+                    item.put("returnAddress", addr);
                     item.put("idCardNumber", rs.getString("id_card_number"));
-                    item.put("taxCode", rs.getString("tax_code"));
-                    item.put("idCardFrontUrl", rs.getString("id_card_front_url"));
-                    item.put("idCardBackUrl", rs.getString("id_card_back_url"));
-                    item.put("shopDescription", rs.getString("shop_description"));
+                    item.put("taxCode", "");
+                    item.put("idCardFrontUrl", "");
+                    item.put("idCardBackUrl", "");
+                    item.put("shopDescription", rs.getString("shop_description") != null ? rs.getString("shop_description") : rs.getString("produce_specialty"));
                     item.put("shopLogoUrl", rs.getString("shop_logo_url"));
                     item.put("shopBannerUrl", rs.getString("shop_banner_url"));
-                    item.put("bankName", rs.getString("bank_name"));
-                    item.put("bankAccountNumber", rs.getString("bank_account_number"));
-                    item.put("bankAccountHolder", rs.getString("bank_account_holder"));
+                    item.put("bankName", "");
+                    item.put("bankAccountNumber", "");
+                    item.put("bankAccountHolder", "");
                     item.put("ownerName", rs.getString("owner_name"));
                     item.put("ownerEmail", rs.getString("owner_email"));
                     item.put("ownerPhone", rs.getString("owner_phone"));
@@ -400,7 +403,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT u.user_id, u.full_name, u.email, u.phone, u.avatar_url, u.gender, u.birth_date, ")
-           .append("       u.status, u.created_at, u.decision_reason, u.decision_at, ")
+           .append("       u.status, u.created_at, ")
            .append("       COALESCE(r.role_name, 'CUSTOMER') as role_name, ")
            .append("       s.shop_id, s.shop_name, s.status as shop_status, ")
            .append("       COALESCE(o.order_count, 0) as order_count, ")
@@ -484,10 +487,8 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("shopId", rs.getObject("shop_id"));
                     item.put("shopName", rs.getString("shop_name"));
                     item.put("shopStatus", rs.getString("shop_status"));
-                    item.put("decisionReason", rs.getString("decision_reason"));
-
-                    Timestamp decisionAt = rs.getTimestamp("decision_at");
-                    item.put("decisionAtFormatted", decisionAt != null ? DATETIME_FORMAT.format(decisionAt) : null);
+                    item.put("decisionReason", null);
+                    item.put("decisionAtFormatted", null);
 
                     Timestamp createdAt = rs.getTimestamp("created_at");
                     item.put("createdAtFormatted", createdAt != null ? DATE_FORMAT.format(createdAt) : "-");
@@ -539,7 +540,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
 
         // 1. Fetch User and Shop info
         String userSql = "SELECT u.user_id, u.full_name, u.email, u.phone, u.avatar_url, u.gender, u.birth_date, "
-                       + "       u.status, u.created_at, u.updated_at, u.decision_reason, u.decision_at, "
+                       + "       u.status, u.created_at, u.updated_at, "
                        + "       COALESCE(r.role_name, 'CUSTOMER') as role_name, "
                        + "       s.shop_id, s.shop_name, s.slug as shop_slug, s.business_type, s.province as shop_province, "
                        + "       s.address as shop_address, s.certification_name, s.commission_rate, s.rating as shop_rating, "
@@ -584,10 +585,8 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                         Timestamp updatedAt = rs.getTimestamp("updated_at");
                         userMap.put("updatedAtFormatted", updatedAt != null ? DATETIME_FORMAT.format(updatedAt) : "-");
 
-                        userMap.put("decisionReason", rs.getString("decision_reason"));
-                        Timestamp decisionAt = rs.getTimestamp("decision_at");
-                        userMap.put("decisionAtFormatted", decisionAt != null ? DATETIME_FORMAT.format(decisionAt) : null);
-
+                        userMap.put("decisionReason", null);
+                        userMap.put("decisionAtFormatted", null);
                         roleName = rs.getString("role_name");
                         userMap.put("roleName", roleName);
 
@@ -797,7 +796,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         }
 
         String getOldStatusSql = "SELECT status FROM users WHERE user_id = ?";
-        String updateUserSql = "UPDATE users SET status = ?, decision_reason = ?, decision_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
+        String updateUserSql = "UPDATE users SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?";
         String insertLogSql = "INSERT INTO user_status_logs (user_id, old_status, new_status, decision_reason, changed_by, created_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         try (Connection conn = getConnection()) {
@@ -818,8 +817,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
 
             try (PreparedStatement psUpdate = conn.prepareStatement(updateUserSql)) {
                 psUpdate.setString(1, newStatus.toUpperCase());
-                psUpdate.setString(2, decisionReason);
-                psUpdate.setLong(3, userId);
+                psUpdate.setLong(2, userId);
                 psUpdate.executeUpdate();
             }
 
@@ -1865,7 +1863,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                    + "    COUNT(p.product_id) as total_count, "
                    + "    SUM(CASE WHEN p.is_active = 1 THEN 1 ELSE 0 END) as active_count, "
                    + "    SUM(CASE WHEN p.is_active = 0 THEN 1 ELSE 0 END) as inactive_count, "
-                   + "    SUM(CASE WHEN p.report_count > 0 OR p.violation_reason IS NOT NULL THEN 1 ELSE 0 END) as flagged_count, "
+                   + "    SUM(CASE WHEN p.is_active = 0 THEN 1 ELSE 0 END) as flagged_count, "
                    + "    SUM(CASE WHEN p.certification IS NOT NULL AND p.certification != '' THEN 1 ELSE 0 END) as certified_count, "
                    + "    SUM(CASE WHEN pv.stock_quantity <= pv.low_stock_threshold THEN 1 ELSE 0 END) as low_stock_count, "
                    + "    SUM(CASE WHEN p.is_featured = 1 THEN 1 ELSE 0 END) as featured_count "
@@ -1914,7 +1912,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name as product_name, p.origin, p.storage_temp, p.certification, ")
-           .append("       p.is_featured, p.is_active, p.created_at, p.updated_at, p.report_count, p.violation_reason, p.moderated_at, ")
+           .append("       p.is_featured, p.is_active, p.created_at, p.updated_at, ")
            .append("       c.category_id, c.category_name, s.shop_name, pv.sku, pv.price, pv.stock_quantity, pv.unit, ")
            .append("       pv.low_stock_threshold, ")
            .append("       (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC) as thumbnail_url ")
@@ -1929,7 +1927,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         if (statusFilter != null && !statusFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(statusFilter.trim())) {
             String sf = statusFilter.trim();
             if ("flagged".equalsIgnoreCase(sf) || "reported".equalsIgnoreCase(sf)) {
-                conditions.add("(p.report_count > 0 OR p.violation_reason IS NOT NULL)");
+                conditions.add("p.is_active = 0");
             } else if ("approved".equalsIgnoreCase(sf) || "ACTIVE".equalsIgnoreCase(sf) || "active".equalsIgnoreCase(sf)) {
                 conditions.add("p.is_active = 1");
             } else if ("pending".equalsIgnoreCase(sf) || "rejected".equalsIgnoreCase(sf) || "INACTIVE".equalsIgnoreCase(sf) || "inactive".equalsIgnoreCase(sf) || "hidden".equalsIgnoreCase(sf)) {
@@ -1962,7 +1960,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         if (!conditions.isEmpty()) {
             sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
         }
-        sql.append("ORDER BY (CASE WHEN p.report_count > 0 THEN 0 WHEN p.is_active = 0 THEN 1 ELSE 2 END) ASC, p.product_id ASC");
+        sql.append("ORDER BY (CASE WHEN p.is_active = 0 THEN 0 ELSE 1 END) ASC, p.product_id ASC");
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -2003,13 +2001,13 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("isActive", isActive);
                     item.put("isFeatured", isFeatured);
 
-                    int reportCount = rs.getInt("report_count");
-                    String violationReason = rs.getString("violation_reason");
-                    Timestamp moderatedAt = rs.getTimestamp("moderated_at");
-                    item.put("reportCount", reportCount);
-                    item.put("violationReason", violationReason);
-                    item.put("moderatedAt", moderatedAt != null ? DATE_FORMAT.format(moderatedAt) : null);
-                    boolean isFlagged = reportCount > 0 || (violationReason != null && !violationReason.trim().isEmpty());
+                    int reportCount = 0;
+                    String violationReason = null;
+                    Timestamp moderatedAt = null;
+                    item.put("reportCount", 0);
+                    item.put("violationReason", null);
+                    item.put("moderatedAt", null);
+                    boolean isFlagged = !isActive;
                     item.put("isFlagged", isFlagged);
 
                     Timestamp createdAt = rs.getTimestamp("created_at");
@@ -2092,12 +2090,11 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     }
 
     public boolean moderateProduct(long productId, boolean isActive, String violationReason) {
-        String sql = "UPDATE products SET is_active = ?, violation_reason = ?, moderated_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
+        String sql = "UPDATE products SET is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBoolean(1, isActive);
-            ps.setString(2, violationReason != null && !violationReason.trim().isEmpty() ? violationReason.trim() : null);
-            ps.setLong(3, productId);
+            ps.setLong(2, productId);
             return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error in moderateProduct: " + ex.getMessage(), ex);
@@ -2107,7 +2104,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
 
     public Map<String, Object> getProductDetail(long productId) {
         String sql = "SELECT p.product_id, p.name as product_name, p.origin, p.storage_temp, p.certification, "
-                   + "       p.is_featured, p.is_active, p.created_at, p.updated_at, p.report_count, p.violation_reason, p.moderated_at, "
+                   + "       p.is_featured, p.is_active, p.created_at, p.updated_at, "
                    + "       c.category_id, c.category_name, s.shop_name, pv.sku, pv.price, pv.stock_quantity, pv.unit, "
                    + "       (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC) as thumbnail_url "
                    + "FROM products p "
@@ -2128,10 +2125,9 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("certification", rs.getString("certification"));
                     item.put("isFeatured", rs.getBoolean("is_featured"));
                     item.put("isActive", rs.getBoolean("is_active"));
-                    item.put("reportCount", rs.getInt("report_count"));
-                    item.put("violationReason", rs.getString("violation_reason"));
-                    item.put("moderatedAt", rs.getTimestamp("moderated_at") != null ? DATE_FORMAT.format(rs.getTimestamp("moderated_at")) : null);
-                    item.put("categoryId", rs.getInt("category_id"));
+                    item.put("reportCount", 0);
+                    item.put("violationReason", null);
+                    item.put("moderatedAt", null);
                     item.put("categoryName", rs.getString("category_name"));
                     item.put("shopName", rs.getString("shop_name"));
                     item.put("sku", rs.getString("sku"));
@@ -2356,21 +2352,8 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     r.setShopName(rs.getString("shop_name"));
                     r.setBusinessType(rs.getString("business_type"));
                     r.setProvince(rs.getString("province"));
-                    r.setDistrict(rs.getString("district"));
-                    r.setWard(rs.getString("ward"));
-                    r.setStreetAddress(rs.getString("street_address"));
-                    r.setPickupAddress(rs.getString("pickup_address"));
-                    r.setReturnAddress(rs.getString("return_address"));
+                    r.setStreetAddress(rs.getString("farm_address"));
                     r.setIdCardNumber(rs.getString("id_card_number"));
-                    r.setTaxCode(rs.getString("tax_code"));
-                    r.setIdCardFrontUrl(rs.getString("id_card_front_url"));
-                    r.setIdCardBackUrl(rs.getString("id_card_back_url"));
-                    r.setShopDescription(rs.getString("shop_description"));
-                    r.setShopLogoUrl(rs.getString("shop_logo_url"));
-                    r.setShopBannerUrl(rs.getString("shop_banner_url"));
-                    r.setBankName(rs.getString("bank_name"));
-                    r.setBankAccountNumber(rs.getString("bank_account_number"));
-                    r.setBankAccountHolder(rs.getString("bank_account_holder"));
                     r.setStatus(rs.getString("status"));
                     r.setReason(rs.getString("reason"));
                     r.setCreatedAt(rs.getTimestamp("created_at"));
@@ -2785,11 +2768,11 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     // 3. Tạo shop thật trong bảng shops (bỏ qua nếu user đã có shop)
     String sqlInsertShop = "INSERT INTO [dbo].[shops] "
             + "(owner_id, shop_name, slug, description, business_type, logo_url, banner_url, phone, address, province, "
-            + " commission_rate, rating, total_sales_amount, total_orders_count, status, created_at, updated_at) "
-            + "SELECT sr.user_id, sr.shop_name, 'shop-' + CAST(sr.request_id AS VARCHAR(20)), sr.shop_description, "
-            + "       sr.business_type, sr.shop_logo_url, sr.shop_banner_url, u.phone, "
-            + "       CONCAT_WS(', ', sr.street_address, sr.ward, sr.district, sr.province), sr.province, "
-            + "       8.0, 0, 0, 0, 'ACTIVE', GETDATE(), GETDATE() "
+            + " certification_name, commission_rate, rating, total_sales_amount, total_orders_count, status, created_at, updated_at) "
+            + "SELECT sr.user_id, sr.shop_name, 'shop-' + CAST(sr.request_id AS VARCHAR(20)), COALESCE(sr.produce_specialty, 'Gian hàng nông sản'), "
+            + "       sr.business_type, NULL, NULL, u.phone, "
+            + "       sr.farm_address, sr.province, "
+            + "       sr.certification_name, 8.0, 5.0, 0, 0, 'ACTIVE', GETDATE(), GETDATE() "
             + "FROM [dbo].[shop_requests] sr "
             + "JOIN [dbo].[users] u ON u.user_id = sr.user_id "
             + "WHERE sr.request_id = ? "

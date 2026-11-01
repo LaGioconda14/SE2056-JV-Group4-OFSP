@@ -13,6 +13,9 @@ import model.User;
 import service.IShopProductService;
 import service.impl.ShopProductServiceImpl;
 
+import enums.SubOrderStatus;
+import service.IOrderFulfillmentService;
+import service.impl.OrderFulfillmentServiceImpl;
 /**
  * Nạp dữ liệu dùng chung cho sidebar của Kênh Người Bán (views/shop/layout/sidebar.jsp).
  * Chạy cho mọi trang /shop/* nên mọi trang seller đều hiển thị cùng một số liệu trên badge,
@@ -25,6 +28,7 @@ import service.impl.ShopProductServiceImpl;
 public class ShopLayoutFilter implements Filter {
 
     private final IShopProductService shopProductService = new ShopProductServiceImpl();
+    private final IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -39,11 +43,15 @@ public class ShopLayoutFilter implements Filter {
             if (u instanceof User && "SHOP_OWNER".equalsIgnoreCase(((User) u).getRole())) {
                 try {
                     Long shopId = (Long) session.getAttribute("shopId");
-                    if (shopId == null) {
+                    if (shopId == null || shopId <= 0) {
                         shopId = shopProductService.getShopIDByOwnerID(((User) u).getId());
+                        if (shopId != null && shopId > 0) {
+                            session.setAttribute("shopId", shopId);
+                        }
                     }
                     if (shopId != null && shopId > 0) {
                         req.setAttribute("sidebarLowStockCount", shopProductService.getLowStockCountByShopId(shopId));
+                        req.setAttribute("sidebarPendingOrdersCount", fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.NEW));
                     }
                 } catch (Exception e) {
                     // Không để lỗi đếm badge làm hỏng cả trang; sidebar sẽ hiện 0

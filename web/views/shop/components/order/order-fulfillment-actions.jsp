@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <fmt:setLocale value="vi_VN" />
 
                         <c:choose>
@@ -262,29 +263,42 @@
 
                             <%-- CASE: GIAO THẤT BẠI - CHUYỂN HOÀN VỀ SHOP (RETURNED / FAILED) --%>
                             <c:when test="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}">
-                                <div class="bg-white rounded-2xl border border-rose-300 p-6 shadow-xs bg-rose-50/20 space-y-5">
-                                    <div class="flex items-start justify-between pb-4 border-b border-rose-200">
+                                <c:set var="reasonLower" value="${not empty subOrder.cancelReason ? subOrder.cancelReason.toLowerCase() : ''}" />
+                                <c:set var="isDamageIncident" value="${fn:contains(reasonLower, 'dập') or fn:contains(reasonLower, 'hỏng') or fn:contains(reasonLower, 'úng') or fn:contains(reasonLower, 'lạnh') or fn:contains(reasonLower, 'biến chất')}" />
+
+                                <div class="bg-white rounded-2xl border ${isDamageIncident ? 'border-rose-400 bg-rose-50/30' : 'border-amber-300 bg-amber-50/20'} p-6 shadow-xs space-y-5">
+                                    <div class="flex items-start justify-between pb-4 border-b ${isDamageIncident ? 'border-rose-200' : 'border-amber-200'}">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-lg font-bold border border-rose-200 shadow-2xs">
-                                                <i class="fa-solid fa-rotate-left"></i>
+                                            <div class="w-10 h-10 rounded-xl ${isDamageIncident ? 'bg-rose-100 text-rose-700 border-rose-200' : 'bg-amber-100 text-amber-700 border-amber-200'} flex items-center justify-center text-lg font-bold border shadow-2xs">
+                                                <i class="fa-solid ${isDamageIncident ? 'fa-triangle-exclamation' : 'fa-rotate-left'}"></i>
                                             </div>
                                             <div>
-                                                <h2 class="text-base font-extrabold text-slate-900">Kiện Hàng Giao Thất Bại &amp; Chuyển Hoàn Về Shop</h2>
-                                                <p class="text-[11px] text-slate-500">Shipper đã mang kiện hàng hoàn về lại Gian hàng. Vui lòng mở thùng kiểm định độ tươi và đá gel.</p>
+                                                <h2 class="text-base font-extrabold text-slate-900">
+                                                    <c:choose>
+                                                        <c:when test="${isDamageIncident}">Kiện Hàng Báo Sự Cố Dập Nát / Hư Hỏng Khi Giao</c:when>
+                                                        <c:otherwise>Kiện Hàng Chuyển Hoàn Do Không Phát Được Cho Khách</c:otherwise>
+                                                    </c:choose>
+                                                </h2>
+                                                <p class="text-[11px] text-slate-500">
+                                                    <c:choose>
+                                                        <c:when test="${isDamageIncident}">Tài xế báo cáo nông sản bị sự cố khi giao. Khi nhận lại kiện hàng từ tài xế, vui lòng kiểm định số lượng để lập phiếu tiêu hủy và đối soát bồi thường.</c:when>
+                                                        <c:otherwise>Tài xế không liên lạc được với người nhận hoặc khách hẹn lại. Vui lòng mở thùng kiểm tra độ lạnh đá gel để xử lý tồn kho.</c:otherwise>
+                                                    </c:choose>
+                                                </p>
                                             </div>
                                         </div>
-                                        <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-300">
-                                            CHỜ KIỂM ĐỊNH HÀNG HOÀN
+                                        <span class="px-3 py-1 rounded-full text-xs font-black ${isDamageIncident ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-amber-100 text-amber-800 border-amber-300'} border">
+                                            ${isDamageIncident ? 'SỰ CỐ HÀNG HỎNG' : 'CHỜ KIỂM ĐỊNH HOÀN'}
                                         </span>
                                     </div>
 
                                     <!-- Thông tin lý do giao thất bại từ Shipper -->
-                                    <div class="p-3.5 rounded-xl bg-white border border-rose-200 text-xs space-y-1 shadow-2xs">
-                                        <div class="font-extrabold text-rose-800 flex items-center gap-1.5">
-                                            <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                                    <div class="p-3.5 rounded-xl bg-white border ${isDamageIncident ? 'border-rose-200' : 'border-amber-200'} text-xs space-y-1 shadow-2xs">
+                                        <div class="font-extrabold ${isDamageIncident ? 'text-rose-800' : 'text-amber-900'} flex items-center gap-1.5">
+                                            <i class="fa-solid fa-triangle-exclamation ${isDamageIncident ? 'text-rose-600' : 'text-amber-600'}"></i>
                                             <span>Lý do chuyển hoàn từ tài xế / Shipper:</span>
                                         </div>
-                                        <div class="text-slate-800 leading-relaxed font-semibold pl-4 border-l-2 border-rose-400">
+                                        <div class="text-slate-800 leading-relaxed font-semibold pl-4 border-l-2 ${isDamageIncident ? 'border-rose-500' : 'border-amber-500'}">
                                             ${not empty subOrder.cancelReason ? subOrder.cancelReason : "Khách hàng từ chối nhận hoa quả hoặc không liên lạc được khi giao."}
                                         </div>
                                     </div>
@@ -303,18 +317,52 @@
                                             </div>
                                         </c:when>
 
-                                        <%-- CHƯA XỬ LÝ -> HIỂN THỊ 2 NÚT THAO TÁC --%>
+                                        <%-- KỊCH BẢN 1: TÀI XẾ BÁO HỎNG / DẬP NÁT -> HƯỚNG XỬ LÝ CHÍNH LÀ TIÊU HỦY --%>
+                                        <c:when test="${isDamageIncident}">
+                                            <div class="p-4 rounded-xl border border-rose-300 bg-white space-y-3 shadow-2xs">
+                                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                    <div class="space-y-1">
+                                                        <div class="flex items-center gap-2 text-rose-800 font-extrabold text-xs">
+                                                            <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
+                                                            <span>Kiểm Định Số Lượng Quả Dập Nát &amp; Lập Phiếu Tiêu Hủy</span>
+                                                        </div>
+                                                        <p class="text-[11px] text-slate-600 leading-relaxed">
+                                                            Nông sản bị dập nát hoặc hư hỏng khi giao ➔ <b>Ghi nhận tiêu hủy vào Sổ hao hụt</b> để làm căn cứ xử lý bồi thường vận chuyển. Nếu có quả còn tươi thì số lượng đó sẽ tự động hoàn lại kho.
+                                                        </p>
+                                                    </div>
+                                                    <button type="button" id="btnOpenReturnWasteModal" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 shrink-0 cursor-pointer">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                        <span>Kiểm Tra &amp; Lập Phiếu Tiêu Hủy</span>
+                                                    </button>
+                                                </div>
+
+                                                <!-- Trường hợp ngoại lệ nếu tài xế báo nhầm hoặc khách viện cớ -->
+                                                <div class="pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-500">
+                                                    <span>Trường hợp mở thùng thấy hoa quả vẫn còn tươi nguyên (tài xế báo nhầm hoặc khách viện cớ)?</span>
+                                                    <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="m-0" onsubmit="return confirm('Bạn xác nhận đã kiểm tra thực tế và hoa quả vẫn còn tươi nguyên 100% để nhập lại kho bán?');">
+                                                        <input type="hidden" name="action" value="return_restock">
+                                                        <input type="hidden" name="code" value="${subOrder.subOrderCode}">
+                                                        <input type="hidden" name="restockNote" value="Kiểm tra thực tế: Khách viện cớ / Tài xế báo nhầm, hoa quả vẫn đạt chuẩn xuất kho lại">
+                                                        <button type="submit" class="text-emerald-700 hover:text-emerald-800 font-bold underline cursor-pointer">
+                                                            Xác nhận còn tươi (Nhập lại kho)
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </c:when>
+
+                                        <%-- KỊCH BẢN 2: TÀI XẾ KHÔNG PHÁT ĐƯỢC (VẮNG NHÀ, SAI ĐỊA CHỈ, ĐỔI Ý) -> 2 LỰA CHỌN THEO ĐỘ TƯƠI --%>
                                         <c:otherwise>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                                                <!-- LỰA CHỌN 1: QUẢ CÒN TƯƠI NGUYÊN (NHẬP KHO) -->
+                                                <!-- LỰA CHỌN 1: ĐÁ GEL CÒN LẠNH, QUẢ CÒN TƯƠI -->
                                                 <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 flex flex-col justify-between space-y-3">
                                                     <div class="space-y-1">
                                                         <div class="flex items-center gap-2 text-emerald-800 font-extrabold text-xs">
                                                             <i class="fa-solid fa-seedling text-emerald-600"></i>
-                                                            <span>1. Hoa Quả Còn Tươi Nguyên</span>
+                                                            <span>1. Đá Gel Còn Lạnh - Quả Tươi Nguyên</span>
                                                         </div>
                                                         <p class="text-[11px] text-slate-600 leading-relaxed">
-                                                            Đá gel còn lạnh sâu, hoa quả còn tươi cứng, không dập nát ➔ <b>Cộng hoàn lại 100% vào kho bán</b>.
+                                                            Kiện hàng hoàn về sớm, đá gel còn lạnh sâu, hoa quả đạt chuẩn xuất kho ➔ <b>Cộng hoàn lại 100% vào kho bán</b>.
                                                         </p>
                                                     </div>
                                                     <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" onsubmit="return confirm('Bạn có chắc chắn hoa quả còn tươi nguyên và muốn nhập lại kho bán?');">
@@ -323,25 +371,25 @@
                                                         <input type="hidden" name="restockNote" value="Kiểm tra kiện hoàn: Đá gel còn lạnh, hoa quả đạt chuẩn xuất kho lại">
                                                         <button type="submit" class="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
                                                             <i class="fa-solid fa-box-open"></i>
-                                                            <span>Xác Nhận Hàng Tươi - Nhập Lại Kho</span>
+                                                            <span>Nhập Lại Kho Bán</span>
                                                         </button>
                                                     </form>
                                                 </div>
 
-                                                <!-- LỰA CHỌN 2: BỊ HỎNG DO VẬN CHUYỂN (TIÊU HỦY) -->
+                                                <!-- LỰA CHỌN 2: CHUYỂN HOÀN QUÁ LÂU ĐÁ TAN QUẢ HỎNG -->
                                                 <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-col justify-between space-y-3">
                                                     <div class="space-y-1">
                                                         <div class="flex items-center gap-2 text-rose-800 font-extrabold text-xs">
-                                                            <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
-                                                            <span>2. Đứt Chuỗi Lạnh / Dập Nát Hỏng</span>
+                                                            <i class="fa-solid fa-trash-can text-rose-600"></i>
+                                                            <span>2. Đá Gel Tan - Quả Bị Nẫu / Hỏng</span>
                                                         </div>
                                                         <p class="text-[11px] text-slate-600 leading-relaxed">
-                                                            Hoa quả bị chảy nước, nát thối do vận chuyển quá lâu hoặc va đập ➔ <b>Tiêu hủy và ghi nhận vào Nhật ký hao hụt</b>.
+                                                            Thời gian lưu kho/quay đầu quá lâu làm đá gel tan hết, quả bị hấp hơi, chảy nước ➔ <b>Tiêu hủy và ghi sổ hao hụt</b>.
                                                         </p>
                                                     </div>
                                                     <button type="button" id="btnOpenReturnWasteModal" class="w-full py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
                                                         <i class="fa-solid fa-trash-can"></i>
-                                                        <span>Báo Hỏng / Tiêu Hủy Do Vận Chuyển</span>
+                                                        <span>Lập Phiếu Tiêu Hủy Hàng Hỏng</span>
                                                     </button>
                                                 </div>
                                             </div>

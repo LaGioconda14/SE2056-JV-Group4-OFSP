@@ -155,7 +155,7 @@
             </form>
 
             <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
-                <a href="${pageContext.request.contextPath}/home.jsp" class="back-link">
+                <a href="${pageContext.request.contextPath}/home" class="back-link">
                     <i class="bi bi-arrow-left"></i>
                     <span>Trang chủ</span>
                 </a>

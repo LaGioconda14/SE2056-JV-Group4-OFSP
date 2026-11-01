@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Review;
 import model.Product;
 import model.Shop;
 import service.IProductService;
@@ -66,9 +67,13 @@ public class DetailServlet extends HttpServlet {
                     Shop shop = null;
                     int shopTotalProducts = 0;
                     try {
-                        if (product.getShopId() > 0) {
-                            shop = shopDAO.getShopById(product.getShopId());
-                            shopTotalProducts = shopDAO.getTotalProductsCountByShopId(product.getShopId());
+                        long targetShopId = product.getShopId() > 0 ? product.getShopId() : 1L;
+                        shop = shopDAO.getShopById(targetShopId);
+                        if (shop == null && targetShopId != 1L) {
+                            shop = shopDAO.getShopById(1L);
+                        }
+                        if (shop != null) {
+                            shopTotalProducts = shopDAO.getTotalProductsCountByShopId(shop.getShopId());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -83,15 +88,18 @@ public class DetailServlet extends HttpServlet {
                         }
                         shop.setShopName(defaultShopName);
                         shop.setStatus("ACTIVE");
-                        shop.setRating(new BigDecimal("4.9"));
-                        shop.setProvince(product.getOrigin() != null && !product.getOrigin().trim().isEmpty() ? product.getOrigin() : "Thành phố Hồ Chí Minh");
+                        shop.setRating(BigDecimal.ZERO);
+                        shop.setProvince(product.getOrigin() != null && !product.getOrigin().trim().isEmpty() ? product.getOrigin() : "Đà Lạt, Lâm Đồng");
                         shop.setDescription("Hệ thống phân phối nông sản tươi sạch, chuẩn hữu cơ VietGAP & GlobalGAP hàng đầu Việt Nam.");
                         shop.setLogoUrl("https://images.unsplash.com/photo-1542838132-92c53300491e?w=150");
-                        shopTotalProducts = 283;
+                        shopTotalProducts = 0;
                     }
                     request.setAttribute("shop", shop);
                     request.setAttribute("shopTotalProducts", shopTotalProducts);
 
+                    // Lấy danh sách đánh giá thật từ bảng reviews
+                    List<Review> reviews = productDAO.getReviewsByProductId(product.getId());
+                    request.setAttribute("reviews", reviews);
                     // Tính thời gian tham gia thực tế từ createdAt của shop
                     String shopJoinedTime = "Đã xác minh";
                     if (shop.getCreatedAt() != null) {

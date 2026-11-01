@@ -12,6 +12,7 @@ import model.DriverProfile;
 import enums.DeliveryStatus;
 import enums.SubOrderStatus;
 import util.DBContext;
+import util.PasswordUtil;
 
 public class DriverDAO extends DBContext {
 
@@ -188,7 +189,8 @@ public class DriverDAO extends DBContext {
                 try (PreparedStatement psUser = conn.prepareStatement(insertUserSql, PreparedStatement.RETURN_GENERATED_KEYS)) {
                     psUser.setString(1, email);
                     psUser.setString(2, phone);
-                    psUser.setString(3, (password != null && !password.trim().isEmpty()) ? password.trim() : "123456");
+                    String plainPass = (password != null && !password.trim().isEmpty()) ? password.trim() : "123456";
+                    psUser.setString(3, PasswordUtil.hashPassword(plainPass));
                     psUser.setNString(4, fullName);
                     psUser.executeUpdate();
                     try (ResultSet rsKey = psUser.getGeneratedKeys()) {

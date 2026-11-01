@@ -6,10 +6,7 @@
     <head>
         <title>Quản Lý Kho & Nông Sản - Kênh Người Bán</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
-
-
-
-            </head>
+    </head>
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">

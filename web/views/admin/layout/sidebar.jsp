@@ -3,22 +3,30 @@
 
 <aside class="admin-sidebar">
     <div class="sidebar-header">
-        <div class="brand-icon-box">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-            </svg>
-        </div>
-        <div class="brand-text">
-            <h4>Gốc Vườn</h4>
-            <span class="brand-badge" data-i18n="brand_badge">QUẢN TRỊ VIÊN</span>
-        </div>
+        <a href="${pageContext.request.contextPath}/admin/dashboard" class="d-flex align-items-center gap-2 text-decoration-none text-dark">
+            <div class="brand-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                    <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                </svg>
+            </div>
+            <div class="brand-text">
+                <h4>Gốc Vườn</h4>
+                <span class="brand-badge" data-i18n="brand_badge">QUẢN TRỊ VIÊN</span>
+            </div>
+        </a>
     </div>
 
     <div class="sidebar-content">
         <!-- 1. CORE -->
         <div class="nav-section-title" data-i18n="nav_sec_core">DANH MỤC CHÍNH</div>
         <ul class="sidebar-nav">
+            <li>
+                <a href="${pageContext.request.contextPath}/admin/dashboard" class="sidebar-nav-link ${param.activePage == 'dashboard' ? 'active' : ''}">
+                    <i class="bi bi-grid-1x2"></i>
+                    <span data-i18n="nav_dashboard">Tổng Quan Dashboard</span>
+                </a>
+            </li>
             <li>
                 <a href="${pageContext.request.contextPath}/admin/users" class="sidebar-nav-link ${param.activePage == 'users' ? 'active' : ''}">
                     <i class="bi bi-people"></i>

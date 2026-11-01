@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import model.Category;
 import model.Product;
 import model.ProductVariant;
+import model.Review;
 import service.IProductService;
 
 public class ProductServiceImpl implements IProductService {
@@ -411,5 +412,15 @@ public class ProductServiceImpl implements IProductService {
                                             Double minRating, List<String> origins,
                                             Boolean inStockOnly) {
         return productDAO.countFilteredCatalogProducts(keyword, categoryParams, minPrice, maxPrice, minRating, origins, inStockOnly);
+    }
+
+    @Override
+    public List<Review> getReviewsByProductId(long productId) {
+        return productDAO.getReviewsByProductId(productId);
+    }
+
+    @Override
+    public double[] getProductRatingStats(long productId) {
+        return productDAO.getProductRatingStats(productId);
     }
 }

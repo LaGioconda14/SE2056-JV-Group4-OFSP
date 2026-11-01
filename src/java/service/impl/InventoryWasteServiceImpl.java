@@ -4,6 +4,7 @@ import dao.InventoryWasteDAO;
 import java.util.List;
 import java.util.Map;
 import model.InventoryWasteLog;
+import model.SubOrder;
 import model.WasteStatisticDTO;
 import service.IInventoryWasteService;
 
@@ -32,6 +33,11 @@ public class InventoryWasteServiceImpl implements IInventoryWasteService {
     }
 
     @Override
+    public boolean recordManualWaste(long shopId, long variantId, String wasteStage, int quantity, String reasonNote, Long loggedBy) {
+        return wasteDAO.recordManualWaste(shopId, variantId, wasteStage, quantity, reasonNote, loggedBy);
+    }
+
+    @Override
     public boolean logOrderCancellationWaste(long subOrderId, String reason, Long loggedBy) {
         return wasteDAO.logOrderCancellationWaste(subOrderId, reason, loggedBy);
     }
@@ -44,5 +50,15 @@ public class InventoryWasteServiceImpl implements IInventoryWasteService {
     @Override
     public boolean logTransitDamageWaste(long subOrderId, String note, Long loggedBy, Map<Long, Integer> wastedQtyMap) {
         return wasteDAO.logTransitDamageWaste(subOrderId, note, loggedBy, wastedQtyMap);
+    }
+
+    @Override
+    public boolean logTransitDamageWasteByCode(String subOrderCode, String note, Long loggedBy, Map<Long, Integer> wastedQtyMap) {
+        return wasteDAO.logTransitDamageWasteByCode(subOrderCode, note, loggedBy, wastedQtyMap);
+    }
+
+    @Override
+    public List<SubOrder> getPendingReturnedOrdersByShop(long shopId) {
+        return wasteDAO.getPendingReturnedOrdersByShop(shopId);
     }
 }

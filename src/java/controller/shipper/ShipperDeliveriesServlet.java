@@ -35,32 +35,22 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             return;
         }
 
-        long driverId = user.getId();
         if (!"DRIVER".equalsIgnoreCase(user.getRole())) {
-            // If admin or staff is viewing, allow testing as driver 9
-            if ("ADMIN".equalsIgnoreCase(user.getRole()) || "STAFF".equalsIgnoreCase(user.getRole())) {
-                driverId = 9;
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-                return;
-            }
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
         }
 
+        long driverId = user.getId();
         DriverProfile driverProfile = driverService.getDriverProfileByUserId(driverId);
         if (driverProfile == null) {
             driverProfile = new DriverProfile();
             driverProfile.setUserId(driverId);
-            driverProfile.setFullName(user.getFullName() != null ? user.getFullName() : "Tài xế FreshFruit");
-            driverProfile.setPhone(user.getPhone() != null ? user.getPhone() : "0900000000");
-            driverProfile.setVehicleType("Xe máy chuyên dụng");
-            driverProfile.setLicensePlate("29-F1 888.88");
-            driverProfile.setColdBoxType("Thùng giữ nhiệt FreshBox");
-            driverProfile.setOperatingCity("Toàn quốc");
-            driverProfile.setApprovalStatus("APPROVED");
-            driverProfile.setAvailabilityStatus("AVAILABLE");
-        } else if (!driverProfile.isApproved()) {
-            driverProfile.setApprovalStatus("APPROVED");
+            driverProfile.setFullName(user.getFullName());
+            driverProfile.setPhone(user.getPhone());
+            driverProfile.setApprovalStatus("PENDING");
+            driverProfile.setAvailabilityStatus("UNAVAILABLE");
         }
+
 
         List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId, "all", null);
 
@@ -101,15 +91,11 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             return;
         }
 
-        long driverId = user.getId();
         if (!"DRIVER".equalsIgnoreCase(user.getRole())) {
-            if ("ADMIN".equalsIgnoreCase(user.getRole()) || "STAFF".equalsIgnoreCase(user.getRole())) {
-                driverId = 9;
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-                return;
-            }
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
         }
+        long driverId = user.getId();
 
         String action = request.getParameter("action");
         String deliveryIdStr = request.getParameter("deliveryId");

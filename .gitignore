@@ -31,4 +31,8 @@ src/java/oauth.properties
 # OAuth private credentials (keep secret)
 *oauth.properties
 !*oauth.properties.example
+
+# Database configuration credentials (keep secret)
+*db.properties
+!*db.properties.example
 .vscode/

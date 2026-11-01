@@ -13,6 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.InventoryWasteLog;
 import model.WasteStatisticDTO;
+import model.SubOrder;
+import model.ShippingAddress;
 import util.DBContext;
 
 public class InventoryWasteDAO extends DBContext {
@@ -95,6 +97,10 @@ public class InventoryWasteDAO extends DBContext {
     }
 
     public boolean recordManualWaste(long shopId, long variantId, int quantity, String reasonNote, Long loggedBy) {
+        return recordManualWaste(shopId, variantId, "WAREHOUSE_EXPIRED", quantity, reasonNote, loggedBy);
+    }
+
+    public boolean recordManualWaste(long shopId, long variantId, String wasteStage, int quantity, String reasonNote, Long loggedBy) {
         Connection conn = getConnection();
         if (conn == null) {
             return false;
@@ -128,6 +134,7 @@ public class InventoryWasteDAO extends DBContext {
                 return false;
             }
 
+            // 1. Trừ tồn kho tự động trong product_variants
             String updateStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity - ?, updated_at = CURRENT_TIMESTAMP WHERE variant_id = ?";
             try (PreparedStatement psStock = conn.prepareStatement(updateStockSql)) {
                 psStock.setInt(1, quantity);
@@ -135,22 +142,38 @@ public class InventoryWasteDAO extends DBContext {
                 psStock.executeUpdate();
             }
 
+            // 2. Cập nhật lô hàng tương ứng (nếu có bảng product_batches)
+            try {
+                String updateBatchSql = "UPDATE product_batches SET current_quantity = CASE WHEN current_quantity >= ? THEN current_quantity - ? ELSE 0 END WHERE variant_id = ?";
+                try (PreparedStatement psBatch = conn.prepareStatement(updateBatchSql)) {
+                    psBatch.setInt(1, quantity);
+                    psBatch.setInt(2, quantity);
+                    psBatch.setLong(3, variantId);
+                    psBatch.executeUpdate();
+                }
+            } catch (SQLException ignored) {
+                // Bỏ qua nếu bảng batches không tồn tại
+            }
+
+            // 3. Ghi log tiêu hủy
+            String stage = (wasteStage != null && !wasteStage.isBlank()) ? wasteStage.trim() : "WAREHOUSE_EXPIRED";
             BigDecimal totalLoss = price.multiply(BigDecimal.valueOf(quantity));
             String insertSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, quantity, "
                     + "unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
-                    + "VALUES (?, ?, NULL, 'WAREHOUSE_EXPIRED', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+                    + "VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
             try (PreparedStatement psIns = conn.prepareStatement(insertSql)) {
                 psIns.setLong(1, shopId);
                 psIns.setLong(2, variantId);
-                psIns.setInt(3, quantity);
-                psIns.setNString(4, unit != null ? unit : "kg");
-                psIns.setBigDecimal(5, price);
-                psIns.setBigDecimal(6, totalLoss);
-                psIns.setNString(7, reasonNote);
+                psIns.setString(3, stage);
+                psIns.setInt(4, quantity);
+                psIns.setNString(5, unit != null ? unit : "kg");
+                psIns.setBigDecimal(6, price);
+                psIns.setBigDecimal(7, totalLoss);
+                psIns.setNString(8, reasonNote);
                 if (loggedBy != null) {
-                    psIns.setLong(8, loggedBy);
+                    psIns.setLong(9, loggedBy);
                 } else {
-                    psIns.setNull(8, Types.BIGINT);
+                    psIns.setNull(9, Types.BIGINT);
                 }
                 psIns.executeUpdate();
             }
@@ -633,5 +656,86 @@ public class InventoryWasteDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error calculating waste statistics for shop " + shopId, ex);
         }
         return dto;
+    }
+
+    public boolean logTransitDamageWasteByCode(String subOrderCode, String note, Long loggedBy, Map<Long, Integer> wastedQtyMap) {
+        String sql = "SELECT sub_order_id FROM sub_orders WHERE sub_order_code = ?";
+        Connection conn = getConnection();
+        if (conn == null) {
+            return false;
+        }
+        long subOrderId = 0;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, subOrderCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    subOrderId = rs.getLong("sub_order_id");
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error finding sub_order_id for code: " + subOrderCode, ex);
+            return false;
+        }
+        if (subOrderId <= 0) {
+            return false;
+        }
+        return logTransitDamageWaste(subOrderId, note, loggedBy, wastedQtyMap);
+    }
+
+    public List<SubOrder> getPendingReturnedOrdersByShop(long shopId) {
+        List<SubOrder> list = new ArrayList<>();
+        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
+                + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
+                + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
+                + "       o.order_code, o.payment_status, o.payment_method, "
+                + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.city "
+                + "FROM sub_orders so "
+                + "JOIN orders o ON so.order_id = o.order_id "
+                + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
+                + "WHERE so.shop_id = ? AND so.status IN ('RETURNED', 'FAILED') "
+                + "ORDER BY so.updated_at DESC, so.created_at DESC";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            return list;
+        }
+
+        OrderFulfillmentDAO fulfillmentDAO = new OrderFulfillmentDAO();
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    SubOrder so = new SubOrder();
+                    so.setSubOrderId(rs.getLong("sub_order_id"));
+                    so.setSubOrderCode(rs.getString("sub_order_code"));
+                    so.setOrderId(rs.getLong("order_id"));
+                    so.setOrderCode(rs.getString("order_code"));
+                    so.setShopId(rs.getLong("shop_id"));
+                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
+                    so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
+                    so.setShopDiscount(rs.getBigDecimal("shop_discount"));
+                    so.setShopTotal(rs.getBigDecimal("shop_total"));
+                    so.setStatus(rs.getString("status"));
+                    so.setCancelReason(rs.getNString("cancel_reason"));
+                    so.setCreatedAt(rs.getTimestamp("created_at"));
+                    so.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    so.setPaymentStatus(rs.getString("payment_status"));
+                    so.setPaymentMethod(rs.getString("payment_method"));
+                    ShippingAddress addr = new ShippingAddress();
+                    addr.setRecipientName(rs.getString("recipient_name"));
+                    addr.setRecipientPhone(rs.getString("recipient_phone"));
+                    addr.setStreetAddress(rs.getString("street_address"));
+                    addr.setCity(rs.getString("city"));
+                    so.setShippingAddress(addr);
+
+                    so.setItems(fulfillmentDAO.getOrderItemsBySubOrderId(so.getSubOrderId()));
+                    list.add(so);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error fetching pending returned orders for shop " + shopId, ex);
+        }
+        return list;
     }
 }

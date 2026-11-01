@@ -8,11 +8,6 @@
     <head>
         <title>Chi Tiết Đơn Hàng Con #${subOrder.subOrderCode} | Gốc Vườn Seller Center</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
-
-
-
-
-
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-order-detail.css">
         <script src="${pageContext.request.contextPath}/assets/js/shop-order-detail.js"></script>
     </head>

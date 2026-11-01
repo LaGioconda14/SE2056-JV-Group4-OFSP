@@ -1,0 +1,9 @@
+# SQL Server Database Configuration Template
+# Copy this file to src/java/db.properties and set your local SQL Server credentials
+db.server=localhost
+db.port=1433
+db.database=OnlineFruitShop
+# Leave instance empty if using default MSSQLSERVER instance
+db.instance=SQLEXPRESS
+db.username=sa
+db.password=YOUR_PASSWORD_HERE

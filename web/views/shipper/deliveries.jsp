@@ -34,7 +34,7 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                     <li><a class="dropdown-item" href="${pageContext.request.contextPath}/profile"><i class="bi bi-person me-2"></i> Hồ sơ cá nhân</a></li>
-                    <li><a class="dropdown-item" href="${pageContext.request.contextPath}/home.jsp"><i class="bi bi-shop me-2"></i> Xem sàn mua sắm</a></li>
+                    <li><a class="dropdown-item" href="${pageContext.request.contextPath}/home"><i class="bi bi-shop me-2"></i> Xem sàn mua sắm</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a></li>
                 </ul>

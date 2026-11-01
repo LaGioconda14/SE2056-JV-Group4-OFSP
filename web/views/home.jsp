@@ -2,24 +2,6 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%
-    // Tự động load danh sách sản phẩm trang chủ và danh mục qua Service nếu truy cập trực tiếp
-    if (request.getAttribute("listProduct") == null) {
-        service.IProductService pService = new service.impl.ProductServiceImpl();
-        request.setAttribute("listProduct", pService.getHomeProducts());
-        request.setAttribute("homeTabs", pService.getHomeFeaturedTabs());
-        request.setAttribute("hierarchyCategories", pService.getHierarchyCategories());
-        request.setAttribute("categories", pService.getAllCategories());
-    }
-    if (request.getAttribute("homeTabs") == null) {
-        service.IProductService pService = new service.impl.ProductServiceImpl();
-        request.setAttribute("homeTabs", pService.getHomeFeaturedTabs());
-    }
-    if (request.getAttribute("hierarchyCategories") == null) {
-        service.IProductService pService = new service.impl.ProductServiceImpl();
-        request.setAttribute("hierarchyCategories", pService.getHierarchyCategories());
-    }
-%>
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth">
     <head>

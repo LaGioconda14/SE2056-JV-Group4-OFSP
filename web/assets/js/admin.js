@@ -487,97 +487,35 @@ document.addEventListener('DOMContentLoaded', function () {
     const currentLang = localStorage.getItem('admin_lang') || 'vi';
     window.setLanguage(currentLang);
 
-    // 2. Initialize Charts
-    const revenueCtx = document.getElementById('revenueVelocityChart');
-    if (revenueCtx && typeof Chart !== 'undefined') {
-        const gradient = revenueCtx.getContext('2d').createLinearGradient(0, 0, 0, 220);
-        gradient.addColorStop(0, 'rgba(21, 128, 61, 0.35)');
-        gradient.addColorStop(1, 'rgba(21, 128, 61, 0.01)');
-
-        const gmvLabels = window.platformChartLabels || [];
-        const gmvValues = window.platformGmvData || [];
-        const commValues = window.platformCommData || [];
-
-        new Chart(revenueCtx, {
-            type: 'line',
-            data: {
-                labels: gmvLabels,
-                datasets: [
-                    {
-                        label: 'GMV Sàn',
-                        data: gmvValues,
-                        borderColor: '#15803d',
-                        backgroundColor: gradient,
-                        borderWidth: 2.5,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: gmvValues.length > 0 ? 4 : 0,
-                        pointBackgroundColor: '#15803d',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
-                    },
-                    {
-                        label: 'Hoa Hồng Sàn',
-                        data: commValues,
-                        borderColor: '#ea580c',
-                        borderWidth: 2,
-                        borderDash: [4, 4],
-                        fill: false,
-                        tension: 0.4,
-                        pointRadius: commValues.length > 0 ? 3 : 0
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: '#94a3b8', font: { size: 11, family: "'Plus Jakarta Sans', sans-serif" } }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: '#f8fafc' },
-                        ticks: {
-                            color: '#94a3b8',
-                            font: { size: 10, family: "'Plus Jakarta Sans', sans-serif" },
-                            callback: function(val) { return '₫' + val + 'M'; }
-                        }
-                    }
-                }
-            }
-        });
-    }
+    // 2. Initialize Category Chart
 
     const categoryCtx = document.getElementById('categoryYieldChart');
     if (categoryCtx && typeof Chart !== 'undefined') {
         const catLabels = window.platformCatLabels || [];
         const catData = window.platformCatData || [];
 
-        new Chart(categoryCtx, {
-            type: 'doughnut',
-            data: {
-                labels: catLabels,
-                datasets: [{
-                    data: catData,
-                    backgroundColor: ['#15803d', '#22c55e', '#ea580c', '#fb923c', '#3b82f6', '#06b6d4'],
-                    borderWidth: 3,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { display: false }
+        if (catLabels.length > 0 && catData.length > 0) {
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catData,
+                        backgroundColor: ['#15803d', '#22c55e', '#ea580c', '#fb923c', '#3b82f6', '#06b6d4'],
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: { display: false }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     // Client-side quick filter for users table

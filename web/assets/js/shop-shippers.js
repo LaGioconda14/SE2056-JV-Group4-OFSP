@@ -4,19 +4,15 @@
  */
 
 function openCreateModal() {
-    var backdrop = document.getElementById('createModalBackdrop');
     var modal = document.getElementById('createShipperModal');
-    if (backdrop && modal) {
-        backdrop.classList.remove('hidden');
+    if (modal) {
         modal.classList.remove('hidden');
     }
 }
 
 function closeCreateModal() {
-    var backdrop = document.getElementById('createModalBackdrop');
     var modal = document.getElementById('createShipperModal');
-    if (backdrop && modal) {
-        backdrop.classList.add('hidden');
+    if (modal) {
         modal.classList.add('hidden');
     }
 }
@@ -38,19 +34,15 @@ function openEditModal(driverId, fullName, phone, vehicleType, vehiclePlate, col
     if (editColdStorageType) editColdStorageType.value = coldStorageType || '';
     if (editAvailabilityStatus) editAvailabilityStatus.value = status || 'AVAILABLE';
 
-    var backdrop = document.getElementById('editModalBackdrop');
     var modal = document.getElementById('editShipperModal');
-    if (backdrop && modal) {
-        backdrop.classList.remove('hidden');
+    if (modal) {
         modal.classList.remove('hidden');
     }
 }
 
 function closeEditModal() {
-    var backdrop = document.getElementById('editModalBackdrop');
     var modal = document.getElementById('editShipperModal');
-    if (backdrop && modal) {
-        backdrop.classList.add('hidden');
+    if (modal) {
         modal.classList.add('hidden');
     }
 }

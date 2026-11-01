@@ -42,13 +42,13 @@
                 <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm flex items-center gap-2">
                     <i class="fa-solid fa-circle-check"></i> ${sessionScope.successMessage}
                 </div>
-                <% session.removeAttribute("successMessage"); %>
+                <c:remove var="successMessage" scope="session"/>
             </c:if>
             <c:if test="${not empty sessionScope.errorMessage}">
                 <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-2">
                     <i class="fa-solid fa-circle-exclamation"></i> ${sessionScope.errorMessage}
                 </div>
-                <% session.removeAttribute("errorMessage"); %>
+                <c:remove var="errorMessage" scope="session"/>
             </c:if>
 
             <!-- FORM (multipart để upload logo/banner) -->
@@ -167,7 +167,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Ngày sinh</label>
-                                <input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500" type="date" name="birthDate" value="${owner.birthDate}" max="<%= java.time.LocalDate.now() %>"/>
+                                <input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:border-emerald-500" type="date" name="birthDate" value="${owner.birthDate}"/>
                             </div>
                         </div>
                     </div>

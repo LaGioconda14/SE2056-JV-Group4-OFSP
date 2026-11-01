@@ -6,6 +6,7 @@ import java.util.Map;
 import model.Category;
 import model.Product;
 import model.ProductVariant;
+import model.Review;
 
 public interface IProductService {
     //lấy danh sách sản phẩm theo shopID
@@ -97,4 +98,6 @@ public interface IProductService {
                                     BigDecimal minPrice, BigDecimal maxPrice,
                                     Double minRating, List<String> origins,
                                     Boolean inStockOnly);
+    List<Review> getReviewsByProductId(long productId);
+    double[] getProductRatingStats(long productId);
 }

@@ -3,7 +3,7 @@
 
 <nav class="navbar-main">
     <div class="container navbar-main-inner">
-        <a href="${pageContext.request.contextPath}/home.jsp" class="brand-link">
+        <a href="${pageContext.request.contextPath}/home" class="brand-link">
             <span class="fs-2">🍎</span>
             <div>
                 <div class="brand-title">Gốc Vườn</div>
@@ -90,7 +90,7 @@
 <div class="sub-nav">
     <div class="container sub-nav-inner">
         <div class="sub-nav-links">
-            <a href="${pageContext.request.contextPath}/home.jsp" class="nav-link">Trang Chủ</a>
+            <a href="${pageContext.request.contextPath}/home" class="nav-link">Trang Chủ</a>
             <a href="#" class="nav-link">Cửa Hàng</a>
             <a href="#" class="nav-link">Danh Mục Trái Cây</a>
             <a href="#" class="nav-link">Hộp Quà & Combo</a>

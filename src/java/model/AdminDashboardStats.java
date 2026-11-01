@@ -34,6 +34,8 @@ public class AdminDashboardStats implements Serializable {
     private double certifiedProductRate;
     private int completedOrdersCount;
     private int processingOrdersCount;
+    private int totalProductsCount;
+    private int certifiedProductsCount;
 
     // Next Payout Cycle
     private double nextPayoutVolume;
@@ -110,7 +112,7 @@ public class AdminDashboardStats implements Serializable {
     }
 
     public double getAvgTakeRate() {
-        if (totalGmv <= 0) return 7.8;
+        if (totalGmv <= 0) return 0.0;
         return Math.round((netCommission / totalGmv) * 1000.0) / 10.0;
     }
 
@@ -214,7 +216,7 @@ public class AdminDashboardStats implements Serializable {
     }
 
     public String getNextPayoutDate() {
-        return nextPayoutDate != null ? nextPayoutDate : "Thứ Sáu, 04/10";
+        return nextPayoutDate != null ? nextPayoutDate : "Chưa có kỳ mới";
     }
 
     public void setNextPayoutDate(String nextPayoutDate) {
@@ -222,7 +224,7 @@ public class AdminDashboardStats implements Serializable {
     }
 
     public String getChartLabelsJson() {
-        return chartLabelsJson != null ? chartLabelsJson : "['01/10', '06/10', '11/10', '16/10', '21/10', '26/10', 'Hôm nay']";
+        return chartLabelsJson != null ? chartLabelsJson : "[]";
     }
 
     public void setChartLabelsJson(String chartLabelsJson) {
@@ -230,7 +232,7 @@ public class AdminDashboardStats implements Serializable {
     }
 
     public String getChartGmvJson() {
-        return chartGmvJson != null ? chartGmvJson : "[42000, 68000, 54000, 78000, 98400, 89000, 114000]";
+        return chartGmvJson != null ? chartGmvJson : "[]";
     }
 
     public void setChartGmvJson(String chartGmvJson) {
@@ -238,7 +240,7 @@ public class AdminDashboardStats implements Serializable {
     }
 
     public String getChartCommissionJson() {
-        return chartCommissionJson != null ? chartCommissionJson : "[3360, 5440, 4320, 6240, 7872, 7120, 9120]";
+        return chartCommissionJson != null ? chartCommissionJson : "[]";
     }
 
     public void setChartCommissionJson(String chartCommissionJson) {
@@ -246,7 +248,7 @@ public class AdminDashboardStats implements Serializable {
     }
 
     public String getCategoryLabelsJson() {
-        return categoryLabelsJson != null ? categoryLabelsJson : "['Cam, Bưởi & Táo Lê', 'Nhiệt Đới & Đặc Sản', 'Dâu Tây & Quả Mọng', 'Dưa Lưới & Nho', 'Hộp Quà Biếu Tặng']";
+        return categoryLabelsJson != null ? categoryLabelsJson : "[]";
     }
 
     public void setCategoryLabelsJson(String categoryLabelsJson) {
@@ -254,7 +256,7 @@ public class AdminDashboardStats implements Serializable {
     }
 
     public String getCategoryDataJson() {
-        return categoryDataJson != null ? categoryDataJson : "[34, 28, 18, 12, 8]";
+        return categoryDataJson != null ? categoryDataJson : "[]";
     }
 
     public void setCategoryDataJson(String categoryDataJson) {
@@ -367,6 +369,21 @@ public class AdminDashboardStats implements Serializable {
 
     public void setProcessingOrdersCount(int processingOrdersCount) {
         this.processingOrdersCount = processingOrdersCount;
+    }
+    public int getTotalProductsCount() {
+        return totalProductsCount;
+    }
+
+    public void setTotalProductsCount(int totalProductsCount) {
+        this.totalProductsCount = totalProductsCount;
+    }
+
+    public int getCertifiedProductsCount() {
+        return certifiedProductsCount;
+    }
+
+    public void setCertifiedProductsCount(int certifiedProductsCount) {
+        this.certifiedProductsCount = certifiedProductsCount;
     }
 
     public static String formatCurrency(double amount) {

@@ -123,14 +123,18 @@ public class Product {
    
 
     public double getRating() { 
-        return rating > 0 ? rating : 4.9; 
+        return rating; 
     }
     public void setRating(double rating) { this.rating = rating; }
 
     public int getReviewsCount() { 
-        return reviewsCount > 0 ? reviewsCount : (int)(24 + (id * 13) % 115); 
+        return reviewsCount; 
     }
     public void setReviewsCount(int reviewsCount) { this.reviewsCount = reviewsCount; }
+
+    public String getRatingFormatted() {
+        return String.format(java.util.Locale.US, "%.1f", rating);
+    }
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }

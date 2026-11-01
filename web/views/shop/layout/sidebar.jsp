@@ -17,6 +17,7 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="sbShopName" value="${not empty sessionScope.shopName ? sessionScope.shopName : (not empty sessionScope.shopObj.shopName ? sessionScope.shopObj.shopName : 'Gian hàng của tôi')}" />
 <c:set var="sbLowStock" value="${not empty requestScope.sidebarLowStockCount ? requestScope.sidebarLowStockCount : 0}" />
+<c:set var="sbPendingOrders" value="${not empty requestScope.sidebarPendingOrdersCount ? requestScope.sidebarPendingOrdersCount : (not empty sessionScope.sidebarPendingOrdersCount ? sessionScope.sidebarPendingOrdersCount : 0)}" />
 
 <div class="shop-sidebar-overlay" id="shopSidebarOverlay"></div>
 
@@ -76,16 +77,22 @@
                 </span>
                 <span class="badge-counter-red">${sbLowStock}</span>
             </a>
+            <a href="${ctx}/shop/waste" class="shop-sidebar-link ${param.active == 'waste' ? 'active' : ''}">
+                <span class="flex items-center gap-3">
+                    <i class="fa-solid fa-trash-can text-slate-400 text-sm w-4 text-center"></i>
+                    <span>Hao hụt & Hư hỏng</span>
+                </span>
+                <span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[10px] font-bold">QC</span>
+            </a>
 
             <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">ĐƠN HÀNG & GIAO VẬN</div>
             <a href="${pageContext.request.contextPath}/shop/orders" 
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'orders' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
+               class="shop-sidebar-link ${param.active == 'orders' || curMenu eq 'orders' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
                     <i class="fa-solid fa-receipt text-slate-400 text-sm w-4 text-center"></i>
                     <span>Đơn hàng con</span>
                 </span>
-                <%-- TODO: thay số 8 bằng số đơn chờ xử lý thật khi có chức năng đơn hàng của shop --%>
-                <span class="badge-counter-orange">8</span>
+                <span class="badge-counter-orange">${sbPendingOrders}</span>
             </a>
             <a href="${ctx}/shop/shipping" class="shop-sidebar-link ${param.active == 'shipping' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
@@ -94,9 +101,9 @@
                 </span>
             </a>
             <a href="${pageContext.request.contextPath}/shop/shippers" 
-               class="flex items-center justify-between px-3 py-2.5 rounded-xl ${curMenu eq 'shippers' ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/60 shadow-2xs' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold'} text-xs transition-all">
+               class="shop-sidebar-link ${param.active == 'shippers' || curMenu eq 'shippers' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
-                    <i class="fa-solid fa-truck-fast ${curMenu eq 'shippers' ? 'text-emerald-600' : 'text-slate-400'} text-sm w-4 text-center"></i>
+                    <i class="fa-solid fa-truck-fast text-slate-400 text-sm w-4 text-center"></i>
                     <span>Nhân viên giao hàng</span>
                 </span>
                 <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">Shop</span>

@@ -8,10 +8,6 @@
     <head>
         <title>Quản Lý Đơn Hàng Con - Gốc Vườn Seller Center</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
-
-
-
-
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-orders.css">
         <script src="${pageContext.request.contextPath}/assets/js/shop-orders.js"></script>
     </head>

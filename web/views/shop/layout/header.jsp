@@ -52,7 +52,9 @@
         <!-- Notification icon with badge -->
         <button class="header-icon-action" type="button" title="Thông báo">
             <i class="fa-regular fa-bell text-sm"></i>
-            <span class="header-icon-badge">5</span>
+            <c:if test="${not empty notificationCount && notificationCount > 0}">
+                <span class="header-icon-badge">${notificationCount}</span>
+            </c:if>
         </button>
 
         <!-- User profile -->
