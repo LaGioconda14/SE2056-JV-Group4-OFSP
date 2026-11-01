@@ -226,9 +226,14 @@
                                         <div>
                                             <a href="${pageContext.request.contextPath}/detail?id=${p.id}" class="product-card-img-wrap">
                                                 <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                                <c:if test="${p.discountPercent > 0}">
-                                                    <span class="absolute top-3 left-3 bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-full shadow">-${p.discountPercent}%</span>
-                                                </c:if>
+                                                <c:choose>
+                                                    <c:when test="${p.onPromotion}">
+                                                        <span class="absolute top-3 left-3 bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-full shadow" title="<c:out value='${p.promotionName}'/>"><c:out value="${p.promotionLabel}"/></span>
+                                                    </c:when>
+                                                    <c:when test="${p.discountPercent > 0}">
+                                                        <span class="absolute top-3 left-3 bg-rose-500 text-white font-bold text-[10px] px-2.5 py-1 rounded-full shadow">-${p.discountPercent}%</span>
+                                                    </c:when>
+                                                </c:choose>
                                             </a>
                                             <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">${p.categoryName}</span>
                                             <h3 class="font-bold text-sm text-gray-900 mt-1 mb-2 line-clamp-2">

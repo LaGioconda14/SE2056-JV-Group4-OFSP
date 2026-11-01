@@ -32,7 +32,7 @@
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-black text-slate-900 tracking-tight">Chương trình khuyến mãi</h1>
-                    <p class="text-sm text-slate-500 mt-1">Giảm giá tự động trên sản phẩm được chọn trong một khoảng thời gian — khách không cần nhập mã.</p>
+                    <p class="text-sm text-slate-500 mt-1">Ưu đãi tự động trên sản phẩm được chọn (giảm %, giảm tiền, đồng giá, mua X tặng Y, mua nhiều giảm sâu) — khách không cần nhập mã, hiển thị trực tiếp trên trang sản phẩm, giỏ hàng và thanh toán.</p>
                 </div>
                 <a href="${ctx}/shop/promotions?action=new" class="mk-btn-primary self-start md:self-auto">
                     <i class="fa-solid fa-plus"></i> Tạo khuyến mãi mới
@@ -81,7 +81,7 @@
                                 <thead>
                                     <tr>
                                         <th>Chương trình</th>
-                                        <th>Mức giảm</th>
+                                        <th>Loại &amp; ưu đãi</th>
                                         <th>Sản phẩm tham gia</th>
                                         <th>Thời gian</th>
                                         <th>Trạng thái</th>
@@ -96,18 +96,24 @@
                                                 <c:if test="${not empty p.description}"><div class="text-[11px] text-slate-400 max-w-xs truncate"><c:out value="${p.description}"/></div></c:if>
                                             </td>
                                             <td>
+                                                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700"><c:out value="${p.typeLabel}"/></span>
+                                                <div class="mt-1 font-extrabold text-slate-900"><c:out value="${p.badgeLabel}"/></div>
                                                 <c:choose>
-                                                    <c:when test="${p.percentage}">
-                                                        <div class="font-extrabold text-slate-900">Giảm <fmt:formatNumber value="${p.discountValue}" maxFractionDigits="1"/>%</div>
+                                                    <c:when test="${p.percentage or p.volume}">
                                                         <c:if test="${not empty p.maxDiscountAmount and p.maxDiscountAmount > 0}">
                                                             <div class="text-[11px] text-slate-500">Tối đa <fmt:formatNumber value="${p.maxDiscountAmount}" pattern="#,##0"/> ₫/sp</div>
                                                         </c:if>
+                                                        <c:if test="${p.volume}"><div class="text-[11px] text-slate-500">cho mọi sản phẩm khi mua từ ${p.minQuantity}</div></c:if>
                                                     </c:when>
-                                                    <c:otherwise>
-                                                        <div class="font-extrabold text-slate-900">Giảm <fmt:formatNumber value="${p.discountValue}" pattern="#,##0"/> ₫</div>
-                                                        <div class="text-[11px] text-slate-500">trên mỗi sản phẩm</div>
-                                                    </c:otherwise>
+                                                    <c:when test="${p.buyXGetY}"><div class="text-[11px] text-slate-500">cùng sản phẩm, tính tự động trong giỏ</div></c:when>
+                                                    <c:otherwise><div class="text-[11px] text-slate-500">trên mỗi sản phẩm</div></c:otherwise>
                                                 </c:choose>
+                                                <c:if test="${p.scheduled}">
+                                                    <div class="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800"><i class="fa-solid fa-clock text-[10px]"></i> <c:out value="${p.scheduleText}"/></div>
+                                                </c:if>
+                                                <c:if test="${p.quota != null and p.quota > 0}">
+                                                    <div class="mt-1 text-[11px] font-semibold text-slate-600">Suất: ${p.soldQuantity}/${p.quota}</div>
+                                                </c:if>
                                             </td>
                                             <td class="text-[13px] text-slate-600 max-w-[220px]">
                                                 <div class="font-bold text-slate-800">${p.productCount} sản phẩm</div>

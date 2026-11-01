@@ -207,7 +207,8 @@
                                             </div>
                                             <div class="md:col-span-2 text-left md:text-center text-sm text-gray-700">
                                                 <span class="md:hidden text-xs text-gray-400 mr-1">Đơn giá:</span>
-                                                <fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                                <fmt:formatNumber value="${item.displayUnitPrice}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                                <c:if test="${item.unitPriceReduced}"><div class="text-[11px] text-gray-400 line-through"><fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/></div></c:if>
                                             </div>
                                             <div class="md:col-span-2 text-left md:text-center text-sm text-gray-700">
                                                 <span class="md:hidden text-xs text-gray-400 mr-1">Số lượng:</span>
@@ -216,6 +217,7 @@
                                             <div class="md:col-span-2 text-left md:text-right text-sm font-extrabold text-[#00652c]">
                                                 <span class="md:hidden text-xs text-gray-400 mr-1">Thành tiền:</span>
                                                 <fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                                <c:if test="${item.onPromotion}"><div class="text-[11px] font-semibold text-rose-600">KM: <c:out value="${item.promotion.badgeLabel}"/> · giảm <fmt:formatNumber value="${item.promotionDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></div></c:if>
                                             </div>
                                         </div>
                                     </c:forEach>

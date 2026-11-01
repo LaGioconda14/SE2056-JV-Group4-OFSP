@@ -22,7 +22,9 @@ public class CartServiceImpl implements ICartService {
     public Cart loadCartAndReconcile(long customerId) {
         validateId(customerId);
         Cart cart = cartDAO.findOrCreateCartByCustomerId(customerId);
-        cart.setItems(cartDAO.loadAndReconcileItems(cart.getCartId()));
+        java.util.List<CartItem> loaded = cartDAO.loadAndReconcileItems(cart.getCartId());
+        util.PromotionPricing.applyToCartItems(loaded); // giá sau khuyến mãi (Promotion)
+        cart.setItems(loaded);
         return cart;
     }
 

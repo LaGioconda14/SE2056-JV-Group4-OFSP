@@ -64,6 +64,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new IllegalArgumentException("Có sản phẩm không thuộc giỏ hàng của bạn hoặc đã bị xóa!");
         }
 
+        util.PromotionPricing.applyToCartItems(selected); // khuyến mãi tính lại từ DB tại thời điểm thanh toán
         validateCheckoutItems(selected);
         return selected;
     }
@@ -77,6 +78,7 @@ public class OrderServiceImpl implements IOrderService {
         if (item == null) {
             throw new IllegalArgumentException("Không tìm thấy sản phẩm mua ngay!");
         }
+        util.PromotionPricing.applyToCartItems(List.of(item));
         validateCheckoutItems(List.of(item));
         return item;
     }
@@ -155,7 +157,12 @@ public class OrderServiceImpl implements IOrderService {
                         ? cartItem.getVariant().getUnit() : "phần");
                 orderItem.setUnitPrice(cartItem.getVariant().getPrice());
                 orderItem.setQuantity(cartItem.getQuantity());
-                orderItem.setTotalPrice(cartItem.getSubtotal());
+                orderItem.setTotalPrice(cartItem.getSubtotal()); // đã trừ khuyến mãi
+                if (cartItem.isOnPromotion()) {
+                    orderItem.setPromotionId(cartItem.getPromotion().getPromotionId());
+                    orderItem.setPromotionDiscount(cartItem.getPromotionDiscount());
+                    orderItem.setPromotionUnits(cartItem.getPromotionUnits());
+                }
 
                 orderItems.add(orderItem);
                 shopSubtotal = shopSubtotal.add(cartItem.getSubtotal());

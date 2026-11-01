@@ -14,6 +14,18 @@ public class OrderItem {
     private BigDecimal unitPrice = BigDecimal.ZERO;
     private int quantity;
     private BigDecimal totalPrice = BigDecimal.ZERO;
+    private Long promotionId;
+    private BigDecimal promotionDiscount = BigDecimal.ZERO;
+    private int promotionUnits;
+
+    public Long getPromotionId() { return promotionId; }
+    public void setPromotionId(Long promotionId) { this.promotionId = promotionId; }
+    public BigDecimal getPromotionDiscount() { return promotionDiscount; }
+    public void setPromotionDiscount(BigDecimal promotionDiscount) {
+        this.promotionDiscount = promotionDiscount == null ? BigDecimal.ZERO : promotionDiscount;
+    }
+    public int getPromotionUnits() { return promotionUnits; }
+    public void setPromotionUnits(int promotionUnits) { this.promotionUnits = promotionUnits; }
 
     // Joined Product & Variant fields for Fulfillment & QC
     private String imageUrl;

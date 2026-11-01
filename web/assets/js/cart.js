@@ -29,6 +29,36 @@
         return rows().filter(row => row.dataset.cartStatus === 'AVAILABLE');
     }
 
+    // Thành tiền một dòng có khuyến mãi (khớp logic Promotion.calcLineDiscount ở server; server vẫn là nguồn chính thức)
+    function lineAmount(row, qty) {
+        const price = numberValue(row.dataset.unitPrice);
+        const gross = price * qty;
+        const type = row.dataset.promoType;
+        if (!type) return gross;
+        const remain = numberValue(row.dataset.promoRemain);   // -1 = không giới hạn suất
+        const units = remain >= 0 ? Math.min(qty, remain) : qty;
+        if (units <= 0) return gross;
+        const value = numberValue(row.dataset.promoValue);
+        const max = numberValue(row.dataset.promoMax);
+        const perUnit = () => {
+            let d;
+            if (type === 'FIXED_AMOUNT' || type === 'TIME_WINDOW') d = value;
+            else if (type === 'FIXED_PRICE') d = price - value;
+            else { d = Math.round(price * value / 100); if (max > 0 && d > max) d = max; }
+            return Math.max(0, Math.min(d, price));
+        };
+        let discount = 0;
+        if (type === 'BUY_X_GET_Y') {
+            const buy = numberValue(row.dataset.promoBuy), get = numberValue(row.dataset.promoGet);
+            if (buy > 0 && get > 0) discount = Math.floor(units / (buy + get)) * get * price;
+        } else if (type === 'VOLUME') {
+            if (qty >= numberValue(row.dataset.promoMin)) discount = perUnit() * units;
+        } else {
+            discount = perUnit() * units;
+        }
+        return Math.max(0, gross - Math.min(discount, gross));
+    }
+
     function rowQuantity(row) {
         const input = row.querySelector('[data-quantity-input]');
         return input ? clampQuantity(input) : 1;
@@ -45,7 +75,7 @@
             const quantity = rowQuantity(row);
             const unitPrice = numberValue(row.dataset.unitPrice);
             const shopId = String(row.dataset.shopId);
-            const lineSubtotal = unitPrice * quantity;
+            const lineSubtotal = lineAmount(row, quantity);
             items.push({itemId: String(row.dataset.itemId), shopId, quantity, unitPrice, subtotal: lineSubtotal});
             subtotal += lineSubtotal;
             shopSubtotals[shopId] = (shopSubtotals[shopId] || 0) + lineSubtotal;
@@ -78,7 +108,7 @@
         if (!cart) return;
         purchasableRows().forEach(row => {
             const output = row.querySelector('[data-line-subtotal]');
-            if (output) output.textContent = currency.format(numberValue(row.dataset.unitPrice) * rowQuantity(row));
+            if (output) output.textContent = currency.format(lineAmount(row, rowQuantity(row)));
         });
         updateCheckboxes();
 

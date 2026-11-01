@@ -183,6 +183,7 @@ public class WishlistDAO extends DBContext {
         } catch (SQLException ex) {
             throw failure("tải sản phẩm yêu thích", ex);
         }
+        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
         return list;
     }
 }

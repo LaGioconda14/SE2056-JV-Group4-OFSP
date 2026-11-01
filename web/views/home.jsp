@@ -181,6 +181,9 @@
                                     
                                     <div class="product-meta">
                                         <span class="product-cat-name">${p.categoryName}</span>
+                                        <c:if test="${p.onPromotion}">
+                                            <span class="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm" title="<c:out value='${p.promotionName}'/>"><i class="fa-solid fa-bolt text-[9px]"></i><c:out value="${p.promotionLabel}"/></span>
+                                        </c:if>
 
                                     </div>
 

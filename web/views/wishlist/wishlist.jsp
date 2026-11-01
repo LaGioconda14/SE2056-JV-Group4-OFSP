@@ -78,6 +78,12 @@
                                         <span class="text-base font-black text-emerald-700">
                                             <fmt:formatNumber value="${p.price}" pattern="#,###" />đ<c:if test="${not empty p.unit}"><span class="text-xs font-semibold text-emerald-800/70">/<c:out value="${p.unit}"/></span></c:if>
                                         </span>
+                                        <c:if test="${p.oldPrice gt p.price}">
+                                            <span class="ml-1 text-xs text-gray-400 line-through"><fmt:formatNumber value="${p.oldPrice}" pattern="#,###" />đ</span>
+                                        </c:if>
+                                        <c:if test="${p.onPromotion}">
+                                            <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white"><c:out value="${p.promotionLabel}"/></span>
+                                        </c:if>
                                     </c:when>
                                     <c:otherwise>
                                         <span class="text-sm font-bold text-gray-400">Chưa có giá</span>

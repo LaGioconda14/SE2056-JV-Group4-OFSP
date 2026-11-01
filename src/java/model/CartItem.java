@@ -13,6 +13,9 @@ public class CartItem {
     private boolean quantityAdjusted;
     private CartItemAvailability availability = CartItemAvailability.AVAILABLE;
     private List<ProductVariant> alternativeVariants = new ArrayList<>();
+    private Promotion promotion;
+    private BigDecimal promotionDiscount = BigDecimal.ZERO;
+    private int promotionUnits;
 
     public CartItem() {
     }
@@ -100,11 +103,52 @@ public class CartItem {
         return availability == CartItemAvailability.AVAILABLE;
     }
 
-    public BigDecimal getSubtotal() {
+    /** Thành tiền GỐC của dòng (chưa tính khuyến mãi). */
+    public BigDecimal getOriginalSubtotal() {
         if (variant == null || variant.getPrice() == null) {
             return BigDecimal.ZERO;
         }
         return variant.getPrice()
                 .multiply(BigDecimal.valueOf(quantity));
+    }
+
+    /** Thành tiền khách phải trả = gốc - khuyến mãi (Promotion). */
+    public BigDecimal getSubtotal() {
+        return getOriginalSubtotal().subtract(promotionDiscount).max(BigDecimal.ZERO);
+    }
+
+    public Promotion getPromotion() { return promotion; }
+    public void setPromotion(Promotion promotion) { this.promotion = promotion; }
+
+    public BigDecimal getPromotionDiscount() { return promotionDiscount; }
+    public void setPromotionDiscount(BigDecimal promotionDiscount) {
+        this.promotionDiscount = promotionDiscount == null ? BigDecimal.ZERO : promotionDiscount;
+    }
+
+    public int getPromotionUnits() { return promotionUnits; }
+    public void setPromotionUnits(int promotionUnits) { this.promotionUnits = promotionUnits; }
+
+    public boolean isOnPromotion() { return promotion != null && promotionDiscount.signum() > 0; }
+
+    public void clearPromotion() {
+        this.promotion = null;
+        this.promotionDiscount = BigDecimal.ZERO;
+        this.promotionUnits = 0;
+    }
+
+    /** Đơn giá hiển thị: giá sau giảm nếu khuyến mãi theo đơn giá áp cho toàn bộ số lượng, ngược lại giá gốc. */
+    public BigDecimal getDisplayUnitPrice() {
+        if (variant == null || variant.getPrice() == null) {
+            return BigDecimal.ZERO;
+        }
+        if (isOnPromotion() && promotion.isUnitPriceType() && promotionUnits == quantity && quantity > 0) {
+            return getSubtotal().divide(BigDecimal.valueOf(quantity), 0, java.math.RoundingMode.HALF_UP);
+        }
+        return variant.getPrice();
+    }
+
+    public boolean isUnitPriceReduced() {
+        return variant != null && variant.getPrice() != null
+                && getDisplayUnitPrice().compareTo(variant.getPrice()) < 0;
     }
 }

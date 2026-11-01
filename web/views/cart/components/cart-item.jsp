@@ -1,6 +1,6 @@
 <%@page pageEncoding="UTF-8"%>
 <div class="grid grid-cols-1 gap-4 border-b border-outline-variant/15 px-5 py-5 transition hover:bg-surface-container-low/30 lg:grid-cols-[minmax(0,1fr)_140px_180px_150px_72px] lg:items-center"
-     id="cart-item-${item.cartItemID}" data-cart-row data-item-id="${item.cartItemID}" data-shop-id="${shopEntry.key}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" data-unit-price="${item.variant.price}">
+     id="cart-item-${item.cartItemID}" data-cart-row data-item-id="${item.cartItemID}" data-shop-id="${shopEntry.key}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" data-unit-price="${item.variant.price}"<c:if test="${not empty item.promotion}"> data-promo-type="<c:out value='${item.promotion.promotionType}'/>" data-promo-value="${item.promotion.discountValue}" data-promo-max="${empty item.promotion.maxDiscountAmount ? 0 : item.promotion.maxDiscountAmount}" data-promo-buy="${empty item.promotion.buyQuantity ? 0 : item.promotion.buyQuantity}" data-promo-get="${empty item.promotion.getQuantity ? 0 : item.promotion.getQuantity}" data-promo-min="${empty item.promotion.minQuantity ? 0 : item.promotion.minQuantity}" data-promo-remain="${empty item.promotion.quota ? -1 : item.promotion.remainingQuota}"</c:if>>
     <div class="flex min-w-0 items-start gap-3">
         <input <c:if test="${not available}">disabled</c:if> type="checkbox" data-cart-item value="${item.cartItemID}" aria-label="Chọn <c:out value='${item.variant.product.name}'/>" class="item-checkbox mt-8 h-4 w-4 shrink-0 accent-primary disabled:opacity-40">
         <div class="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container">
@@ -13,9 +13,18 @@
             <a href="${pageContext.request.contextPath}/detail?id=${item.variant.product.productId}" class="line-clamp-2 text-sm font-bold text-on-surface hover:text-primary"><c:out value="${item.variant.product.name}"/></a>
             <c:choose><c:when test="${item.availabilityStatus ne 'NOT_FOUND'}"><button type="button" data-cart-action="open-variant" data-item-id="${item.cartItemID}" aria-controls="variant-dialog-${item.cartItemID}" aria-expanded="false" class="mt-2 flex max-w-full items-center gap-1 rounded-md bg-surface-container-low px-2 py-1 text-left text-xs text-on-surface-variant hover:text-primary"><span class="truncate">Phân loại: <c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}">, <c:out value="${item.variant.unit}"/></c:if></span><span class="material-symbols-outlined text-[15px]">arrow_drop_down</span></button></c:when><c:otherwise><span class="mt-2 block text-xs text-on-surface-variant">Phân loại: <c:out value="${item.variant.variantName}"/></span></c:otherwise></c:choose>
             <c:choose><c:when test="${available}"><span class="mt-2 block text-[11px] font-semibold text-primary">Còn hàng · Kho <c:out value="${item.variant.stockQuantity}"/></span></c:when><c:otherwise><span class="mt-2 block text-[11px] font-semibold text-error">Sản phẩm hiện không khả dụng</span></c:otherwise></c:choose>
+            <c:if test="${available and not empty item.promotion}">
+                <span class="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] font-bold text-rose-600">
+                    <span class="inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5"><span class="material-symbols-outlined text-[14px]">bolt</span><c:out value="${item.promotion.badgeLabel}"/></span>
+                    <c:choose>
+                        <c:when test="${item.onPromotion}">Đã giảm <fmt:formatNumber value="${item.promotionDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></c:when>
+                        <c:otherwise><span class="font-semibold text-on-surface-variant"><c:out value="${item.promotion.conditionText}"/></span></c:otherwise>
+                    </c:choose>
+                </span>
+            </c:if>
         </div>
     </div>
-    <div class="flex items-center justify-between lg:justify-center"><span class="text-xs text-on-surface-variant lg:hidden">Đơn giá</span><strong class="text-sm"><fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+    <div class="flex items-center justify-between lg:justify-center"><span class="text-xs text-on-surface-variant lg:hidden">Đơn giá</span><span class="flex flex-col items-end lg:items-center"><strong class="text-sm"><fmt:formatNumber value="${item.displayUnitPrice}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong><c:if test="${item.unitPriceReduced}"><span class="text-[11px] text-on-surface-variant line-through"><fmt:formatNumber value="${item.variant.price}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span></c:if></span></div>
     <div class="flex items-center justify-between lg:justify-center">
         <span class="text-xs text-on-surface-variant lg:hidden">Số lượng</span>
         <c:choose>
