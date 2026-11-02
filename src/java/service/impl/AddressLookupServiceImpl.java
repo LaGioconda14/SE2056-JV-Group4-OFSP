@@ -16,7 +16,7 @@ public class AddressLookupServiceImpl implements IAddressLookupService {
     private static final Logger LOGGER = Logger.getLogger(AddressLookupServiceImpl.class.getName());
     private static final Map<String, String> CACHE = new ConcurrentHashMap<>();
 
-    private static final String API_BASE_URL = "https://provinces.open-api.vn/api/v1";
+    private static final String API_BASE_URL = "https://provinces.open-api.vn/api/v2";
 
     private final HttpClient httpClient = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL)
@@ -120,12 +120,12 @@ public class AddressLookupServiceImpl implements IAddressLookupService {
     }
 
     @Override
-    public String getDistrictsJson(String provinceCode) {
+    public String getWardsJson(String provinceCode) {
         if (provinceCode == null || !provinceCode.matches("^\\d+$")) {
-            return "{\"districts\":[]}";
+            return "{\"wards\":[]}";
         }
 
-        String cacheKey = "districts_" + provinceCode;
+        String cacheKey = "wards_" + provinceCode;
         String cached = CACHE.get(cacheKey);
         if (cached != null) {
             return cached;
@@ -147,41 +147,7 @@ public class AddressLookupServiceImpl implements IAddressLookupService {
                 return body;
             }
         } catch (Exception ex) {
-            LOGGER.log(Level.WARNING, "Failed to fetch districts for province {0}: {1}", new Object[]{provinceCode, ex.getMessage()});
-        }
-
-        return "{\"districts\":[]}";
-    }
-
-    @Override
-    public String getWardsJson(String districtCode) {
-        if (districtCode == null || !districtCode.matches("^\\d+$")) {
-            return "{\"wards\":[]}";
-        }
-
-        String cacheKey = "wards_" + districtCode;
-        String cached = CACHE.get(cacheKey);
-        if (cached != null) {
-            return cached;
-        }
-
-        String url = API_BASE_URL + "/d/" + districtCode + "?depth=2";
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .timeout(Duration.ofSeconds(4))
-                    .header("Accept", "application/json")
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200 && response.body() != null && response.body().startsWith("{")) {
-                String body = response.body();
-                CACHE.put(cacheKey, body);
-                return body;
-            }
-        } catch (Exception ex) {
-            LOGGER.log(Level.WARNING, "Failed to fetch wards for district {0}: {1}", new Object[]{districtCode, ex.getMessage()});
+            LOGGER.log(Level.WARNING, "Failed to fetch wards for province {0}: {1}", new Object[]{provinceCode, ex.getMessage()});
         }
 
         return "{\"wards\":[]}";

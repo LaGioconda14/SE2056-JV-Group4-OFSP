@@ -450,18 +450,11 @@
                                         <label class="block font-bold text-gray-700 mb-1">Số điện thoại</label>
                                         <input type="tel" name="recipientPhone" value="<c:out value='${formDraft.recipientPhone}'/>" class="w-full border rounded-lg px-3 py-2 text-xs">
                                     </div>
-                                    <div class="sm:col-span-2">
+                                    <div>
                                         <label class="block font-bold text-gray-700 mb-1" for="checkoutCitySelect">Tỉnh / Thành phố <span class="text-red-500">*</span></label>
                                         <select id="checkoutCitySelect" name="provinceCode" class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600">
                                             <option value="" disabled <c:if test="${empty formDraft.provinceCode}">selected</c:if>>Chọn Tỉnh / Thành phố</option>
                                             <c:forEach var="province" items="${provinces}"><option value="<c:out value='${province.code}'/>" <c:if test="${formDraft.provinceCode eq province.code}">selected</c:if>><c:out value="${province.name}"/></option></c:forEach>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block font-bold text-gray-700 mb-1" for="checkoutDistrictSelect">Quận / Huyện <span class="text-red-500">*</span></label>
-                                        <select id="checkoutDistrictSelect" name="districtCode" <c:if test="${empty districts}">disabled</c:if> class="w-full border rounded-lg px-3 py-2 text-xs bg-white outline-none focus:border-emerald-600 disabled:bg-gray-100 disabled:text-gray-400">
-                                            <option value="" disabled <c:if test="${empty formDraft.districtCode}">selected</c:if>>Chọn Quận / Huyện</option>
-                                            <c:forEach var="district" items="${districts}"><option value="<c:out value='${district.code}'/>" <c:if test="${formDraft.districtCode eq district.code}">selected</c:if>><c:out value="${district.name}"/></option></c:forEach>
                                         </select>
                                     </div>
                                     <div>
@@ -597,7 +590,6 @@
     }
 
     document.getElementById('checkoutCitySelect')?.addEventListener('change', () => submitCheckoutAction('selectProvince'));
-    document.getElementById('checkoutDistrictSelect')?.addEventListener('change', () => submitCheckoutAction('selectDistrict'));
     document.getElementById('checkout-form')?.addEventListener('submit', function(event) {
         if (document.getElementById('checkout-action')?.disabled &&
                 document.querySelector('input[name="addressSelection"]:checked')?.value === 'new') {
@@ -646,10 +638,9 @@
             const phone = (document.querySelector('input[name="recipientPhone"]')?.value || '').trim();
             const street = (document.querySelector('input[name="streetAddress"]')?.value || '').trim();
             const city = (document.getElementById('checkoutCitySelect')?.value || '').trim();
-            const district = (document.getElementById('checkoutDistrictSelect')?.value || '').trim();
             const ward = (document.getElementById('checkoutWardSelect')?.value || '').trim();
-            if (!name || !phone || !street || !city || !district || !ward) {
-                alert('Vui lòng điền đầy đủ họ tên, số điện thoại, tỉnh/thành phố, quận/huyện, phường/xã và địa chỉ cụ thể!');
+            if (!name || !phone || !street || !city || !ward) {
+                alert('Vui lòng điền đầy đủ họ tên, số điện thoại, tỉnh/thành phố, phường/xã và địa chỉ cụ thể!');
                 return;
             }
             submitCheckoutAction('createAddress');

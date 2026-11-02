@@ -16,7 +16,6 @@ import service.impl.CustomerAddressServiceImpl;
 
 @WebServlet(name = "AddressLookupServlet", urlPatterns = {
     "/api/address/provinces",
-    "/api/address/districts",
     "/api/address/wards",
     "/api/address/create"
 })
@@ -36,12 +35,9 @@ public class AddressLookupServlet extends HttpServlet {
 
         if ("/api/address/provinces".equals(path)) {
             json = addressLookupService.getProvincesJson();
-        } else if ("/api/address/districts".equals(path)) {
-            String provinceCode = request.getParameter("provinceCode");
-            json = addressLookupService.getDistrictsJson(provinceCode);
         } else if ("/api/address/wards".equals(path)) {
-            String districtCode = request.getParameter("districtCode");
-            json = addressLookupService.getWardsJson(districtCode);
+            String provinceCode = request.getParameter("provinceCode");
+            json = addressLookupService.getWardsJson(provinceCode);
         } else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             json = "{\"error\":\"Endpoint not found\"}";
@@ -68,7 +64,6 @@ public class AddressLookupServlet extends HttpServlet {
         String recipientPhone = request.getParameter("recipientPhone");
         String streetAddress = request.getParameter("streetAddress");
         String city = request.getParameter("city");
-        String district = request.getParameter("district");
         String ward = request.getParameter("ward");
         boolean isDefault = "true".equalsIgnoreCase(request.getParameter("isDefault"));
 
@@ -76,7 +71,7 @@ public class AddressLookupServlet extends HttpServlet {
                 || recipientPhone == null || recipientPhone.trim().isEmpty()
                 || streetAddress == null || streetAddress.trim().isEmpty()
                 || city == null || city.trim().isEmpty()
-                || district == null || district.trim().isEmpty()) {
+                || ward == null || ward.trim().isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng điền đầy đủ các thông tin bắt buộc!\"}");
             return;
@@ -88,8 +83,8 @@ public class AddressLookupServlet extends HttpServlet {
         newAddress.setRecipientPhone(recipientPhone.trim());
         newAddress.setStreetAddress(streetAddress.trim());
         newAddress.setCity(city.trim());
-        newAddress.setDistrict(district.trim());
-        newAddress.setWard(ward != null ? ward.trim() : "");
+        newAddress.setDistrict("");
+        newAddress.setWard(ward.trim());
         newAddress.setDefault(isDefault);
 
         try {

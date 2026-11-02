@@ -324,10 +324,9 @@ public class OrderServiceImpl implements IOrderService {
             throw new IllegalArgumentException("Vui lòng nhập địa chỉ giao hàng cụ thể!");
         }
         if (address.getWard() == null || address.getWard().trim().isEmpty()
-                || address.getDistrict() == null || address.getDistrict().trim().isEmpty()
                 || address.getCity() == null || address.getCity().trim().isEmpty()) {
             throw new IllegalArgumentException(
-                    "Vui lòng nhập đầy đủ phường/xã, quận/huyện và tỉnh/thành phố!");
+                    "Vui lòng nhập đầy đủ phường/xã và tỉnh/thành phố!");
         }
 
         DeliverySlot selectedSlot = DeliverySlot.from(deliverySlot);
@@ -346,7 +345,7 @@ public class OrderServiceImpl implements IOrderService {
         address.setRecipientPhone(normalizedPhone);
         address.setStreetAddress(address.getStreetAddress().trim());
         address.setWard(address.getWard().trim());
-        address.setDistrict(address.getDistrict().trim());
+        address.setDistrict(address.getDistrict() != null ? address.getDistrict().trim() : "");
         address.setCity(address.getCity().trim());
 
         Order order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);

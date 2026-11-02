@@ -676,7 +676,7 @@
                                 <div class="text-xs font-semibold text-slate-800 mt-1 leading-relaxed">
                                     <c:choose>
                                         <c:when test="${not empty subOrder.shippingAddress.streetAddress}">
-                                            ${subOrder.shippingAddress.streetAddress}<c:if test="${not empty subOrder.shippingAddress.ward}">, ${subOrder.shippingAddress.ward}</c:if><c:if test="${not empty subOrder.shippingAddress.district}">, ${subOrder.shippingAddress.district}</c:if><c:if test="${not empty subOrder.shippingAddress.city}">, ${subOrder.shippingAddress.city}</c:if>
+                                            ${subOrder.shippingAddress.streetAddress}<c:if test="${not empty subOrder.shippingAddress.ward}">, ${subOrder.shippingAddress.ward}</c:if><c:if test="${not empty subOrder.shippingAddress.city}">, ${subOrder.shippingAddress.city}</c:if>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="text-slate-400 italic">Chưa có thông tin địa chỉ chi tiết</span>

@@ -132,7 +132,7 @@ public class PlaceOrderServlet extends HttpServlet {
             shippingAddress.setRecipientPhone(request.getParameter("recipientPhone"));
             shippingAddress.setStreetAddress(request.getParameter("streetAddress"));
             shippingAddress.setWard(request.getParameter("ward"));
-            shippingAddress.setDistrict(request.getParameter("district"));
+            shippingAddress.setDistrict("");
             shippingAddress.setCity(request.getParameter("city"));
         } else {
             session.setAttribute("checkoutError", "Vui lòng chọn hoặc thêm địa chỉ giao hàng!");
