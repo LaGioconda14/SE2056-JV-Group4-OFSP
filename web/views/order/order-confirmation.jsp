@@ -48,11 +48,13 @@
             </c:when>
             <c:otherwise>
                 <section class="success-hero">
-                    <div class="success-icon"><span class="material-symbols-outlined">check</span></div>
-                    <p class="eyebrow">Đặt hàng thành công</p>
-                    <h1>Cảm ơn bạn đã mua hàng!</h1>
+                    <div class="success-icon"><span class="material-symbols-outlined"><c:choose><c:when test="${param.payment eq 'failed' or param.payment eq 'invalid'}">error</c:when><c:otherwise>check</c:otherwise></c:choose></span></div>
+                    <p class="eyebrow"><c:choose><c:when test="${param.payment eq 'success'}">Thanh toán thành công</c:when><c:when test="${param.payment eq 'failed'}">Thanh toán chưa thành công</c:when><c:when test="${param.payment eq 'invalid'}">Kết quả thanh toán không hợp lệ</c:when><c:otherwise>Đặt hàng thành công</c:otherwise></c:choose></p>
+                    <h1><c:choose><c:when test="${param.payment eq 'success'}">VNPAY đã xác nhận thanh toán!</c:when><c:when test="${param.payment eq 'failed' or param.payment eq 'invalid'}">Đơn hàng đã được ghi nhận</c:when><c:otherwise>Cảm ơn bạn đã mua hàng!</c:otherwise></c:choose></h1>
                     <p><c:choose><c:when test="${not empty sessionScope.orderSuccess}"><c:out value="${sessionScope.orderSuccess}"/></c:when><c:otherwise>Đơn hàng của bạn đã được Gốc Vườn tiếp nhận.</c:otherwise></c:choose></p>
                     <c:if test="${order.paymentStatus eq 'PENDING' and order.paymentMethod eq 'CARD'}"><p>Đơn hàng đã được ghi nhận, thanh toán chưa hoàn tất. Không có khoản thanh toán thẻ nào được thực hiện tại trang này.</p></c:if>
+                    <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'failed'}"><p>VNPAY chưa ghi nhận thanh toán thành công. Bạn có thể thực hiện lại thanh toán từ đơn hàng của mình.</p></c:if>
+                    <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'invalid'}"><p>Không thể xác minh chữ ký phản hồi từ VNPAY. Trạng thái thanh toán không được thay đổi.</p></c:if>
                     <c:remove var="orderSuccess" scope="session"/>
                     <div class="order-number">Mã đơn hàng <strong>#<c:out value="${order.orderId}"/></strong></div>
                 </section>
@@ -83,7 +85,13 @@
                         <section class="panel compact-panel">
                             <div class="panel-heading"><span class="panel-icon material-symbols-outlined">receipt_long</span><div><p class="section-kicker">Thanh toán</p><h2>Tổng đơn hàng</h2></div></div>
                             <div class="totals confirmation-totals"><div><span>Tiền hàng</span><strong><fmt:formatNumber value="${order.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div><div><span>Phí giao hàng</span><strong><fmt:formatNumber value="${order.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div><c:if test="${order.platformDiscount gt 0}"><div class="discount"><span>Giảm giá</span><strong>-<fmt:formatNumber value="${order.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div></c:if><div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${order.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div></div>
-                            <div class="payment-state"><span class="material-symbols-outlined">schedule</span><span><small>Trạng thái thanh toán</small><strong><c:out value="${order.paymentStatus}"/></strong></span></div>
+                            <div class="payment-state">
+                                <span class="material-symbols-outlined"><c:choose><c:when test="${order.paymentStatus eq 'PAID'}">check_circle</c:when><c:when test="${order.paymentStatus eq 'FAILED'}">cancel</c:when><c:when test="${order.paymentStatus eq 'REFUNDED'}">currency_exchange</c:when><c:otherwise>schedule</c:otherwise></c:choose></span>
+                                <span>
+                                    <small>Trạng thái thanh toán</small>
+                                    <strong><c:choose><c:when test="${order.paymentStatus eq 'PAID'}">Đã thanh toán</c:when><c:when test="${order.paymentStatus eq 'FAILED'}">Thanh toán thất bại</c:when><c:when test="${order.paymentStatus eq 'REFUNDED'}">Đã hoàn tiền</c:when><c:when test="${order.paymentStatus eq 'PENDING'}">Chờ thanh toán</c:when><c:otherwise><c:out value="${order.paymentStatus}"/></c:otherwise></c:choose></strong>
+                                </span>
+                            </div>
                         </section>
                     </aside>
                 </div>

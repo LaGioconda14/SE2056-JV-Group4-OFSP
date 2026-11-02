@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import enums.PaymentMethod;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -161,7 +162,11 @@ public class PlaceOrderServlet extends HttpServlet {
             session.removeAttribute("checkoutFormDraft");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
 
-            response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);
+            if (PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)) {
+                response.sendRedirect(request.getContextPath() + "/payment/vnpay/create?orderId=" + orderId);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);
+            }
 
         } catch (Exception ex) {
             session.setAttribute("checkoutError", ex.getMessage());

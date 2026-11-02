@@ -29,4 +29,6 @@ docs/
 # OAuth private credentials (keep secret)
 *oauth.properties
 !*oauth.properties.example
+*vnpay.properties
+!*vnpay.properties.example
 .vscode/

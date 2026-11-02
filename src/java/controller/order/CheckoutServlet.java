@@ -309,10 +309,13 @@ public class CheckoutServlet extends HttpServlet {
         if ("buyNow".equals(session.getAttribute("checkoutMode"))) {
             Object variant = session.getAttribute("checkoutBuyNowVariantId");
             Object quantity = session.getAttribute("checkoutBuyNowQuantity");
-            if (variant instanceof Long variantId && variantId > 0
-                    && quantity instanceof Integer buyNowQuantity && buyNowQuantity > 0) {
+            if (variant instanceof Long && quantity instanceof Integer) {
+                long variantId = (Long) variant;
+                int buyNowQuantity = (Integer) quantity;
+                if (variantId > 0 && buyNowQuantity > 0) {
                 return new CheckoutSelection(Collections.emptyList(), variantId, buyNowQuantity,
                         null, Collections.emptyMap());
+                }
             }
             clearBuyNowSelection(session);
             throw new IllegalArgumentException("Thông tin mua ngay đã hết hạn hoặc không hợp lệ!");
@@ -328,12 +331,18 @@ public class CheckoutServlet extends HttpServlet {
 
     private List<Long> restoreItemIds(HttpSession session) {
         Object saved = session.getAttribute("checkoutItemIds");
-        if (!(saved instanceof List<?> savedIds)) {
+        if (!(saved instanceof List<?>)) {
             return new ArrayList<>();
         }
+        List<?> savedIds = (List<?>) saved;
         Set<Long> uniqueIds = new LinkedHashSet<>();
         for (Object value : savedIds) {
-            if (!(value instanceof Long id) || id <= 0 || !uniqueIds.add(id)) {
+            if (!(value instanceof Long)) {
+                throw new IllegalArgumentException(
+                        "Danh sách sản phẩm thanh toán đã lưu không hợp lệ!");
+            }
+            Long id = (Long) value;
+            if (id <= 0 || !uniqueIds.add(id)) {
                 throw new IllegalArgumentException(
                         "Danh sách sản phẩm thanh toán đã lưu không hợp lệ!");
             }

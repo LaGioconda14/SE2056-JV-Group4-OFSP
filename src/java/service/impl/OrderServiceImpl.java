@@ -336,7 +336,8 @@ public class OrderServiceImpl implements IOrderService {
         }
 
         PaymentMethod selectedPayment = PaymentMethod.from(paymentMethod);
-        if (selectedPayment != PaymentMethod.COD && selectedPayment != PaymentMethod.CARD) {
+        if (selectedPayment != PaymentMethod.COD && selectedPayment != PaymentMethod.CARD
+                && selectedPayment != PaymentMethod.VNPAY) {
             throw new IllegalArgumentException(
                     "Phương thức thanh toán không hợp lệ!");
         }

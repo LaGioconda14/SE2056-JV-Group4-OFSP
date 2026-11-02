@@ -335,7 +335,7 @@
                         <strong class="text-base text-gray-900 font-bold">Phương thức thanh toán</strong>
                         <div class="flex flex-wrap items-center gap-3" id="payment-options-container">
                             <label class="payment-method-pill px-4 py-2 rounded-xl border-2 border-[#00652c] bg-emerald-50/60 text-[#00652c] text-xs font-bold cursor-pointer transition select-none flex items-center gap-1.5">
-                                <input type="radio" name="paymentMethod" value="COD" <c:if test="${formDraft.paymentMethod ne 'CARD'}">checked</c:if> class="hidden">
+                                <input type="radio" name="paymentMethod" value="COD" <c:if test="${formDraft.paymentMethod ne 'CARD' and formDraft.paymentMethod ne 'VNPAY'}">checked</c:if> class="hidden">
                                 <span class="material-symbols-outlined text-[16px]">check</span>
                                 <span>Thanh toán khi nhận hàng (COD)</span>
                             </label>
@@ -343,13 +343,15 @@
                                 <input type="radio" name="paymentMethod" value="CARD" <c:if test="${formDraft.paymentMethod eq 'CARD'}">checked</c:if> class="hidden">
                                 <span>Thẻ ngân hàng (CARD)</span>
                             </label>
-                            <span class="px-4 py-2 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 text-xs font-medium opacity-60 cursor-not-allowed">
-                                Ví điện tử (Sắp có)
-                            </span>
+                            <label class="payment-method-pill px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-medium cursor-pointer transition select-none flex items-center gap-1.5">
+                                <input type="radio" name="paymentMethod" value="VNPAY" <c:if test="${formDraft.paymentMethod eq 'VNPAY'}">checked</c:if> class="hidden">
+                                <span>VNPAY</span>
+                            </label>
                         </div>
                     </div>
 
                     <p id="card-payment-notice" class="hidden text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4">Thanh toán thẻ chưa được kết nối. Đơn hàng sẽ được ghi nhận ở trạng thái chờ thanh toán; không nhập thông tin thẻ tại đây.</p>
+                    <p id="vnpay-payment-notice" class="hidden text-sm text-blue-800 bg-blue-50 border border-blue-200 rounded-xl p-4">Bạn sẽ được chuyển sang cổng VNPAY Sandbox để hoàn tất thanh toán an toàn.</p>
 
                     <!-- Bảng tổng hợp chi phí (Căn phải giống Shopee) -->
                     <div class="flex flex-col items-end space-y-3 pt-3 text-sm">
@@ -861,10 +863,11 @@
         submitCheckoutAction('removeCoupon');
     }
 
-    // 3. Xử lý chuyển đổi phương thức thanh toán (COD vs CARD)
+    // 3. Xử lý chuyển đổi phương thức thanh toán
     const paymentForm = document.getElementById('checkout-form');
     const paymentLabels = document.querySelectorAll('.payment-method-pill');
     const cardNotice = document.getElementById('card-payment-notice');
+    const vnpayNotice = document.getElementById('vnpay-payment-notice');
     const submitBtn = document.getElementById('submit-order-btn');
 
     paymentLabels.forEach(label => {
@@ -887,11 +890,15 @@
             const radio = this.querySelector('input[type="radio"]');
             if (radio) {
                 radio.checked = true;
+                cardNotice?.classList.add('hidden');
+                vnpayNotice?.classList.add('hidden');
                 if (radio.value === 'CARD') {
                     if (cardNotice) cardNotice.classList.remove('hidden');
                     if (submitBtn) submitBtn.textContent = 'Đặt hàng (chờ thanh toán)';
+                } else if (radio.value === 'VNPAY') {
+                    vnpayNotice?.classList.remove('hidden');
+                    if (submitBtn) submitBtn.textContent = 'Thanh toán qua VNPAY';
                 } else {
-                    if (cardNotice) cardNotice.classList.add('hidden');
                     if (submitBtn) submitBtn.textContent = 'Đặt hàng';
                 }
             }
@@ -901,6 +908,9 @@
     if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'CARD') {
         cardNotice?.classList.remove('hidden');
         if (submitBtn) submitBtn.textContent = 'Đặt hàng (chờ thanh toán)';
+    } else if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'VNPAY') {
+        vnpayNotice?.classList.remove('hidden');
+        if (submitBtn) submitBtn.textContent = 'Thanh toán qua VNPAY';
     }
 
     document.addEventListener('DOMContentLoaded', function() {
