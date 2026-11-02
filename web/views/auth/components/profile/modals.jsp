@@ -88,15 +88,17 @@
             </div>
             <div class="modal-body pt-3">
                 <p class="text-muted small mb-3">Mã đơn: <strong id="reviewModalOrderCode" class="text-dark">#</strong></p>
+                <input type="hidden" id="reviewModalOrderItemId" name="orderItemId" value="">
+                <input type="hidden" id="reviewModalRating" name="rating" value="5">
                 <div class="mb-3 text-center">
-                    <div class="fs-2 text-warning mb-1">
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
-                        <i class="bi bi-star-fill"></i>
+                    <div class="fs-2 mb-1" id="reviewStarContainer" style="cursor: pointer;">
+                        <i class="bi bi-star-fill review-star text-warning" data-rating="1" onclick="setReviewRating(1)"></i>
+                        <i class="bi bi-star-fill review-star text-warning" data-rating="2" onclick="setReviewRating(2)"></i>
+                        <i class="bi bi-star-fill review-star text-warning" data-rating="3" onclick="setReviewRating(3)"></i>
+                        <i class="bi bi-star-fill review-star text-warning" data-rating="4" onclick="setReviewRating(4)"></i>
+                        <i class="bi bi-star-fill review-star text-warning" data-rating="5" onclick="setReviewRating(5)"></i>
                     </div>
-                    <span class="small text-muted fw-semibold">Tuyệt vời (5/5 sao)</span>
+                    <span class="small text-muted fw-semibold" id="reviewRatingLabel">Tuyệt vời (5/5 sao)</span>
                 </div>
                 <div class="mb-3">
                     <label class="form-label-bold" for="reviewComment">Cảm nhận của bạn về chất lượng trái cây</label>

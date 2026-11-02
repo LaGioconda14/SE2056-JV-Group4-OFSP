@@ -12,7 +12,12 @@ public class Review implements Serializable {
     private String customerName;
     private String customerAvatar;
     private long shopId;
-    private int rating;
+    private String shopName;
+    private long productId;
+    private String productName;
+    private String variantName;
+    private String productImage;
+    private int rating = 5;
     private String comment;
     private String replyComment;
     private String status = "APPROVED";
@@ -68,6 +73,46 @@ public class Review implements Serializable {
 
     public void setShopId(long shopId) {
         this.shopId = shopId;
+    }
+
+    public String getShopName() {
+        return shopName;
+    }
+
+    public void setShopName(String shopName) {
+        this.shopName = shopName;
+    }
+
+    public long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(long productId) {
+        this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
+    public String getProductImage() {
+        return productImage;
+    }
+
+    public void setProductImage(String productImage) {
+        this.productImage = productImage;
     }
 
     public int getRating() {

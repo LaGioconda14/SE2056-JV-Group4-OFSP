@@ -18,6 +18,8 @@ import model.ShippingAddress;
 import model.User;
 import service.IOrderService;
 import service.impl.OrderServiceImpl;
+import service.INotificationService;
+import service.impl.NotificationServiceImpl;
 
 @WebServlet(name = "PlaceOrderServlet", urlPatterns = {"/order/place"})
 public class PlaceOrderServlet extends HttpServlet {
@@ -32,7 +34,8 @@ public class PlaceOrderServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
-        if (user == null) {
+        if (user == null || !user.isActive()) {
+            if (session != null) session.invalidate();
             request.getSession(true).setAttribute("errorMessage", "Vui lòng đăng nhập để hoàn tất đơn hàng!");
             response.sendRedirect(request.getContextPath() + "/login");
             return;
@@ -161,6 +164,11 @@ public class PlaceOrderServlet extends HttpServlet {
             session.removeAttribute("checkoutShopCoupons");
             session.removeAttribute("checkoutFormDraft");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
+            // Gửi thông báo đặt hàng thành công
+            try {
+                INotificationService notiService = new NotificationServiceImpl();
+                notiService.notifyOrderPlaced(user.getId(), orderId, String.valueOf(orderId), 0);
+            } catch (Exception ignored) {}
 
             if (PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)) {
                 response.sendRedirect(request.getContextPath() + "/payment/vnpay/create?orderId=" + orderId);

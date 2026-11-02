@@ -26,6 +26,9 @@ import model.Product;
 import model.Shop;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
+import model.ReviewSummary;
+import service.IReviewService;
+import service.impl.ReviewServiceImpl;
 
 /**
  *
@@ -98,8 +101,11 @@ public class DetailServlet extends HttpServlet {
                     request.setAttribute("shopTotalProducts", shopTotalProducts);
 
                     // Lấy danh sách đánh giá thật từ bảng reviews
-                    List<Review> reviews = productDAO.getReviewsByProductId(product.getId());
+                    IReviewService reviewService = new ReviewServiceImpl();
+                    List<Review> reviews = reviewService.getReviewsByProduct(product.getId(), 1, 20);
+                    ReviewSummary reviewSummary = reviewService.getReviewSummary(product.getId());
                     request.setAttribute("reviews", reviews);
+                    request.setAttribute("reviewSummary", reviewSummary);
                     // Tính thời gian tham gia thực tế từ createdAt của shop
                     String shopJoinedTime = "Đã xác minh";
                     if (shop.getCreatedAt() != null) {

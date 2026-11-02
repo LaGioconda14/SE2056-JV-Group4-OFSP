@@ -174,7 +174,7 @@
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
                                             </button>
-                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${order.id}')">
+                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${order.code}', '${order.hasItems() ? order.items[0].orderItemId : ''}')">
                                                 Đánh Giá
                                             </button>
                                         </c:when>

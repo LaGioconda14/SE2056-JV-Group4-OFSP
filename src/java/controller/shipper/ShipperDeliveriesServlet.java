@@ -16,6 +16,8 @@ import service.IDeliveryService;
 import service.IDriverService;
 import service.impl.DeliveryServiceImpl;
 import service.impl.DriverServiceImpl;
+import service.INotificationService;
+import service.impl.NotificationServiceImpl;
 
 @WebServlet(name = "ShipperDeliveriesServlet", urlPatterns = {"/shipper/deliveries"})
 public class ShipperDeliveriesServlet extends HttpServlet {
@@ -104,9 +106,13 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
             return;
         }
-
-        long deliveryId = Long.parseLong(deliveryIdStr);
-
+        long deliveryId;
+        try {
+            deliveryId = Long.parseLong(deliveryIdStr.trim());
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+            return;
+        }
         if ("pickup".equalsIgnoreCase(action)) {
             boolean ok = deliveryService.confirmPickup(deliveryId, driverId);
             if (ok) {
@@ -123,6 +129,13 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             boolean ok = deliveryService.completeDelivery(deliveryId, driverId, proofImageUrl);
             if (ok) {
                 session.setAttribute("successMessage", "Giao hàng thành công! Đã lưu ảnh bằng chứng (PoD) và cập nhật thanh toán.");
+                try {
+                    Delivery del = deliveryService.getDeliveryById(deliveryId, driverId);
+                    if (del != null && del.getSubOrderId() > 0) {
+                        INotificationService notiService = new NotificationServiceImpl();
+                        notiService.notifyOrderDeliveredBySubOrder(del.getSubOrderId(), del.getSubOrderCode());
+                    }
+                } catch (Exception ignored) {}
             } else {
                 session.setAttribute("errorMessage", "Không thể hoàn tất giao hàng. Vui lòng thử lại!");
             }

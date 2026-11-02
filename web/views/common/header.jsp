@@ -76,8 +76,8 @@
                         class="relative flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 hover:text-[#00652c] transition-colors cursor-pointer"
                         title="Thông báo">
                     <span class="material-symbols-outlined text-[22px]">notifications</span>
-                    <span id="header-noti-badge" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
-                        1
+                    <span id="header-noti-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white rounded-full text-[10px] font-bold items-center justify-center border-2 border-white shadow-xs">
+                        0
                     </span>
                 </button>
 
@@ -108,7 +108,7 @@
                         </div>
                     </div>
                     <div class="pt-3 border-t border-gray-100 mt-3 text-center">
-                        <a href="<c:out value='${profileUrl}'/>" class="text-xs text-[#00652c] font-semibold hover:underline">Xem trong tài khoản</a>
+                        <a href="${pageContext.request.contextPath}/notifications" class="text-xs text-[#00652c] font-semibold hover:underline">Xem tất cả thông báo</a>
                     </div>
                 </div>
             </div>
@@ -258,6 +258,69 @@
     };
 
     // Close notifications popover on click outside or escape
+    window.toggleHeaderNotification = function(event) {
+        if (event) event.stopPropagation();
+        const popover = document.getElementById('header-noti-popover');
+        if (popover) {
+            popover.classList.toggle('hidden');
+            if (!popover.classList.contains('hidden')) {
+                loadHeaderNotifications();
+            }
+        }
+    };
+
+    window.clearAllNotifications = async function(event) {
+        if (event) event.stopPropagation();
+        try {
+            const res = await fetch('${pageContext.request.contextPath}/api/notifications/mark-all-read', { method: 'POST' });
+            if (res.ok) {
+                const badge = document.getElementById('header-noti-badge');
+                if (badge) {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+                loadHeaderNotifications();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    async function loadHeaderNotifications() {
+        try {
+            const res = await fetch('${pageContext.request.contextPath}/api/notifications/recent?limit=5');
+            if (!res.ok) return;
+            const data = await res.json();
+            const badge = document.getElementById('header-noti-badge');
+            const list = document.getElementById('header-noti-list');
+            if (badge) {
+                if (data.unreadCount > 0) {
+                    badge.textContent = data.unreadCount > 9 ? '9+' : data.unreadCount;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('flex');
+                } else {
+                    badge.classList.add('hidden');
+                    badge.classList.remove('flex');
+                }
+            }
+            if (list && data.notifications && data.notifications.length > 0) {
+                list.innerHTML = data.notifications.map(n => `
+                    <div class="flex items-start gap-3 p-2.5 rounded-xl \${n.isRead ? 'bg-gray-50 border border-gray-100' : 'bg-emerald-50/70 border border-emerald-100'} text-xs text-gray-700">
+                        <span class="material-symbols-outlined text-emerald-600 text-[18px] shrink-0 mt-0.5">notifications</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-gray-900 truncate">\${n.title}</p>
+                            <p class="text-gray-600 text-[11px] mt-0.5 line-clamp-2">\${n.message}</p>
+                            <span class="text-[10px] text-gray-400 mt-1 inline-block">\${n.timeAgo || ''}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            // guest
+        }
+    }
+    document.addEventListener('DOMContentLoaded', loadHeaderNotifications);
+
     document.addEventListener('click', function(e) {
         const container = document.getElementById('header-noti-container');
         const popover = document.getElementById('header-noti-popover');
