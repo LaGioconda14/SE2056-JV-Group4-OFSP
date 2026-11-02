@@ -48,9 +48,10 @@
             </c:if>
 
             <!-- Danh sách sản phẩm -->
-            <div id="wishlistGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 ${empty wishlistItems ? 'hidden' : ''}">
+            <%-- Luôn là MỘT hàng ngang: màn hình rộng chia 4 cột, màn hình nhỏ cuộn ngang; thêm sản phẩm thì sang trang kế --%>
+            <div id="wishlistGrid" class="flex gap-6 overflow-x-auto pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible lg:pb-0 ${empty wishlistItems ? 'hidden' : ''}">
                 <c:forEach var="p" items="${wishlistItems}">
-                    <div class="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between transition hover:shadow-lg"
+                    <div class="w-64 shrink-0 lg:w-auto bg-white rounded-3xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between transition hover:shadow-lg"
                          data-wishlist-item data-product-id="${p.id}">
                         <div>
                             <a href="${ctx}/detail?id=${p.id}" class="block aspect-square rounded-2xl overflow-hidden bg-gray-100 mb-3.5">
@@ -121,6 +122,14 @@
                         </div>
                     </div>
                 </c:forEach>
+            </div>
+
+            <!-- Phân trang (chỉ hiện khi có nhiều hơn 1 trang) -->
+            <div id="wishlistPagination">
+                <jsp:include page="/views/common/pagination.jsp">
+                    <jsp:param name="baseUrl" value="/wishlist" />
+                    <jsp:param name="wrapClass" value="mt-8" />
+                </jsp:include>
             </div>
 
             <!-- Trạng thái trống (JS sẽ hiện lên khi xóa hết sản phẩm) -->

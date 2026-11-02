@@ -133,21 +133,21 @@
                                                     <c:if test="${p.status == 'ONGOING' || p.status == 'UPCOMING'}">
                                                         <form method="post" action="${ctx}/shop/promotions" data-confirm="Tạm dừng chương trình &quot;${p.name}&quot;? Giá sản phẩm sẽ trở về giá gốc.">
                                                             <input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="${p.promotionId}">
-                                                            <input type="hidden" name="active" value="0"><input type="hidden" name="tab" value="${tab}">
+                                                            <input type="hidden" name="active" value="0"><input type="hidden" name="tab" value="${tab}"><input type="hidden" name="page" value="${currentPage}"><input type="hidden" name="q" value="<c:out value='${q}'/>">
                                                             <button type="submit" class="mk-act mk-act-pause" title="Tạm dừng"><i class="fa-solid fa-pause"></i></button>
                                                         </form>
                                                     </c:if>
                                                     <c:if test="${p.status == 'PAUSED'}">
                                                         <form method="post" action="${ctx}/shop/promotions">
                                                             <input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="${p.promotionId}">
-                                                            <input type="hidden" name="active" value="1"><input type="hidden" name="tab" value="${tab}">
+                                                            <input type="hidden" name="active" value="1"><input type="hidden" name="tab" value="${tab}"><input type="hidden" name="page" value="${currentPage}"><input type="hidden" name="q" value="<c:out value='${q}'/>">
                                                             <button type="submit" class="mk-act mk-act-play" title="Kích hoạt lại"><i class="fa-solid fa-play"></i></button>
                                                         </form>
                                                     </c:if>
                                                     <c:if test="${p.status == 'ONGOING' || p.status == 'UPCOMING' || p.status == 'PAUSED'}">
                                                         <form method="post" action="${ctx}/shop/promotions" data-confirm="Kết thúc sớm chương trình? Thao tác này không thể hoàn tác.">
                                                             <input type="hidden" name="action" value="terminate"><input type="hidden" name="id" value="${p.promotionId}">
-                                                            <input type="hidden" name="tab" value="${tab}">
+                                                            <input type="hidden" name="tab" value="${tab}"><input type="hidden" name="page" value="${currentPage}"><input type="hidden" name="q" value="<c:out value='${q}'/>">
                                                             <button type="submit" class="mk-act mk-act-stop" title="Kết thúc sớm"><i class="fa-solid fa-ban"></i></button>
                                                         </form>
                                                     </c:if>
@@ -173,6 +173,11 @@
                         </div>
                     </c:otherwise>
                 </c:choose>
+                <jsp:include page="/views/common/pagination.jsp">
+                    <jsp:param name="baseUrl" value="/shop/promotions" />
+                    <jsp:param name="tab" value="${tab}" />
+                    <jsp:param name="q" value="${q}" />
+                </jsp:include>
             </div>
         </div>
     </main>

@@ -73,7 +73,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
         }
         String q = trimToNull(request.getParameter("q"));
 
-        request.setAttribute("vouchers", voucherDAO.listByShop(shopId, tab, q));
+        request.setAttribute("vouchers", paginate(request, voucherDAO.listByShop(shopId, tab, q), LIST_PAGE_SIZE));
         request.setAttribute("tabCounts", voucherDAO.countByTab(shopId));
         request.setAttribute("summary", voucherDAO.getShopSummary(shopId));
         request.setAttribute("tab", tab);
@@ -88,11 +88,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
         if (shopId == null) return;
 
         String action = request.getParameter("action");
-        String back = request.getContextPath() + "/shop/vouchers";
-        String tab = request.getParameter("tab");
-        if (tab != null && tab.matches("ALL|ONGOING|UPCOMING|PAUSED|FINISHED")) {
-            back += "?tab=" + tab;
-        }
+        String back = listUrl(request, "/shop/vouchers");
 
         if ("toggle".equals(action) || "terminate".equals(action)) {
             Integer id = parseInt(request.getParameter("id"));

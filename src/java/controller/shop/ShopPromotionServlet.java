@@ -66,7 +66,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         }
         String q = trimToNull(request.getParameter("q"));
 
-        request.setAttribute("promotions", promotionDAO.listByShop(shopId, tab, q));
+        request.setAttribute("promotions", paginate(request, promotionDAO.listByShop(shopId, tab, q), LIST_PAGE_SIZE));
         request.setAttribute("tabCounts", promotionDAO.countByTab(shopId));
         request.setAttribute("summary", promotionDAO.getShopSummary(shopId));
         request.setAttribute("tab", tab);
@@ -81,11 +81,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         if (shopId == null) return;
 
         String action = request.getParameter("action");
-        String back = request.getContextPath() + "/shop/promotions";
-        String tab = request.getParameter("tab");
-        if (tab != null && tab.matches("ALL|ONGOING|UPCOMING|PAUSED|FINISHED")) {
-            back += "?tab=" + tab;
-        }
+        String back = listUrl(request, "/shop/promotions");
 
         if ("toggle".equals(action) || "terminate".equals(action)) {
             Integer id = parseInt(request.getParameter("id"));
