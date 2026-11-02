@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import enums.SubOrderStatus;
 import enums.DeliveryStatus;
+import enums.DeliverySlot;
 import enums.PaymentStatus;
 import enums.PaymentMethod;
 
@@ -219,6 +220,14 @@ public class SubOrder {
 
     public void setDeliverySlot(String deliverySlot) {
         this.deliverySlot = deliverySlot;
+    }
+
+    public DeliverySlot getDeliverySlotEnum() {
+        return DeliverySlot.from(deliverySlot);
+    }
+
+    public void setDeliverySlot(DeliverySlot deliverySlot) {
+        this.deliverySlot = deliverySlot != null ? deliverySlot.name() : null;
     }
 
     public BigDecimal getShopSubtotal() {

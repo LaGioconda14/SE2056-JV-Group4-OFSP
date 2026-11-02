@@ -143,7 +143,7 @@
                 <c:otherwise>
                     <div class="space-y-4 pb-4">
                         <div class="hidden lg:grid grid-cols-[minmax(0,1fr)_140px_180px_150px_72px] items-center rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-5 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant shadow-sm">
-                            <label class="flex items-center gap-3 normal-case text-sm text-on-surface cursor-pointer"><input checked type="checkbox" data-select-all class="select-all-toggle w-4 h-4 accent-primary" aria-label="Chọn tất cả sản phẩm">Sản phẩm (<span id="select-all-count"><c:out value="${cart.items.size()}"/></span>)</label>
+                            <label class="flex items-center gap-3 normal-case text-sm text-on-surface cursor-pointer"><input type="checkbox" data-select-all class="select-all-toggle w-4 h-4 accent-primary" aria-label="Chọn tất cả sản phẩm">Sản phẩm (<span id="select-all-count"><c:out value="${cart.items.size()}"/></span>)</label>
                             <span class="text-center">Đơn giá</span><span class="text-center">Số lượng</span><span class="text-center">Số tiền</span><span class="text-center">Thao tác</span>
                         </div>
                         <c:forEach var="shopEntry" items="${cart.itemsByShop}">

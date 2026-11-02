@@ -1,5 +1,8 @@
 package model;
 
+import enums.OrderStatus;
+import enums.PaymentMethod;
+import enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -16,9 +19,9 @@ public class Order {
     private BigDecimal totalShippingFee = BigDecimal.ZERO;
     private BigDecimal platformDiscount = BigDecimal.ZERO;
     private BigDecimal finalAmount = BigDecimal.ZERO;
-    private String paymentStatus = "PENDING";
-    private String paymentMethod;
-    private String orderStatus;
+    private String paymentStatus = PaymentStatus.PENDING.name();
+    private String paymentMethod = PaymentMethod.COD.name();
+    private String orderStatus = OrderStatus.PROCESSING.name();
     private Timestamp createdAt;
     private Timestamp updatedAt;
     private String note;
@@ -147,12 +150,30 @@ public class Order {
         this.paymentStatus = paymentStatus;
     }
 
+    public PaymentStatus getPaymentStatusEnum() {
+        PaymentStatus status = PaymentStatus.from(paymentStatus);
+        return status != null ? status : PaymentStatus.PENDING;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus != null ? paymentStatus.name() : PaymentStatus.PENDING.name();
+    }
+
     public String getPaymentMethod() {
         return paymentMethod;
     }
 
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public PaymentMethod getPaymentMethodEnum() {
+        PaymentMethod method = PaymentMethod.from(paymentMethod);
+        return method != null ? method : PaymentMethod.COD;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod != null ? paymentMethod.name() : PaymentMethod.COD.name();
     }
 
     public String getOrderStatus() {
@@ -163,8 +184,17 @@ public class Order {
         this.orderStatus = orderStatus;
     }
 
+    public OrderStatus getOrderStatusEnum() {
+        OrderStatus status = OrderStatus.from(orderStatus);
+        return status != null ? status : OrderStatus.PROCESSING;
+    }
+
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.orderStatus = orderStatus != null ? orderStatus.name() : OrderStatus.PROCESSING.name();
+    }
+
     public String getStatus() {
-        return orderStatus != null ? orderStatus : "PENDING";
+        return orderStatus != null ? orderStatus : OrderStatus.PROCESSING.name();
     }
 
     public String getCreatedAt() {

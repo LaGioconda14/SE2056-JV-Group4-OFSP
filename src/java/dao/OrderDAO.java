@@ -1,5 +1,11 @@
 package dao;
 
+import enums.OrderStatus;
+import enums.PaymentMethod;
+import enums.PaymentStatus;
+import enums.PaymentTransactionStatus;
+import enums.PaymentType;
+import enums.SubOrderStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
@@ -111,6 +117,59 @@ public class OrderDAO extends DBContext {
         return items;
     }
 
+    public CartItem getBuyNowItem(long variantId, int quantity) {
+        String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "       p.product_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
+                + "       s.shop_id, s.shop_name, s.status AS shop_status, "
+                + "       (SELECT TOP 1 pi2.image_url FROM product_images pi2 "
+                + "        WHERE pi2.product_id = p.product_id AND pi2.is_thumbnail = 1 "
+                + "        ORDER BY pi2.display_order) AS thumbnail_url "
+                + "FROM product_variants pv "
+                + "INNER JOIN products p ON pv.product_id = p.product_id "
+                + "INNER JOIN shops s ON p.shop_id = s.shop_id "
+                + "WHERE pv.variant_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new IllegalStateException("Không thể tải sản phẩm mua ngay. Vui lòng thử lại!");
+        }
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, variantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                Product product = new Product();
+                product.setProductId(rs.getLong("product_id"));
+                product.setName(rs.getString("product_name"));
+                product.setOrigin(rs.getString("origin"));
+                product.setActive(rs.getBoolean("product_active"));
+                product.setShopId(rs.getLong("shop_id"));
+                product.setShopName(rs.getString("shop_name"));
+                product.setShopStatus(rs.getString("shop_status"));
+                product.setThumbnailUrl(rs.getString("thumbnail_url"));
+                product.setImage(rs.getString("thumbnail_url"));
+
+                ProductVariant variant = new ProductVariant();
+                variant.setVariantId(rs.getLong("variant_id"));
+                variant.setSku(rs.getString("sku"));
+                variant.setVariantName(rs.getString("variant_name"));
+                variant.setUnit(rs.getString("unit"));
+                variant.setWeightKg(rs.getBigDecimal("weight_kg"));
+                variant.setPrice(rs.getBigDecimal("price"));
+                variant.setStockQuantity(rs.getInt("stock_quantity"));
+                variant.setActive(rs.getBoolean("variant_active"));
+                variant.setProduct(product);
+                return new CartItem(0, variant, quantity);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting Buy Now item for variant " + variantId, ex);
+            throw new IllegalStateException("Không thể tải sản phẩm mua ngay. Vui lòng thử lại!", ex);
+        }
+    }
+
     // 2. Láº¤Y Äá»ŠA CHá»ˆ Máº¶C Äá»ŠNH HOáº¶C Äá»ŠA CHá»ˆ Gáº¦N NHáº¤T Cá»¦A KHÃCH HÃ€NG
     public CustomerAddress getDefaultAddress(long customerId) {
         String sql = "SELECT TOP 1 address_id, user_id, recipient_name, recipient_phone, "
@@ -212,6 +271,18 @@ public class OrderDAO extends DBContext {
     // 3. Táº O ÄÆ N HÃ€NG TOÃ€N DIá»†N (TRANSACTION AN TOÃ€N)
     public long createOrder(Order order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        return createOrderInternal(order, address, cartItemIdsToDelete, paymentMethod,
+                saveCustomerAddress, true);
+    }
+
+    public long createBuyNowOrder(Order order, ShippingAddress address,
+            String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        return createOrderInternal(order, address, Collections.emptyList(), paymentMethod,
+                saveCustomerAddress, false);
+    }
+
+    private long createOrderInternal(Order order, ShippingAddress address, List<Long> cartItemIdsToDelete,
+            String paymentMethod, boolean saveCustomerAddress, boolean consumeCart) throws Exception {
         String insertOrderSql = "INSERT INTO orders (order_code, customer_id, coupon_id, total_goods_amount, "
                 + "total_shipping_fee, platform_discount, final_amount, payment_status, payment_method, order_status) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -259,7 +330,9 @@ public class OrderDAO extends DBContext {
         try {
             conn.setAutoCommit(false); // Báº®T Äáº¦U TRANSACTION
 
-            lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
+            if (consumeCart) {
+                lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
+            }
 
             if (saveCustomerAddress) {
                 insertCustomerAddress(conn, insertCustomerAddressSql,
@@ -318,9 +391,12 @@ public class OrderDAO extends DBContext {
                 ps.setBigDecimal(5, order.getTotalShippingFee());
                 ps.setBigDecimal(6, order.getPlatformDiscount());
                 ps.setBigDecimal(7, order.getFinalAmount());
-                ps.setString(8, order.getPaymentStatus() != null ? order.getPaymentStatus() : "PENDING");
-                ps.setString(9, paymentMethod != null && !paymentMethod.trim().isEmpty() ? paymentMethod : "COD");
-                ps.setString(10, order.getOrderStatus() != null ? order.getOrderStatus() : "PROCESSING");
+                ps.setString(8, order.getPaymentStatus() != null
+                        ? order.getPaymentStatus() : PaymentStatus.PENDING.name());
+                ps.setString(9, paymentMethod != null && !paymentMethod.trim().isEmpty()
+                        ? paymentMethod : PaymentMethod.COD.name());
+                ps.setString(10, order.getOrderStatus() != null
+                        ? order.getOrderStatus() : OrderStatus.PROCESSING.name());
 
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -364,7 +440,8 @@ public class OrderDAO extends DBContext {
                     ps.setBigDecimal(8, sub.getShopTotal());
                     ps.setBigDecimal(9, commissionRate);
                     ps.setBigDecimal(10, commissionAmount);
-                    ps.setString(11, sub.getStatus() != null ? sub.getStatus() : "NEW");
+                    ps.setString(11, sub.getStatus() != null
+                            ? sub.getStatus() : SubOrderStatus.NEW.name());
 
                     ps.executeUpdate();
                     try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -416,7 +493,7 @@ public class OrderDAO extends DBContext {
             }
 
             // F. XÃ“A CÃC Sáº¢N PHáº¨M ÄÃƒ MUA KHá»ŽI GIá»Ž HÃ€NG
-            if (cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
+            if (consumeCart && cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
                 try (PreparedStatement ps = conn.prepareStatement(deleteCartItemsSql)) {
                     for (Long itemId : cartItemIdsToDelete) {
                         ps.setLong(1, itemId);
@@ -448,9 +525,10 @@ public class OrderDAO extends DBContext {
             try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
                 ps.setLong(1, orderId);
                 ps.setString(2, paymentMethod);
-                ps.setString(3, "COD".equals(paymentMethod) ? "CASH" : "ONLINE");
+                ps.setString(3, PaymentMethod.COD.name().equals(paymentMethod)
+                        ? PaymentType.CASH.name() : PaymentType.ONLINE.name());
                 ps.setBigDecimal(4, order.getFinalAmount());
-                ps.setString(5, "PENDING");
+                ps.setString(5, PaymentTransactionStatus.PENDING.name());
                 ps.executeUpdate();
             }
 
@@ -599,7 +677,7 @@ public class OrderDAO extends DBContext {
     // 4. Láº¤Y CHI TIáº¾T ÄÆ N HÃ€NG THEO ID
     public Order getOrderById(long orderId) {
         String sqlOrder = "SELECT o.order_id, o.customer_id, o.coupon_id, o.total_goods_amount, "
-                + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, "
+                + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, o.payment_method, "
                 + "o.created_at, o.updated_at, "
                 + "sa.recipient_name, sa.recipient_phone, sa.street_address, sa.ward, sa.district, sa.city "
                 + "FROM orders o "
@@ -638,6 +716,7 @@ public class OrderDAO extends DBContext {
                         order.setPlatformDiscount(rs.getBigDecimal("platform_discount"));
                         order.setFinalAmount(rs.getBigDecimal("final_amount"));
                         order.setPaymentStatus(rs.getString("payment_status"));
+                        order.setPaymentMethod(rs.getString("payment_method"));
                         order.setCreatedAt(rs.getTimestamp("created_at"));
                         order.setUpdatedAt(rs.getTimestamp("updated_at"));
 
@@ -1024,14 +1103,11 @@ public class OrderDAO extends DBContext {
             if ("SHIPPING".equals(status) || "DELIVERING".equals(status) || "IN_TRANSIT".equals(status)) {
                 throw new IllegalStateException("Đơn hàng đang trong quá trình vận chuyển giao hàng, không thể hủy!");
             }
-            if ("COMPLETED".equals(status) || "DELIVERED".equals(status) || "SUCCESS".equals(status)) {
+            if (OrderStatus.COMPLETED.name().equals(status) || SubOrderStatus.DELIVERED.name().equals(status)) {
                 throw new IllegalStateException("Đơn hàng đã được giao thành công, không thể hủy!");
             }
             if ("CANCELLED".equals(status) || "CANCELED".equals(status)) {
                 throw new IllegalStateException("Đơn hàng này đã được hủy trước đó!");
-            }
-            if ("RETURNED".equals(status) || "REFUNDED".equals(status) || "DISPUTED".equals(status)) {
-                throw new IllegalStateException("Đơn hàng đang trong quy trình đổi trả / khiếu nại, không thể hủy!");
             }
 
             String reasonToSave = (cancelReason != null && !cancelReason.trim().isEmpty()) ? cancelReason.trim() : "Người mua hủy đơn trực tiếp";
@@ -1060,7 +1136,8 @@ public class OrderDAO extends DBContext {
                 }
 
                 // Đồng bộ trạng thái đơn cha nếu tất cả sub_orders đều đã CANCELLED
-                String syncParentSql = "UPDATE o SET o.order_status = 'CANCELLED', o.updated_at = CURRENT_TIMESTAMP "
+                String syncParentSql = "UPDATE o SET o.order_status = '" + OrderStatus.CANCELLED.name()
+                                     + "', o.updated_at = CURRENT_TIMESTAMP "
                                      + "FROM orders o "
                                      + "WHERE o.order_id = ? "
                                      + "  AND NOT EXISTS ( "
@@ -1096,7 +1173,8 @@ public class OrderDAO extends DBContext {
                     psSubs.executeUpdate();
                 }
 
-                String cancelOrderSql = "UPDATE orders SET order_status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP "
+                String cancelOrderSql = "UPDATE orders SET order_status = '" + OrderStatus.CANCELLED.name()
+                                      + "', updated_at = CURRENT_TIMESTAMP "
                                       + "WHERE order_id = ?";
                 try (PreparedStatement psOrder = conn.prepareStatement(cancelOrderSql)) {
                     psOrder.setLong(1, matchedOrderId);

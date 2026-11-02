@@ -5,6 +5,7 @@ package enums;
  */
 public enum OrderStatus {
     PENDING("Chờ xác nhận", "bg-amber-100 text-amber-800 border-amber-200"),
+    CONFIRMED("Đã xác nhận", "bg-blue-100 text-blue-800 border-blue-200"),
     PROCESSING("Đang xử lý", "bg-sky-100 text-sky-800 border-sky-200"),
     SHIPPING("Đang giao hàng", "bg-indigo-100 text-indigo-800 border-indigo-200"),
     COMPLETED("Hoàn tất", "bg-emerald-100 text-emerald-800 border-emerald-200"),

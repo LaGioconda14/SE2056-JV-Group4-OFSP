@@ -2,7 +2,7 @@
 <div class="grid grid-cols-1 gap-4 border-b border-outline-variant/15 px-5 py-5 transition hover:bg-surface-container-low/30 lg:grid-cols-[minmax(0,1fr)_140px_180px_150px_72px] lg:items-center"
      id="cart-item-${item.cartItemID}" data-cart-row data-item-id="${item.cartItemID}" data-shop-id="${shopEntry.key}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" data-unit-price="${item.variant.price}">
     <div class="flex min-w-0 items-start gap-3">
-        <input <c:if test="${available}">checked</c:if> <c:if test="${not available}">disabled</c:if> type="checkbox" data-cart-item value="${item.cartItemID}" aria-label="Chọn <c:out value='${item.variant.product.name}'/>" class="item-checkbox mt-8 h-4 w-4 shrink-0 accent-primary disabled:opacity-40">
+        <input <c:if test="${not available}">disabled</c:if> type="checkbox" data-cart-item value="${item.cartItemID}" aria-label="Chọn <c:out value='${item.variant.product.name}'/>" class="item-checkbox mt-8 h-4 w-4 shrink-0 accent-primary disabled:opacity-40">
         <div class="h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container">
             <c:choose>
                 <c:when test="${not empty item.variant.product.image}"><img class="h-full w-full object-cover" src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>"></c:when>

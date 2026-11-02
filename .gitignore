@@ -35,4 +35,7 @@ src/java/oauth.properties
 # Database configuration credentials (keep secret)
 *db.properties
 !*db.properties.example
+
+*vnpay.properties
+!*vnpay.properties.example
 .vscode/

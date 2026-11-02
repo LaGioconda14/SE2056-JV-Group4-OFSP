@@ -13,6 +13,7 @@ import model.OrderItem;
 import model.ShippingAddress;
 import model.SubOrder;
 import enums.SubOrderStatus;
+import enums.OrderStatus;
 import util.DBContext;
 
 public class OrderFulfillmentDAO extends DBContext {
@@ -164,14 +165,16 @@ public class OrderFulfillmentDAO extends DBContext {
             if (updated > 0) {
                 // Synchronize parent order status
                 if (newStatus == SubOrderStatus.SHIPPING) {
-                    String syncShipping = "UPDATE o SET o.order_status = 'SHIPPING', o.updated_at = CURRENT_TIMESTAMP "
+                    String syncShipping = "UPDATE o SET o.order_status = '" + OrderStatus.SHIPPING.name()
+                            + "', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id WHERE so.sub_order_code = ?";
                     try (PreparedStatement psSync = conn.prepareStatement(syncShipping)) {
                         psSync.setString(1, subOrderCode);
                         psSync.executeUpdate();
                     }
                 } else if (newStatus == SubOrderStatus.DELIVERED) {
-                    String syncDelivered = "UPDATE o SET o.order_status = 'COMPLETED', o.updated_at = CURRENT_TIMESTAMP "
+                    String syncDelivered = "UPDATE o SET o.order_status = '" + OrderStatus.COMPLETED.name()
+                            + "', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
                             + "WHERE so.sub_order_code = ? "
                             + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> '"
@@ -347,7 +350,7 @@ public class OrderFulfillmentDAO extends DBContext {
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 // Synchronize parent order status if all sub_orders are CANCELLED
-                String syncSql = "UPDATE o SET o.order_status = '" + SubOrderStatus.CANCELLED.name()
+                String syncSql = "UPDATE o SET o.order_status = '" + OrderStatus.CANCELLED.name()
                         + "', o.updated_at = CURRENT_TIMESTAMP "
                         + "FROM orders o "
                         + "JOIN sub_orders so ON o.order_id = so.order_id "

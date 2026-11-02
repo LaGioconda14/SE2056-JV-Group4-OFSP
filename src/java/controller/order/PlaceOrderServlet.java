@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import enums.PaymentMethod;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -37,6 +38,23 @@ public class PlaceOrderServlet extends HttpServlet {
             return;
         }
 
+        boolean buyNow = "buyNow".equals(request.getParameter("checkoutMode"));
+        Long buyNowVariantId = null;
+        Integer buyNowQuantity = null;
+        if (buyNow) {
+            try {
+                buyNowVariantId = Long.parseLong(request.getParameter("variantId"));
+                buyNowQuantity = Integer.parseInt(request.getParameter("quantity"));
+                if (buyNowVariantId <= 0 || buyNowQuantity <= 0) {
+                    throw new NumberFormatException();
+                }
+            } catch (NumberFormatException ex) {
+                session.setAttribute("checkoutError", "Sản phẩm mua ngay không hợp lệ!");
+                response.sendRedirect(request.getContextPath() + "/checkout");
+                return;
+            }
+        }
+
         // Lấy danh sách cartItemIds
         String[] itemIdParams = request.getParameterValues("cartItemIds");
         List<Long> cartItemIds = new ArrayList<>();
@@ -49,7 +67,7 @@ public class PlaceOrderServlet extends HttpServlet {
             }
         }
 
-        if (cartItemIds.isEmpty()) {
+        if (!buyNow && cartItemIds.isEmpty()) {
             session.setAttribute("cartError", "Không có sản phẩm nào được chọn!");
             response.sendRedirect(request.getContextPath() + "/cart");
             return;
@@ -114,7 +132,7 @@ public class PlaceOrderServlet extends HttpServlet {
             shippingAddress.setRecipientPhone(request.getParameter("recipientPhone"));
             shippingAddress.setStreetAddress(request.getParameter("streetAddress"));
             shippingAddress.setWard(request.getParameter("ward"));
-            shippingAddress.setDistrict(request.getParameter("district"));
+            shippingAddress.setDistrict("");
             shippingAddress.setCity(request.getParameter("city"));
         } else {
             session.setAttribute("checkoutError", "Vui lòng chọn hoặc thêm địa chỉ giao hàng!");
@@ -123,17 +141,32 @@ public class PlaceOrderServlet extends HttpServlet {
         }
 
         try {
-            long orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
-                    deliverySlot, paymentMethod, couponCode, shopCouponCodes,
-                    "new".equals(addressSelection) && saveAddress);
+            long orderId;
+            if (buyNow) {
+                orderId = orderService.placeBuyNowOrder((long) user.getId(), buyNowVariantId,
+                        buyNowQuantity, shippingAddress, deliverySlot, paymentMethod, couponCode,
+                        shopCouponCodes, "new".equals(addressSelection) && saveAddress);
+            } else {
+                orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
+                        deliverySlot, paymentMethod, couponCode, shopCouponCodes,
+                        "new".equals(addressSelection) && saveAddress);
+            }
 
             // Dọn dẹp session sau khi đặt hàng thành công
             session.removeAttribute("checkoutItemIds");
+            session.removeAttribute("checkoutMode");
+            session.removeAttribute("checkoutBuyNowVariantId");
+            session.removeAttribute("checkoutBuyNowQuantity");
             session.removeAttribute("checkoutCouponCode");
             session.removeAttribute("checkoutShopCoupons");
+            session.removeAttribute("checkoutFormDraft");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
 
-            response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);
+            if (PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)) {
+                response.sendRedirect(request.getContextPath() + "/payment/vnpay/create?orderId=" + orderId);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);
+            }
 
         } catch (Exception ex) {
             session.setAttribute("checkoutError", ex.getMessage());

@@ -229,7 +229,6 @@ public class ProfileServlet extends HttpServlet {
         String recipientName = request.getParameter("recipientName");
         String recipientPhone = request.getParameter("recipientPhone");
         String city = request.getParameter("city");
-        String district = request.getParameter("district");
         String ward = request.getParameter("ward");
         String streetAddress = request.getParameter("streetAddress");
         boolean isDefault = "true".equalsIgnoreCase(request.getParameter("isDefault"));
@@ -239,7 +238,7 @@ public class ProfileServlet extends HttpServlet {
         newAddress.setRecipientName(recipientName);
         newAddress.setRecipientPhone(recipientPhone);
         newAddress.setCity(city);
-        newAddress.setDistrict(district);
+        newAddress.setDistrict("");
         newAddress.setWard(ward);
         newAddress.setStreetAddress(streetAddress);
         newAddress.setDefault(isDefault);

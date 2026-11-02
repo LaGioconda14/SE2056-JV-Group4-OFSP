@@ -87,10 +87,16 @@
                                 <div class="pt-3 border-t border-slate-100 flex items-baseline justify-between">
                                     <div>
                                         <c:choose>
-                                            <c:when test="${subOrder.paymentStatus eq 'PAID' or (not empty subOrder.paymentMethod and !subOrder.paymentMethod.toUpperCase().contains('COD'))}">
+                                            <c:when test="${subOrder.paymentStatus eq 'PAID'}">
                                                 <div class="text-sm font-extrabold text-slate-900">Tổng Tiền Đã Thanh Toán</div>
                                                 <div class="text-[11px] text-emerald-600 font-bold">
                                                     <i class="fa-solid fa-circle-check"></i> Đã thanh toán qua ${subOrder.paymentMethod} (Không thu COD)
+                                                </div>
+                                            </c:when>
+                                            <c:when test="${subOrder.paymentMethod ne 'COD'}">
+                                                <div class="text-sm font-extrabold text-slate-900">Tổng Tiền Chờ Thanh Toán</div>
+                                                <div class="text-[11px] text-amber-600 font-bold">
+                                                    <i class="fa-solid fa-clock"></i> Đang chờ thanh toán qua ${subOrder.paymentMethod}
                                                 </div>
                                             </c:when>
                                             <c:otherwise>

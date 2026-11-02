@@ -1,13 +1,14 @@
 package controller.cart;
 
 import java.io.IOException;
-import exception.CartException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Cart;
 import model.User;
 import service.ICartService;
@@ -16,6 +17,7 @@ import service.impl.CartServiceImpl;
 @WebServlet(name = "CartServlet", urlPatterns = {"/cart"})
 public class CartServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(CartServlet.class.getName());
     private transient ICartService cartService;
 
     public CartServlet() {
@@ -52,14 +54,14 @@ public class CartServlet extends HttpServlet {
         Cart cart;
         try {
             cart = cartService.loadCartAndReconcile((long) user.getId());
-        } catch (CartException ex) {
-            response.setStatus(CartControllerSupport.status(ex));
+        } catch (IllegalArgumentException ex) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             request.setAttribute("errorMessage", ex.getMessage());
             cart = new Cart();
         } catch (RuntimeException ex) {
-            CartException safeError = CartControllerSupport.unexpected(ex);
+            LOGGER.log(Level.SEVERE, "Cannot load cart", ex);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            request.setAttribute("errorMessage", safeError.getMessage());
+            request.setAttribute("errorMessage", "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!");
             cart = new Cart();
         }
         request.setAttribute("cart", cart);

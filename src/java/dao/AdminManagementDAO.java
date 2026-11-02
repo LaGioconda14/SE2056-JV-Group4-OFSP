@@ -1,6 +1,9 @@
 package dao;
 
 import model.ShopRequest;
+import enums.DeliveryStatus;
+import enums.PaymentStatus;
+import enums.SubOrderStatus;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -2301,7 +2304,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     if ("PAID".equalsIgnoreCase(payStatus)) {
                         item.put("paymentStatusText", "Đã thanh toán");
                         item.put("paymentStatusBadge", "bg-success-subtle text-success border border-success-subtle");
-                    } else if ("UNPAID".equalsIgnoreCase(payStatus)) {
+                    } else if (PaymentStatus.PENDING.name().equalsIgnoreCase(payStatus)) {
                         item.put("paymentStatusText", "Chờ thanh toán");
                         item.put("paymentStatusBadge", "bg-warning-subtle text-warning-emphasis border border-warning-subtle");
                     } else if ("REFUNDED".equalsIgnoreCase(payStatus)) {
@@ -2588,10 +2591,13 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         Map<String, Object> stats = new HashMap<>();
         String sql = "SELECT "
                    + "    COUNT(*) as total_deliveries, "
-                   + "    SUM(CASE WHEN delivery_status = 'DELIVERED' THEN 1 ELSE 0 END) as delivered_count, "
-                   + "    SUM(CASE WHEN delivery_status = 'IN_TRANSIT' THEN 1 ELSE 0 END) as in_transit_count, "
-                   + "    SUM(CASE WHEN delivery_status = 'ASSIGNED' THEN 1 ELSE 0 END) as assigned_count, "
-                   + "    SUM(CASE WHEN delivery_status = 'FAILED' THEN 1 ELSE 0 END) as failed_count, "
+                   + "    SUM(CASE WHEN delivery_status = '" + DeliveryStatus.DELIVERED.name() + "' THEN 1 ELSE 0 END) as delivered_count, "
+                   + "    SUM(CASE WHEN delivery_status IN ('" + DeliveryStatus.PICKED_UP.name() + "', '"
+                   + DeliveryStatus.IN_TRANSIT.name() + "', '" + DeliveryStatus.DELIVERING.name() + "') THEN 1 ELSE 0 END) as in_transit_count, "
+                   + "    SUM(CASE WHEN delivery_status IN ('" + DeliveryStatus.ASSIGNING.name() + "', '"
+                   + DeliveryStatus.ASSIGNED.name() + "') THEN 1 ELSE 0 END) as assigned_count, "
+                   + "    SUM(CASE WHEN delivery_status IN ('" + DeliveryStatus.FAILED.name() + "', '"
+                   + DeliveryStatus.CANCELLED.name() + "') THEN 1 ELSE 0 END) as failed_count, "
                    + "    SUM(CASE WHEN proof_image_url IS NOT NULL AND proof_image_url != '' THEN 1 ELSE 0 END) as proof_count "
                    + "FROM deliveries";
 
@@ -2874,9 +2880,16 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
      * Dispatch / re-assign driver and update delivery status.
      */
     public boolean assignDriver(long deliveryId, long driverId, String trackingNumber, String deliveryStatus) {
+        DeliveryStatus status = deliveryStatus == null || deliveryStatus.isBlank()
+                ? DeliveryStatus.ASSIGNED : DeliveryStatus.from(deliveryStatus);
+        if (status == null) {
+            return false;
+        }
+        String statusName = status.name();
         String updateDelSql = "UPDATE deliveries SET driver_id = ?, tracking_number = ?, delivery_status = ?, "
                             + "       assigned_at = COALESCE(assigned_at, CURRENT_TIMESTAMP), "
-                            + "       delivered_at = CASE WHEN ? = 'DELIVERED' AND delivered_at IS NULL THEN CURRENT_TIMESTAMP ELSE delivered_at END "
+                            + "       delivered_at = CASE WHEN ? = '" + DeliveryStatus.DELIVERED.name()
+                            + "' AND delivered_at IS NULL THEN CURRENT_TIMESTAMP ELSE delivered_at END "
                             + "WHERE delivery_id = ?";
 
         try (Connection conn = getConnection()) {
@@ -2885,21 +2898,24 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
             try (PreparedStatement ps = conn.prepareStatement(updateDelSql)) {
                 ps.setLong(1, driverId);
                 ps.setString(2, trackingNumber != null ? trackingNumber.trim() : null);
-                ps.setString(3, deliveryStatus != null ? deliveryStatus.trim() : "ASSIGNED");
-                ps.setString(4, deliveryStatus != null ? deliveryStatus.trim() : "ASSIGNED");
+                ps.setString(3, statusName);
+                ps.setString(4, statusName);
                 ps.setLong(5, deliveryId);
                 ps.executeUpdate();
             }
 
             // Sync with sub_orders status if delivered or shipping
-            if ("DELIVERED".equalsIgnoreCase(deliveryStatus)) {
-                String subSql = "UPDATE sub_orders SET status = 'DELIVERED', updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = (SELECT sub_order_id FROM deliveries WHERE delivery_id = ?)";
+            if (status == DeliveryStatus.DELIVERED) {
+                String subSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.DELIVERED.name()
+                        + "', updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = (SELECT sub_order_id FROM deliveries WHERE delivery_id = ?)";
                 try (PreparedStatement psSub = conn.prepareStatement(subSql)) {
                     psSub.setLong(1, deliveryId);
                     psSub.executeUpdate();
                 }
-            } else if ("IN_TRANSIT".equalsIgnoreCase(deliveryStatus)) {
-                String subSql = "UPDATE sub_orders SET status = 'SHIPPING', updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = (SELECT sub_order_id FROM deliveries WHERE delivery_id = ?)";
+            } else if (status == DeliveryStatus.IN_TRANSIT || status == DeliveryStatus.DELIVERING
+                    || status == DeliveryStatus.PICKED_UP) {
+                String subSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.SHIPPING.name()
+                        + "', updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = (SELECT sub_order_id FROM deliveries WHERE delivery_id = ?)";
                 try (PreparedStatement psSub = conn.prepareStatement(subSql)) {
                     psSub.setLong(1, deliveryId);
                     psSub.executeUpdate();

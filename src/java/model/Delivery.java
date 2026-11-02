@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import enums.DeliveryStatus;
+import enums.DeliverySlot;
 import enums.PaymentStatus;
 import enums.PaymentMethod;
 
@@ -18,7 +19,7 @@ public class Delivery {
     private String driverName;
     private String driverPhone;
     private String trackingNumber;
-    private String deliveryStatus = DeliveryStatus.ASSIGNING.name(); // ASSIGNING, DELIVERING, DELIVERED, FAILED
+    private String deliveryStatus = DeliveryStatus.ASSIGNING.name();
     private String proofImageUrl;
     private String failureReason;
     private Timestamp assignedAt;
@@ -245,6 +246,14 @@ public class Delivery {
         this.deliverySlot = deliverySlot;
     }
 
+    public DeliverySlot getDeliverySlotEnum() {
+        return DeliverySlot.from(deliverySlot);
+    }
+
+    public void setDeliverySlot(DeliverySlot deliverySlot) {
+        this.deliverySlot = deliverySlot != null ? deliverySlot.name() : null;
+    }
+
     public String getDeliveryNote() {
         return deliveryNote;
     }
@@ -311,7 +320,7 @@ public class Delivery {
     }
 
     public boolean isCOD() {
-        return "COD".equalsIgnoreCase(paymentMethod);
+        return getPaymentMethodEnum() == PaymentMethod.COD;
     }
 
     public String getFullDeliveryAddress() {
