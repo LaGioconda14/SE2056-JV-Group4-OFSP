@@ -1,0 +1,1552 @@
+/* FE-10 GỐC VƯỜN — visual tokens taken from current OFSP home/admin/catalog CSS. */
+:root{
+    --rv-green:#00652c;
+    --rv-dark:#064e3b;
+    --rv-emerald:#059669;
+    --rv-mint:#ecfdf5;
+    --rv-border:#e2e8f0;
+    --rv-ink:#14241b;
+    --rv-muted:#64748b;
+    --rv-gold:#f59e0b;
+    --rv-bg:#f7faf7;
+    --rv-font:'Plus Jakarta Sans',Inter,system-ui,sans-serif
+}
+.rv-root,.rv-root *{
+    box-sizing:border-box
+}
+.rv-root{
+    font-family:var(--rv-font);
+    font-size:14px;
+    color:var(--rv-ink);
+    background:var(--rv-bg);
+    min-height:100vh;
+    line-height:1.55
+}
+.rv-root button,.rv-root input,.rv-root textarea,.rv-root select{
+    font:inherit
+}
+.rv-root button{
+    cursor:pointer
+}
+.rv-root a{
+    text-decoration:none;
+    color:var(--rv-green)
+}
+.rv-root .rv-container{
+    max-width:1200px;
+    margin:0 auto;
+    padding:24px 24px 72px
+}
+.rv-root .rv-crumb{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#7a8a7d;
+    font-size:12px;
+    margin-bottom:23px
+}
+.rv-root .rv-crumb a{
+    color:#6b7e70
+}
+.rv-root .rv-crumb span:last-child{
+    color:var(--rv-ink);
+    font-weight:800
+}
+.rv-root .rv-hero{
+    background:linear-gradient(110deg,#064e3b 0%,#047857 62%,#16a34a 100%);
+    color:white;
+    border-radius:24px;
+    position:relative;
+    overflow:hidden;
+    padding:34px 42px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:24px;
+    box-shadow:0 18px 45px rgba(6,78,59,.12)
+}
+.rv-root .rv-hero:before,.rv-root .rv-hero:after{
+    content:'';
+    position:absolute;
+    border:1px solid rgba(255,255,255,.11);
+    border-radius:50%;
+    pointer-events:none
+}
+.rv-root .rv-hero:before{
+    height:280px;
+    width:280px;
+    right:-35px;
+    top:-100px
+}
+.rv-root .rv-hero:after{
+    height:160px;
+    width:160px;
+    right:120px;
+    bottom:-110px
+}
+.rv-root .rv-hero-copy{
+    position:relative;
+    z-index:1
+}
+.rv-root .rv-eyebrow{
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    font-weight:800;
+    color:#bbf7d0;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:12px
+}
+.rv-root h1{
+    font-size:clamp(26px,3.6vw,38px);
+    font-weight:850;
+    letter-spacing:-.055em;
+    line-height:1.22;
+    margin:0 0 12px
+}
+.rv-root .rv-hero p{
+    color:#d9fbe8;
+    max-width:560px;
+    margin:0;
+    font-size:13px
+}
+.rv-root .rv-hero-art{
+    width:128px;
+    height:128px;
+    flex-shrink:0;
+    border-radius:28px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.21);
+    font-size:57px;
+    position:relative;
+    z-index:1;
+    transform:rotate(8deg)
+}
+.rv-root .rv-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    border-radius:999px;
+    padding:5px 11px;
+    font-weight:800;
+    font-size:11px;
+    white-space:nowrap
+}
+.rv-root .rv-pill.green{
+    background:#dcfce7;
+    color:#166534
+}
+.rv-root .rv-pill.orange{
+    background:#fff7ed;
+    color:#c2410c
+}
+.rv-root .rv-pill.gray{
+    background:#f1f5f9;
+    color:#475569
+}
+.rv-root .rv-pill.red{
+    background:#fef2f2;
+    color:#b91c1c
+}
+.rv-root .rv-stat-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:16px;
+    margin:21px 0 23px
+}
+.rv-root .rv-stat{
+    background:white;
+    border:1px solid #eaf0e9;
+    border-radius:18px;
+    padding:20px 23px;
+    display:flex;
+    align-items:center;
+    gap:13px;
+    box-shadow:0 3px 15px rgba(15,23,42,.025)
+}
+.rv-root .rv-stat-icon{
+    width:43px;
+    height:43px;
+    display:grid;
+    place-items:center;
+    border-radius:13px;
+    background:#e8f7ed;
+    color:var(--rv-green);
+    font-size:22px;
+    flex:none
+}
+.rv-root .rv-stat strong{
+    font-size:27px;
+    line-height:1.1;
+    display:block;
+    letter-spacing:-.04em
+}
+.rv-root .rv-stat span{
+    font-size:12px;
+    color:var(--rv-muted);
+    font-weight:600
+}
+.rv-root .rv-surface{
+    background:#fff;
+    border:1px solid #e5eee6;
+    border-radius:22px;
+    box-shadow:0 8px 28px rgba(15,23,42,.026);
+    overflow:hidden
+}
+.rv-root .rv-surface-header{
+    padding:24px 26px 0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    flex-wrap:wrap
+}
+.rv-root h2{
+    font-size:19px;
+    font-weight:850;
+    letter-spacing:-.035em;
+    margin:0
+}
+.rv-root .rv-sub{
+    margin:3px 0 0;
+    font-size:12px;
+    color:var(--rv-muted)
+}
+.rv-root .rv-tabs{
+    display:flex;
+    gap:6px;
+    padding:15px 24px 0;
+    flex-wrap:wrap;
+    border-bottom:1px solid #edf2ee;
+    margin-top:4px
+}
+.rv-root .rv-tab{
+    border:0;
+    background:transparent;
+    color:#687c6d;
+    padding:12px 16px;
+    font-size:13px;
+    font-weight:750;
+    border-radius:10px 10px 0 0;
+    border-bottom:3px solid transparent
+}
+.rv-root .rv-tab[aria-selected=true]{
+    color:var(--rv-green);
+    border-bottom-color:var(--rv-green);
+    background:#f1faf3
+}
+.rv-root .rv-toolbar{
+    display:flex;
+    gap:10px;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 25px;
+    flex-wrap:wrap
+}
+.rv-root .rv-input{
+    border:1px solid #d9e5dc;
+    border-radius:11px;
+    padding:11px 12px;
+    background:white;
+    color:var(--rv-ink);
+    outline:0;
+    min-width:130px;
+    max-width:100%
+}
+.rv-root .rv-input:focus{
+    border-color:#16a34a;
+    box-shadow:0 0 0 3px rgba(22,163,74,.1)
+}
+.rv-root textarea.rv-input{
+    display:block;
+    width:100%;
+    min-height:122px;
+    resize:vertical
+}
+.rv-root .rv-search{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    background:#f7faf7;
+    border:1px solid #e6eee6;
+    border-radius:12px;
+    padding:0 12px;
+    min-width:min(330px,100%)
+}
+.rv-root .rv-search input{
+    border:0;
+    outline:0;
+    background:transparent;
+    width:100%;
+    padding:11px 0
+}
+.rv-root .rv-btn{
+    appearance:none;
+    border:1px solid transparent;
+    background:var(--rv-green);
+    color:white;
+    font-weight:750;
+    border-radius:11px;
+    padding:10px 16px;
+    display:inline-flex;
+    gap:8px;
+    align-items:center;
+    justify-content:center;
+    transition:.18s;
+    font-size:12px;
+    white-space:nowrap
+}
+.rv-root .rv-btn:hover{
+    background:#04743b;
+    transform:translateY(-1px)
+}
+.rv-root .rv-btn.secondary{
+    background:white;
+    color:var(--rv-green);
+    border-color:#cfe8d5
+}
+.rv-root .rv-btn.secondary:hover{
+    background:#effaf1
+}
+.rv-root .rv-btn.danger{
+    background:#fff2f2;
+    color:#b91c1c;
+    border-color:#fecaca
+}
+.rv-root .rv-btn.danger:hover{
+    background:#fee2e2
+}
+.rv-root .rv-btn.ghost{
+    background:transparent;
+    color:#64748b;
+    border-color:#e2e8f0
+}
+.rv-root .rv-btn.ghost:hover{
+    background:#f1f5f9
+}
+.rv-root .rv-btn:disabled{
+    cursor:not-allowed;
+    opacity:.55;
+    transform:none
+}
+.rv-root .rv-card-list{
+    padding:0 24px 25px
+}
+.rv-root .rv-item{
+    display:flex;
+    gap:17px;
+    align-items:flex-start;
+    padding:23px 2px;
+    border-bottom:1px solid #edf2ee
+}
+.rv-root .rv-item:last-child{
+    border-bottom:0
+}
+.rv-root .rv-thumb{
+    width:88px;
+    height:88px;
+    border-radius:15px;
+    object-fit:cover;
+    background:linear-gradient(130deg,#f0fdf4,#e3f4e3);
+    flex:none;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#65a67c;
+    font-size:36px;
+    overflow:hidden
+}
+.rv-root .rv-main{
+    min-width:0;
+    flex:1
+}
+.rv-root .rv-title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:start;
+    gap:15px;
+    flex-wrap:wrap
+}
+.rv-root h3{
+    font-size:14px;
+    font-weight:850;
+    margin:0 0 4px
+}
+.rv-root .rv-meta{
+    color:#78907e;
+    font-size:11px;
+    margin:0 0 9px
+}
+.rv-root .rv-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end
+}
+.rv-root .rv-stars{
+    color:var(--rv-gold);
+    letter-spacing:1.4px;
+    font-size:20px;
+    white-space:nowrap
+}
+.rv-root .rv-stars.small{
+    font-size:16px
+}
+.rv-root .rv-copy{
+    color:#384a3f;
+    font-size:13px;
+    line-height:1.75;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+    margin:5px 0 10px
+}
+.rv-root .rv-owner-reply{
+    margin-top:12px;
+    background:#f4faf6;
+    border-left:3px solid #16a34a;
+    border-radius:8px;
+    padding:11px 13px;
+    font-size:12px;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere
+}
+.rv-root .rv-review-images{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:11px
+}
+.rv-root .rv-review-images img{
+    height:78px;
+    width:78px;
+    object-fit:cover;
+    border-radius:10px;
+    border:1px solid #ecf1ec
+}
+.rv-root .rv-empty{
+    text-align:center;
+    padding:50px 16px;
+    color:var(--rv-muted)
+}
+.rv-root .rv-empty-icon{
+    font-size:43px;
+    margin-bottom:12px
+}
+.rv-root .rv-empty strong{
+    display:block;
+    font-size:16px;
+    color:#334155;
+    margin-bottom:5px
+}
+.rv-root .rv-pagination{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    align-items:center;
+    padding:0 20px 26px;
+    color:#64748b;
+    font-weight:650;
+    font-size:12px
+}
+.rv-root .rv-message{
+    border-radius:12px;
+    padding:12px 16px;
+    font-size:12px;
+    font-weight:700;
+    margin:16px 0;
+    display:none;
+    white-space:pre-wrap
+}
+.rv-root .rv-message.show{
+    display:block
+}
+.rv-root .rv-message.success{
+    background:#edfdf2;
+    border:1px solid #bbf7d0;
+    color:#166534
+}
+.rv-root .rv-message.error{
+    background:#fff2f2;
+    border:1px solid #fecaca;
+    color:#991b1b
+}
+.rv-root .rv-layer{
+    position:fixed;
+    inset:0;
+    z-index:11000;
+    background:rgba(12,26,17,.65);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:17px;
+    backdrop-filter:blur(5px)
+}
+.rv-root .rv-layer.open{
+    display:flex
+}
+.rv-root .rv-dialog{
+    background:white;
+    box-shadow:0 30px 90px rgba(0,0,0,.22);
+    border-radius:22px;
+    width:min(520px,100%);
+    max-height:92vh;
+    overflow:auto;
+    padding:26px
+}
+.rv-root .rv-dialog-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px
+}
+.rv-root .rv-x{
+    background:#f1f5f9;
+    color:#475569;
+    border:0;
+    width:32px;
+    height:32px;
+    border-radius:9px;
+    font-size:20px
+}
+.rv-root .rv-field{
+    display:block;
+    font-size:12px;
+    font-weight:800;
+    color:#334155;
+    margin:18px 0 7px
+}
+.rv-root .rv-rate-select{
+    display:flex;
+    gap:2px
+}
+.rv-root .rv-rate-select button{
+    font-size:32px;
+    border:0;
+    background:none;
+    color:#d1d5db;
+    line-height:1.2;
+    padding:0 4px
+}
+.rv-root .rv-rate-select button.on{
+    color:#f59e0b
+}
+.rv-root .rv-upload{
+    display:block;
+    border:1.5px dashed #b9dac1;
+    border-radius:13px;
+    background:#f8fcf8;
+    padding:15px;
+    margin-top:10px;
+    color:#65836b;
+    font-size:12px
+}
+.rv-root .rv-modal-footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:9px;
+    padding-top:22px;
+    margin-top:18px;
+    border-top:1px solid #f1f5f9
+}
+.rv-root .rv-rating-layout{
+    display:grid;
+    grid-template-columns:245px 1fr;
+    gap:26px;
+    padding:25px
+}
+.rv-root .rv-score{
+    font-weight:900;
+    font-size:54px;
+    color:#15442c;
+    letter-spacing:-.065em;
+    line-height:1
+}
+.rv-root .rv-chart-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:6px 0;
+    font-size:12px;
+    color:#64748b
+}
+.rv-root .rv-chart-row span{
+    width:25px
+}
+.rv-root .rv-bar{
+    background:#e9f3e9;
+    border-radius:15px;
+    height:8px;
+    flex:1;
+    overflow:hidden
+}
+.rv-root .rv-bar b{
+    display:block;
+    background:linear-gradient(90deg,#34d399,#059669);
+    height:100%;
+    border-radius:15px
+}
+.rv-root .rv-moderation{
+    padding:12px 24px 26px
+}
+.rv-root .rv-report{
+    border:1px solid #edf2ee;
+    border-radius:15px;
+    padding:19px;
+    margin:14px 0;
+    display:flex;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap
+}
+.rv-root .rv-report-body{
+    flex:1;
+    min-width:240px
+}
+.rv-root .rv-report-actions{
+    display:flex;
+    flex-direction:column;
+    gap:7px;
+    min-width:120px
+}
+.rv-root .rv-mini-note{
+    color:#64748b;
+    font-size:11px
+}
+.rv-root .rv-tagline{
+    font-size:11px;
+    color:#6b7b70;
+    font-weight:750;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:6px
+}
+.rv-root .rv-inline-status{
+    padding:6px 12px;
+    background:#f1faf2;
+    border:1px solid #d9e9dc;
+    border-radius:10px;
+    color:#166534;
+    font-size:11px;
+    font-weight:750
+}
+.rv-root.rv-embed{
+    background:transparent;
+    min-height:0
+}
+.rv-root.rv-embed .rv-container{
+    padding:0
+}
+.rv-root.rv-embed .rv-surface{
+    box-shadow:none
+}
+@media(max-width:780px){
+    .rv-root .rv-container{
+        padding:16px 14px 45px
+    }
+    .rv-root .rv-hero{
+        padding:27px 22px
+    }
+    .rv-root .rv-hero-art{
+        display:none
+    }
+    .rv-root .rv-stat-grid{
+        grid-template-columns:1fr;
+        gap:10px
+    }
+    .rv-root .rv-stat{
+        padding:14px
+    }
+    .rv-root .rv-rating-layout{
+        grid-template-columns:1fr
+    }
+    .rv-root .rv-title-row{
+        display:block
+    }
+    .rv-root .rv-actions{
+        justify-content:flex-start;
+        margin-top:12px
+    }
+    .rv-root .rv-item{
+        gap:12px
+    }
+    .rv-root .rv-thumb{
+        width:67px;
+        height:67px
+    }
+    .rv-root .rv-toolbar{
+        padding:16px;
+        gap:8px
+    }
+    .rv-root .rv-tabs{
+        padding:10px 12px 0
+    }
+    .rv-root .rv-card-list{
+        padding:0 15px 20px
+    }
+}
+
+
+
+/* ===================== GỐC VƯỜN FE-10 UI/UX 2.0 =====================
+   Purpose: high-fidelity responsive screens while keeping old JSP data-* hooks.
+   Only scoped .rv-root to avoid overriding team header, seller/admin layout. */
+:root {
+    --rv-green:#00652c;
+    --rv-dark:#063b24;
+    --rv-soft:#eef6ed;
+    --rv-accent:#e8ad52;
+    --rv-shadow:0 12px 35px rgba(21,56,35,.045);
+}
+.rv-root {
+    background:linear-gradient(180deg,#f6f9f5 0,#fbfcf9 540px);
+    color:#173425;
+    font-size:14px;
+}
+.rv-root .rv-container {
+    max-width:1240px;
+    padding:27px 34px 90px;
+}
+.rv-root .rv-crumb {
+    font-size:12px;
+    color:#789086;
+    margin-bottom:21px;
+    gap:11px;
+}
+.rv-root .rv-crumb a {
+    color:#6a8074;
+    transition:color .2s
+}
+.rv-root .rv-crumb a:hover {
+    color:#00652c
+}
+.rv-root .rv-hero {
+    min-height:257px;
+    padding:40px 49px;
+    border-radius:24px;
+    background:linear-gradient(118deg,#093f2b 0%,#075b37 55%,#178653 100%);
+    box-shadow:0 18px 45px rgba(10,84,45,.13);
+    isolation:isolate;
+}
+.rv-root .rv-hero::before{
+    width:510px;
+    height:510px;
+    border:1px solid rgba(255,255,255,.11);
+    right:-132px;
+    top:-183px;
+    background:radial-gradient(circle at 50% 40%,rgba(169,245,173,.055),transparent 65%)
+}
+.rv-root .rv-hero::after {
+    width:260px;
+    height:260px;
+    right:130px;
+    bottom:-202px;
+    opacity:.7
+}
+.rv-root .rv-hero-copy {
+    max-width:670px
+}
+.rv-root .rv-eyebrow {
+    color:#c8f7c8;
+    background:rgba(255,255,255,.105);
+    border:1px solid rgba(255,255,255,.14);
+    letter-spacing:.13em;
+    border-radius:50px;
+    padding:7px 13px;
+    margin-bottom:17px;
+    font-size:10px;
+}
+.rv-root .rv-dot {
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#a7f3d0;
+    display:inline-block;
+    box-shadow:0 0 0 4px rgba(167,243,208,.12)
+}
+.rv-root .rv-hero h1 {
+    font-size:clamp(28px,3.4vw,41px);
+    line-height:1.24;
+    letter-spacing:-.045em;
+    margin-bottom:13px
+}
+.rv-root .rv-hero h1 em {
+    font-style:normal;
+    color:#d2f6b5
+}
+.rv-root .rv-hero p {
+    font-size:13px;
+    line-height:1.75;
+    color:#dbefe1;
+    max-width:600px
+}
+.rv-root .rv-hero-points {
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-top:18px;
+    color:#ddf9df;
+    font-size:11px;
+    font-weight:700
+}
+.rv-root .rv-hero-art {
+    flex:none;
+    display:block;
+    width:235px;
+    height:197px;
+    transform:none;
+    border:none;
+    background:transparent;
+    position:relative;
+    filter:drop-shadow(0 20px 20px rgba(0,0,0,.12))
+}
+.rv-root .rv-fruit {
+    position:absolute;
+    display:grid;
+    place-items:center;
+    width:120px;
+    height:120px;
+    border-radius:36px;
+    background:rgba(255,255,255,.13);
+    border:1px solid rgba(255,255,255,.20);
+    backdrop-filter:blur(2px);
+    line-height:1.1;
+    box-shadow:0 20px 50px rgba(0,0,0,.08);
+    font-size:77px
+}
+.rv-root .rv-fruit-a {
+    top:5px;
+    left:24px;
+    transform:rotate(-15deg)
+}
+.rv-root .rv-fruit-b {
+    top:66px;
+    right:4px;
+    transform:rotate(12deg);
+    background:rgba(255,255,255,.18)
+}
+.rv-root .rv-fruit-c {
+    top:105px;
+    left:-10px;
+    width:86px;
+    height:86px;
+    font-size:51px;
+    transform:rotate(-10deg)
+}
+.rv-root .rv-fruit-leaf {
+    position:absolute;
+    top:8px;
+    right:12px;
+    font-size:33px;
+    color:#dcfce7
+}
+.rv-root .rv-stat-grid {
+    gap:17px;
+    margin:22px 0 24px
+}
+.rv-root .rv-stat {
+    min-height:100px;
+    border:1px solid #e4eee5;
+    padding:20px 23px;
+    border-radius:17px;
+    box-shadow:var(--rv-shadow);
+    gap:16px
+}
+.rv-root .rv-stat-icon {
+    width:49px;
+    height:49px;
+    border-radius:14px;
+    background:#e9f7ea;
+    font-size:24px
+}
+.rv-root .rv-stat:nth-child(2) .rv-stat-icon {
+    background:#fff5df;
+    color:#c88722
+}
+.rv-root .rv-stat:nth-child(3) .rv-stat-icon {
+    background:#f0eeff;
+    color:#7464b5
+}
+.rv-root .rv-stat strong {
+    font-size:25px;
+    font-weight:850;
+    color:#123f29
+}
+.rv-root .rv-stat strong small {
+    font-size:13px;
+    color:#efad38
+}
+.rv-root .rv-stat span {
+    margin-top:4px;
+    display:block;
+    font-size:11px;
+    color:#6d8276
+}
+.rv-root .rv-surface {
+    border:1px solid #e4ebe5;
+    border-radius:19px;
+    box-shadow:0 12px 40px rgba(34,77,45,.035)
+}
+.rv-root .rv-surface-header {
+    padding:27px 30px 6px
+}
+.rv-root h2 {
+    font-size:20px;
+    font-weight:850;
+    letter-spacing:-.04em;
+    color:#183b2a
+}
+.rv-root .rv-sub {
+    font-size:12px;
+    color:#7b8b81;
+    line-height:1.6;
+    margin-top:5px
+}
+.rv-root .rv-pill {
+    font-size:10px;
+    letter-spacing:.01em;
+    padding:6px 11px;
+    border:1px solid transparent
+}
+.rv-root .rv-pill.green {
+    background:#eef9ef;
+    color:#087541;
+    border-color:#d6eed9
+}
+.rv-root .rv-pill.orange {
+    background:#fff7e9;
+    color:#a95d18;
+    border-color:#f8e5c7
+}
+.rv-root .rv-section-tag {
+    font-size:10px;
+    color:#829289;
+    font-weight:800;
+    letter-spacing:.13em;
+    padding:21px 29px 0
+}
+.rv-root .rv-tabs {
+    padding:5px 25px 0;
+    gap:10px;
+    border-bottom-color:#edf1ee;
+    margin-top:0
+}
+.rv-root .rv-tab {
+    padding:15px 19px;
+    font-weight:800;
+    border-bottom-width:3px;
+    border-radius:10px 10px 0 0;
+    color:#667c6d;
+    font-size:12px
+}
+.rv-root .rv-tab[aria-selected=true] {
+    background:#f3faf2;
+    color:#036331;
+    border-bottom-color:#0a743e
+}
+.rv-root .rv-tab:hover {
+    color:#00652c;
+    background:#f7faf7
+}
+.rv-root .rv-toolbar {
+    padding:21px 30px 16px
+}
+.rv-root .rv-actions {
+    gap:9px
+}
+.rv-root .rv-toolbar .rv-actions {
+    background:#f5f8f4;
+    border:1px solid #eaf0e7;
+    border-radius:11px;
+    padding:4px
+}
+.rv-root .rv-btn {
+    border-radius:10px;
+    padding:10px 16px;
+    font-size:11px;
+    font-weight:850;
+    box-shadow:none;
+    line-height:1.45
+}
+.rv-root .rv-btn:hover {
+    transform:translateY(-1px);
+    box-shadow:0 4px 15px rgba(3,103,47,.1)
+}
+.rv-root .rv-btn:focus-visible,.rv-root button:focus-visible,.rv-root a:focus-visible {
+    outline:3px solid #9be7bd;
+    outline-offset:2px
+}
+.rv-root .rv-btn.secondary {
+    color:#0b7441;
+    border-color:#d4e9d7;
+    background:#fff
+}
+.rv-root .rv-btn.secondary.active {
+    color:#fff;
+    background:#075e35;
+    border-color:#075e35;
+    box-shadow:0 2px 8px rgba(9,92,53,.16)
+}
+.rv-root .rv-toolbar .rv-btn.secondary {
+    border-color:transparent;
+    background:transparent;
+    color:#658275
+}
+.rv-root .rv-toolbar .rv-btn.secondary.active {
+    background:white;
+    color:#07643b;
+    box-shadow:0 3px 10px rgba(15,23,42,.07)
+}
+.rv-root .rv-mini-note {
+    font-size:11px;
+    color:#7b8e7f
+}
+.rv-root .rv-card-list {
+    padding:0 30px 19px
+}
+.rv-root .rv-item {
+    gap:19px;
+    padding:25px 2px;
+    border-bottom:1px solid #edf2eb;
+    transition:background-color .18s
+}
+.rv-root .rv-thumb {
+    width:96px;
+    height:96px;
+    border-radius:16px;
+    font-size:39px;
+    background:#ecf5e9
+}
+.rv-root h3 {
+    font-size:14px;
+    letter-spacing:-.025em;
+    color:#233b2b;
+    font-weight:850
+}
+.rv-root .rv-meta {
+    font-size:11px;
+    line-height:1.6;
+    color:#839288;
+    margin:5px 0 10px
+}
+.rv-root .rv-stars {
+    color:#ebac3d;
+    letter-spacing:2px
+}
+.rv-root .rv-copy {
+    color:#476152;
+    font-size:13px;
+    line-height:1.8
+}
+.rv-root .rv-owner-reply {
+    background:#f4faf4;
+    color:#446752;
+    border-left:3px solid #16a34a;
+    padding:13px 16px;
+    border-radius:0 10px 10px 0
+}
+.rv-root .rv-report {
+    border-color:#edf1ed;
+    box-shadow:0 4px 22px rgba(15,62,34,.025);
+    background:white;
+    border-radius:14px
+}
+.rv-root .rv-pagination {
+    padding-bottom:25px;
+    color:#75857b;
+    gap:14px
+}
+.rv-root .rv-empty {
+    padding:70px 18px 76px;
+    background:linear-gradient(180deg,white,#fcfefb)
+}
+.rv-root .rv-empty-icon {
+    font-size:52px
+}
+.rv-root .rv-empty strong {
+    font-size:16px;
+    color:#2d4e38;
+    margin-top:6px
+}
+.rv-root .rv-layer {
+    background:rgba(5,31,18,.64)
+}
+.rv-root .rv-dialog {
+    padding:30px 33px 27px;
+    border-radius:23px;
+    border:1px solid #e5f2e4;
+    box-shadow:0 30px 100px rgba(0,0,0,.25)
+}
+.rv-root .rv-dialog-title {
+    border-bottom:1px solid #edf1ed;
+    padding-bottom:20px
+}
+.rv-root .rv-dialog-title .rv-eyebrow {
+    background:#f1faf1;
+    border-color:#e5f4e6;
+    color:#0d8944;
+    font-size:9px;
+    letter-spacing:.11em
+}
+.rv-root .rv-dialog-title h2 {
+    font-size:23px;
+    margin-top:2px
+}
+.rv-root .rv-field {
+    font-size:12px;
+    font-weight:850;
+    color:#2d4937;
+    margin:19px 0 9px
+}
+.rv-root .rv-rate-select {
+    gap:8px;
+    padding-bottom:4px
+}
+.rv-root .rv-rate-select button {
+    font-size:35px;
+    transition:transform .16s
+}
+.rv-root .rv-rate-select button:hover{
+    transform:scale(1.17)
+}
+.rv-root .rv-input {
+    background:#fbfcfa;
+    border-color:#dbeadd;
+    border-radius:12px;
+    padding:13px;
+    font-size:13px
+}
+.rv-root .rv-upload {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    text-align:center;
+    padding:22px;
+    border-style:dashed;
+    background:#fafcf8;
+    color:#728577;
+    font-size:11px
+}
+.rv-root .rv-upload strong {
+    font-size:13px;
+    color:#174f2d
+}
+.rv-root .rv-upload-icon {
+    font-size:27px;
+    margin-bottom:4px
+}
+.rv-root .rv-upload input {
+    max-width:100%;
+    margin-top:9px
+}
+.rv-root .rv-rating-panel {
+    background:#fcfdfb;
+    border:1px solid #e6eee6;
+    border-radius:16px;
+    margin:18px 27px 20px;
+    overflow:hidden
+}
+.rv-root .rv-rating-panel-top {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    padding:18px 23px 0
+}
+.rv-root .rv-rating-panel-top .rv-section-tag {
+    padding:0
+}
+.rv-root .rv-rating-panel-top h3 {
+    font-size:15px;
+    margin:7px 0 0
+}
+.rv-root .rv-rating-layout {
+    padding:17px 24px 24px;
+    grid-template-columns:210px 1fr;
+    gap:30px
+}
+.rv-root .rv-score {
+    font-size:66px;
+    color:#0c6d3d
+}
+.rv-root .rv-chart-row {
+    font-size:11px;
+    gap:12px;
+    margin:7px 0
+}
+.rv-root .rv-bar {
+    height:9px;
+    background:#e8f1e7
+}
+.rv-root .rv-bar b {
+    background:linear-gradient(90deg,#f4c45e,#e8a93c)
+}
+.rv-root .rv-report-actions .rv-btn {
+    width:100%
+}
+.rv-root .rv-tagline {
+    font-size:10px;
+    color:#93a09a
+}
+.rv-root .rv-message {
+    margin:18px 0
+}
+.rv-root.rv-embed {
+    background:transparent
+}
+.rv-root.rv-embed .rv-rating-panel{
+    margin:18px 18px 20px
+}
+/* Admin team content shell compatibility */
+.admin-main > .rv-root, .admin-main .rv-root {
+    background:transparent;
+    min-height:0;
+    width:100%
+}
+.admin-main .rv-root .rv-container{
+    max-width:1250px;
+    padding:22px 27px 70px
+}
+@media(max-width:900px){
+    .rv-root .rv-container{
+        padding:20px 20px 55px
+    }
+    .rv-root .rv-hero{
+        padding:32px;
+        min-height:220px
+    }
+    .rv-root .rv-hero-art{
+        width:185px;
+        height:175px
+    }
+    .rv-root .rv-fruit{
+        width:95px;
+        height:95px;
+        font-size:63px
+    }
+    .rv-root .rv-fruit-b{
+        top:61px
+    }
+    .rv-root .rv-fruit-c{
+        top:104px;
+        width:75px;
+        height:75px;
+        font-size:43px
+    }
+    .rv-root .rv-stat-grid{
+        gap:10px
+    }
+    .rv-root .rv-stat{
+        padding:15px
+    }
+    .rv-root .rv-stat strong{
+        font-size:21px
+    }
+}
+@media(max-width:700px){
+    .rv-root .rv-container{
+        padding:14px 12px 38px
+    }
+    .rv-root .rv-hero{
+        padding:30px 22px;
+        border-radius:17px;
+        min-height:auto
+    }
+    .rv-root .rv-hero-art{
+        display:none
+    }
+    .rv-root .rv-hero h1{
+        font-size:27px
+    }
+    .rv-root .rv-hero-points{
+        gap:11px
+    }
+    .rv-root .rv-stat-grid{
+        grid-template-columns:1fr;
+        gap:9px;
+        margin:14px 0
+    }
+    .rv-root .rv-stat{
+        min-height:75px;
+        padding:12px 17px
+    }
+    .rv-root .rv-stat-icon{
+        width:42px;
+        height:42px
+    }
+    .rv-root .rv-surface-header{
+        padding:19px 18px 4px
+    }
+    .rv-root .rv-tabs{
+        padding:5px 11px 0;
+        gap:0
+    }
+    .rv-root .rv-tab{
+        padding:12px 9px;
+        font-size:11px
+    }
+    .rv-root .rv-toolbar{
+        padding:15px 14px
+    }
+    .rv-root .rv-mini-note{
+        display:block;
+        width:100%
+    }
+    .rv-root .rv-card-list{
+        padding:0 14px 14px
+    }
+    .rv-root .rv-item{
+        gap:12px;
+        padding:20px 0
+    }
+    .rv-root .rv-thumb{
+        width:68px;
+        height:68px;
+        border-radius:12px;
+        font-size:28px
+    }
+    .rv-root .rv-rating-panel{
+        margin:12px
+    }
+    .rv-root .rv-rating-layout{
+        grid-template-columns:1fr;
+        padding:10px 18px 22px;
+        gap:20px
+    }
+    .rv-root .rv-rating-panel-top{
+        padding:17px 17px 0
+    }
+    .rv-root .rv-dialog{
+        padding:20px 17px
+    }
+    .rv-root .rv-hero-points span{
+        font-size:10px
+    }
+    .admin-main .rv-root .rv-container{
+        padding:14px 12px 40px
+    }
+}
+@media(prefers-reduced-motion:reduce){
+    .rv-root *{
+        transition:none!important;
+        scroll-behavior:auto!important
+    }
+}
+
+/* FE-10: An thanh cuon va bo tron popup danh gia */
+.rv-root .rv-dialog {
+    border-radius: 28px !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: calc(100dvh - 32px);
+
+    /* An thanh cuon nhung van cho phep cuon */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    background: #ffffff;
+}
+
+/* Chrome, Edge, Safari */
+.rv-root .rv-dialog::-webkit-scrollbar {
+    display: none;
+}
+
+/* Giup popup khong sat mep man hinh */
+.rv-root .rv-layer {
+    padding: 16px;
+}
+
+/* =========================================
+   FE-10 - LIGHTBOX XEM ANH DANH GIA
+   ========================================= */
+
+/* Anh nho co the click */
+.rv-root .rv-review-images img {
+    cursor: zoom-in;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rv-root .rv-review-images img:hover {
+    transform: scale(1.06);
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* Lop nen toi */
+.fe10-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 50px 20px;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(6px);
+}
+
+/* Anh duoc phong to */
+.fe10-lightbox-image {
+    display: block;
+    max-width: 95vw;
+    max-height: 90vh;
+    width: auto;
+    height: auto;
+
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.35);
+}
+
+/* Nut dong */
+.fe10-lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+
+    width: 44px;
+    height: 44px;
+
+    background: rgba(255, 255, 255, 0.16);
+    color: white;
+    border: none;
+    border-radius: 50%;
+
+    font-size: 32px;
+    line-height: 1;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fe10-lightbox-close:hover {
+    background: #dc2626;
+}
+
+/* FE-10: Phong to anh khi click */
+.fe10-lightbox-image {
+    width: 92vw !important;
+    height: 85vh !important;
+
+    max-width: 1100px !important;
+    max-height: 850px !important;
+
+    object-fit: contain !important;
+    border-radius: 12px;
+}
+
+/* Man hinh dien thoai */
+@media (max-width: 768px) {
+    .fe10-lightbox-image {
+        width: 96vw !important;
+        height: 80vh !important;
+    }
+}
+
+/* FE10_BRANDED_CONFIRM_CSS_START: thay window.confirm voi giao dien Goc Vuon */
+.fe10-confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 13000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(11, 29, 22, .56);
+    backdrop-filter: blur(5px);
+}
+.fe10-confirm-dialog, .fe10-confirm-dialog * { box-sizing: border-box; }
+.fe10-confirm-dialog {
+    width: min(440px, 100%);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+    padding: 27px 28px 24px;
+    border: 1px solid #e1ede4;
+    border-radius: 24px;
+    background: #fff;
+    color: #213c2d;
+    box-shadow: 0 25px 75px rgba(10, 39, 22, .24);
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    animation: fe10-confirm-appear .16s ease-out;
+    scrollbar-width: none;
+}
+.fe10-confirm-dialog::-webkit-scrollbar { display: none; }
+.fe10-confirm-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.fe10-confirm-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: #e8f7ed;
+    color: #04783c;
+    font-size: 27px;
+    font-weight: 800;
+}
+.fe10-confirm-symbol.danger { background: #fff0eb; color: #c7472d; }
+.fe10-confirm-close {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 9px;
+    background: #f3f6f4;
+    color: #657b6c;
+    font-size: 23px;
+    line-height: 1;
+    cursor: pointer;
+}
+.fe10-confirm-close:hover { background: #e7eee9; }
+.fe10-confirm-eyebrow {
+    margin-bottom: 9px;
+    color: #118849;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .09em;
+}
+.fe10-confirm-title { margin: 0; font-size: 23px; line-height: 1.35; font-weight: 800; color: #153f2b; }
+.fe10-confirm-description { margin: 11px 0 25px; color: #63746a; font-size: 13px; line-height: 1.8; }
+.fe10-confirm-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.fe10-confirm-btn {
+    min-height: 42px;
+    padding: 11px 19px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background .15s, transform .15s;
+}
+.fe10-confirm-btn:hover { transform: translateY(-1px); }
+.fe10-confirm-btn:focus-visible, .fe10-confirm-close:focus-visible { outline: 3px solid #a6d7b6; outline-offset: 3px; }
+.fe10-confirm-btn.cancel { background: #f4f7f4; color: #4f6958; border-color: #e2eae4; }
+.fe10-confirm-btn.cancel:hover { background: #e9f0eb; }
+.fe10-confirm-btn.accept { background: #04763a; color: #fff; }
+.fe10-confirm-btn.accept:hover { background: #065c30; }
+.fe10-confirm-btn.accept.danger { background: #c63b35; }
+.fe10-confirm-btn.accept.danger:hover { background: #a62c28; }
+@keyframes fe10-confirm-appear {
+    from { opacity: 0; transform: translateY(8px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 480px) {
+    .fe10-confirm-dialog { padding: 22px 20px; border-radius: 19px; }
+    .fe10-confirm-title { font-size: 20px; }
+    .fe10-confirm-actions { flex-direction: column-reverse; }
+    .fe10-confirm-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fe10-confirm-dialog { animation: none; }
+    .fe10-confirm-btn { transition: none; }
+}
+/* FE10_BRANDED_CONFIRM_CSS_END */
