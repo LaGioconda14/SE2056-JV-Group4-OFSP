@@ -88,6 +88,7 @@
                                         <th>Phạm vi</th>
                                         <th>Lượt sử dụng</th>
                                         <th>Thời gian</th>
+                                        <th>Ngày tạo</th>
                                         <th>Trạng thái</th>
                                         <th class="text-right">Thao tác</th>
                                     </tr>
@@ -134,34 +135,37 @@
                                             <td class="text-[12px] text-slate-600 whitespace-nowrap">
                                                 <fmt:formatDate value="${v.startDate}" pattern="dd/MM/yyyy HH:mm"/><br>
                                                 <span class="text-slate-400">đến</span> <fmt:formatDate value="${v.endDate}" pattern="dd/MM/yyyy HH:mm"/>
+                                            </td>   
+                                            <td class="text-[12px] text-slate-600 whitespace-nowrap">
+                                                <fmt:formatDate value="${v.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                             </td>
                                             <td>
                                                 <jsp:include page="/views/shop/layout/mk-status.jsp"><jsp:param name="status" value="${v.status}"/></jsp:include>
-                                            </td>
+                                            </td>                                           
                                             <td>
                                                 <div class="flex items-center justify-end gap-1.5">
                                                     <a href="${ctx}/shop/vouchers?action=usage&id=${v.couponId}" class="mk-act mk-act-view" title="Lịch sử sử dụng"><i class="fa-solid fa-chart-line"></i></a>
                                                     <c:if test="${v.status != 'ENDED'}">
-                                                        <a href="${ctx}/shop/vouchers?action=edit&id=${v.couponId}" class="mk-act mk-act-edit" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></a>
+                                                          <a href="${ctx}/shop/vouchers?action=edit&id=${v.couponId}" class="mk-act mk-act-edit" title="Chỉnh sửa"><i class="fa-solid fa-pen"></i></a>
                                                     </c:if>
                                                     <c:if test="${v.status == 'ONGOING' || v.status == 'UPCOMING'}">
                                                         <form method="post" action="${ctx}/shop/vouchers" data-confirm="Tạm dừng voucher ${v.code}? Khách sẽ không dùng được mã này cho đến khi bạn kích hoạt lại.">
                                                             <input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="${v.couponId}">
-                                                            <input type="hidden" name="active" value="0"><input type="hidden" name="tab" value="${tab}">
+                                                            <input type="hidden" name="active" value="0"><input type="hidden" name="tab" value="${tab}"><input type="hidden" name="page" value="${currentPage}"><input type="hidden" name="q" value="<c:out value='${q}'/>">
                                                             <button type="submit" class="mk-act mk-act-pause" title="Tạm dừng"><i class="fa-solid fa-pause"></i></button>
                                                         </form>
                                                     </c:if>
                                                     <c:if test="${v.status == 'PAUSED'}">
                                                         <form method="post" action="${ctx}/shop/vouchers">
                                                             <input type="hidden" name="action" value="toggle"><input type="hidden" name="id" value="${v.couponId}">
-                                                            <input type="hidden" name="active" value="1"><input type="hidden" name="tab" value="${tab}">
+                                                            <input type="hidden" name="active" value="1"><input type="hidden" name="tab" value="${tab}"><input type="hidden" name="page" value="${currentPage}"><input type="hidden" name="q" value="<c:out value='${q}'/>">
                                                             <button type="submit" class="mk-act mk-act-play" title="Kích hoạt lại"><i class="fa-solid fa-play"></i></button>
                                                         </form>
                                                     </c:if>
                                                     <c:if test="${v.status == 'ONGOING' || v.status == 'UPCOMING' || v.status == 'PAUSED'}">
                                                         <form method="post" action="${ctx}/shop/vouchers" data-confirm="Kết thúc sớm voucher ${v.code}? Thao tác này không thể hoàn tác (lịch sử sử dụng vẫn được giữ).">
                                                             <input type="hidden" name="action" value="terminate"><input type="hidden" name="id" value="${v.couponId}">
-                                                            <input type="hidden" name="tab" value="${tab}">
+                                                            <input type="hidden" name="tab" value="${tab}"><input type="hidden" name="page" value="${currentPage}"><input type="hidden" name="q" value="<c:out value='${q}'/>">
                                                             <button type="submit" class="mk-act mk-act-stop" title="Kết thúc sớm"><i class="fa-solid fa-ban"></i></button>
                                                         </form>
                                                     </c:if>
@@ -187,6 +191,11 @@
                         </div>
                     </c:otherwise>
                 </c:choose>
+                <jsp:include page="/views/common/pagination.jsp">
+                    <jsp:param name="baseUrl" value="/shop/vouchers" />
+                    <jsp:param name="tab" value="${tab}" />
+                    <jsp:param name="q" value="${q}" />
+                </jsp:include>
             </div>
         </div>
     </main>

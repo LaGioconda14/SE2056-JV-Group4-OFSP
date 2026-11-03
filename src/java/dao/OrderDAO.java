@@ -36,6 +36,7 @@ public class OrderDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(OrderDAO.class.getName());
     private final CouponDAO couponDAO = new CouponDAO();
+    private final PromotionDAO promotionDAO = new PromotionDAO();
 
     // 1. Láº¤Y CÃC CART ITEMS ÄÆ¯á»¢C CHá»ŒN Cá»¦A KHÃCH HÃ€NG
     public List<CartItem> getSelectedCartItems(long customerId, List<Long> cartItemIds) {
@@ -298,8 +299,9 @@ public class OrderDAO extends DBContext {
 
         String insertOrderItemSql = "INSERT INTO order_items "
                 + "(sub_order_id, variant_id, product_name_snapshot, variant_name_snapshot, "
-                + "sku_snapshot, unit, unit_price, quantity, total_price) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "sku_snapshot, unit, unit_price, quantity, total_price, "
+                + "promotion_id, promotion_discount, promotion_units) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String deductStockSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity - ? "
                 + "FROM product_variants pv "
@@ -470,7 +472,22 @@ public class OrderDAO extends DBContext {
                         ps.setBigDecimal(7, item.getUnitPrice());
                         ps.setInt(8, item.getQuantity());
                         ps.setBigDecimal(9, item.getTotalPrice());
+                        if (item.getPromotionId() != null && item.getPromotionUnits() > 0) {
+                            ps.setLong(10, item.getPromotionId());
+                        } else {
+                            ps.setNull(10, Types.BIGINT);
+                        }
+                        ps.setBigDecimal(11, item.getPromotionDiscount());
+                        ps.setInt(12, item.getPromotionUnits());
                         ps.executeUpdate();
+                    }
+
+                    // D2. GIỮ SUẤT KHUYẾN MÃI (cùng transaction): chương trình hết hạn / hết suất thì huỷ cả đơn.
+                    if (item.getPromotionId() != null && item.getPromotionUnits() > 0) {
+                        if (!promotionDAO.reserveQuota(conn, item.getPromotionId(), item.getPromotionUnits())) {
+                            throw new SQLException("Chương trình khuyến mãi của '" + item.getProductNameSnapshot()
+                                    + "' vừa kết thúc hoặc đã hết suất ưu đãi. Vui lòng quay lại giỏ hàng để cập nhật giá!");
+                        }
                     }
 
                     // E. TRá»ª Tá»’N KHO NGUYÃŠN Tá»¬
@@ -1124,6 +1141,7 @@ public class OrderDAO extends DBContext {
                     psStock.setLong(1, matchedSubOrderId);
                     psStock.executeUpdate();
                 }
+                promotionDAO.releaseQuotaBySubOrder(conn, matchedSubOrderId); // hoàn suất khuyến mãi
 
                 String cancelSubSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
                                     + "       cancelled_by = ?, cancelled_at = CURRENT_TIMESTAMP, "
@@ -1162,6 +1180,7 @@ public class OrderDAO extends DBContext {
                     psStock.setLong(1, matchedOrderId);
                     psStock.executeUpdate();
                 }
+                promotionDAO.releaseQuotaByOrder(conn, matchedOrderId); // hoàn suất khuyến mãi
 
                 String cancelSubsSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
                                      + "       cancelled_by = ?, cancelled_at = CURRENT_TIMESTAMP, "

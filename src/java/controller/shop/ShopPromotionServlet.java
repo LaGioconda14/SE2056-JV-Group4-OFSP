@@ -13,6 +13,9 @@ import model.Promotion;
 
 /**
  * Quản lý Promotion (khuyến mãi tự động theo sản phẩm) của shop (FE-08).
+ * Các loại: FIXED_PRICE (đồng giá), VOLUME (mua nhiều giảm sâu),
+ * TIME_WINDOW (giảm tiền theo khung giờ / ngày cố định) + suất ưu đãi (quota) và lịch áp dụng tuỳ chọn.
+ * (PERCENTAGE / FIXED_AMOUNT là loại cũ trùng voucher nên không cho tạo mới.)
  *   GET  /shop/promotions                    danh sách + lọc tab + tìm kiếm
  *   GET  /shop/promotions?action=new         form tạo mới
  *   GET  /shop/promotions?action=edit&id=    form sửa
@@ -63,7 +66,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         }
         String q = trimToNull(request.getParameter("q"));
 
-        request.setAttribute("promotions", promotionDAO.listByShop(shopId, tab, q));
+        request.setAttribute("promotions", paginate(request, promotionDAO.listByShop(shopId, tab, q), LIST_PAGE_SIZE));
         request.setAttribute("tabCounts", promotionDAO.countByTab(shopId));
         request.setAttribute("summary", promotionDAO.getShopSummary(shopId));
         request.setAttribute("tab", tab);
@@ -78,11 +81,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         if (shopId == null) return;
 
         String action = request.getParameter("action");
-        String back = request.getContextPath() + "/shop/promotions";
-        String tab = request.getParameter("tab");
-        if (tab != null && tab.matches("ALL|ONGOING|UPCOMING|PAUSED|FINISHED")) {
-            back += "?tab=" + tab;
-        }
+        String back = listUrl(request, "/shop/promotions");
 
         if ("toggle".equals(action) || "terminate".equals(action)) {
             Integer id = parseInt(request.getParameter("id"));
@@ -156,9 +155,42 @@ public class ShopPromotionServlet extends BaseShopServlet {
         p.setShopId(shopId);
         p.setName(trimToNull(req.getParameter("name")));
         p.setDescription(trimToNull(req.getParameter("description")));
-        p.setPromotionType("FIXED_AMOUNT".equals(req.getParameter("promotionType")) ? "FIXED_AMOUNT" : "PERCENTAGE");
-        p.setDiscountValue(p.isPercentage() ? parsePercent(req.getParameter("discountValue")) : parseMoney(req.getParameter("discountValue")));
-        p.setMaxDiscountAmount(p.isPercentage() ? parseMoney(req.getParameter("maxDiscountAmount")) : null);
+        String type = req.getParameter("promotionType");
+        if (type == null || !type.matches("FIXED_PRICE|VOLUME|TIME_WINDOW")) {
+            type = Promotion.FIXED_PRICE;
+        }
+        p.setPromotionType(type);
+        // Chỉ đọc các trường thuộc đúng loại đã chọn, các trường còn lại để null
+        if (p.isVolume()) {
+            p.setDiscountValue(parsePercent(req.getParameter("discountValue")));
+            p.setMaxDiscountAmount(parseMoney(req.getParameter("maxDiscountAmount")));
+        } else if (p.isTimeWindow() || p.isFixedPrice()) {
+            p.setDiscountValue(parseMoney(req.getParameter("discountValue")));
+        }
+        if (p.isVolume()) {
+            p.setMinQuantity(parseInt(req.getParameter("minQuantity")));
+        }
+        p.setQuota(parseInt(req.getParameter("quota")));
+        // Lịch áp dụng: thứ trong tuần (1 = Thứ 2 ... 7 = Chủ nhật) + khung giờ trong ngày
+        java.util.TreeSet<Integer> days = new java.util.TreeSet<>();
+        String[] dayParams = req.getParameterValues("activeDays");
+        if (dayParams != null) {
+            for (String d : dayParams) {
+                try {
+                    days.add(Integer.parseInt(d.trim()));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        if (days.size() < 7) { // chọn đủ 7 ngày = mọi ngày = không giới hạn
+            StringBuilder sb = new StringBuilder();
+            for (int d : days) {
+                if (d >= 1 && d <= 7) sb.append(sb.length() > 0 ? "," : "").append(d);
+            }
+            p.setActiveDays(sb.toString());
+        }
+        p.setDailyStartTime(trimToNull(req.getParameter("dailyStartTime")));
+        p.setDailyEndTime(trimToNull(req.getParameter("dailyEndTime")));
         p.setStartDate(parseDateTime(req.getParameter("startDate")));
         p.setEndDate(parseDateTime(req.getParameter("endDate")));
         p.setProductIds(parseIdList(req.getParameterValues("productIds")));
@@ -173,18 +205,20 @@ public class ShopPromotionServlet extends BaseShopServlet {
         if (p.getDescription() != null && p.getDescription().length() > 500) {
             return "Mô tả tối đa 500 ký tự.";
         }
-        if (p.getDiscountValue() == null || p.getDiscountValue().signum() <= 0) {
-            return "Vui lòng nhập mức giảm hợp lệ (lớn hơn 0).";
+        String typeError = validateType(p);
+        if (typeError != null) {
+            return typeError;
         }
-        if (p.isPercentage()) {
-            if (p.getDiscountValue().compareTo(BigDecimal.valueOf(90)) > 0) {
-                return "Mức giảm theo phần trăm tối đa là 90%.";
+        if (p.getQuota() != null) {
+            if (p.getQuota() < 1 || p.getQuota() > 1_000_000) {
+                return "Suất ưu đãi phải từ 1 đến 1.000.000 (để trống nếu không giới hạn).";
             }
-            if (p.getMaxDiscountAmount() != null && p.getMaxDiscountAmount().signum() < 0) {
-                return "Mức giảm tối đa không hợp lệ.";
+            if (editing) {
+                Promotion old = promotionDAO.findByIdAndShop(p.getPromotionId(), shopId);
+                if (old != null && p.getQuota() < old.getSoldQuantity()) {
+                    return "Suất ưu đãi không được nhỏ hơn số đã dùng (" + old.getSoldQuantity() + ").";
+                }
             }
-        } else if (p.getDiscountValue().compareTo(BigDecimal.valueOf(1000)) < 0) {
-            return "Mức giảm cố định tối thiểu là 1.000đ cho mỗi sản phẩm.";
         }
         if (p.getStartDate() == null || p.getEndDate() == null) {
             return "Vui lòng chọn thời gian bắt đầu và kết thúc.";
@@ -198,12 +232,92 @@ public class ShopPromotionServlet extends BaseShopServlet {
         if (p.getProductIds().isEmpty()) {
             return "Vui lòng chọn ít nhất một sản phẩm tham gia khuyến mãi.";
         }
+        if (p.isFixedPrice() || p.isTimeWindow()) {
+            List<String> tooLow = new java.util.ArrayList<>();
+            for (java.util.Map<String, Object> row : promotionDAO.getShopProductsForPicker(shopId)) {
+                Long pid = (Long) row.get("productId");
+                BigDecimal minPrice = (BigDecimal) row.get("minPrice");
+                if (p.getProductIds().contains(pid) && minPrice != null && p.getDiscountValue().compareTo(minPrice) >= 0) {
+                    tooLow.add((String) row.get("name"));
+                }
+            }
+            if (!tooLow.isEmpty()) {
+                return (p.isTimeWindow() ? "Số tiền giảm phải nhỏ hơn giá bán hiện tại của: "
+                        : "Giá đồng giá phải thấp hơn giá bán hiện tại của: ")
+                        + String.join(", ", tooLow.size() > 3 ? tooLow.subList(0, 3) : tooLow)
+                        + (tooLow.size() > 3 ? " và " + (tooLow.size() - 3) + " sản phẩm khác" : "") + ".";
+            }
+        }
         List<String> conflicts = promotionDAO.findConflictingProducts(shopId, p.getProductIds(), p.getStartDate(), p.getEndDate(), editing ? p.getPromotionId() : 0);
         if (!conflicts.isEmpty()) {
             String shown = String.join(", ", conflicts.size() > 3 ? conflicts.subList(0, 3) : conflicts);
             return "Sản phẩm đã tham gia chương trình khuyến mãi khác trong cùng thời gian: " + shown
                     + (conflicts.size() > 3 ? " và " + (conflicts.size() - 3) + " sản phẩm khác" : "")
                     + ". Hãy đổi thời gian hoặc bỏ chọn các sản phẩm này.";
+        }
+        return null;
+    }
+
+    /** Kiểm tra các trường riêng của từng loại khuyến mãi. */
+    private String validateType(Promotion p) {
+        String scheduleError = validateSchedule(p);
+        if (scheduleError != null) {
+            return scheduleError;
+        }
+        if (p.getDiscountValue() == null || p.getDiscountValue().signum() <= 0) {
+            return p.isFixedPrice() ? "Vui lòng nhập giá đồng giá hợp lệ (lớn hơn 0)."
+                    : "Vui lòng nhập mức giảm hợp lệ (lớn hơn 0).";
+        }
+        if (p.isPercentage() || p.isVolume()) {
+            if (p.getDiscountValue().compareTo(BigDecimal.valueOf(90)) > 0) {
+                return "Mức giảm theo phần trăm tối đa là 90%.";
+            }
+            if (p.getMaxDiscountAmount() != null && p.getMaxDiscountAmount().signum() < 0) {
+                return "Mức giảm tối đa không hợp lệ.";
+            }
+            if (p.isVolume()) {
+                Integer min = p.getMinQuantity();
+                if (min == null || min < 2 || min > 1000) {
+                    return "Số lượng tối thiểu để được giảm phải từ 2 đến 1.000.";
+                }
+            }
+        } else if (p.isTimeWindow()) {
+            if (p.getDiscountValue().compareTo(BigDecimal.valueOf(1000)) < 0) {
+                return "Số tiền giảm tối thiểu là 1.000đ cho mỗi sản phẩm.";
+            }
+        } else if (p.isFixedPrice()) {
+            if (p.getDiscountValue().compareTo(BigDecimal.valueOf(1000)) < 0) {
+                return "Giá đồng giá tối thiểu là 1.000đ.";
+            }
+        }
+        return null;
+    }
+
+    /** Kiểm tra lịch áp dụng (thứ + khung giờ). Loại TIME_WINDOW bắt buộc phải có lịch. */
+    private String validateSchedule(Promotion p) {
+        for (int d : p.getActiveDayNumbers()) {
+            if (d < 1 || d > 7) {
+                return "Ngày trong tuần không hợp lệ.";
+            }
+        }
+        String start = p.getDailyStartTime(), end = p.getDailyEndTime();
+        if ((start == null) != (end == null)) {
+            return "Vui lòng nhập đủ cả giờ bắt đầu và giờ kết thúc (hoặc để trống cả hai nếu áp dụng cả ngày).";
+        }
+        if (start != null) {
+            java.time.LocalTime s, e;
+            try {
+                s = java.time.LocalTime.parse(start);
+                e = java.time.LocalTime.parse(end);
+            } catch (java.time.format.DateTimeParseException ex) {
+                return "Khung giờ không hợp lệ (định dạng HH:mm).";
+            }
+            if (!s.isBefore(e)) {
+                return "Giờ kết thúc phải sau giờ bắt đầu (không áp dụng khung giờ qua đêm). Muốn qua đêm hãy tạo 2 chương trình.";
+            }
+        }
+        if (p.isTimeWindow() && !p.hasDaySchedule() && !p.hasTimeSchedule()) {
+            return "Loại \"Giảm tiền theo khung giờ / ngày\" cần chọn ít nhất một thứ trong tuần hoặc một khung giờ cố định.";
         }
         return null;
     }

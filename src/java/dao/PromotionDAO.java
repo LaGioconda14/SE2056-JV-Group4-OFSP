@@ -18,7 +18,8 @@ import util.DBContext;
 
 /**
  * Promotion = chương trình khuyến mãi tự động áp lên sản phẩm của shop trong một khoảng thời gian
- * (khác voucher: khách không cần nhập mã).
+ * (khác voucher: khách không cần nhập mã). Hỗ trợ: giảm %, giảm tiền, đồng giá, mua X tặng Y,
+ * mua nhiều giảm sâu, kèm suất ưu đãi (quota).
  * Bảng: promotions, promotion_products.
  */
 public class PromotionDAO extends DBContext {
@@ -32,7 +33,9 @@ public class PromotionDAO extends DBContext {
 
     private static final String SELECT_COLS =
             "SELECT p.promotion_id, p.shop_id, p.name, p.description, p.promotion_type, p.discount_value, "
-          + "p.max_discount_amount, p.start_date, p.end_date, p.is_active, p.terminated_at, p.created_at, "
+          + "p.max_discount_amount, p.min_quantity, p.quota, p.sold_quantity, "
+          + "p.active_days, CONVERT(VARCHAR(5), p.daily_start_time, 108) AS daily_start_time, CONVERT(VARCHAR(5), p.daily_end_time, 108) AS daily_end_time, "
+          + "p.start_date, p.end_date, p.is_active, p.terminated_at, p.created_at, "
           + STATUS_EXPR + " AS status, "
           + "(SELECT COUNT(*) FROM promotion_products pp WHERE pp.promotion_id = p.promotion_id) AS product_count "
           + "FROM promotions p ";
@@ -46,6 +49,7 @@ public class PromotionDAO extends DBContext {
         p.setPromotionType(rs.getString("promotion_type"));
         p.setDiscountValue(rs.getBigDecimal("discount_value"));
         p.setMaxDiscountAmount(rs.getBigDecimal("max_discount_amount"));
+        readExtra(rs, p);
         p.setStartDate(rs.getTimestamp("start_date"));
         p.setEndDate(rs.getTimestamp("end_date"));
         p.setActive(rs.getBoolean("is_active"));
@@ -54,6 +58,48 @@ public class PromotionDAO extends DBContext {
         p.setStatus(rs.getString("status"));
         p.setProductCount(rs.getInt("product_count"));
         return p;
+    }
+
+    private static Integer intOrNull(ResultSet rs, String col) throws SQLException {
+        int v = rs.getInt(col);
+        return rs.wasNull() ? null : v;
+    }
+
+    /** Đọc các cột mở rộng (min/quota/sold/lịch). */
+    private static void readExtra(ResultSet rs, Promotion p) throws SQLException {
+        p.setMinQuantity(intOrNull(rs, "min_quantity"));
+        p.setQuota(intOrNull(rs, "quota"));
+        p.setSoldQuantity(rs.getInt("sold_quantity"));
+        p.setActiveDays(rs.getString("active_days"));
+        p.setDailyStartTime(rs.getString("daily_start_time"));
+        p.setDailyEndTime(rs.getString("daily_end_time"));
+    }
+
+    /** Điều kiện SQL: hôm nay / giờ hiện tại nằm trong lịch của promotion (alias rỗng khi dùng trong UPDATE). */
+    private static String scheduleOk(String alias) {
+        String a = alias == null || alias.isEmpty() ? "" : alias + ".";
+        return "(" + a + "active_days IS NULL OR CHARINDEX(',' + CAST((DATEDIFF(day, 0, GETDATE()) % 7) + 1 AS VARCHAR(1)) + ',', "
+                + "',' + " + a + "active_days + ',') > 0) "
+                + "AND (" + a + "daily_start_time IS NULL OR " + a + "daily_end_time IS NULL OR "
+                + "(CAST(GETDATE() AS TIME) >= " + a + "daily_start_time AND CAST(GETDATE() AS TIME) < " + a + "daily_end_time))";
+    }
+
+    private static java.sql.Time toTime(String hhmm) {
+        if (hhmm == null || hhmm.trim().isEmpty()) return null;
+        try {
+            return java.sql.Time.valueOf(hhmm.trim().length() == 5 ? hhmm.trim() + ":00" : hhmm.trim());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static void setTimeOrNull(PreparedStatement ps, int idx, String hhmm) throws SQLException {
+        java.sql.Time t = toTime(hhmm);
+        if (t == null) ps.setNull(idx, java.sql.Types.TIME); else ps.setTime(idx, t);
+    }
+
+    private static void setIntOrNull(PreparedStatement ps, int idx, Integer v) throws SQLException {
+        if (v == null) ps.setNull(idx, java.sql.Types.INTEGER); else ps.setInt(idx, v);
     }
 
     // ------------------------------------------------------------------
@@ -139,8 +185,10 @@ public class PromotionDAO extends DBContext {
                 }
             }
             try (PreparedStatement ps = conn.prepareStatement(
-                    "SELECT COALESCE(SUM(oi.quantity), 0) AS units, COALESCE(SUM(oi.promotion_discount), 0) AS disc "
-                  + "FROM order_items oi JOIN promotions p ON p.promotion_id = oi.promotion_id WHERE p.shop_id = ?")) {
+                    "SELECT COALESCE(SUM(oi.promotion_units), 0) AS units, COALESCE(SUM(oi.promotion_discount), 0) AS disc "
+                  + "FROM order_items oi JOIN promotions p ON p.promotion_id = oi.promotion_id "
+                  + "JOIN sub_orders so ON so.sub_order_id = oi.sub_order_id AND so.status NOT IN ('CANCELLED','REFUNDED') "
+                  + "WHERE p.shop_id = ?")) {
                 ps.setLong(1, shopId);
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -234,7 +282,9 @@ public class PromotionDAO extends DBContext {
     /** Tạo promotion. Trả về promotion_id mới hoặc -1 nếu lỗi. */
     public long create(Promotion p) {
         String sql = "INSERT INTO promotions (shop_id, name, description, promotion_type, discount_value, max_discount_amount, "
-                + "start_date, end_date, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "min_quantity, quota, active_days, daily_start_time, daily_end_time, "
+                + "start_date, end_date, is_active) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -244,9 +294,14 @@ public class PromotionDAO extends DBContext {
                 ps.setString(4, p.getPromotionType());
                 ps.setBigDecimal(5, p.getDiscountValue());
                 ps.setBigDecimal(6, p.getMaxDiscountAmount());
-                ps.setTimestamp(7, p.getStartDate());
-                ps.setTimestamp(8, p.getEndDate());
-                ps.setBoolean(9, p.isActive());
+                setIntOrNull(ps, 7, p.getMinQuantity());
+                setIntOrNull(ps, 8, p.getQuota());
+                ps.setString(9, p.getActiveDays());
+                setTimeOrNull(ps, 10, p.getDailyStartTime());
+                setTimeOrNull(ps, 11, p.getDailyEndTime());
+                ps.setTimestamp(12, p.getStartDate());
+                ps.setTimestamp(13, p.getEndDate());
+                ps.setBoolean(14, p.isActive());
                 ps.executeUpdate();
                 long id = -1;
                 try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -271,6 +326,8 @@ public class PromotionDAO extends DBContext {
 
     public boolean update(Promotion p) {
         String sql = "UPDATE promotions SET name = ?, description = ?, promotion_type = ?, discount_value = ?, max_discount_amount = ?, "
+                + "min_quantity = ?, quota = ?, "
+                + "active_days = ?, daily_start_time = ?, daily_end_time = ?, "
                 + "start_date = ?, end_date = ?, is_active = ?, updated_at = GETDATE() "
                 + "WHERE promotion_id = ? AND shop_id = ? AND terminated_at IS NULL";
         try (Connection conn = getConnection()) {
@@ -281,11 +338,16 @@ public class PromotionDAO extends DBContext {
                 ps.setString(3, p.getPromotionType());
                 ps.setBigDecimal(4, p.getDiscountValue());
                 ps.setBigDecimal(5, p.getMaxDiscountAmount());
-                ps.setTimestamp(6, p.getStartDate());
-                ps.setTimestamp(7, p.getEndDate());
-                ps.setBoolean(8, p.isActive());
-                ps.setLong(9, p.getPromotionId());
-                ps.setLong(10, p.getShopId());
+                setIntOrNull(ps, 6, p.getMinQuantity());
+                setIntOrNull(ps, 7, p.getQuota());
+                ps.setString(8, p.getActiveDays());
+                setTimeOrNull(ps, 9, p.getDailyStartTime());
+                setTimeOrNull(ps, 10, p.getDailyEndTime());
+                ps.setTimestamp(11, p.getStartDate());
+                ps.setTimestamp(12, p.getEndDate());
+                ps.setBoolean(13, p.isActive());
+                ps.setLong(14, p.getPromotionId());
+                ps.setLong(15, p.getShopId());
                 if (ps.executeUpdate() == 0) {
                     conn.rollback();
                     return false;
@@ -398,8 +460,12 @@ public class PromotionDAO extends DBContext {
             in.append(i == 0 ? "?" : ",?");
         }
         String sql = "SELECT pp.product_id, p.promotion_id, p.shop_id, p.name, p.promotion_type, p.discount_value, p.max_discount_amount, "
+                + "p.min_quantity, p.quota, p.sold_quantity, "
+                + "p.active_days, CONVERT(VARCHAR(5), p.daily_start_time, 108) AS daily_start_time, "
+                + "CONVERT(VARCHAR(5), p.daily_end_time, 108) AS daily_end_time, "
                 + "p.start_date, p.end_date FROM promotions p JOIN promotion_products pp ON pp.promotion_id = p.promotion_id "
                 + "WHERE p.is_active = 1 AND p.terminated_at IS NULL AND p.start_date <= GETDATE() AND p.end_date >= GETDATE() "
+                + "AND (p.quota IS NULL OR p.sold_quantity < p.quota) AND p.promotion_type <> 'BUY_X_GET_Y' AND " + scheduleOk("p") + " "
                 + "AND pp.product_id IN (" + in + ") ORDER BY p.start_date";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             int i = 1;
@@ -415,6 +481,7 @@ public class PromotionDAO extends DBContext {
                     p.setPromotionType(rs.getString("promotion_type"));
                     p.setDiscountValue(rs.getBigDecimal("discount_value"));
                     p.setMaxDiscountAmount(rs.getBigDecimal("max_discount_amount"));
+                    readExtra(rs, p);
                     p.setStartDate(rs.getTimestamp("start_date"));
                     p.setEndDate(rs.getTimestamp("end_date"));
                     p.setStatus("ONGOING");
@@ -425,5 +492,52 @@ public class PromotionDAO extends DBContext {
             e.printStackTrace();
         }
         return result;
+    }
+
+    // ------------------------------------------------------------------
+    // SUẤT ƯU ĐÃI (dùng trong transaction đặt / huỷ đơn)
+    // ------------------------------------------------------------------
+
+    /**
+     * Giữ chỗ {@code units} suất ưu đãi cho đơn đang đặt. Trả về false nếu chương trình đã kết thúc,
+     * bị tạm dừng hoặc không còn đủ suất (UPDATE có điều kiện nên an toàn khi nhiều người đặt cùng lúc).
+     */
+    public boolean reserveQuota(Connection conn, long promotionId, int units) throws SQLException {
+        if (units <= 0) {
+            return true;
+        }
+        String sql = "UPDATE promotions SET sold_quantity = sold_quantity + ?, updated_at = GETDATE() "
+                + "WHERE promotion_id = ? AND is_active = 1 AND terminated_at IS NULL "
+                + "AND start_date <= GETDATE() AND end_date >= GETDATE() "
+                + "AND (quota IS NULL OR sold_quantity + ? <= quota) AND " + scheduleOk("");
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, units);
+            ps.setLong(2, promotionId);
+            ps.setInt(3, units);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /** Hoàn suất ưu đãi của TOÀN BỘ đơn cha khi huỷ đơn. */
+    public void releaseQuotaByOrder(Connection conn, long orderId) throws SQLException {
+        releaseQuota(conn, "so.order_id = ?", orderId);
+    }
+
+    /** Hoàn suất ưu đãi của MỘT đơn con khi huỷ riêng đơn con đó. */
+    public void releaseQuotaBySubOrder(Connection conn, long subOrderId) throws SQLException {
+        releaseQuota(conn, "so.sub_order_id = ?", subOrderId);
+    }
+
+    private void releaseQuota(Connection conn, String where, long id) throws SQLException {
+        String sql = "UPDATE p SET p.sold_quantity = CASE WHEN p.sold_quantity - x.units < 0 THEN 0 ELSE p.sold_quantity - x.units END "
+                + "FROM promotions p JOIN ("
+                + "  SELECT oi.promotion_id, SUM(oi.promotion_units) AS units "
+                + "  FROM order_items oi JOIN sub_orders so ON so.sub_order_id = oi.sub_order_id "
+                + "  WHERE " + where + " AND oi.promotion_id IS NOT NULL AND oi.promotion_units > 0 "
+                + "  GROUP BY oi.promotion_id) x ON x.promotion_id = p.promotion_id";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.executeUpdate();
+        }
     }
 }

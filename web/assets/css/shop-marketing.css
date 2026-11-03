@@ -100,3 +100,4 @@
 .mk-ticket-title { font-size: .85rem; font-weight: 800; color: #0f172a; word-break: break-word; }
 .mk-ticket-meta { font-size: .7rem; color: #64748b; margin-top: .2rem; line-height: 1.5; }
 .mk-ticket-code { display: inline-block; margin-top: .45rem; font-family: ui-monospace, monospace; font-weight: 800; font-size: .72rem; color: #047857; background: #ecfdf5; border: 1px dashed #6ee7b7; padding: .15rem .5rem; border-radius: .4rem; }
+.mk-seg-wrap { flex-wrap: wrap; }

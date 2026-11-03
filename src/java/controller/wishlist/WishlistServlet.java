@@ -25,6 +25,9 @@ public class WishlistServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(WishlistServlet.class.getName());
 
+    /** Mỗi trang đúng 1 hàng ngang (4 thẻ sản phẩm ở màn hình rộng); nhiều hơn thì chuyển sang trang kế. */
+    private static final int WISHLIST_PAGE_SIZE = 4;
+
     private final IWishlistService wishlistService = new WishlistServiceImpl();
 
     @Override
@@ -58,8 +61,26 @@ public class WishlistServlet extends HttpServlet {
                     "Không thể tải danh sách yêu thích lúc này. Vui lòng thử lại sau!");
         }
 
-        request.setAttribute("wishlistItems", items);
-        request.setAttribute("wishlistCount", items.size());
+        int total = items.size();
+        int totalPages = Math.max(1, (int) Math.ceil(total / (double) WISHLIST_PAGE_SIZE));
+        int current = 1;
+        try {
+            current = Integer.parseInt(request.getParameter("page").trim());
+        } catch (RuntimeException ignored) {
+            // không có / sai tham số page -> trang 1
+        }
+        current = Math.min(Math.max(current, 1), totalPages);
+        int from = (current - 1) * WISHLIST_PAGE_SIZE;
+        List<Product> pageItems = total == 0
+                ? new ArrayList<Product>()
+                : new ArrayList<>(items.subList(from, Math.min(from + WISHLIST_PAGE_SIZE, total)));
+
+        request.setAttribute("wishlistItems", pageItems);
+        request.setAttribute("wishlistCount", total);
+        request.setAttribute("currentPage", current);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("totalItems", total);
+        request.setAttribute("pageSize", WISHLIST_PAGE_SIZE);
         request.getRequestDispatcher("/views/wishlist/wishlist.jsp").forward(request, response);
     }
 }

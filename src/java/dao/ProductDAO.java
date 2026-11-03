@@ -1141,10 +1141,8 @@ public class ProductDAO extends DBContext {
                     price = new BigDecimal("100000");
                 }
 
-                BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
-                int discountPercent = 20;
-
-                list.add(new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 18));
+                // Không còn giảm giá "giả": giá gạch ngang chỉ xuất hiện khi có Promotion thật (util.PromotionPricing)
+                list.add(new Product(id, name, categoryName, image, price, price, 0, 4.9, 18));
             }
             rs.close();
             ps.close();
@@ -1152,6 +1150,7 @@ public class ProductDAO extends DBContext {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
         return list;
     }
 
@@ -1313,6 +1312,7 @@ public class ProductDAO extends DBContext {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
         return list;
     }
 
@@ -1363,10 +1363,7 @@ public class ProductDAO extends DBContext {
                         price = new BigDecimal("100000");
                     }
 
-                    BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
-                    int discountPercent = 20;
-
-                    Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 4.9, 32);
+                    Product p = new Product(id, name, categoryName, image, price, price, 0, 4.9, 32);
                     p.setCategoryId(catId);
                     p.setCategorySlug(categorySlugVal);
                     p.setOrigin(rs.getString("origin"));
@@ -1384,6 +1381,7 @@ public class ProductDAO extends DBContext {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
         return list;
     }
 
@@ -1457,22 +1455,17 @@ public class ProductDAO extends DBContext {
                     List<ProductVariant> variants = getVariantsByProductId(productId);
                     p.setVariants(variants);
 
+                    // Giá gạch ngang chỉ lấy từ "giá gốc" seller nhập (nếu cao hơn giá bán); không còn tự bịa 17% / 20%.
+                    p.setOldPrice(price);
+                    p.setDiscountPercent(0);
                     if (variants != null && !variants.isEmpty()) {
                         ProductVariant firstV = variants.get(0);
                         if (firstV.getOriginalPrice() != null && firstV.getOriginalPrice().compareTo(price) > 0) {
                             p.setOldPrice(firstV.getOriginalPrice());
-                        } else {
-                            p.setOldPrice(price.multiply(new java.math.BigDecimal("1.20")).setScale(-3, java.math.RoundingMode.HALF_UP));
+                            double disc = (p.getOldPrice().doubleValue() - price.doubleValue()) / p.getOldPrice().doubleValue() * 100.0;
+                            p.setDiscountPercent((int) Math.round(disc));
+                            p.setTag("-" + p.getDiscountPercent() + "% SALE");
                         }
-                    } else {
-                        p.setOldPrice(price.multiply(new java.math.BigDecimal("1.20")).setScale(-3, java.math.RoundingMode.HALF_UP));
-                    }
-
-                    if (p.getOldPrice() != null && p.getOldPrice().compareTo(p.getPrice()) > 0) {
-                        double disc = (p.getOldPrice().doubleValue() - p.getPrice().doubleValue()) / p.getOldPrice().doubleValue() * 100.0;
-                        p.setDiscountPercent((int) Math.round(disc));
-                    } else {
-                        p.setDiscountPercent(17);
                     }
 
                     double[] rStats = getProductRatingStats(productId);
@@ -1501,6 +1494,7 @@ public class ProductDAO extends DBContext {
                         }
                     }
                     p.setImages(imgs);
+                    util.PromotionPricing.applyToProductDetail(p); // khuyến mãi cho sản phẩm + từng phân loại
                 }
             }
         } catch (Exception e) {
@@ -1692,6 +1686,7 @@ public class ProductDAO extends DBContext {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
         return list;
     }
 
@@ -1824,6 +1819,7 @@ public class ProductDAO extends DBContext {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
         return list;
     }
 
@@ -2071,6 +2067,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
         } catch (Exception e) {
             e.printStackTrace();
         }
+        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
         return list;
     }
 

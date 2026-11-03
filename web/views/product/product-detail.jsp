@@ -212,6 +212,22 @@
                                     </c:if>
                                 </div>
 
+                                <c:if test="${product.onPromotion}">
+                                    <div class="mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                                        <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white"><i class="fa-solid fa-bolt"></i></span>
+                                        <div class="min-w-0 text-sm">
+                                            <div class="font-extrabold text-rose-700"><c:out value="${product.promotionName}"/> · <c:out value="${product.promotionLabel}"/></div>
+                                            <div class="text-rose-900/80"><c:out value="${product.promotionCondition}"/>. Tự động áp dụng trong giỏ hàng, không cần nhập mã.</div>
+                                            <c:if test="${not empty product.promotionSchedule}">
+                                                <div class="mt-0.5 text-xs font-bold text-rose-700"><i class="fa-solid fa-clock mr-1"></i>Áp dụng: <c:out value="${product.promotionSchedule}"/></div>
+                                            </c:if>
+                                            <c:if test="${not empty product.promotionEndDate}">
+                                                <div class="mt-0.5 text-xs text-rose-700/80">Chương trình kết thúc: <fmt:formatDate value="${product.promotionEndDate}" pattern="HH:mm dd/MM/yyyy"/></div>
+                                            </c:if>
+                                        </div>
+                                    </div>
+                                </c:if>
+
                                 <!-- Trạng Thái Tồn Kho Thực Tế Từ DB -->
                                 <div class="flex items-center gap-2 mb-4 text-xs font-semibold text-gray-700">
                                     <span class="w-2.5 h-2.5 rounded-full ${product.stockQuantity > 0 ? 'bg-emerald-500' : 'bg-red-500'} inline-block animate-pulse"></span>

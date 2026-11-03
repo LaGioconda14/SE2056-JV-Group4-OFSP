@@ -36,6 +36,15 @@ public class Product {
     private long primaryVariantId;
     private int variantCount;
     private boolean activeForSale;
+
+    // Khuyến mãi (Promotion) đang áp dụng - do util.PromotionPricing gắn vào
+    private long promotionId;
+    private String promotionName;
+    private String promotionLabel;      // -20%, Đồng giá 49.000đ, Mua 2 tặng 1...
+    private String promotionCondition;  // mô tả đầy đủ điều kiện
+    private String promotionType;
+    private String promotionSchedule;   // VD: Thứ 7, Chủ nhật · 19:00–21:00 (rỗng nếu không có lịch)
+    private java.sql.Timestamp promotionEndDate;
     
     // Thuộc tính phục vụ trang Product Detail
     private List<String> images;             // Thư viện ảnh chi tiết
@@ -144,7 +153,26 @@ public class Product {
     }
     public void setOrigin(String origin) { this.origin = origin; }
 
+    public long getPromotionId() { return promotionId; }
+    public void setPromotionId(long promotionId) { this.promotionId = promotionId; }
+    public String getPromotionName() { return promotionName; }
+    public void setPromotionName(String promotionName) { this.promotionName = promotionName; }
+    public String getPromotionLabel() { return promotionLabel; }
+    public void setPromotionLabel(String promotionLabel) { this.promotionLabel = promotionLabel; }
+    public String getPromotionCondition() { return promotionCondition; }
+    public void setPromotionCondition(String promotionCondition) { this.promotionCondition = promotionCondition; }
+    public String getPromotionType() { return promotionType; }
+    public void setPromotionType(String promotionType) { this.promotionType = promotionType; }
+    public java.sql.Timestamp getPromotionEndDate() { return promotionEndDate; }
+    public void setPromotionEndDate(java.sql.Timestamp promotionEndDate) { this.promotionEndDate = promotionEndDate; }
+    public String getPromotionSchedule() { return promotionSchedule; }
+    public void setPromotionSchedule(String promotionSchedule) { this.promotionSchedule = promotionSchedule; }
+    public boolean isOnPromotion() { return promotionId > 0; }
+
     public String getTag() { 
+        if (promotionLabel != null && !promotionLabel.trim().isEmpty()) {
+            return promotionLabel;
+        }
         if (tag != null && !tag.trim().isEmpty()) {
             return tag;
         }

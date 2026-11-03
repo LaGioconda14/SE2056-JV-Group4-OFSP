@@ -28,6 +28,7 @@ public class AdminShopServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         // Handle flash session messages
         HttpSession session = request.getSession();
         if (session.getAttribute("successMessage") != null) {

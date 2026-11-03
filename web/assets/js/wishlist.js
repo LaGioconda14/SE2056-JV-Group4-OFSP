@@ -146,10 +146,17 @@
                     if (data.count <= 0) {
                         var grid = document.getElementById('wishlistGrid');
                         var empty = document.getElementById('wishlistEmpty');
+                        var pager = document.getElementById('wishlistPagination');
                         if (grid) grid.classList.add('hidden');
+                        if (pager) pager.classList.add('hidden');
                         if (empty) empty.classList.remove('hidden');
+                    } else if (document.getElementById('wishlistGrid')
+                            && document.getElementById('wishlistPagination')) {
+                        // Trang wishlist có phân trang: tải lại để sản phẩm trang sau tự đẩy lên cho đủ hàng
+                        // (server tự đưa về trang cuối nếu trang hiện tại không còn sản phẩm).
+                        window.location.reload();
                     }
-                }, 250);
+                }, 600);
             }
             setCount(data.count);
             toast(data.message, 'success', false);

@@ -1,94 +1,1 @@
-package model;
-
-import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-
-
-public class Promotion {
-
-    private long promotionId;
-    private long shopId;
-    private String name;
-    private String description;
-    private String promotionType;
-    private BigDecimal discountValue;
-    private BigDecimal maxDiscountAmount;
-    private Timestamp startDate;
-    private Timestamp endDate;
-    private boolean active = true;
-    private Timestamp terminatedAt;
-    private Timestamp createdAt;
-    private String status;
-    private int productCount;
-    private List<Long> productIds = new ArrayList<>();
-    private List<String> productNames = new ArrayList<>();
-
-    public long getPromotionId() { return promotionId; }
-    public void setPromotionId(long promotionId) { this.promotionId = promotionId; }
-    public long getShopId() { return shopId; }
-    public void setShopId(long shopId) { this.shopId = shopId; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public String getPromotionType() { return promotionType; }
-    public void setPromotionType(String promotionType) { this.promotionType = promotionType; }
-    public BigDecimal getDiscountValue() { return discountValue; }
-    public void setDiscountValue(BigDecimal discountValue) { this.discountValue = discountValue; }
-    public BigDecimal getMaxDiscountAmount() { return maxDiscountAmount; }
-    public void setMaxDiscountAmount(BigDecimal maxDiscountAmount) { this.maxDiscountAmount = maxDiscountAmount; }
-    public Timestamp getStartDate() { return startDate; }
-    public void setStartDate(Timestamp startDate) { this.startDate = startDate; }
-    public Timestamp getEndDate() { return endDate; }
-    public void setEndDate(Timestamp endDate) { this.endDate = endDate; }
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
-    public Timestamp getTerminatedAt() { return terminatedAt; }
-    public void setTerminatedAt(Timestamp terminatedAt) { this.terminatedAt = terminatedAt; }
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public int getProductCount() { return productCount; }
-    public void setProductCount(int productCount) { this.productCount = productCount; }
-    public List<Long> getProductIds() { return productIds; }
-    public void setProductIds(List<Long> productIds) { this.productIds = productIds; }
-    public List<String> getProductNames() { return productNames; }
-    public void setProductNames(List<String> productNames) { this.productNames = productNames; }
-
-
-    private static String fmt(Timestamp t) {
-        return t == null ? "" : new SimpleDateFormat("yyyy-MM-dd'T'HH:mm").format(t);
-    }
-
-    public String getStartDateInput() { return fmt(startDate); }
-    public String getEndDateInput() { return fmt(endDate); }
-    public boolean isPercentage() { return "PERCENTAGE".equals(promotionType); }
-    public boolean isEnded() { return "ENDED".equals(status) || "EXPIRED".equals(status); }
-
-    /** Tiền giảm trên MỘT đơn vị sản phẩm có đơn giá unitPrice. */
-    public BigDecimal calcDiscount(BigDecimal unitPrice) {
-        if (unitPrice == null || discountValue == null) {
-            return BigDecimal.ZERO;
-        }
-        BigDecimal d;
-        if (isPercentage()) {
-            d = unitPrice.multiply(discountValue).divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.HALF_UP);
-            if (maxDiscountAmount != null && maxDiscountAmount.signum() > 0 && d.compareTo(maxDiscountAmount) > 0) {
-                d = maxDiscountAmount;
-            }
-        } else {
-            d = discountValue;
-        }
-        return d.min(unitPrice).max(BigDecimal.ZERO);
-    }
-
-    /** Giá sau khuyến mãi của một đơn vị sản phẩm. */
-    public BigDecimal calcDiscountedPrice(BigDecimal unitPrice) {
-        return unitPrice.subtract(calcDiscount(unitPrice));
-    }
-
-}
+package model;import java.math.BigDecimal;import java.math.RoundingMode;import java.sql.Timestamp;import java.text.DecimalFormat;import java.text.DecimalFormatSymbols;import java.text.SimpleDateFormat;import java.util.ArrayList;import java.util.List;import java.util.Locale;/** * Promotion = chương trình khuyến mãi TỰ ĐỘNG của shop, áp thẳng lên sản phẩm (khách không nhập mã). * * Các loại đang dùng (promotion_type): *   FIXED_PRICE  đồng giá               (discountValue = giá bán mới / đơn vị) *   VOLUME       mua nhiều giảm sâu     (minQuantity = số lượng tối thiểu, discountValue = % giảm trên mọi đơn vị) *   TIME_WINDOW  giảm tiền theo khung giờ / ngày cố định (discountValue = số tiền giảm / đơn vị, *                chỉ có hiệu lực vào các thứ trong tuần và khung giờ đã chọn) * PERCENTAGE / FIXED_AMOUNT là loại CŨ (trùng chức năng voucher): không còn tạo mới nhưng vẫn tính đúng * cho dữ liệu cũ đã có trong DB. * * Lịch áp dụng (activeDays + dailyStartTime/dailyEndTime) dùng được cho mọi loại; riêng TIME_WINDOW bắt buộc có lịch. * quota (tuỳ chọn) = tổng số đơn vị được hưởng ưu đãi (kiểu flash sale); soldQuantity = đã dùng. */public class Promotion {    public static final String PERCENTAGE = "PERCENTAGE";    public static final String FIXED_AMOUNT = "FIXED_AMOUNT";    public static final String FIXED_PRICE = "FIXED_PRICE";    /** Loại đã ngừng (mua X tặng Y) - chỉ còn để nhận biết dữ liệu cũ, không còn áp dụng. */    private static final String RETIRED_BUY_X_GET_Y = "BUY_X_GET_Y";    public static final String VOLUME = "VOLUME";    public static final String TIME_WINDOW = "TIME_WINDOW";    private long promotionId;    private long shopId;    private String name;    private String description;    private String promotionType = FIXED_PRICE;    private BigDecimal discountValue;    private BigDecimal maxDiscountAmount;    private Integer minQuantity;    private Integer quota;    private int soldQuantity;    private String activeDays;       // "1,2,3,4,5,6,7" (1 = Thứ 2 ... 7 = Chủ nhật); null = mọi ngày    private String dailyStartTime;   // "HH:mm"; null = cả ngày    private String dailyEndTime;     // "HH:mm" (không qua đêm)    private Timestamp startDate;    private Timestamp endDate;    private boolean active = true;    private Timestamp terminatedAt;    private Timestamp createdAt;    private String status;    private int productCount;    private List<Long> productIds = new ArrayList<>();    private List<String> productNames = new ArrayList<>();    public long getPromotionId() { return promotionId; }    public void setPromotionId(long promotionId) { this.promotionId = promotionId; }    public long getShopId() { return shopId; }    public void setShopId(long shopId) { this.shopId = shopId; }    public String getName() { return name; }    public void setName(String name) { this.name = name; }    public String getDescription() { return description; }    public void setDescription(String description) { this.description = description; }    public String getPromotionType() { return promotionType; }    public void setPromotionType(String promotionType) { this.promotionType = promotionType; }    public BigDecimal getDiscountValue() { return discountValue; }    public void setDiscountValue(BigDecimal discountValue) { this.discountValue = discountValue; }    public BigDecimal getMaxDiscountAmount() { return maxDiscountAmount; }    public void setMaxDiscountAmount(BigDecimal maxDiscountAmount) { this.maxDiscountAmount = maxDiscountAmount; }    public Integer getMinQuantity() { return minQuantity; }    public void setMinQuantity(Integer minQuantity) { this.minQuantity = minQuantity; }    public Integer getQuota() { return quota; }    public void setQuota(Integer quota) { this.quota = quota; }    public int getSoldQuantity() { return soldQuantity; }    public void setSoldQuantity(int soldQuantity) { this.soldQuantity = soldQuantity; }    public String getActiveDays() { return activeDays; }    public void setActiveDays(String activeDays) {        this.activeDays = (activeDays == null || activeDays.trim().isEmpty()) ? null : activeDays.trim();    }    public String getDailyStartTime() { return dailyStartTime; }    public void setDailyStartTime(String dailyStartTime) { this.dailyStartTime = blankToNull(dailyStartTime); }    public String getDailyEndTime() { return dailyEndTime; }    public void setDailyEndTime(String dailyEndTime) { this.dailyEndTime = blankToNull(dailyEndTime); }    private static String blankToNull(String s) { return (s == null || s.trim().isEmpty()) ? null : s.trim(); }    public Timestamp getStartDate() { return startDate; }    public void setStartDate(Timestamp startDate) { this.startDate = startDate; }    public Timestamp getEndDate() { return endDate; }    public void setEndDate(Timestamp endDate) { this.endDate = endDate; }    public boolean isActive() { return active; }    public void setActive(boolean active) { this.active = active; }    public Timestamp getTerminatedAt() { return terminatedAt; }    public void setTerminatedAt(Timestamp terminatedAt) { this.terminatedAt = terminatedAt; }    public Timestamp getCreatedAt() { return createdAt; }    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }    public String getStatus() { return status; }    public void setStatus(String status) { this.status = status; }    public int getProductCount() { return productCount; }    public void setProductCount(int productCount) { this.productCount = productCount; }    public List<Long> getProductIds() { return productIds; }    public void setProductIds(List<Long> productIds) { this.productIds = productIds; }    public List<String> getProductNames() { return productNames; }    public void setProductNames(List<String> productNames) { this.productNames = productNames; }    // ------------------------------------------------------------------    // Hiển thị / form    // ------------------------------------------------------------------    private static String fmt(Timestamp t) {        return t == null ? "" : new SimpleDateFormat("yyyy-MM-dd'T'HH:mm").format(t);    }    private static String money(BigDecimal v) {        DecimalFormat df = new DecimalFormat("#,###", DecimalFormatSymbols.getInstance(new Locale("vi", "VN")));        return df.format(v == null ? BigDecimal.ZERO : v) + "đ";    }    private static String percent(BigDecimal v) {        if (v == null) return "0%";        return v.stripTrailingZeros().toPlainString() + "%";    }    public String getStartDateInput() { return fmt(startDate); }    public String getEndDateInput() { return fmt(endDate); }    public boolean isPercentage() { return PERCENTAGE.equals(promotionType); }    public boolean isFixedAmount() { return FIXED_AMOUNT.equals(promotionType); }    public boolean isFixedPrice() { return FIXED_PRICE.equals(promotionType); }    public boolean isVolume() { return VOLUME.equals(promotionType); }    public boolean isTimeWindow() { return TIME_WINDOW.equals(promotionType); }    /** Loại cũ (trùng voucher) - chỉ còn để hiển thị/tính cho dữ liệu cũ. */    public boolean isLegacyType() {        return isPercentage() || isFixedAmount() || RETIRED_BUY_X_GET_Y.equals(promotionType);    }    public boolean isEnded() { return "ENDED".equals(status) || "EXPIRED".equals(status); }    /** Loại làm đổi ĐƠN GIÁ hiển thị (gạch giá cũ) - các loại còn lại chỉ hiện nhãn ưu đãi. */    public boolean isUnitPriceType() {        return isPercentage() || isFixedAmount() || isFixedPrice() || isTimeWindow();    }    // ------------------------------------------------------------------    // Lịch áp dụng (thứ trong tuần + khung giờ)    // ------------------------------------------------------------------    private static final String[] DAY_NAMES = {"", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"};    /** Danh sách thứ được chọn (1..7). Rỗng = mọi ngày. */    public List<Integer> getActiveDayNumbers() {        List<Integer> out = new ArrayList<>();        if (activeDays != null) {            for (String s : activeDays.split(",")) {                try {                    int d = Integer.parseInt(s.trim());                    if (d >= 1 && d <= 7 && !out.contains(d)) out.add(d);                } catch (NumberFormatException ignored) {                }            }        }        return out;    }    public boolean isDayActive(int day) { return getActiveDayNumbers().contains(day); }    public boolean hasDaySchedule() { return !getActiveDayNumbers().isEmpty(); }    public boolean hasTimeSchedule() { return dailyStartTime != null && dailyEndTime != null; }    public boolean isScheduled() { return hasDaySchedule() || hasTimeSchedule(); }    /** VD: "Thứ 7, Chủ nhật · 19:00–21:00" / "Mỗi ngày · 11:00–13:00" / "Thứ 2, Thứ 4 · cả ngày". Rỗng nếu không có lịch. */    public String getScheduleText() {        if (!isScheduled()) return "";        List<Integer> days = getActiveDayNumbers();        String d;        if (days.isEmpty() || days.size() == 7) {            d = "Mỗi ngày";        } else {            StringBuilder sb = new StringBuilder();            for (int n : days) {                if (sb.length() > 0) sb.append(", ");                sb.append(n == 7 ? "Chủ nhật" : DAY_NAMES[n]);            }            d = sb.toString();        }        String t = hasTimeSchedule() ? dailyStartTime + "–" + dailyEndTime : "cả ngày";        return d + " · " + t;    }    public String getTypeLabel() {        if (isTimeWindow()) return "Giảm tiền theo khung giờ / ngày";        if (isFixedAmount()) return "Giảm số tiền (cũ)";        if (isFixedPrice()) return "Đồng giá";        if (RETIRED_BUY_X_GET_Y.equals(promotionType)) return "Mua X tặng Y (đã ngừng)";        if (isVolume()) return "Mua nhiều giảm sâu";        return "Giảm theo % (cũ)";    }    /** Nhãn ngắn hiện trên thẻ sản phẩm: -20%, -5.000đ, Đồng giá 49.000đ, Mua 2 tặng 1... */    public String getBadgeLabel() {        if (isFixedAmount() || isTimeWindow()) return "-" + money(discountValue);        if (isFixedPrice()) return "Đồng giá " + money(discountValue);        if (isVolume()) return "Mua từ " + nz(minQuantity) + " giảm " + percent(discountValue);        return "-" + percent(discountValue);    }    /** Mô tả đầy đủ điều kiện, dùng ở trang giỏ hàng / chi tiết. */    public String getConditionText() {        if (isVolume()) {            return "Mua từ " + nz(minQuantity) + " sản phẩm, giảm " + percent(discountValue) + " cho mỗi sản phẩm";        }        if (isFixedPrice()) return "Đồng giá " + money(discountValue) + " / sản phẩm";        if (isTimeWindow()) {            return "Giảm " + money(discountValue) + " / sản phẩm, áp dụng " + getScheduleText();        }        if (isFixedAmount()) return "Giảm " + money(discountValue) + " / sản phẩm";        return "Giảm " + percent(discountValue) + " / sản phẩm";    }    private static int nz(Integer v) { return v == null ? 0 : v; }    // ------------------------------------------------------------------    // Suất ưu đãi (quota)    // ------------------------------------------------------------------    public boolean hasQuota() { return quota != null && quota > 0; }    /** Số đơn vị còn được hưởng ưu đãi (Integer.MAX_VALUE nếu không giới hạn). */    public int getRemainingQuota() {        if (!hasQuota()) return Integer.MAX_VALUE;        return Math.max(0, quota - soldQuantity);    }    /** Số đơn vị (trong qty khách mua) thực sự được hưởng ưu đãi. */    public int eligibleUnits(int qty) {        return Math.max(0, Math.min(qty, getRemainingQuota()));    }    // ------------------------------------------------------------------    // Tính giá    // ------------------------------------------------------------------    /** Tiền giảm trên MỘT đơn vị cho các loại PERCENTAGE / FIXED_AMOUNT / FIXED_PRICE / VOLUME(%). */    public BigDecimal calcDiscount(BigDecimal unitPrice) {        if (unitPrice == null || discountValue == null) {            return BigDecimal.ZERO;        }        BigDecimal d;        if (isPercentage() || isVolume()) {            d = unitPrice.multiply(discountValue).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);            if (maxDiscountAmount != null && maxDiscountAmount.signum() > 0 && d.compareTo(maxDiscountAmount) > 0) {                d = maxDiscountAmount;            }        } else if (isFixedPrice()) {            d = unitPrice.subtract(discountValue);        } else if (isFixedAmount() || isTimeWindow()) {            d = discountValue;        } else {            return BigDecimal.ZERO; // loại không xác định / đã ngừng: không giảm        }        return d.min(unitPrice).max(BigDecimal.ZERO);    }    /** Giá sau khuyến mãi của một đơn vị (chỉ khác giá gốc với loại isUnitPriceType()). */    public BigDecimal calcDiscountedPrice(BigDecimal unitPrice) {        if (!isUnitPriceType()) {            return unitPrice;        }        return unitPrice.subtract(calcDiscount(unitPrice));    }    /** Tổng tiền giảm cho một dòng hàng: unitPrice x qty, đã tính điều kiện và suất ưu đãi còn lại. */    public BigDecimal calcLineDiscount(BigDecimal unitPrice, int qty) {        if (unitPrice == null || qty <= 0) {            return BigDecimal.ZERO;        }        int units = eligibleUnits(qty);        if (units <= 0) {            return BigDecimal.ZERO;        }        BigDecimal total;        if (isVolume()) {            if (qty < nz(minQuantity)) return BigDecimal.ZERO;            total = calcDiscount(unitPrice).multiply(BigDecimal.valueOf(units));        } else {            total = calcDiscount(unitPrice).multiply(BigDecimal.valueOf(units));        }        return total.min(unitPrice.multiply(BigDecimal.valueOf(qty))).max(BigDecimal.ZERO)                .setScale(2, RoundingMode.HALF_UP);    }}

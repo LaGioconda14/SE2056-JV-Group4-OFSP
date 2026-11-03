@@ -33,9 +33,9 @@
     setTimeout(function () { el.style.transition = 'opacity .4s'; el.style.opacity = '0'; setTimeout(function () { el.remove(); }, 450); }, 5000);
   });
 
-  /* ---- Form: loại giảm giá (phần trăm / cố định) ---- */
+  /* ---- Form VOUCHER: loại giảm giá (phần trăm / cố định). Form Promotion có script riêng (nhiều loại hơn). ---- */
   function bindType() {
-    var radios = $all('input[name="discountType"], input[name="promotionType"]');
+    var radios = $all('input[name="discountType"]');
     if (!radios.length) return;
     function refresh() {
       var checked = radios.filter(function (r) { return r.checked; })[0];

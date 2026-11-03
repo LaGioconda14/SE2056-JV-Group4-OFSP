@@ -358,7 +358,7 @@
                                                         <c:choose>
                                                             <c:when test="${p.tag eq 'HỮU CƠ'}">badge-organic</c:when>
                                                             <c:when test="${p.tag eq 'ĐẶC SẢN'}">badge-local</c:when>
-                                                            <c:when test="${p.tag.startsWith('-')}">badge-sale</c:when>
+                                                            <c:when test="${p.onPromotion or p.tag.startsWith('-')}">badge-sale</c:when>
                                                             <c:otherwise>badge-fresh</c:otherwise>
                                                         </c:choose>">
                                                         ${p.tag}
