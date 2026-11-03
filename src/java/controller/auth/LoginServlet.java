@@ -146,6 +146,9 @@ public class LoginServlet extends HttpServlet {
                 IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
                 int countAll = fulfillmentService.countSubOrdersByShop(shop.getShopId(), null);
                 session.setAttribute("shopSubOrdersCount", countAll);
+
+                int lowStockCount = shopDAO.getLowStockCountByShopId(shop.getShopId());
+                session.setAttribute("lowStockCount", lowStockCount);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -169,7 +172,7 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
                 break;
             default:
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
                 break;
         }
     }

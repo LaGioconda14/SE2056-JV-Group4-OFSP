@@ -801,11 +801,12 @@ function toggleCustomCancelReason(val) {
     }
 }
 
-function openReviewModal(orderCode) {
+function openReviewModal(orderCode, orderItemId) {
     const codeEl = document.getElementById('reviewModalOrderCode');
-    if (codeEl) {
-        codeEl.textContent = '#' + orderCode;
-    }
+    const itemInput = document.getElementById('reviewModalOrderItemId');
+    if (codeEl) codeEl.textContent = '#' + (orderCode || '');
+    if (itemInput) itemInput.value = orderItemId || '';
+    setReviewRating(5);
     const modalEl = document.getElementById('reviewModal');
     if (modalEl && window.bootstrap && bootstrap.Modal) {
         const m = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -813,15 +814,74 @@ function openReviewModal(orderCode) {
     }
 }
 
-function submitReview() {
-    const comment = document.getElementById('reviewComment');
+function setReviewRating(stars) {
+    const ratingInput = document.getElementById('reviewModalRating');
+    const label = document.getElementById('reviewRatingLabel');
+    if (ratingInput) ratingInput.value = stars;
+    const starIcons = document.querySelectorAll('#reviewStarContainer .review-star');
+    starIcons.forEach(icon => {
+        const r = parseInt(icon.dataset.rating);
+        if (r <= stars) {
+            icon.className = 'bi bi-star-fill review-star text-warning';
+        } else {
+            icon.className = 'bi bi-star review-star text-muted';
+        }
+    });
+    const labels = {
+        1: 'Rất tệ (1/5 sao)',
+        2: 'Không hài lòng (2/5 sao)',
+        3: 'Bình thường (3/5 sao)',
+        4: 'Hài lòng (4/5 sao)',
+        5: 'Tuyệt vời (5/5 sao)'
+    };
+    if (label) label.textContent = labels[stars] || (stars + '/5 sao');
+}
+
+async function submitReview() {
+    const commentEl = document.getElementById('reviewComment');
+    const orderItemIdEl = document.getElementById('reviewModalOrderItemId');
+    const ratingEl = document.getElementById('reviewModalRating');
     const modalEl = document.getElementById('reviewModal');
-    if (modalEl && window.bootstrap && bootstrap.Modal) {
-        const m = bootstrap.Modal.getInstance(modalEl);
-        if (m) m.hide();
+
+    const orderItemId = orderItemIdEl ? orderItemIdEl.value : null;
+    const rating = ratingEl ? ratingEl.value : '5';
+    const comment = commentEl ? commentEl.value.trim() : '';
+
+    if (!orderItemId) {
+        alert('Không tìm thấy thông tin sản phẩm cần đánh giá!');
+        return;
     }
-    if (comment) comment.value = '';
-    alert('Cảm ơn bạn! Đánh giá chất lượng trái cây của bạn đã được gửi thành công.');
+
+    try {
+        const formData = new URLSearchParams();
+        formData.append('orderItemId', orderItemId);
+        formData.append('rating', rating);
+        formData.append('comment', comment);
+
+        const response = await fetch((window.contextPath || '') + '/review/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            body: formData.toString()
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+            if (modalEl && window.bootstrap && bootstrap.Modal) {
+                const m = bootstrap.Modal.getInstance(modalEl);
+                if (m) m.hide();
+            }
+            alert('Cảm ơn bạn! Đánh giá chất lượng trái cây của bạn đã được gửi thành công.');
+            location.reload();
+        } else {
+            alert(data.message || 'Không thể gửi đánh giá!');
+        }
+    } catch (e) {
+        alert('Lỗi gửi đánh giá: ' + e.message);
+    }
 }
 
 // =========================================================================

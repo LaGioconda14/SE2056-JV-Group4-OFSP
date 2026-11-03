@@ -32,12 +32,14 @@ if (typeof tailwind !== 'undefined') {
 document.addEventListener('DOMContentLoaded', function () {
 
     // ==========================================
-    // 1. QC Packaging Checklist Counter
+    // 1. QC Packaging Checklist Counter & Driver Selection Validation
     // ==========================================
     const checkboxes = document.querySelectorAll('.qc-check');
     const qcCountEl = document.getElementById('qcCount');
     const qcBadge = document.getElementById('qcProgressBadge');
     const btnFinish = document.getElementById('btnFinishPacking');
+    const formReadyToShip = document.getElementById('formReadyToShip');
+    const driverSelect = document.getElementById('driverUserIdSelect') || document.querySelector('select[name="driverUserId"]');
 
     function updateQcProgress() {
         if (!checkboxes || checkboxes.length === 0) return;
@@ -54,7 +56,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (qcCountEl) qcCountEl.textContent = checkedCount;
 
-        if (checkedCount === 4) {
+        // Shipper must be selected if dropdown exists
+        const isDriverSelected = driverSelect ? (driverSelect.value && driverSelect.value.trim() !== '') : true;
+
+        if (checkedCount === 4 && isDriverSelected) {
             if (qcBadge) {
                 qcBadge.className = "px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-300 transition-all";
                 qcBadge.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Đã hoàn tất 4/4 tiêu chuẩn';
@@ -65,8 +70,17 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         } else {
             if (qcBadge) {
-                qcBadge.className = "px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60 transition-all";
-                qcBadge.innerHTML = 'Bắt buộc hoàn thành <span id="qcCount">' + checkedCount + '</span>/4';
+                if (checkedCount === 4 && !isDriverSelected) {
+                    qcBadge.className = "px-3 py-1 rounded-full bg-amber-50 text-amber-700 font-bold text-xs border border-amber-300 transition-all";
+                    qcBadge.innerHTML = '<i class="fa-solid fa-motorcycle mr-1"></i> Vui lòng chọn 1 shipper';
+                } else {
+                    qcBadge.className = "px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200/60 transition-all";
+                    qcBadge.innerHTML = 'Bắt buộc hoàn thành <span id="qcCount">' + checkedCount + '</span>/4';
+                }
+            }
+            if (btnFinish) {
+                btnFinish.disabled = true;
+                btnFinish.className = "w-full py-3 px-4 rounded-xl bg-slate-200 text-slate-400 font-extrabold text-sm transition shadow-sm flex items-center justify-center gap-2 cursor-not-allowed";
             }
         }
     }
@@ -74,6 +88,31 @@ document.addEventListener('DOMContentLoaded', function () {
     checkboxes.forEach(cb => {
         cb.addEventListener('change', updateQcProgress);
     });
+
+    if (driverSelect) {
+        driverSelect.addEventListener('change', updateQcProgress);
+    }
+
+    if (formReadyToShip) {
+        formReadyToShip.addEventListener('submit', function (e) {
+            let checkedCount = 0;
+            checkboxes.forEach(cb => {
+                if (cb.checked) checkedCount++;
+            });
+            if (checkedCount < 4) {
+                e.preventDefault();
+                alert('Vui lòng kiểm tra và tích chọn đủ 4/4 tiêu chuẩn đóng gói!');
+                return false;
+            }
+            if (driverSelect && (!driverSelect.value || driverSelect.value.trim() === '')) {
+                e.preventDefault();
+                alert('Vui lòng chọn 1 nhân viên giao hàng của Shop trước khi hoàn tất!');
+                driverSelect.focus();
+                return false;
+            }
+        });
+    }
+
     updateQcProgress();
 
     // ==========================================
@@ -109,19 +148,66 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnDismissCancelModal) btnDismissCancelModal.addEventListener('click', closeCancelModal);
     if (cancelModalBackdrop) cancelModalBackdrop.addEventListener('click', closeCancelModal);
 
-    // Cancel Reason Radio options highlight
+    // Cancel Reason Radio options highlight & dynamic section toggle
     const cancelReasonRadios = document.querySelectorAll('input[name="cancelReasonCategory"]');
-    cancelReasonRadios.forEach(radio => {
-        radio.addEventListener('change', function () {
-            cancelReasonRadios.forEach(r => {
-                const optCard = r.closest('.cancel-reason-option');
-                if (optCard) {
-                    if (r.checked) optCard.classList.add('is-selected');
-                    else optCard.classList.remove('is-selected');
-                }
-            });
+    const qcWasteBreakdown = document.getElementById('qcWasteBreakdown');
+    const outOfStockNotice = document.getElementById('outOfStockNotice');
+    const restockNotice = document.getElementById('restockNotice');
+
+    function updateCancelReasonView() {
+        let selectedVal = '';
+        cancelReasonRadios.forEach(r => {
+            const optCard = r.closest('.cancel-reason-option');
+            if (r.checked) {
+                selectedVal = r.value || '';
+                if (optCard) optCard.classList.add('is-selected');
+            } else {
+                if (optCard) optCard.classList.remove('is-selected');
+            }
         });
+
+        const valLower = selectedVal.toLowerCase();
+        if (valLower.includes('chất lượng') || valLower.includes('dập') || valLower.includes('hỏng')) {
+            if (qcWasteBreakdown) qcWasteBreakdown.classList.remove('hidden');
+            if (restockNotice) restockNotice.classList.add('hidden');
+        } else {
+            if (qcWasteBreakdown) qcWasteBreakdown.classList.add('hidden');
+            if (restockNotice) restockNotice.classList.remove('hidden');
+        }
+    }
+
+    cancelReasonRadios.forEach(radio => {
+        radio.addEventListener('change', updateCancelReasonView);
     });
+    updateCancelReasonView();
+
+    // Modal Return Waste (Hàng hoàn bị hỏng do vận chuyển)
+    const returnWasteModal = document.getElementById('returnWasteModal');
+    const returnWasteModalBackdrop = document.getElementById('returnWasteModalBackdrop');
+    const btnOpenReturnWasteModal = document.getElementById('btnOpenReturnWasteModal');
+    const btnCloseReturnWasteModal = document.getElementById('btnCloseReturnWasteModal');
+    const btnDismissReturnWasteModal = document.getElementById('btnDismissReturnWasteModal');
+
+    function openReturnWasteModal() {
+        if (returnWasteModal && returnWasteModalBackdrop) {
+            returnWasteModal.classList.remove('hidden');
+            returnWasteModalBackdrop.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeReturnWasteModal() {
+        if (returnWasteModal && returnWasteModalBackdrop) {
+            returnWasteModal.classList.add('hidden');
+            returnWasteModalBackdrop.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (btnOpenReturnWasteModal) btnOpenReturnWasteModal.addEventListener('click', openReturnWasteModal);
+    if (btnCloseReturnWasteModal) btnCloseReturnWasteModal.addEventListener('click', closeReturnWasteModal);
+    if (btnDismissReturnWasteModal) btnDismissReturnWasteModal.addEventListener('click', closeReturnWasteModal);
+    if (returnWasteModalBackdrop) returnWasteModalBackdrop.addEventListener('click', closeReturnWasteModal);
 
     // ==========================================
     // 3. Notification Toast for URL Query Params
@@ -136,7 +222,11 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => toast.remove(), 4500);
     }
 
-    if (urlParams.get('cancelled') === '1') {
+    if (urlParams.get('restocked') === '1') {
+        showToast('Đã kiểm định thành công! Toàn bộ hoa quả tươi đã được hoàn trả lại kho bán.', 'fa-solid fa-circle-check', 'bg-emerald-700');
+    } else if (urlParams.get('waste_logged') === '1') {
+        showToast('Đã ghi nhận tiêu hủy hoa quả hỏng do vận chuyển vào sổ Hao hụt thành công!', 'fa-solid fa-trash-can', 'bg-rose-600');
+    } else if (urlParams.get('cancelled') === '1') {
         showToast('Đã hủy đơn hàng con thành công. Hệ thống đã kích hoạt thông báo và hoàn tiền cho khách.', 'fa-solid fa-circle-xmark', 'bg-rose-600');
     } else if (urlParams.get('success') === '1') {
         showToast('Cập nhật trạng thái đơn hàng thành công!', 'fa-solid fa-circle-check', 'bg-emerald-700');

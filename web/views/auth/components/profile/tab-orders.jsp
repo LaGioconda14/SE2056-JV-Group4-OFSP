@@ -128,9 +128,9 @@
                                         <div class="shopee-item-row">
                                             <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop" class="shopee-item-thumb" alt="Trái cây tươi">
                                             <div class="shopee-item-details">
-                                                    <div class="shopee-item-title">${order.note}</div>
-                                                    <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn Gốc Vườn</div>
-                                                    <div class="shopee-item-qty">x1</div>
+                                                <div class="shopee-item-title">${order.note}</div>
+                                                <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn Gốc Vườn</div>
+                                                <div class="shopee-item-qty">x1</div>
                                             </div>
                                             <div class="shopee-item-price">
                                                 <span class="shopee-price-current">${order.totalAmount}₫</span>
@@ -174,7 +174,7 @@
                                             <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
                                                 Liên Hệ Người Bán
                                             </button>
-                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${order.id}')">
+                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${order.code}', '${order.hasItems() ? order.items[0].orderItemId : ''}')">
                                                 Đánh Giá
                                             </button>
                                         </c:when>
@@ -246,4 +246,3 @@
         </c:choose>
     </div>
 </div>
-

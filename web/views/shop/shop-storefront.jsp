@@ -205,8 +205,8 @@
                         <div class="flex flex-wrap items-center gap-4 sm:gap-6 pt-1 text-xs text-gray-500 font-medium">
                             <div class="flex items-center gap-1 text-gray-900 font-bold">
                                 <i class="fa-solid fa-star text-amber-400"></i>
-                                <span>${shop.rating != null ? shop.rating : '4.9'}</span>
-                                <span class="text-gray-400 font-normal">(${reviews != null ? reviews.size() : 1420} đánh giá)</span>
+                                <span>${shop.rating != null && shop.rating > 0 ? shop.rating : '5.0'}</span>
+                                <span class="text-gray-400 font-normal">(${reviews != null ? reviews.size() : 0} đánh giá)</span>
                             </div>
                             <span class="text-gray-300 hidden sm:inline">&bull;</span>
                             <div class="flex items-center gap-1.5">
@@ -388,11 +388,11 @@
             </div>
             <!-- Overall Score Badge -->
             <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-xs">
-                <span class="text-xl font-black text-gray-950">${shop.rating != null ? shop.rating : '4.9'}</span>
+                <span class="text-xl font-black text-gray-950">${shop.rating != null && shop.rating > 0 ? shop.rating : '5.0'}</span>
                 <div class="flex text-amber-400 text-xs gap-0.5">
                     <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
                 </div>
-                <span class="text-xs text-gray-400 font-medium">(${reviews != null ? reviews.size() : 1420} lượt đánh giá)</span>
+                <span class="text-xs text-gray-400 font-medium">(${reviews != null ? reviews.size() : 0} lượt đánh giá)</span>
             </div>
         </div>
 

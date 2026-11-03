@@ -16,6 +16,8 @@ import service.IDeliveryService;
 import service.IDriverService;
 import service.impl.DeliveryServiceImpl;
 import service.impl.DriverServiceImpl;
+import service.INotificationService;
+import service.impl.NotificationServiceImpl;
 
 @WebServlet(name = "ShipperDeliveriesServlet", urlPatterns = {"/shipper/deliveries"})
 public class ShipperDeliveriesServlet extends HttpServlet {
@@ -35,32 +37,22 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             return;
         }
 
-        long driverId = user.getId();
         if (!"DRIVER".equalsIgnoreCase(user.getRole())) {
-            // If admin or staff is viewing, allow testing as driver 9
-            if ("ADMIN".equalsIgnoreCase(user.getRole()) || "STAFF".equalsIgnoreCase(user.getRole())) {
-                driverId = 9;
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-                return;
-            }
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
         }
 
+        long driverId = user.getId();
         DriverProfile driverProfile = driverService.getDriverProfileByUserId(driverId);
         if (driverProfile == null) {
             driverProfile = new DriverProfile();
             driverProfile.setUserId(driverId);
-            driverProfile.setFullName(user.getFullName() != null ? user.getFullName() : "Tài xế FreshFruit");
-            driverProfile.setPhone(user.getPhone() != null ? user.getPhone() : "0900000000");
-            driverProfile.setVehicleType("Xe máy chuyên dụng");
-            driverProfile.setLicensePlate("29-F1 888.88");
-            driverProfile.setColdBoxType("Thùng giữ nhiệt FreshBox");
-            driverProfile.setOperatingCity("Toàn quốc");
-            driverProfile.setApprovalStatus("APPROVED");
-            driverProfile.setAvailabilityStatus("AVAILABLE");
-        } else if (!driverProfile.isApproved()) {
-            driverProfile.setApprovalStatus("APPROVED");
+            driverProfile.setFullName(user.getFullName());
+            driverProfile.setPhone(user.getPhone());
+            driverProfile.setApprovalStatus("PENDING");
+            driverProfile.setAvailabilityStatus("UNAVAILABLE");
         }
+
 
         List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId, "all", null);
 
@@ -101,15 +93,11 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             return;
         }
 
-        long driverId = user.getId();
         if (!"DRIVER".equalsIgnoreCase(user.getRole())) {
-            if ("ADMIN".equalsIgnoreCase(user.getRole()) || "STAFF".equalsIgnoreCase(user.getRole())) {
-                driverId = 9;
-            } else {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
-                return;
-            }
+            response.sendRedirect(request.getContextPath() + "/home");
+            return;
         }
+        long driverId = user.getId();
 
         String action = request.getParameter("action");
         String deliveryIdStr = request.getParameter("deliveryId");
@@ -118,9 +106,13 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
             return;
         }
-
-        long deliveryId = Long.parseLong(deliveryIdStr);
-
+        long deliveryId;
+        try {
+            deliveryId = Long.parseLong(deliveryIdStr.trim());
+        } catch (NumberFormatException e) {
+            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+            return;
+        }
         if ("pickup".equalsIgnoreCase(action)) {
             boolean ok = deliveryService.confirmPickup(deliveryId, driverId);
             if (ok) {
@@ -137,6 +129,13 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             boolean ok = deliveryService.completeDelivery(deliveryId, driverId, proofImageUrl);
             if (ok) {
                 session.setAttribute("successMessage", "Giao hàng thành công! Đã lưu ảnh bằng chứng (PoD) và cập nhật thanh toán.");
+                try {
+                    Delivery del = deliveryService.getDeliveryById(deliveryId, driverId);
+                    if (del != null && del.getSubOrderId() > 0) {
+                        INotificationService notiService = new NotificationServiceImpl();
+                        notiService.notifyOrderDeliveredBySubOrder(del.getSubOrderId(), del.getSubOrderCode());
+                    }
+                } catch (Exception ignored) {}
             } else {
                 session.setAttribute("errorMessage", "Không thể hoàn tất giao hàng. Vui lòng thử lại!");
             }

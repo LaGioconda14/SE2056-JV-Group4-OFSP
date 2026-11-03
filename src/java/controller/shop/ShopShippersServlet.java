@@ -1,6 +1,7 @@
 package controller.shop;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -10,15 +11,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.User;
 import model.DriverProfile;
 import service.IDriverService;
 import service.impl.DriverServiceImpl;
+import service.IShopProductService;
+import service.impl.ShopProductServiceImpl;
 
 @WebServlet(name = "ShopShippersServlet", urlPatterns = {"/shop/shippers", "/shop/delivery-staff"})
 public class ShopShippersServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ShopShippersServlet.class.getName());
     private final IDriverService driverService = new DriverServiceImpl();
+    private final IShopProductService shopProductService = new ShopProductServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -28,9 +33,25 @@ public class ShopShippersServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
 
-        long shopId = getShopIdFromSession(request);
+        HttpSession session = request.getSession();
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
 
-        // Get shippers of this shop for display
+        Long shopId = (session.getAttribute("shopId") != null)
+                ? ((Number) session.getAttribute("shopId")).longValue() : null;
+        if (shopId == null || shopId <= 0) {
+            shopId = shopProductService.getShopIDByOwnerID(user.getId());
+            if (shopId != null && shopId > 0) {
+                session.setAttribute("shopId", shopId);
+            } else {
+                shopId = 1L;
+                session.setAttribute("shopId", shopId);
+            }
+        }
+
         List<DriverProfile> drivers = driverService.getDriversByShopId(shopId, null, null);
 
         request.setAttribute("drivers", drivers);
@@ -47,7 +68,25 @@ public class ShopShippersServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
 
-        long shopId = getShopIdFromSession(request);
+        HttpSession session = request.getSession();
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        Long shopId = (session.getAttribute("shopId") != null)
+                ? ((Number) session.getAttribute("shopId")).longValue() : null;
+        if (shopId == null || shopId <= 0) {
+            shopId = shopProductService.getShopIDByOwnerID(user.getId());
+            if (shopId != null && shopId > 0) {
+                session.setAttribute("shopId", shopId);
+            } else {
+                shopId = 1L;
+                session.setAttribute("shopId", shopId);
+            }
+        }
+
         String action = request.getParameter("action");
 
         try {
@@ -139,16 +178,4 @@ public class ShopShippersServlet extends HttpServlet {
 
         response.sendRedirect(request.getContextPath() + "/shop/shippers");
     }
-
-    private long getShopIdFromSession(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute("shopId") != null) {
-            try {
-                return ((Number) session.getAttribute("shopId")).longValue();
-            } catch (Exception ignored) {
-            }
-        }
-        return 1L; // Default fallback to Shop 1
-    }
 }
-

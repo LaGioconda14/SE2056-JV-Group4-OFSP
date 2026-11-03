@@ -7,7 +7,24 @@
     <display-name>Online Fruit Shopping Platform</display-name>
 
     <!-- Filters -->
-    <!-- Filters -->
+    <filter>
+        <filter-name>AdminAuthFilter</filter-name>
+        <filter-class>filter.AdminAuthFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>AdminAuthFilter</filter-name>
+        <url-pattern>/admin</url-pattern>
+        <url-pattern>/admin/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>ShopAuthFilter</filter-name>
+        <filter-class>filter.ShopAuthFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ShopAuthFilter</filter-name>
+        <url-pattern>/shop/*</url-pattern>
+    </filter-mapping>
     <filter>
         <filter-name>AuthFilter</filter-name>
         <filter-class>filter.AuthFilter</filter-class>

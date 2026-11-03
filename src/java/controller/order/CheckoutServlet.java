@@ -85,24 +85,19 @@ public class CheckoutServlet extends HttpServlet {
             processCheckout(request, response);
             return;
         }
-        if (!List.of("selectProvince", "selectDistrict", "selectAddress", "createAddress", "applyCoupon", "removeCoupon",
+        if (!List.of("selectProvince", "selectAddress", "createAddress", "applyCoupon", "removeCoupon",
                 "applyShopCoupon", "removeShopCoupon").contains(action)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
         Map<String, String> draft = draft(session, user.getId());
         saveDraft(request, draft);
-        if ("selectProvince".equals(action) || "selectDistrict".equals(action)
-                || "createAddress".equals(action)) {
+        if ("selectProvince".equals(action) || "createAddress".equals(action)) {
             draft.put("openAddressModal", "true");
         } else {
             draft.remove("openAddressModal");
         }
         if ("selectProvince".equals(action)) {
-            draft.put("addressSelection", "new");
-            draft.remove("districtCode");
-            draft.remove("wardCode");
-        } else if ("selectDistrict".equals(action)) {
             draft.put("addressSelection", "new");
             draft.remove("wardCode");
         } else if ("selectAddress".equals(action)) {
@@ -128,18 +123,16 @@ public class CheckoutServlet extends HttpServlet {
                     throw new IllegalArgumentException("Vui lòng chọn thêm địa chỉ mới!");
                 }
                 String provinceCode = draft.get("provinceCode");
-                String districtCode = draft.get("districtCode");
                 String city = lookupName(provinces(), provinceCode);
-                String district = lookupName(districts(provinceCode), districtCode);
                 CustomerAddress address = new CustomerAddress();
                 address.setUserId((long) user.getId());
                 address.setRecipientName(draft.get("recipientName"));
                 address.setRecipientPhone(draft.get("recipientPhone"));
                 address.setStreetAddress(draft.get("streetAddress"));
                 address.setCity(city);
-                address.setDistrict(district);
+                address.setDistrict("");
                 String wardCode = draft.get("wardCode");
-                address.setWard(lookupName(wards(districtCode), wardCode));
+                address.setWard(lookupName(wards(provinceCode), wardCode));
                 address.setDefault("true".equals(draft.get("isDefault")));
                 if (!customerAddressService.addAddress(address)) {
                     throw new IllegalArgumentException("Không thể lưu địa chỉ. Vui lòng thử lại!");
@@ -233,19 +226,12 @@ public class CheckoutServlet extends HttpServlet {
             List<AddressOption> provinces = provinces();
             request.setAttribute("provinces", provinces);
             String provinceCode = formDraft.get("provinceCode");
-            String districtCode = formDraft.get("districtCode");
-            List<AddressOption> districts = lookupOptional(provinces, provinceCode)
-                    ? districts(provinceCode) : Collections.emptyList();
-            List<AddressOption> wards = lookupOptional(districts, districtCode)
-                    ? wards(districtCode) : Collections.emptyList();
-            request.setAttribute("districts", districts);
+            List<AddressOption> wards = lookupOptional(provinces, provinceCode)
+                    ? wards(provinceCode) : Collections.emptyList();
             request.setAttribute("wards", wards);
             if (provinces.isEmpty() && request.getAttribute("addressError") == null) {
                 request.setAttribute("addressError", "Không thể tải danh sách tỉnh/thành. Vui lòng thử lại sau!");
-            } else if (lookupOptional(provinces, provinceCode) && districts.isEmpty()
-                    && request.getAttribute("addressError") == null) {
-                request.setAttribute("addressError", "Không thể tải danh sách quận/huyện. Vui lòng thử lại sau!");
-            } else if (lookupOptional(districts, districtCode) && wards.isEmpty()
+            } else if (lookupOptional(provinces, provinceCode) && wards.isEmpty()
                     && request.getAttribute("addressError") == null) {
                 request.setAttribute("addressError", "Không thể tải danh sách phường/xã. Vui lòng thử lại sau!");
             }
@@ -309,10 +295,13 @@ public class CheckoutServlet extends HttpServlet {
         if ("buyNow".equals(session.getAttribute("checkoutMode"))) {
             Object variant = session.getAttribute("checkoutBuyNowVariantId");
             Object quantity = session.getAttribute("checkoutBuyNowQuantity");
-            if (variant instanceof Long variantId && variantId > 0
-                    && quantity instanceof Integer buyNowQuantity && buyNowQuantity > 0) {
+            if (variant instanceof Long && quantity instanceof Integer) {
+                long variantId = (Long) variant;
+                int buyNowQuantity = (Integer) quantity;
+                if (variantId > 0 && buyNowQuantity > 0) {
                 return new CheckoutSelection(Collections.emptyList(), variantId, buyNowQuantity,
                         null, Collections.emptyMap());
+                }
             }
             clearBuyNowSelection(session);
             throw new IllegalArgumentException("Thông tin mua ngay đã hết hạn hoặc không hợp lệ!");
@@ -328,12 +317,18 @@ public class CheckoutServlet extends HttpServlet {
 
     private List<Long> restoreItemIds(HttpSession session) {
         Object saved = session.getAttribute("checkoutItemIds");
-        if (!(saved instanceof List<?> savedIds)) {
+        if (!(saved instanceof List<?>)) {
             return new ArrayList<>();
         }
+        List<?> savedIds = (List<?>) saved;
         Set<Long> uniqueIds = new LinkedHashSet<>();
         for (Object value : savedIds) {
-            if (!(value instanceof Long id) || id <= 0 || !uniqueIds.add(id)) {
+            if (!(value instanceof Long)) {
+                throw new IllegalArgumentException(
+                        "Danh sách sản phẩm thanh toán đã lưu không hợp lệ!");
+            }
+            Long id = (Long) value;
+            if (id <= 0 || !uniqueIds.add(id)) {
                 throw new IllegalArgumentException(
                         "Danh sách sản phẩm thanh toán đã lưu không hợp lệ!");
             }
@@ -577,7 +572,7 @@ public class CheckoutServlet extends HttpServlet {
 
     private void saveDraft(HttpServletRequest request, Map<String, String> draft) {
         for (String key : List.of("addressSelection", "recipientName", "recipientPhone", "streetAddress",
-                "provinceCode", "districtCode", "wardCode", "paymentMethod", "deliverySlot")) {
+                "provinceCode", "wardCode", "paymentMethod", "deliverySlot")) {
             String value = request.getParameter(key);
             if (value != null) {
                 int maxLength = "addressSelection".equals(key) ? 32 : 255;
@@ -603,12 +598,8 @@ public class CheckoutServlet extends HttpServlet {
         return parseOptions(addressLookupService.getProvincesJson(), null);
     }
 
-    private List<AddressOption> districts(String provinceCode) {
-        return parseOptions(addressLookupService.getDistrictsJson(provinceCode), "districts");
-    }
-
-    private List<AddressOption> wards(String districtCode) {
-        return parseOptions(addressLookupService.getWardsJson(districtCode), "wards");
+    private List<AddressOption> wards(String provinceCode) {
+        return parseOptions(addressLookupService.getWardsJson(provinceCode), "wards");
     }
 
     private List<AddressOption> parseOptions(String json, String property) {
@@ -634,7 +625,7 @@ public class CheckoutServlet extends HttpServlet {
     private String lookupName(List<AddressOption> options, String code) {
         return options.stream().filter(option -> option.getCode().equals(code))
                 .map(AddressOption::getName).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Địa chỉ tỉnh/quận/phường không hợp lệ hoặc chưa được tải!"));
+                .orElseThrow(() -> new IllegalArgumentException("Địa chỉ tỉnh/phường không hợp lệ hoặc chưa được tải!"));
     }
 
     public static class AddressOption {

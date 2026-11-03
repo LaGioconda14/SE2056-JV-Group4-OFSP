@@ -6,9 +6,6 @@
     <head>
         <title>Thêm Mới Nông Sản - Kênh Người Bán</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
-
-
-
     </head>
     <body class="bg-[#f8fafc] text-[#0f172a]">
 

@@ -34,7 +34,7 @@
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                     <li><a class="dropdown-item" href="${pageContext.request.contextPath}/profile"><i class="bi bi-person me-2"></i> Hồ sơ cá nhân</a></li>
-                    <li><a class="dropdown-item" href="${pageContext.request.contextPath}/home.jsp"><i class="bi bi-shop me-2"></i> Xem sàn mua sắm</a></li>
+                    <li><a class="dropdown-item" href="${pageContext.request.contextPath}/home"><i class="bi bi-shop me-2"></i> Xem sàn mua sắm</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="${pageContext.request.contextPath}/logout"><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a></li>
                 </ul>
@@ -95,9 +95,6 @@
                         </c:if>
                     </div>
                     <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
-                        <span class="badge bg-light text-dark border">
-                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Khu vực: <strong>${not empty driverProfile.operatingCity ? driverProfile.operatingCity : 'Toàn hệ thống'}</strong>
-                        </span>
                         <span class="badge bg-light text-primary border border-primary-subtle">
                             <i class="bi bi-box-seam me-1"></i> Đang phụ trách: <strong>${activeOrderCount != null ? activeOrderCount : 0} đơn</strong>
                         </span>
@@ -381,25 +378,9 @@
                         <label class="form-label fw-bold small text-dark">
                             <i class="bi bi-image text-success me-1"></i> Ảnh bằng chứng giao hàng (PoD):
                         </label>
-                        <input type="text" class="form-control mb-2" name="proofImageUrl" id="proofImageUrlInput"
-                               placeholder="Nhập link ảnh hoặc bấm chọn mẫu bên dưới"
+                        <input type="text" class="form-control" name="proofImageUrl" id="proofImageUrlInput"
+                               placeholder="Nhập link ảnh bằng chứng giao hàng..."
                                value="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600">
-
-                        <div class="text-muted fs-xs mb-2">Ảnh mẫu chụp thực tế đồng kiểm nhận quả tươi:</div>
-                        <div class="d-flex gap-2">
-                            <img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=200&h=150&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 70px; height: 50px; object-fit: cover;"
-                                 alt="PoD 1" onclick="selectPoDPreset('https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600')" title="Chọn mẫu ảnh 1">
-                            <img src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=200&h=150&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 70px; height: 50px; object-fit: cover;"
-                                 alt="PoD 2" onclick="selectPoDPreset('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600')" title="Chọn mẫu ảnh 2">
-                            <img src="https://images.unsplash.com/photo-1587334274328-64186a80aeee?w=200&h=150&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 70px; height: 50px; object-fit: cover;"
-                                 alt="PoD 3" onclick="selectPoDPreset('https://images.unsplash.com/photo-1587334274328-64186a80aeee?w=600')" title="Chọn mẫu ảnh 3">
-                        </div>
-                        <div class="mt-2 text-center">
-                            <img id="podPreviewImg" src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600" class="rounded border shadow-xs" style="max-height: 120px; object-fit: cover;">
-                        </div>
                     </div>
 
                     <div class="form-check mb-2">
@@ -483,4 +464,3 @@
 <script src="${pageContext.request.contextPath}/assets/js/shipper.js"></script>
 </body>
 </html>
-

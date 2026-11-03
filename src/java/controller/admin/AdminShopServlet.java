@@ -28,15 +28,16 @@ public class AdminShopServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String action = request.getParameter("action");
         // Handle flash session messages
         HttpSession session = request.getSession();
         if (session.getAttribute("successMessage") != null) {
-            request.setAttribute("successMessage", session.getAttribute("successMessage"));
+            request.setAttribute("flashMessage", session.getAttribute("successMessage"));
+            request.setAttribute("flashType", "success");
             session.removeAttribute("successMessage");
         }
         if (session.getAttribute("errorMessage") != null) {
-            request.setAttribute("errorMessage", session.getAttribute("errorMessage"));
+            request.setAttribute("flashMessage", session.getAttribute("errorMessage"));
+            request.setAttribute("flashType", "danger");
             session.removeAttribute("errorMessage");
         }
         String status = request.getParameter("status");

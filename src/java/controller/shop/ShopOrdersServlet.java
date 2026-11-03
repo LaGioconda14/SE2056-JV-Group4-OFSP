@@ -8,15 +8,19 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.User;
 import model.SubOrder;
 import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
 import service.impl.OrderFulfillmentServiceImpl;
+import service.IShopProductService;
+import service.impl.ShopProductServiceImpl;
 
 @WebServlet(name = "ShopOrdersServlet", urlPatterns = {"/shop/orders"})
 public class ShopOrdersServlet extends HttpServlet {
 
     private final IOrderFulfillmentService fulfillmentService = new OrderFulfillmentServiceImpl();
+    private final IShopProductService shopProductService = new ShopProductServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -26,21 +30,31 @@ public class ShopOrdersServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
 
+        HttpSession session = request.getSession();
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+
+        Long shopId = (session.getAttribute("shopId") != null)
+                ? ((Number) session.getAttribute("shopId")).longValue() : null;
+        if (shopId == null || shopId <= 0) {
+            shopId = shopProductService.getShopIDByOwnerID(user.getId());
+            if (shopId != null && shopId > 0) {
+                session.setAttribute("shopId", shopId);
+            } else {
+                shopId = 1L;
+                session.setAttribute("shopId", shopId);
+            }
+        }
+
         String statusTab = request.getParameter("status");
         if (statusTab == null || statusTab.trim().isEmpty()) {
             statusTab = "ALL";
         }
 
         String keyword = request.getParameter("keyword");
-
-        long shopId = 1L; // Default current shop
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute("shopId") != null) {
-            try {
-                shopId = ((Number) session.getAttribute("shopId")).longValue();
-            } catch (Exception ignored) {
-            }
-        }
 
         SubOrderStatus tabStatus = SubOrderStatus.from(statusTab);
         List<SubOrder> list = fulfillmentService.getSubOrdersByShop(shopId, tabStatus, keyword);
@@ -53,9 +67,9 @@ public class ShopOrdersServlet extends HttpServlet {
         int countFailed = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.FAILED);
         int countCancelled = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.CANCELLED);
 
-        if (session != null) {
-            session.setAttribute("shopSubOrdersCount", countAll);
-        }
+        session.setAttribute("shopSubOrdersCount", countAll);
+        session.setAttribute("sidebarPendingOrdersCount", countNew);
+        request.setAttribute("sidebarPendingOrdersCount", countNew);
 
         request.setAttribute("orderList", list);
         request.setAttribute("currentTab", statusTab.toUpperCase());

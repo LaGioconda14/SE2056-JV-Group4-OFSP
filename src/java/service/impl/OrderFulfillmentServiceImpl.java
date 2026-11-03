@@ -32,6 +32,30 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
     }
 
     @Override
+    public boolean cancelSubOrderWithRestock(String subOrderCode, String cancelReason, Long cancelledBy) {
+        if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
+            return false;
+        }
+        return fulfillmentDAO.cancelSubOrderWithRestock(subOrderCode.trim(), cancelReason, cancelledBy);
+    }
+
+    @Override
+    public boolean cancelSubOrderOutOfStock(String subOrderCode, String cancelReason, Long cancelledBy) {
+        if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
+            return false;
+        }
+        return fulfillmentDAO.cancelSubOrderOutOfStock(subOrderCode.trim(), cancelReason, cancelledBy);
+    }
+
+    @Override
+    public boolean processReturnedOrderRestock(String subOrderCode, String note, Long processedBy) {
+        if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
+            return false;
+        }
+        return fulfillmentDAO.processReturnedOrderRestock(subOrderCode.trim(), note, processedBy);
+    }
+
+    @Override
     public boolean updateSubOrderStatus(String subOrderCode, SubOrderStatus newStatus) {
         if (subOrderCode == null || subOrderCode.trim().isEmpty() || newStatus == null) {
             return false;

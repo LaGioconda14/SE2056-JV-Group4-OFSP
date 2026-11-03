@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import enums.PaymentMethod;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,6 +18,8 @@ import model.ShippingAddress;
 import model.User;
 import service.IOrderService;
 import service.impl.OrderServiceImpl;
+import service.INotificationService;
+import service.impl.NotificationServiceImpl;
 
 @WebServlet(name = "PlaceOrderServlet", urlPatterns = {"/order/place"})
 public class PlaceOrderServlet extends HttpServlet {
@@ -31,7 +34,8 @@ public class PlaceOrderServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
-        if (user == null) {
+        if (user == null || !user.isActive()) {
+            if (session != null) session.invalidate();
             request.getSession(true).setAttribute("errorMessage", "Vui lòng đăng nhập để hoàn tất đơn hàng!");
             response.sendRedirect(request.getContextPath() + "/login");
             return;
@@ -131,7 +135,7 @@ public class PlaceOrderServlet extends HttpServlet {
             shippingAddress.setRecipientPhone(request.getParameter("recipientPhone"));
             shippingAddress.setStreetAddress(request.getParameter("streetAddress"));
             shippingAddress.setWard(request.getParameter("ward"));
-            shippingAddress.setDistrict(request.getParameter("district"));
+            shippingAddress.setDistrict("");
             shippingAddress.setCity(request.getParameter("city"));
         } else {
             session.setAttribute("checkoutError", "Vui lòng chọn hoặc thêm địa chỉ giao hàng!");
@@ -160,8 +164,17 @@ public class PlaceOrderServlet extends HttpServlet {
             session.removeAttribute("checkoutShopCoupons");
             session.removeAttribute("checkoutFormDraft");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
+            // Gửi thông báo đặt hàng thành công
+            try {
+                INotificationService notiService = new NotificationServiceImpl();
+                notiService.notifyOrderPlaced(user.getId(), orderId, String.valueOf(orderId), 0);
+            } catch (Exception ignored) {}
 
-            response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);
+            if (PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)) {
+                response.sendRedirect(request.getContextPath() + "/payment/vnpay/create?orderId=" + orderId);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/order/confirmation?orderId=" + orderId);
+            }
 
         } catch (Exception ex) {
             session.setAttribute("checkoutError", ex.getMessage());

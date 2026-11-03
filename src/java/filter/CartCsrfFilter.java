@@ -34,7 +34,12 @@ public class CartCsrfFilter implements Filter {
             }
         }
         if ("POST".equals(req.getMethod()) && !token.equals(req.getParameter("csrfToken"))) {
-            res.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid CSRF token");
+            session.setAttribute("checkoutError",
+                    "Phiên làm việc đã thay đổi. Vui lòng kiểm tra lại thông tin và thực hiện thao tác lần nữa!");
+            String servletPath = req.getServletPath();
+            String safePath = "/order/place".equals(servletPath) || "/checkout".equals(servletPath)
+                    ? "/checkout" : "/cart";
+            res.sendRedirect(req.getContextPath() + safePath);
             return;
         }
         chain.doFilter(request, response);

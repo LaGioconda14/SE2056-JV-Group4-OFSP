@@ -52,7 +52,15 @@ public class UserDAO extends DBContext {
                 if (rs.next()) {
                     String storedPassword = rs.getString("password_hash");
                     if (PasswordUtil.verifyPassword(password, storedPassword)) {
-                        return mapResultSetToUser(rs);
+                        User user = mapResultSetToUser(rs);
+                        if (PasswordUtil.needsUpgrade(storedPassword)) {
+                            try {
+                                updatePassword(user.getId(), password);
+                            } catch (Exception ex) {
+                                LOGGER.log(Level.WARNING, "Failed to auto-upgrade password for user " + user.getId(), ex);
+                            }
+                        }
+                        return user;
                     }
                 }
             }

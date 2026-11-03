@@ -34,7 +34,7 @@
                     </div>
                     <h5 class="fw-bold text-dark">Chưa có mã giảm giá nào</h5>
                     <p class="text-muted small mb-4">Hiện tại bạn chưa có mã voucher nào. Hãy theo dõi các sự kiện khuyến mãi mới nhất trên sàn nhé!</p>
-                    <a href="${pageContext.request.contextPath}/home.jsp" class="btn-pill-success py-2">
+                    <a href="${pageContext.request.contextPath}/home" class="btn-pill-success py-2">
                         <i class="bi bi-tag me-1"></i> Xem ưu đãi hôm nay
                     </a>
                 </div>

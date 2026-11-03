@@ -88,6 +88,11 @@
                  ======================================================== -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-2 overflow-x-auto pb-1 text-sm">
+                    <a href="${pageContext.request.contextPath}/shop/waste" 
+                       class="inv-tab-btn">
+                        <i class="fa-solid fa-trash-can text-rose-500 text-xs"></i>
+                        <span>Hao hụt &amp; Tiêu hủy</span>
+                    </a>
                     <a href="${pageContext.request.contextPath}/shop/inventory?viewTab=alert" 
                        class="inv-tab-btn ${viewTab == 'alert' ? 'active' : ''}">
                         <i class="fa-solid fa-triangle-exclamation text-red-500 text-xs"></i>
@@ -116,7 +121,7 @@
                 </div>
             </div>
 
-            <!-- ========================================================
+<!-- ========================================================
                  7. SEARCH & RISK TOOLBAR
                  ======================================================== -->
             <form action="${pageContext.request.contextPath}/shop/inventory" method="GET" class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center gap-3">
@@ -431,7 +436,8 @@
             </div>
 
         </div>
-    </main>
+    
+</main>
 
     <!-- ========================================================
          MODAL: NHẬP KHO NHANH (RESTOCK)
@@ -552,6 +558,9 @@
             if (f) f.remove();
         }, 4000);
     </script>
+
+    <script src="${pageContext.request.contextPath}/assets/js/shop-inventory.js"></script>
+
 </body>
 </html>
 

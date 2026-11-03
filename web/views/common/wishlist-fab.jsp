@@ -8,28 +8,13 @@
     Ẩn nút nổi nhưng vẫn nạp script (ví dụ ở chính trang wishlist):
         <jsp:include page="/views/common/wishlist-fab.jsp"><jsp:param name="hideButton" value="true" /></jsp:include>
 --%>
-<%
-    Object wlUser = session.getAttribute("user");
-    boolean wlLoggedIn = (wlUser instanceof model.User);
-    if (request.getAttribute("wishlistCount") == null) {
-        int wlCount = 0;
-        if (wlLoggedIn) {
-            try {
-                wlCount = new service.impl.WishlistServiceImpl().count((long) ((model.User) wlUser).getId());
-            } catch (RuntimeException ex) {
-                wlCount = 0; // chưa tạo bảng wishlists hoặc lỗi DB: không làm hỏng trang
-            }
-        }
-        request.setAttribute("wishlistCount", wlCount);
-    }
-%>
 <c:set var="wlCtx" value="${pageContext.request.contextPath}" />
 
 <script>
     window.WISHLIST = {
         ctx: '<c:out value="${wlCtx}"/>',
         csrf: '<c:out value="${sessionScope.cartCsrfToken}"/>',
-        loggedIn: <%= wlLoggedIn %>,
+        loggedIn: ${not empty sessionScope.user},
         count: <c:out value="${wishlistCount}"/>
     };
 </script>

@@ -41,6 +41,16 @@ public class UserServiceImpl implements IUserService {
             throw new Exception("Tài khoản của bạn đang bị khóa. Vui lòng liên hệ hỗ trợ!");
         }
 
+        // Auto-upgrade legacy password (plain text or legacy SHA-256) to PBKDF2WithHmacSHA256
+        if (PasswordUtil.needsUpgrade(user.getPassword())) {
+            try {
+                userDAO.updatePassword(user.getId(), rawPassword);
+                user.setPassword(PasswordUtil.hashPassword(rawPassword));
+            } catch (Exception ignored) {
+                // Non-blocking: allow user login even if upgrade update fails
+            }
+        }
+
         return user;
     }
 

@@ -1,4 +1,4 @@
-﻿<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
 <html lang="vi">
@@ -44,6 +44,59 @@
     window.contextPath = '${pageContext.request.contextPath}';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async function () {
+        const citySelect = document.getElementById('citySelect');
+        const wardSelect = document.getElementById('wardSelect');
+        if (!citySelect || !wardSelect) return;
+
+        function resetWards(message) {
+            wardSelect.innerHTML = '';
+            const option = new Option(message, '');
+            option.disabled = true;
+            option.selected = true;
+            wardSelect.add(option);
+            wardSelect.disabled = true;
+        }
+
+        try {
+            const response = await fetch(window.contextPath + '/api/address/provinces');
+            if (!response.ok) throw new Error('Không thể tải tỉnh/thành phố');
+            const provinces = await response.json();
+            citySelect.innerHTML = '<option value="" selected disabled>Chọn Tỉnh / Thành phố</option>';
+            provinces.forEach(function (province) {
+                const option = new Option(province.name, province.name);
+                option.dataset.code = province.code;
+                citySelect.add(option);
+            });
+        } catch (error) {
+            citySelect.innerHTML = '<option value="" selected disabled>Không thể tải Tỉnh / Thành phố</option>';
+        }
+
+        citySelect.addEventListener('change', async function () {
+            const provinceCode = citySelect.options[citySelect.selectedIndex]?.dataset.code;
+            if (!provinceCode) {
+                resetWards('Chọn Tỉnh / Thành phố trước');
+                return;
+            }
+            resetWards('Đang tải Phường / Xã...');
+            try {
+                const response = await fetch(window.contextPath + '/api/address/wards?provinceCode=' + encodeURIComponent(provinceCode));
+                if (!response.ok) throw new Error('Không thể tải phường/xã');
+                const province = await response.json();
+                const wards = Array.isArray(province.wards) ? province.wards : [];
+                wardSelect.innerHTML = '<option value="" selected disabled>Chọn Phường / Xã</option>';
+                wards.forEach(function (ward) {
+                    wardSelect.add(new Option(ward.name, ward.name));
+                });
+                wardSelect.disabled = wards.length === 0;
+                if (wards.length === 0) resetWards('Không có dữ liệu Phường / Xã');
+            } catch (error) {
+                resetWards('Không thể tải Phường / Xã');
+            }
+        });
+    });
+</script>
 <script src="${pageContext.request.contextPath}/assets/js/profile.js?v=<%= System.currentTimeMillis() %>"></script>
 </body>
 </html>

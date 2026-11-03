@@ -11,17 +11,24 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import model.Shop;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Review;
 import model.Product;
 import model.Shop;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
+import model.ReviewSummary;
+import service.IReviewService;
+import service.impl.ReviewServiceImpl;
 
 /**
  *
@@ -63,9 +70,13 @@ public class DetailServlet extends HttpServlet {
                     Shop shop = null;
                     int shopTotalProducts = 0;
                     try {
-                        if (product.getShopId() > 0) {
-                            shop = shopDAO.getShopById(product.getShopId());
-                            shopTotalProducts = shopDAO.getTotalProductsCountByShopId(product.getShopId());
+                        long targetShopId = product.getShopId() > 0 ? product.getShopId() : 1L;
+                        shop = shopDAO.getShopById(targetShopId);
+                        if (shop == null && targetShopId != 1L) {
+                            shop = shopDAO.getShopById(1L);
+                        }
+                        if (shop != null) {
+                            shopTotalProducts = shopDAO.getTotalProductsCountByShopId(shop.getShopId());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -80,15 +91,21 @@ public class DetailServlet extends HttpServlet {
                         }
                         shop.setShopName(defaultShopName);
                         shop.setStatus("ACTIVE");
-                        shop.setRating(new BigDecimal("4.9"));
-                        shop.setProvince(product.getOrigin() != null && !product.getOrigin().trim().isEmpty() ? product.getOrigin() : "Thành phố Hồ Chí Minh");
+                        shop.setRating(BigDecimal.ZERO);
+                        shop.setProvince(product.getOrigin() != null && !product.getOrigin().trim().isEmpty() ? product.getOrigin() : "Đà Lạt, Lâm Đồng");
                         shop.setDescription("Hệ thống phân phối nông sản tươi sạch, chuẩn hữu cơ VietGAP & GlobalGAP hàng đầu Việt Nam.");
                         shop.setLogoUrl("https://images.unsplash.com/photo-1542838132-92c53300491e?w=150");
-                        shopTotalProducts = 283;
+                        shopTotalProducts = 0;
                     }
                     request.setAttribute("shop", shop);
                     request.setAttribute("shopTotalProducts", shopTotalProducts);
 
+                    // Lấy danh sách đánh giá thật từ bảng reviews
+                    IReviewService reviewService = new ReviewServiceImpl();
+                    List<Review> reviews = reviewService.getReviewsByProduct(product.getId(), 1, 20);
+                    ReviewSummary reviewSummary = reviewService.getReviewSummary(product.getId());
+                    request.setAttribute("reviews", reviews);
+                    request.setAttribute("reviewSummary", reviewSummary);
                     // Tính thời gian tham gia thực tế từ createdAt của shop
                     String shopJoinedTime = "Đã xác minh";
                     if (shop.getCreatedAt() != null) {
@@ -137,6 +154,26 @@ public class DetailServlet extends HttpServlet {
                         transferFlashMessage(session, request, "cartSuccess", "successMessage");
                         transferFlashMessage(session, request, "cartError", "errorMessage");
                     }
+
+                    request.setAttribute("variants", product.getVariants());
+
+                    List<Map<String, String>> imageList = new ArrayList<>();
+                    if (product.getImages() != null) {
+                        for (String imageUrl : product.getImages()) {
+                            if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+                                Map<String, String> image = new LinkedHashMap<>();
+                                image.put("imageUrl", imageUrl);
+                                imageList.add(image);
+                            }
+                        }
+                    }
+                    if (imageList.isEmpty() && product.getImage() != null) {
+                        Map<String, String> image = new LinkedHashMap<>();
+                        image.put("imageUrl", product.getImage());
+                        imageList.add(image);
+                    }
+                    request.setAttribute("imageList", imageList);
+
                     
                     // 3. Forward dữ liệu sang trang detail.jsp đã tạo
                     request.getRequestDispatcher("/views/product/product-detail.jsp").forward(request, response);

@@ -3,7 +3,7 @@
 
 <nav aria-label="breadcrumb" class="profile-breadcrumb">
     <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/home.jsp">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/home">Trang chủ</a></li>
         <li class="breadcrumb-item text-muted">Tài khoản của tôi</li>
         <li class="breadcrumb-item active text-success fw-semibold" aria-current="page">Hồ Sơ Cá Nhân & Cài Đặt</li>
     </ol>

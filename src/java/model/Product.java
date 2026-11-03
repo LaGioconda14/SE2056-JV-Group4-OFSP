@@ -15,11 +15,8 @@ public class Product {
     private int discountPercent;
     private double rating;
     private int reviewsCount; 
-    private long shopId;
     private String shopName;
     private String shopStatus;
-    private String categorySlug;
-    private String filterSlugs;
     private String thumbnailUrl;
     private long defaultVariantId;
     private BigDecimal minPrice;
@@ -42,6 +39,13 @@ public class Product {
     private String promotionType;
     private String promotionSchedule;   // VD: Thứ 7, Chủ nhật · 19:00–21:00 (rỗng nếu không có lịch)
     private java.sql.Timestamp promotionEndDate;
+
+    private long shopId;
+    private String categorySlug;
+    private String filterSlugs;
+    private long primaryVariantId;
+    private int variantCount;
+    private boolean activeForSale;   
     
     // Thuộc tính phục vụ trang Product Detail
     private List<String> images;             // Thư viện ảnh chi tiết
@@ -80,9 +84,6 @@ public class Product {
     public long getProductId() { return id; }
     public void setProductId(long productId) { this.id = productId; }
 
-    public long getShopId() { return shopId; }
-    public void setShopId(long shopId) { this.shopId = shopId; }
-
     public int getCategoryId() { return categoryId; }
     public void setCategoryId(int categoryId) { this.categoryId = categoryId; }
 
@@ -91,9 +92,6 @@ public class Product {
 
     public String getCategoryName() { return categoryName; }
     public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
-
-    public String getCategorySlug() { return categorySlug; }
-    public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }
 
     public String getShopName() { return shopName; }
     public void setShopName(String shopName) { this.shopName = shopName; }
@@ -135,14 +133,18 @@ public class Product {
    
 
     public double getRating() { 
-        return rating > 0 ? rating : 4.9; 
+        return rating; 
     }
     public void setRating(double rating) { this.rating = rating; }
 
     public int getReviewsCount() { 
-        return reviewsCount > 0 ? reviewsCount : (int)(24 + (id * 13) % 115); 
+        return reviewsCount; 
     }
     public void setReviewsCount(int reviewsCount) { this.reviewsCount = reviewsCount; }
+
+    public String getRatingFormatted() {
+        return String.format(java.util.Locale.US, "%.1f", rating);
+    }
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
@@ -226,6 +228,22 @@ public class Product {
 
     public List<ProductVariant> getVariants() { return variants; }
     public void setVariants(List<ProductVariant> variants) { this.variants = variants; }
+
+    public long getPrimaryVariantId() { return primaryVariantId; }
+    public void setPrimaryVariantId(long primaryVariantId) { this.primaryVariantId = primaryVariantId; }
+
+    public int getVariantCount() { return variantCount; }
+    public void setVariantCount(int variantCount) { this.variantCount = variantCount; }
+
+    public boolean isActiveForSale() { return activeForSale; }
+    public void setActiveForSale(boolean activeForSale) { this.activeForSale = activeForSale; }
+
+
+    public long getShopId() { return shopId; }
+    public void setShopId(long shopId) { this.shopId = shopId; }
+
+    public String getCategorySlug() { return categorySlug; }
+    public void setCategorySlug(String categorySlug) { this.categorySlug = categorySlug; }
 
     public void setFilterSlugs(String filterSlugs) { this.filterSlugs = filterSlugs; }
     public String getFilterSlugs() {

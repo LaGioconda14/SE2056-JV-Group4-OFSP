@@ -181,11 +181,11 @@
                                             <i class="fa-solid fa-star"></i>
                                             <i class="fa-solid fa-star-half-stroke"></i>
                                         </div>
-                                        <span class="font-extrabold text-gray-800">${product.rating > 0 ? product.rating : '5.0'} / 5.0</span>
+                                        <span class="font-extrabold text-gray-800"><fmt:formatNumber value="${product.rating}" pattern="#0.0" /> / 5.0</span>
                                     </div>
                                     <span class="text-gray-300">•</span>
                                     <a href="#tab-reviews" onclick="switchTab('reviews')" class="text-gray-500 hover:text-[#00652c] transition underline font-medium">
-                                        ${product.reviewsCount > 0 ? product.reviewsCount : '128'} đánh giá xác thực
+                                        ${product.reviewsCount} đánh giá xác thực
                                     </a>
                                     <span class="text-gray-300">•</span>
                                     <div class="flex items-center gap-1 text-gray-500">
@@ -435,7 +435,7 @@
                                     <div class="flex items-center justify-between">
                                         <span class="text-gray-500">Đánh Giá</span>
                                         <span class="font-bold text-gray-900 text-sm">
-                                            ${not empty shop.rating ? shop.rating : '5.0'} ★
+                                            ${shop.rating != null && shop.rating > 0 ? shop.rating : '5.0'} ★
                                         </span>
                                     </div>
 
@@ -581,7 +581,7 @@
                                     Vận Chuyển &amp; Đóng Gói
                                 </button>
                                 <button type="button" onclick="switchTab('reviews')" id="tab-btn-reviews" class="tab-btn text-gray-500 hover:text-gray-800 pb-4 text-xs sm:text-sm font-medium transition-all">
-                                    Đánh Giá Sản Phẩm (${product.reviewsCount > 0 ? product.reviewsCount : 128})
+                                    Đánh Giá Sản Phẩm (${product.reviewsCount})
                                 </button>
                             </div>
                         </div>
@@ -733,7 +733,7 @@
                                     <div class="flex items-center gap-5">
                                         <div class="text-center">
                                             <div class="text-4xl sm:text-5xl font-black text-[#00652c] leading-none mb-1">
-                                                ${product.rating > 0 ? product.rating : '5.0'}
+                                                <fmt:formatNumber value="${product.rating}" pattern="#0.0" />
                                             </div>
                                             <div class="text-xs text-gray-500 font-bold">trên 5 sao</div>
                                             <div class="flex text-amber-400 text-xs gap-0.5 mt-1 justify-center">
@@ -747,7 +747,7 @@
                                         <div class="h-12 w-px bg-gray-300 hidden sm:block"></div>
                                         <div class="text-xs text-gray-600">
                                             <div class="font-bold text-gray-800 text-sm mb-0.5">
-                                                ${product.reviewsCount > 0 ? product.reviewsCount : '128'} đánh giá từ người mua
+                                                ${product.reviewsCount} đánh giá từ người mua
                                             </div>
                                             <div>99% khách hàng hài lòng về chất lượng và đóng gói</div>
                                         </div>
@@ -762,7 +762,7 @@
                                 <!-- Bộ Lọc Đánh Giá Tiếng Việt -->
                                 <div class="flex items-center gap-2 flex-wrap text-xs">
                                     <button type="button" class="px-4 py-1.5 rounded-lg border border-[#00652c] bg-emerald-50 text-[#00652c] font-bold">
-                                        Tất Cả (${product.reviewsCount > 0 ? product.reviewsCount : '128'})
+                                        Tất Cả (${product.reviewsCount})
                                     </button>
                                     <button type="button" class="px-4 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-gray-300">
                                         5 Sao
@@ -775,65 +775,62 @@
                                     </button>
                                 </div>
 
-                                <!-- Danh Sách Các Đánh Giá Tiếng Việt -->
+                                <!-- Danh Sách Các Đánh Giá Thực Tế Từ Database -->
                                 <div id="reviews-list" class="space-y-6 divide-y divide-gray-100">
-                                    <!-- Review 1 -->
-                                    <div class="pt-6 first:pt-0 space-y-3">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-full bg-emerald-100 text-[#00652c] font-bold flex items-center justify-center text-sm">
-                                                    ML
-                                                </div>
-                                                <div>
-                                                    <div class="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
-                                                        <span>nguyen_thi_mai_lan</span>
-                                                        <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                                                            <i class="fa-solid fa-circle-check"></i> Đã mua tại cửa hàng
+                                    <c:choose>
+                                        <c:when test="${not empty reviews}">
+                                            <c:forEach items="${reviews}" var="rev">
+                                                <div class="pt-6 first:pt-0 space-y-3">
+                                                    <div class="flex items-center justify-between">
+                                                        <div class="flex items-center gap-3">
+                                                            <div class="w-10 h-10 rounded-full bg-emerald-100 text-[#00652c] font-bold flex items-center justify-center text-sm overflow-hidden">
+                                                                <c:choose>
+                                                                    <c:when test="${not empty rev.customerAvatar}">
+                                                                        <img src="${rev.customerAvatar}" alt="${rev.customerName}" class="w-full h-full object-cover">
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <i class="fa-solid fa-user text-emerald-700"></i>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </div>
+                                                            <div>
+                                                                <div class="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
+                                                                    <span>${not empty rev.customerName ? rev.customerName : 'Khách hàng ẩn danh'}</span>
+                                                                    <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                                                                        <i class="fa-solid fa-circle-check"></i> Đã mua hàng
+                                                                    </span>
+                                                                </div>
+                                                                <div class="flex text-amber-400 text-[10px] gap-0.5 mt-0.5">
+                                                                    <c:forEach begin="1" end="5" var="star">
+                                                                        <i class="fa-solid fa-star ${rev.rating >= star ? '' : 'text-gray-200'}"></i>
+                                                                    </c:forEach>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <span class="text-xs text-gray-400">
+                                                            <fmt:formatDate value="${rev.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                                         </span>
                                                     </div>
-                                                    <div class="flex text-amber-400 text-[10px] gap-0.5 mt-0.5">
-                                                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                                    </div>
+                                                    <p class="text-xs sm:text-sm text-gray-700 leading-relaxed">
+                                                        <c:out value="${rev.comment}"/>
+                                                    </p>
+                                                    <c:if test="${not empty rev.replyComment}">
+                                                        <div class="bg-gray-50 p-3.5 rounded-xl text-xs space-y-1 border border-gray-100">
+                                                            <div class="font-bold text-gray-800">Phản Hồi Của Nhà Vườn:</div>
+                                                            <div class="text-gray-600"><c:out value="${rev.replyComment}"/></div>
+                                                        </div>
+                                                    </c:if>
                                                 </div>
+                                            </c:forEach>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="p-8 text-center text-gray-400">
+                                                <i class="fa-regular fa-comment-dots text-4xl text-gray-300 mb-2"></i>
+                                                <p class="text-sm font-semibold text-gray-600">Chưa có đánh giá nào cho sản phẩm này.</p>
+                                                <p class="text-xs text-gray-400 mt-1">Hãy là người đầu tiên mua và chia sẻ trải nghiệm về chất lượng hoa quả!</p>
                                             </div>
-                                            <span class="text-xs text-gray-400">12:30 hôm qua</span>
-                                        </div>
-                                        <div class="text-xs text-gray-500">Phân loại: ${not empty product.variants ? product.variants[0].variantName : product.unit}</div>
-                                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed">
-                                            Sản phẩm đóng gói rất đẹp và chỉn chu, trái cây tươi nguyên cuống. Ăn giòn ngọt, mọng nước, đúng chuẩn an toàn. Đặt sáng mà trưa đã nhận được hàng. Rất hài lòng!
-                                        </p>
-                                        <!-- Phản hồi của nhà vườn -->
-                                        <div class="bg-gray-50 p-3.5 rounded-xl text-xs space-y-1 border border-gray-100">
-                                            <div class="font-bold text-gray-800">Phản Hồi Của Nhà Vườn:</div>
-                                            <div class="text-gray-600">Dạ ${not empty shop.shopName ? shop.shopName : 'Shop'} chân thành cảm ơn bạn Mai Lan đã tin dùng sản phẩm của nông trại ạ! Chúc bạn và gia đình thưởng thức thật ngon miệng nhé!</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Review 2 -->
-                                    <div class="pt-6 space-y-3">
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-sm">
-                                                    HN
-                                                </div>
-                                                <div>
-                                                    <div class="font-extrabold text-sm text-gray-900 flex items-center gap-1.5">
-                                                        <span>tran_hoang_nam</span>
-                                                        <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                                                            <i class="fa-solid fa-circle-check"></i> Đã mua tại cửa hàng
-                                                        </span>
-                                                    </div>
-                                                    <div class="flex text-amber-400 text-[10px] gap-0.5 mt-0.5">
-                                                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <span class="text-xs text-gray-400">3 ngày trước</span>
-                                        </div>
-                                        <p class="text-xs sm:text-sm text-gray-700 leading-relaxed">
-                                            Mua làm quà biếu đối tác ai cũng khen sang trọng và chất lượng. Quả to đều, thơm nức mùi thơm tự nhiên. Shipper giao hàng nhiệt tình, lịch sự. Sẽ tiếp tục ủng hộ dài dài.
-                                        </p>
-                                    </div>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </div>
                         </div>

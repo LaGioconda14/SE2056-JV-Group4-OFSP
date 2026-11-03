@@ -1,12 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%
-    /* FOOTER DÙNG CHUNG (giống footer Trang chủ). Tự nạp danh mục nếu chưa có. */
-    if (request.getAttribute("categories") == null) {
-        service.IProductService siteFooterService = new service.impl.ProductServiceImpl();
-        request.setAttribute("categories", siteFooterService.getAllCategories());
-    }
-%>
         <footer id="about" class="bg-gray-950 text-gray-300 pt-16 pb-8 border-t border-gray-800 mt-12">
             <div class="max-w-7xl mx-auto px-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">

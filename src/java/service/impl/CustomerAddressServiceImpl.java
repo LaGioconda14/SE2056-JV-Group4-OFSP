@@ -59,6 +59,10 @@ public class CustomerAddressServiceImpl implements ICustomerAddressService {
         if (address.getCity() == null || address.getCity().trim().isEmpty()) {
             throw new IllegalArgumentException("Tỉnh/Thành phố không được để trống!");
         }
+        if (address.getWard() == null || address.getWard().trim().isEmpty()) {
+            throw new IllegalArgumentException("Phường/Xã không được để trống!");
+        }
+        address.setDistrict("");
 
         return addressDAO.addAddress(address);
     }

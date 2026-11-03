@@ -11,8 +11,6 @@ public interface IDriverService {
 
     List<DriverProfile> getAllDriverProfiles(String approvalStatus, String keyword);
 
-    boolean autoDispatchSubOrder(long subOrderId);
-
     // Shop Delivery Staff (Shippers) Management
     List<DriverProfile> getDriversByShopId(long shopId, String statusFilter, String keyword);
 

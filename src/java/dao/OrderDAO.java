@@ -701,7 +701,7 @@ public class OrderDAO extends DBContext {
                 + "LEFT JOIN order_shipping_addresses sa ON o.order_id = sa.order_id "
                 + "WHERE o.order_id = ?";
 
-        String sqlSub = "SELECT so.sub_order_id, so.order_id, so.shop_id, s.shop_name, "
+        String sqlSub = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, s.shop_name, "
                 + "so.delivery_slot, so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, "
                 + "so.shop_total, so.status, so.created_at "
                 + "FROM sub_orders so "
@@ -758,6 +758,7 @@ public class OrderDAO extends DBContext {
                         while (rsSub.next()) {
                             SubOrder sub = new SubOrder();
                             sub.setSubOrderId(rsSub.getLong("sub_order_id"));
+                            sub.setSubOrderCode(rsSub.getString("sub_order_code"));
                             sub.setOrderId(orderId);
                             sub.setShopId(rsSub.getLong("shop_id"));
                             sub.setShopName(rsSub.getString("shop_name"));

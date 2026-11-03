@@ -6,10 +6,7 @@
     <head>
         <title>Quản Lý Kho & Nông Sản - Kênh Người Bán</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
-
-
-
-            </head>
+    </head>
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
@@ -337,6 +334,10 @@
 
                                                             <div class="inline-flex items-center gap-1 bg-slate-50 p-1 rounded-xl border border-slate-200">
                                                                 <a href="${pageContext.request.contextPath}/shop/product/edit?id=${v.variantId}" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-500 flex items-center justify-center transition-all shadow-2xs" title="Chỉnh sửa">
+                                                                <a href="${pageContext.request.contextPath}/shop/product/variants?productId=${v.productId}" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-indigo-700 hover:border-indigo-500 flex items-center justify-center transition-all shadow-2xs" title="Quản lý biến thể">
+                                                                    <i class="fa-solid fa-layer-group text-xs"></i>
+                                                                </a>
+
                                                                     <i class="fa-solid fa-pen text-[11px]"></i>
                                                                 </a>
                                                                 <a href="${pageContext.request.contextPath}/shop/product/toggle?id=${v.variantId}" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-blue-700 hover:border-blue-500 flex items-center justify-center transition-all shadow-2xs" title="Ẩn / Hiện">

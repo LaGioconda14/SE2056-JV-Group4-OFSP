@@ -33,11 +33,6 @@ public class DriverServiceImpl implements IDriverService {
     }
 
     @Override
-    public boolean autoDispatchSubOrder(long subOrderId) {
-        return driverDAO.autoAssignDelivery(subOrderId);
-    }
-
-    @Override
     public List<DriverProfile> getDriversByShopId(long shopId, String statusFilter, String keyword) {
         return driverDAO.getDriversByShopId(shopId, statusFilter, keyword);
     }

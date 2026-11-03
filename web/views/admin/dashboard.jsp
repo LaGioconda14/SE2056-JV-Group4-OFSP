@@ -25,112 +25,74 @@
         <jsp:include page="layout/header.jsp" />
 
         <main class="admin-page-content">
-            <!-- 1. Live Engine Telemetry Banner -->
-            <div class="engine-telemetry-banner">
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-                    <div>
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="badge-live-engine"><i class="bi bi-circle-fill text-success" style="font-size: 0.55rem;"></i> LIVE E-COMMERCE ENGINE</span>
-                        </div>
-                        <h1 class="telemetry-banner-title">Tổng Quan Hoạt Động Sàn Nông Sản</h1>
-                        <p class="telemetry-banner-desc mb-0">Giám sát dòng tiền GMV, chất lượng nhà vườn và phê duyệt kiểm định sản phẩm toàn hệ thống Gốc Vườn.</p>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="banner-pill-stat">
-                            <i class="bi bi-shop text-success fs-5"></i>
-                            <div>
-                                <span class="fw-bold text-dark fs-6">${stats.activeShopsCount}</span>
-                                <div class="text-muted" style="font-size: 0.65rem; line-height: 1.1;">Gian hàng<br>hoạt động</div>
-                            </div>
-                        </div>
-                        <div class="banner-pill-stat">
-                            <i class="bi bi-shield-check text-primary fs-5"></i>
-                            <div>
-                                <span class="fw-bold text-dark fs-6">${stats.certifiedProductRate}%</span>
-                                <div class="text-muted" style="font-size: 0.65rem; line-height: 1.1;">Chuẩn VietGAP /<br>GlobalGAP</div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- 1. Simple Dashboard Header -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+                <div>
+                    <h1 class="h4 fw-bold text-dark mb-1">Tổng Quan Quản Trị Hệ Thống</h1>
+                    <p class="text-muted small mb-0">Giám sát doanh số, đơn hàng và các hoạt động vận hành trên sàn Gốc Vườn.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-white text-dark border px-3 py-2 shadow-sm rounded-pill fw-semibold">
+                        <i class="bi bi-shop text-success me-1"></i> ${stats.activeShopsCount} Gian hàng hoạt động
+                    </span>
+                    <span class="badge bg-white text-dark border px-3 py-2 shadow-sm rounded-pill fw-semibold">
+                        <i class="bi bi-people text-primary me-1"></i> ${stats.activeUsersFormatted} Người dùng
+                    </span>
                 </div>
             </div>
 
-            <!-- 2. 4 KPI Metrics Cards -->
+            <!-- 2. 4 Core KPI Metrics Cards -->
             <div class="kpi-grid-4">
                 <!-- Card 1: Tổng GMV Toàn Sàn -->
                 <div class="stat-card-kpi">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="kpi-label">TỔNG GMV TOÀN SÀN</span>
                         <div class="kpi-icon-box bg-green-subtle"><i class="bi bi-cash-stack"></i></div>
                     </div>
                     <div class="kpi-main-val">${stats.totalGmvFullFormatted}</div>
-                    <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-growth">${stats.gmvGrowthFormatted}</span>
-                        <span class="text-muted" style="font-size: 0.7rem;">so với chu kỳ trước</span>
-                    </div>
-                    <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
-                        <span class="text-muted" style="font-size: 0.68rem;">GMV từ ${stats.activeShopsCount} shop hoạt động</span>
-                        <svg width="65" height="18" viewBox="0 0 65 18" fill="none">
-                            <path d="M1 14C10 14 16 5 26 10C36 15 48 2 64 6" stroke="#15803d" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
+                    <div class="text-muted small mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                        Doanh số từ ${stats.activeShopsCount} gian hàng hoạt động
                     </div>
                 </div>
 
                 <!-- Card 2: Doanh Thu Hoa Hồng Sàn -->
                 <div class="stat-card-kpi">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="kpi-label">DOANH THU HOA HỒNG SÀN</span>
                         <div class="kpi-icon-box bg-green-subtle"><i class="bi bi-wallet2"></i></div>
                     </div>
                     <div class="kpi-main-val text-success">${stats.netCommissionFullFormatted}</div>
-                    <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-growth">${stats.commissionGrowthFormatted}</span>
-                        <span class="text-muted" style="font-size: 0.7rem;">so với chu kỳ trước</span>
-                    </div>
-                    <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
-                        <span class="text-muted" style="font-size: 0.68rem;">Takerate định mức: ${stats.avgTakeRate}%</span>
-                        <div class="d-flex align-items-end gap-1" style="height: 16px;">
-                            <span style="width: 3px; height: 8px; background: #15803d; border-radius: 1px;"></span>
-                            <span style="width: 3px; height: 11px; background: #15803d; border-radius: 1px;"></span>
-                            <span style="width: 3px; height: 14px; background: #15803d; border-radius: 1px;"></span>
-                            <span style="width: 3px; height: 16px; background: #15803d; border-radius: 1px;"></span>
-                            <span style="width: 3px; height: 12px; background: #15803d; border-radius: 1px;"></span>
-                        </div>
+                    <div class="text-muted small mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                        Tỷ lệ hoa hồng trung bình: <strong class="text-dark">${stats.avgTakeRate}%</strong>
                     </div>
                 </div>
 
                 <!-- Card 3: Tổng Đơn Hàng Đã Xử Lý -->
                 <div class="stat-card-kpi">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="kpi-label">TỔNG ĐƠN HÀNG ĐÃ XỬ LÝ</span>
                         <div class="kpi-icon-box bg-purple-subtle"><i class="bi bi-bag-check-fill"></i></div>
                     </div>
                     <div class="kpi-main-val">${stats.totalOrdersFormatted} <span class="fs-6 fw-normal text-muted">đơn</span></div>
-                    <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-growth">${stats.orderGrowthFormatted}</span>
-                        <span class="text-muted" style="font-size: 0.7rem;">${stats.orderCompletionRate}% hoàn tất</span>
-                    </div>
-                    <div class="progress mt-2" style="height: 4px; background-color: #f1f5f9;">
-                        <div class="progress-bar bg-success" style="width: ${stats.orderCompletionRate}%;"></div>
+                    <div class="text-muted small mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                        Tỷ lệ hoàn tất: <strong class="text-dark">${stats.orderCompletionRate}%</strong>
                     </div>
                 </div>
 
                 <!-- Card 4: Tài Khoản Hoạt Động -->
                 <div class="stat-card-kpi">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="kpi-label">TÀI KHOẢN HOẠT ĐỘNG</span>
                         <div class="kpi-icon-box bg-green-subtle"><i class="bi bi-people-fill"></i></div>
                     </div>
                     <div class="kpi-main-val">${stats.activeUsersFormatted}</div>
-                    <div class="d-flex align-items-center gap-2 my-1">
-                        <span class="badge-kpi-purple">Tỷ lệ Active ${stats.activeUserRate}%</span>
-                    </div>
-                    <div class="mt-2 pt-2 border-top text-muted" style="font-size: 0.68rem; border-color: #f1f5f9 !important;">
-                        +${stats.totalBuyersCount} khách mua & ${stats.activeShopsCount} shop đối tác
+                    <div class="text-muted small mt-2 pt-2 border-top" style="border-color: #f1f5f9 !important;">
+                        ${stats.totalBuyersCount} khách mua &bull; ${stats.totalUsersCount} tổng tài khoản
                     </div>
                 </div>
             </div>
 
-            <!-- 3. 3 Action / Attention Cards (Khối Cần Xử Lý Ngay) -->
+            <!-- 3. Action Cards (Khối Cần Xử Lý) -->
             <div class="action-cards-grid-3">
                 <!-- Card 1: Xét Duyệt Gian Hàng -->
                 <div class="action-card card-orange">
@@ -141,19 +103,11 @@
                             </span>
                             <span class="badge-counter badge-counter-orange">${stats.pendingKycCount} Đang Chờ</span>
                         </div>
-                        <h3 class="action-card-title">${stats.pendingKycCount} Đơn đăng ký mở Shop đang chờ duyệt</h3>
-                        <p class="action-card-desc">Hồ sơ KYC thương nhân & chứng chỉ VietGAP/GlobalGAP cần thẩm định pháp lý trước khi cấp quyền mở bán.</p>
+                        <h3 class="action-card-title">${stats.pendingKycCount} Hồ sơ mở Shop đang chờ duyệt</h3>
+                        <p class="action-card-desc">Kiểm tra thông tin thương nhân và pháp lý trước khi cấp quyền bán lẻ.</p>
                     </div>
-                    <div class="action-card-footer">
-                        <div class="avatar-stack">
-                            <c:forEach items="${stats.pendingShops}" var="ps" begin="0" end="2">
-                                <span class="avatar-stack-item bg-orange">${ps.avatarAbbr}</span>
-                            </c:forEach>
-                            <c:if test="${empty stats.pendingShops}">
-                                <span class="avatar-stack-item bg-secondary">-</span>
-                            </c:if>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/admin/shops?status=PENDING_KYC" class="btn-action-pill btn-action-orange">
+                    <div class="action-card-footer mt-3">
+                        <a href="${pageContext.request.contextPath}/admin/shops?status=PENDING" class="btn-action-pill btn-action-orange text-decoration-none">
                             Xét duyệt Shop (${stats.pendingKycCount}) →
                         </a>
                     </div>
@@ -166,16 +120,13 @@
                             <span class="action-tag-pill action-tag-red">
                                 <i class="bi bi-shield-exclamation text-danger"></i> KIỂM DUYỆT SẢN PHẨM
                             </span>
-                            <span class="badge-counter badge-counter-red">${stats.flaggedProductsCount} Báo Cáo</span>
+                            <span class="badge-counter badge-counter-red">${stats.flaggedProductsCount} Cần Xử Lý</span>
                         </div>
-                        <h3 class="action-card-title">${stats.flaggedProductsCount} Sản phẩm đang chờ kiểm duyệt / tạm ẩn</h3>
-                        <p class="action-card-desc">Thẩm định chứng nhận nguồn gốc xuất xứ nông sản, tiêu chuẩn an toàn thực phẩm trước khi mở bán.</p>
+                        <h3 class="action-card-title">${stats.flaggedProductsCount} Sản phẩm cần kiểm định</h3>
+                        <p class="action-card-desc">Thẩm định chứng nhận nguồn gốc xuất xứ và an toàn thực phẩm.</p>
                     </div>
-                    <div class="action-card-footer">
-                        <span class="text-danger fw-bold" style="font-size: 0.72rem;">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Cần xử lý trước 24h
-                        </span>
-                        <a href="${pageContext.request.contextPath}/admin/categories" class="btn-action-pill btn-action-red">
+                    <div class="action-card-footer mt-3">
+                        <a href="${pageContext.request.contextPath}/admin/product-moderation" class="btn-action-pill btn-action-red text-decoration-none">
                             Kiểm định sản phẩm (${stats.flaggedProductsCount}) →
                         </a>
                     </div>
@@ -190,70 +141,27 @@
                             </span>
                             <span class="badge-counter badge-counter-navy">${stats.totalOrdersCount} Đơn</span>
                         </div>
-                        <h3 class="action-card-title">Giám sát chuỗi giao nhận nông sản toàn sàn</h3>
-                        <p class="action-card-desc">Kiểm soát tiến độ xử lý đơn hàng, điều phối vận chuyển chuỗi lạnh bảo quản hoa quả tươi.</p>
+                        <h3 class="action-card-title">Giám sát chuỗi giao nhận nông sản</h3>
+                        <p class="action-card-desc">Theo dõi luồng xử lý đơn hàng, điều phối vận chuyển và giao nhận.</p>
                     </div>
-                    <div class="action-card-footer">
-                        <span class="text-muted" style="font-size: 0.72rem;">
-                            Tổng doanh số: <strong class="text-dark">${stats.totalGmvFormatted}</strong>
-                        </span>
-                        <a href="${pageContext.request.contextPath}/admin/orders" class="btn-action-pill btn-action-navy">
+                    <div class="action-card-footer mt-3">
+                        <a href="${pageContext.request.contextPath}/admin/orders" class="btn-action-pill btn-action-navy text-decoration-none">
                             Quản lý đơn hàng →
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. Charts Section -->
+            <!-- 4. Category Share & Operations Overview -->
             <div class="charts-grid-2">
-                <!-- Left: Xu Hướng Doanh Thu Sàn & Sản Lượng Đơn -->
-                <div class="chart-card">
-                    <div class="chart-card-header flex-wrap gap-2">
-                        <div>
-                            <h2 class="chart-title">Xu Hướng Doanh Thu Sàn & Sản Lượng Đơn</h2>
-                            <span class="chart-subtitle">Biểu đồ tổng hợp dữ liệu giao dịch từ các đơn hàng</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="chart-filter-pills">
-                                <button type="button" class="chart-pill-btn active">Tất cả</button>
-                                <button type="button" class="chart-pill-btn">Nhập khẩu</button>
-                                <button type="button" class="chart-pill-btn">Nội địa</button>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="chart-legend-badge"><span class="dot-green"></span> GMV Sàn</span>
-                                <span class="chart-legend-badge"><span class="dot-orange"></span> Hoa Hồng ${stats.avgTakeRate}%</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="chart-canvas-wrapper">
-                        <!-- Peak Day Tooltip Callout -->
-                        <div class="peak-callout-box">
-                            <div class="peak-title">● GMV Sàn Trực Tuyến</div>
-                            <div>${stats.totalGmvFormatted} | ${stats.totalOrdersFormatted} Đơn</div>
-                        </div>
-                        <canvas id="revenueVelocityChart"></canvas>
-                    </div>
-
-                    <div class="chart-bottom-note">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-check-circle-fill text-success"></i>
-                            <span>Đã đối soát thanh toán trực tuyến qua VNPAY, MoMo, Visa/Mastercard tự động.</span>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/admin/orders" class="text-success fw-bold text-decoration-none">
-                            Xem đơn hàng thanh toán →
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Right: Cơ Cấu Doanh Số -->
+                <!-- Left: Cơ Cấu Doanh Số Theo Danh Mục -->
                 <div class="chart-card">
                     <div class="chart-card-header">
                         <div>
-                            <h2 class="chart-title">Cơ Cấu Doanh Số</h2>
-                            <span class="chart-subtitle">Phân loại theo danh mục hàng hóa</span>
+                            <h2 class="chart-title">Cơ Cấu Doanh Số Theo Danh Mục</h2>
+                            <span class="chart-subtitle">Phân loại theo danh mục hàng hóa trên sàn</span>
                         </div>
-                        <button type="button" class="btn btn-sm btn-link text-muted p-0"><i class="bi bi-three-dots-vertical"></i></button>
+                        <a href="${pageContext.request.contextPath}/admin/categories" class="text-muted small text-decoration-none">Quản lý &rarr;</a>
                     </div>
 
                     <div class="donut-chart-container">
@@ -275,8 +183,68 @@
                             </div>
                         </c:forEach>
                         <c:if test="${empty stats.categoryStats}">
-                            <div class="text-muted small py-2 text-center">Chưa có phân loại danh mục</div>
+                            <div class="text-muted small py-3 text-center">Chưa có dữ liệu danh mục</div>
                         </c:if>
+                    </div>
+                </div>
+
+                <!-- Right: Tình Trạng Vận Hành Sàn -->
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <h2 class="chart-title">Tình Trạng Vận Hành Sàn</h2>
+                            <span class="chart-subtitle">Tiến độ xử lý đơn hàng và chất lượng sản phẩm</span>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/admin/orders" class="text-muted small text-decoration-none">Đơn hàng &rarr;</a>
+                    </div>
+
+                    <div class="p-2 d-flex flex-column gap-3 flex-grow-1 justify-content-center">
+                        <!-- Item 1: Tỷ lệ hoàn thành đơn hàng -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small fw-semibold text-dark"><i class="bi bi-check-circle-fill text-success me-1"></i> Đơn hàng hoàn tất</span>
+                                <span class="small fw-bold text-success">${stats.completedOrdersCount} / ${stats.totalOrdersCount} (${stats.orderCompletionRate}%)</span>
+                            </div>
+                            <div class="progress" style="height: 6px; background-color: #f1f5f9;">
+                                <div class="progress-bar bg-success" style="width: ${stats.orderCompletionRate}%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Item 2: Đơn hàng đang xử lý -->
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: #f8fafc;">
+                            <span class="small text-muted"><i class="bi bi-hourglass-split text-warning me-1"></i> Đơn hàng đang xử lý</span>
+                            <span class="fw-bold text-dark">${stats.processingOrdersCount} đơn</span>
+                        </div>
+
+                        <!-- Item 3: Tỷ lệ sản phẩm chứng nhận -->
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="small fw-semibold text-dark"><i class="bi bi-shield-check text-primary me-1"></i> Chuẩn VietGAP / GlobalGAP</span>
+                                <span class="small fw-bold text-primary">${stats.certifiedProductRate}%</span>
+                            </div>
+                            <div class="progress" style="height: 6px; background-color: #f1f5f9;">
+                                <div class="progress-bar bg-primary" style="width: ${stats.certifiedProductRate}%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Item 4: Hồ sơ Shop chờ duyệt -->
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: #f8fafc;">
+                            <span class="small text-muted"><i class="bi bi-shop text-orange me-1"></i> Gian hàng chờ kích hoạt</span>
+                            <span class="badge bg-warning text-dark">${stats.pendingKycCount} yêu cầu</span>
+                        </div>
+
+                        <!-- Item 5: Khiếu nại bảo hành -->
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background: #f8fafc;">
+                            <span class="small text-muted"><i class="bi bi-exclamation-octagon text-danger me-1"></i> Khiếu nại đang hòa giải</span>
+                            <span class="badge ${stats.openDisputesCount > 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}">${stats.openDisputesCount}</span>
+                        </div>
+                    </div>
+
+                    <div class="chart-bottom-note mt-auto">
+                        <span class="text-muted small">Dữ liệu đối soát trực tiếp từ hệ thống</span>
+                        <a href="${pageContext.request.contextPath}/admin/orders" class="text-success fw-bold text-decoration-none small">
+                            Chi tiết đơn hàng →
+                        </a>
                     </div>
                 </div>
             </div>
@@ -388,13 +356,10 @@
 </div>
 
 <script>
-    window.platformChartLabels = ${not empty stats.chartLabelsJson ? stats.chartLabelsJson : '[]'};
-    window.platformGmvData = ${not empty stats.chartGmvJson ? stats.chartGmvJson : '[]'};
-    window.platformCommData = ${not empty stats.chartCommissionJson ? stats.chartCommissionJson : '[]'};
     window.platformCatLabels = ${not empty stats.categoryLabelsJson ? stats.categoryLabelsJson : '[]'};
     window.platformCatData = ${not empty stats.categoryDataJson ? stats.categoryDataJson : '[]'};
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=11"></script>
+<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=13"></script>
 </body>
 </html>

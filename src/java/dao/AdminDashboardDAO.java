@@ -55,9 +55,6 @@ public class AdminDashboardDAO extends DBContext {
             // 5. Category Distribution & Chart
             loadCategoryShare(conn, stats);
 
-            // 6. Time series charts for GMV & Commission
-            loadRevenueTrajectory(conn, stats);
-
             // 7. Top Vendors
             loadTopShops(conn, stats);
 
@@ -126,6 +123,8 @@ public class AdminDashboardDAO extends DBContext {
                 int certifiedProds = rs.getInt("CertifiedProducts");
                 double certRate = totalProds > 0 ? (certifiedProds * 100.0 / totalProds) : 100.0;
                 stats.setCertifiedProductRate(Math.round(certRate * 10.0) / 10.0);
+                stats.setTotalProductsCount(totalProds);
+                stats.setCertifiedProductsCount(certifiedProds);
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Failed to load core KPIs: " + ex.getMessage());
@@ -274,24 +273,29 @@ public class AdminDashboardDAO extends DBContext {
                    + "LEFT JOIN categories pcat ON c.parent_id = pcat.category_id "
                    + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
                    + "GROUP BY COALESCE(pcat.category_name, c.category_name) "
-                   + "ORDER BY inventory_volume DESC";
+                   + "ORDER BY inventory_volume DESC, product_count DESC";
 
         List<String> labels = new ArrayList<>();
         List<Double> volumes = new ArrayList<>();
+        List<Integer> counts = new ArrayList<>();
         List<Map<String, Object>> catList = new ArrayList<>();
-        double grandTotal = 0;
+        double grandTotalVolume = 0;
+        int grandTotalCount = 0;
 
-        String[] colors = {"#15803d", "#22c55e", "#ea580c", "#fb923c", "#3b82f6"};
+        String[] colors = {"#15803d", "#22c55e", "#ea580c", "#fb923c", "#3b82f6", "#06b6d4"};
 
         try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 String catName = rs.getString("group_name");
                 double vol = rs.getDouble("inventory_volume");
-                if (vol > 0) {
+                int cnt = rs.getInt("product_count");
+                if (vol > 0 || cnt > 0) {
                     labels.add(catName);
                     volumes.add(vol);
-                    grandTotal += vol;
+                    counts.add(cnt);
+                    grandTotalVolume += vol;
+                    grandTotalCount += cnt;
                 }
             }
         } catch (SQLException ex) {
@@ -299,15 +303,18 @@ public class AdminDashboardDAO extends DBContext {
         }
 
         List<Integer> percentages = new ArrayList<>();
+        boolean useVolume = grandTotalVolume > 0;
+        double baseTotal = useVolume ? grandTotalVolume : (grandTotalCount > 0 ? grandTotalCount : 1.0);
+
         for (int i = 0; i < labels.size(); i++) {
-            double vol = volumes.get(i);
-            int pct = (int) Math.round((vol / (grandTotal > 0 ? grandTotal : 1.0)) * 100.0);
+            double metric = useVolume ? volumes.get(i) : counts.get(i);
+            int pct = (int) Math.round((metric / baseTotal) * 100.0);
             percentages.add(pct);
 
             Map<String, Object> cMap = new HashMap<>();
             cMap.put("name", labels.get(i));
             cMap.put("percent", pct);
-            cMap.put("volumeFormatted", AdminDashboardStats.formatCurrency(vol));
+            cMap.put("volumeFormatted", useVolume ? AdminDashboardStats.formatCurrency(volumes.get(i)) : (counts.get(i) + " sản phẩm"));
             cMap.put("color", colors[i % colors.length]);
             catList.add(cMap);
         }
@@ -406,7 +413,9 @@ public class AdminDashboardDAO extends DBContext {
                 map.put("salesFormatted", df.format(rs.getDouble("total_sales_amount")));
                 map.put("rating", String.format("%.2f ★", rs.getDouble("rating")));
                 map.put("avatarTag", getAbbr(name));
-                map.put("statusLabel", "Hoạt động tốt");
+                String status = rs.getString("status");
+                map.put("status", status);
+                map.put("statusLabel", "ACTIVE".equalsIgnoreCase(status) ? "Hoạt động" : ("SUSPENDED".equalsIgnoreCase(status) ? "Tạm khóa" : status));
                 list.add(map);
             }
         } catch (SQLException ex) {

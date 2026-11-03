@@ -1,16 +1,13 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <fmt:setLocale value="vi_VN" />
 <!DOCTYPE html>
 <html lang="vi">
     <head>
         <title>Quản Lý Đơn Hàng Con - Gốc Vườn Seller Center</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
-
-
-
-
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/shop-orders.css">
         <script src="${pageContext.request.contextPath}/assets/js/shop-orders.js"></script>
     </head>

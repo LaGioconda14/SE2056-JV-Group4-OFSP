@@ -390,10 +390,10 @@
                                         </c:when>
                                         <c:otherwise>
                                             <c:forEach items="${userDetail.addresses}" var="a">
-                                                <div class="address-box ${a.default ? 'is-default' : ''}">
+                                                <div class="address-box ${a.isDefault ? 'is-default' : ''}">
                                                     <div class="d-flex align-items-center justify-content-between mb-1">
                                                         <strong><i class="bi bi-person-fill text-muted me-1"></i>${fn:escapeXml(a.recipientName)} • ${fn:escapeXml(a.recipientPhone)}</strong>
-                                                        <c:if test="${a.default}">
+                                                        <c:if test="${a.isDefault}">
                                                             <span class="badge bg-success" style="font-size: 0.65rem;"><i class="bi bi-check2"></i> Mặc định</span>
                                                         </c:if>
                                                     </div>
