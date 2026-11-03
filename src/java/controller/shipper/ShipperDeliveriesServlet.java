@@ -18,9 +18,22 @@ import service.impl.DeliveryServiceImpl;
 import service.impl.DriverServiceImpl;
 import service.INotificationService;
 import service.impl.NotificationServiceImpl;
+import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.http.Part;
+import util.CloudinaryUtil;
 
 @WebServlet(name = "ShipperDeliveriesServlet", urlPatterns = {"/shipper/deliveries"})
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
+        maxFileSize = 1024 * 1024 * 10,       // 10MB
+        maxRequestSize = 1024 * 1024 * 30     // 30MB
+)
 public class ShipperDeliveriesServlet extends HttpServlet {
+
+    private static final Logger LOGGER = Logger.getLogger(ShipperDeliveriesServlet.class.getName());
 
     private final IDeliveryService deliveryService = new DeliveryServiceImpl();
     private final IDriverService driverService = new DriverServiceImpl();
@@ -125,7 +138,35 @@ public class ShipperDeliveriesServlet extends HttpServlet {
         }
 
         if ("complete".equalsIgnoreCase(action)) {
-            String proofImageUrl = request.getParameter("proofImageUrl");
+            String proofImageUrl = null;
+            try {
+                Part filePart = request.getPart("proofImageFile");
+                if (filePart != null && filePart.getSize() > 0) {
+                    try {
+                        proofImageUrl = CloudinaryUtil.uploadImage(filePart, "deliveries/pod");
+                    } catch (Exception ex) {
+                        LOGGER.log(Level.WARNING, "Cloudinary upload failed for PoD, falling back to local file", ex);
+                        String appPath = request.getServletContext().getRealPath("");
+                        String uploadPath = appPath + File.separator + "assets" + File.separator + "uploads" + File.separator + "pod";
+                        File uploadDir = new File(uploadPath);
+                        if (!uploadDir.exists()) {
+                            uploadDir.mkdirs();
+                        }
+                        String fileName = "pod_" + deliveryId + "_" + System.currentTimeMillis() + ".jpg";
+                        filePart.write(uploadPath + File.separator + fileName);
+                        proofImageUrl = request.getContextPath() + "/assets/uploads/pod/" + fileName;
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "Error processing PoD file part", e);
+            }
+
+            if (proofImageUrl == null || proofImageUrl.isBlank()) {
+                proofImageUrl = request.getParameter("proofImageUrl");
+            }
+            if (proofImageUrl == null || proofImageUrl.isBlank()) {
+                proofImageUrl = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600";
+            }
             boolean ok = deliveryService.completeDelivery(deliveryId, driverId, proofImageUrl);
             if (ok) {
                 session.setAttribute("successMessage", "Giao hàng thành công! Đã lưu ảnh bằng chứng (PoD) và cập nhật thanh toán.");

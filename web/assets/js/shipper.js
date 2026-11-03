@@ -14,6 +14,7 @@ function openCompleteModal(deliveryId, trackingNum, amountText, isCod) {
     } else {
         codBox.classList.add('d-none');
     }
+    clearPoDSelection();
 
     const modalEl = document.getElementById('completeDeliveryModal');
     if (modalEl && window.bootstrap && bootstrap.Modal) {
@@ -41,6 +42,48 @@ function selectPoDPreset(url) {
         preview.src = url;
         preview.classList.remove('d-none');
     }
+}
+
+function handlePoDFileSelect(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (!file.type.startsWith('image/')) {
+            alert('Vui lòng chọn tệp hình ảnh (JPG, PNG, WEBP)!');
+            input.value = '';
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Kích thước ảnh không được vượt quá 10MB!');
+            input.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('podPreviewImg');
+            const wrapper = document.getElementById('podPreviewWrapper');
+            const placeholder = document.getElementById('podUploadPlaceholder');
+            if (preview && wrapper && placeholder) {
+                preview.src = e.target.result;
+                wrapper.classList.remove('d-none');
+                placeholder.classList.add('d-none');
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function clearPoDSelection() {
+    const fileInput = document.getElementById('proofImageFile');
+    const preview = document.getElementById('podPreviewImg');
+    const wrapper = document.getElementById('podPreviewWrapper');
+    const placeholder = document.getElementById('podUploadPlaceholder');
+    const manualInput = document.getElementById('proofImageUrlInput');
+    if (fileInput) fileInput.value = '';
+    if (preview) preview.src = '';
+    if (wrapper) wrapper.classList.add('d-none');
+    if (placeholder) placeholder.classList.remove('d-none');
+    if (manualInput) manualInput.value = '';
 }
 
 function viewImageModal(url) {
