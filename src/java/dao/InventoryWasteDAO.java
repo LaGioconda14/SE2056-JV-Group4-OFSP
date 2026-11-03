@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.InventoryWasteLog;
+import model.OrderCancellationData;
+import model.TransitDamageData;
 import model.WasteStatisticDTO;
 import model.SubOrder;
 import model.ShippingAddress;
@@ -190,6 +192,141 @@ public class InventoryWasteDAO extends DBContext {
         return logOrderCancellationWaste(subOrderId, reason, loggedBy, null);
     }
 
+
+    /**
+     * Bước 1: Lấy thông tin đơn hàng con và danh sách mặt hàng đã đặt.
+     */
+    private OrderCancellationData fetchOrderCancellationData(Connection conn, long subOrderId) throws SQLException {
+        String fetchOrderSql = "SELECT so.shop_id, so.order_id, oi.variant_id, oi.quantity, oi.unit, oi.unit_price "
+                + "FROM sub_orders so "
+                + "JOIN order_items oi ON so.sub_order_id = oi.sub_order_id "
+                + "WHERE so.sub_order_id = ?";
+
+        OrderCancellationData data = new OrderCancellationData();
+        try (PreparedStatement psFetch = conn.prepareStatement(fetchOrderSql)) {
+            psFetch.setLong(1, subOrderId);
+            try (ResultSet rs = psFetch.executeQuery()) {
+                while (rs.next()) {
+                    data.setShopId(rs.getLong("shop_id"));
+                    data.setParentOrderId(rs.getLong("order_id"));
+                    long varId = rs.getLong("variant_id");
+                    int qty = rs.getInt("quantity");
+                    String unit = rs.getString("unit");
+                    BigDecimal price = rs.getBigDecimal("unit_price");
+                    data.addItem(new Object[]{varId, qty, unit, price});
+                }
+            }
+        }
+        return data;
+    }
+
+    /**
+     * Bước 2: Cập nhật trạng thái đơn hàng con sang CANCELLED.
+     */
+    private void updateSubOrderToCancelled(Connection conn, long subOrderId, String reason, Long loggedBy) throws SQLException {
+        String updateStatusSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
+                + "cancelled_by = ?, cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE sub_order_id = ?";
+        try (PreparedStatement psUp = conn.prepareStatement(updateStatusSql)) {
+            psUp.setNString(1, reason);
+            if (loggedBy != null) {
+                psUp.setLong(2, loggedBy);
+            } else {
+                psUp.setNull(2, Types.BIGINT);
+            }
+            psUp.setLong(3, subOrderId);
+            psUp.executeUpdate();
+        }
+    }
+
+    /**
+     * Bước 3: Đồng bộ trạng thái đơn cha sang CANCELLED (nếu tất cả đơn con đều đã bị hủy).
+     */
+    private void syncParentOrderStatus(Connection conn, long parentOrderId) throws SQLException {
+        String syncParentSql = "UPDATE o SET o.order_status = 'CANCELLED', o.updated_at = CURRENT_TIMESTAMP "
+                + "FROM orders o "
+                + "WHERE o.order_id = ? "
+                + "  AND NOT EXISTS ( "
+                + "      SELECT 1 FROM sub_orders other "
+                + "      WHERE other.order_id = o.order_id "
+                + "        AND other.status <> 'CANCELLED' "
+                + "  )";
+        try (PreparedStatement psSync = conn.prepareStatement(syncParentSql)) {
+            psSync.setLong(1, parentOrderId);
+            psSync.executeUpdate();
+        }
+    }
+
+    /**
+     * Bước 4: Phân tách hoa quả: Quả hỏng ghi sổ hao hụt (QC_PACKING), quả lành hoàn lại kho bán.
+     */
+    private void processCancellationWasteAndRestock(Connection conn, long shopId, long subOrderId,
+            List<Object[]> items, Map<Long, Integer> wastedQtyMap, String reason, Long loggedBy) throws SQLException {
+
+        String insertWasteSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, "
+                + "quantity, unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
+                + "VALUES (?, ?, ?, 'QC_PACKING', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE variant_id = ?";
+
+        try (PreparedStatement psWaste = conn.prepareStatement(insertWasteSql);
+             PreparedStatement psRestore = conn.prepareStatement(restoreStockSql)) {
+
+            boolean hasWaste = false;
+            boolean hasRestore = false;
+
+            for (Object[] item : items) {
+                long varId = (long) item[0];
+                int totalOrderedQty = (int) item[1];
+                String unit = (String) item[2];
+                BigDecimal price = (BigDecimal) item[3];
+
+                int wastedQty = totalOrderedQty;
+                if (wastedQtyMap != null && wastedQtyMap.containsKey(varId)) {
+                    int userWasted = wastedQtyMap.get(varId);
+                    wastedQty = Math.min(totalOrderedQty, Math.max(0, userWasted));
+                }
+                int goodQty = Math.max(0, totalOrderedQty - wastedQty);
+
+                // Ghi sổ hao hụt phần nông sản bị dập hỏng
+                if (wastedQty > 0) {
+                    BigDecimal loss = price.multiply(BigDecimal.valueOf(wastedQty));
+                    psWaste.setLong(1, shopId);
+                    psWaste.setLong(2, varId);
+                    psWaste.setLong(3, subOrderId);
+                    psWaste.setInt(4, wastedQty);
+                    psWaste.setNString(5, unit != null ? unit : "kg");
+                    psWaste.setBigDecimal(6, price);
+                    psWaste.setBigDecimal(7, loss);
+                    psWaste.setNString(8, reason);
+                    if (loggedBy != null) {
+                        psWaste.setLong(9, loggedBy);
+                    } else {
+                        psWaste.setNull(9, Types.BIGINT);
+                    }
+                    psWaste.addBatch();
+                    hasWaste = true;
+                }
+
+                // Cộng hoàn trả vào kho số lượng quả còn tươi nguyên
+                if (goodQty > 0) {
+                    psRestore.setInt(1, goodQty);
+                    psRestore.setLong(2, varId);
+                    psRestore.addBatch();
+                    hasRestore = true;
+                }
+            }
+
+            if (hasWaste) {
+                psWaste.executeBatch();
+            }
+            if (hasRestore) {
+                psRestore.executeBatch();
+            }
+        }
+    }
+
     public boolean logOrderCancellationWaste(long subOrderId, String reason, Long loggedBy, Map<Long, Integer> wastedQtyMap) {
         Connection conn = getConnection();
         if (conn == null) {
@@ -198,126 +335,21 @@ public class InventoryWasteDAO extends DBContext {
         try (conn) {
             conn.setAutoCommit(false);
 
-            String fetchOrderSql = "SELECT so.shop_id, so.order_id, oi.variant_id, oi.quantity, oi.unit, oi.unit_price "
-                    + "FROM sub_orders so "
-                    + "JOIN order_items oi ON so.sub_order_id = oi.sub_order_id "
-                    + "WHERE so.sub_order_id = ?";
-
-            long shopId = 0;
-            long parentOrderId = 0;
-            List<Object[]> items = new ArrayList<>();
-            try (PreparedStatement psFetch = conn.prepareStatement(fetchOrderSql)) {
-                psFetch.setLong(1, subOrderId);
-                try (ResultSet rs = psFetch.executeQuery()) {
-                    while (rs.next()) {
-                        shopId = rs.getLong("shop_id");
-                        parentOrderId = rs.getLong("order_id");
-                        long varId = rs.getLong("variant_id");
-                        int qty = rs.getInt("quantity");
-                        String unit = rs.getString("unit");
-                        BigDecimal price = rs.getBigDecimal("unit_price");
-                        items.add(new Object[]{varId, qty, unit, price});
-                    }
-                }
-            }
-
-            if (shopId == 0 || items.isEmpty()) {
+            // 1. Lấy thông tin đơn hàng và danh sách hoa quả
+            OrderCancellationData data = fetchOrderCancellationData(conn, subOrderId);
+            if (data == null || data.getShopId() == 0 || data.getItems().isEmpty()) {
                 conn.rollback();
                 return false;
             }
 
-            // 1. Update sub_order status to CANCELLED
-            String updateStatusSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
-                    + "cancelled_by = ?, cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
-                    + "WHERE sub_order_id = ?";
-            try (PreparedStatement psUp = conn.prepareStatement(updateStatusSql)) {
-                psUp.setNString(1, reason);
-                if (loggedBy != null) {
-                    psUp.setLong(2, loggedBy);
-                } else {
-                    psUp.setNull(2, Types.BIGINT);
-                }
-                psUp.setLong(3, subOrderId);
-                psUp.executeUpdate();
-            }
+            // 2. Cập nhật trạng thái đơn con sang CANCELLED
+            updateSubOrderToCancelled(conn, subOrderId, reason, loggedBy);
 
-            // 2. Synchronize parent order if all sub_orders are CANCELLED
-            String syncParentSql = "UPDATE o SET o.order_status = 'CANCELLED', o.updated_at = CURRENT_TIMESTAMP "
-                    + "FROM orders o "
-                    + "WHERE o.order_id = ? "
-                    + "  AND NOT EXISTS ( "
-                    + "      SELECT 1 FROM sub_orders other "
-                    + "      WHERE other.order_id = o.order_id "
-                    + "        AND other.status <> 'CANCELLED' "
-                    + "  )";
-            try (PreparedStatement psSync = conn.prepareStatement(syncParentSql)) {
-                psSync.setLong(1, parentOrderId);
-                psSync.executeUpdate();
-            }
+            // 3. Đồng bộ trạng thái đơn cha (nếu tất cả đơn con đều đã CANCELLED)
+            syncParentOrderStatus(conn, data.getParentOrderId());
 
-            // 3. Process each item: damaged fruit to waste log, good fruit restored to stock
-            String insertWasteSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, "
-                    + "quantity, unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
-                    + "VALUES (?, ?, ?, 'QC_PACKING', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
-
-            String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
-                    + "WHERE variant_id = ?";
-
-            try (PreparedStatement psWaste = conn.prepareStatement(insertWasteSql);
-                 PreparedStatement psRestore = conn.prepareStatement(restoreStockSql)) {
-
-                boolean hasWaste = false;
-                boolean hasRestore = false;
-
-                for (Object[] item : items) {
-                    long varId = (long) item[0];
-                    int totalOrderedQty = (int) item[1];
-                    String unit = (String) item[2];
-                    BigDecimal price = (BigDecimal) item[3];
-
-                    int wastedQty = totalOrderedQty;
-                    if (wastedQtyMap != null && wastedQtyMap.containsKey(varId)) {
-                        int userWasted = wastedQtyMap.get(varId);
-                        wastedQty = Math.min(totalOrderedQty, Math.max(0, userWasted));
-                    }
-                    int goodQty = Math.max(0, totalOrderedQty - wastedQty);
-
-                    // Insert waste log for damaged portion
-                    if (wastedQty > 0) {
-                        BigDecimal loss = price.multiply(BigDecimal.valueOf(wastedQty));
-                        psWaste.setLong(1, shopId);
-                        psWaste.setLong(2, varId);
-                        psWaste.setLong(3, subOrderId);
-                        psWaste.setInt(4, wastedQty);
-                        psWaste.setNString(5, unit != null ? unit : "kg");
-                        psWaste.setBigDecimal(6, price);
-                        psWaste.setBigDecimal(7, loss);
-                        psWaste.setNString(8, reason);
-                        if (loggedBy != null) {
-                            psWaste.setLong(9, loggedBy);
-                        } else {
-                            psWaste.setNull(9, Types.BIGINT);
-                        }
-                        psWaste.addBatch();
-                        hasWaste = true;
-                    }
-
-                    // Restore good fruit to stock
-                    if (goodQty > 0) {
-                        psRestore.setInt(1, goodQty);
-                        psRestore.setLong(2, varId);
-                        psRestore.addBatch();
-                        hasRestore = true;
-                    }
-                }
-
-                if (hasWaste) {
-                    psWaste.executeBatch();
-                }
-                if (hasRestore) {
-                    psRestore.executeBatch();
-                }
-            }
+            // 4. Xử lý tách hoa quả: Quả hỏng ghi sổ hao hụt, quả lành hoàn kho bán
+            processCancellationWasteAndRestock(conn, data.getShopId(), subOrderId, data.getItems(), wastedQtyMap, reason, loggedBy);
 
             conn.commit();
             return true;
@@ -325,6 +357,109 @@ public class InventoryWasteDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error logging order cancellation waste", ex);
         }
         return false;
+    }
+
+    private TransitDamageData fetchTransitDamageData(Connection conn, long subOrderId) throws SQLException {
+        String fetchOrderSql = "SELECT so.shop_id, so.cancel_reason, oi.variant_id, oi.quantity, oi.unit, oi.unit_price "
+                + "FROM sub_orders so "
+                + "JOIN order_items oi ON so.sub_order_id = oi.sub_order_id "
+                + "WHERE so.sub_order_id = ?";
+
+        TransitDamageData data = new TransitDamageData();
+        try (PreparedStatement psFetch = conn.prepareStatement(fetchOrderSql)) {
+            psFetch.setLong(1, subOrderId);
+            try (ResultSet rs = psFetch.executeQuery()) {
+                while (rs.next()) {
+                    data.setShopId(rs.getLong("shop_id"));
+                    data.setCurrentReason(rs.getString("cancel_reason"));
+                    long varId = rs.getLong("variant_id");
+                    int qty = rs.getInt("quantity");
+                    String unit = rs.getString("unit");
+                    BigDecimal price = rs.getBigDecimal("unit_price");
+                    data.addItem(new Object[]{varId, qty, unit, price});
+                }
+            }
+        }
+        return data;
+    }
+
+    private void updateTransitDamageReason(Connection conn, long subOrderId, String currentReason, String note) throws SQLException {
+        String updatedReason = (currentReason != null ? currentReason : "")
+                + " [ĐÃ XỬ LÝ TIÊU HỦY: Ghi nhận hao hụt do vận chuyển" + (note != null && !note.isBlank() ? " - " + note.trim() : "") + "]";
+
+        String updateStatusSql = "UPDATE sub_orders SET cancel_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
+        try (PreparedStatement psUp = conn.prepareStatement(updateStatusSql)) {
+            psUp.setNString(1, updatedReason);
+            psUp.setLong(2, subOrderId);
+            psUp.executeUpdate();
+        }
+    }
+
+    private void processTransitDamageWasteAndRestock(Connection conn, long shopId, long subOrderId,
+            List<Object[]> items, Map<Long, Integer> wastedQtyMap, String note, Long loggedBy) throws SQLException {
+
+        String insertWasteSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, "
+                + "quantity, unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
+                + "VALUES (?, ?, ?, 'TRANSIT_DAMAGE', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE variant_id = ?";
+
+        try (PreparedStatement psWaste = conn.prepareStatement(insertWasteSql);
+             PreparedStatement psRestore = conn.prepareStatement(restoreStockSql)) {
+
+            boolean hasWaste = false;
+            boolean hasRestore = false;
+
+            for (Object[] item : items) {
+                long varId = (long) item[0];
+                int totalOrderedQty = (int) item[1];
+                String unit = (String) item[2];
+                BigDecimal price = (BigDecimal) item[3];
+
+                int wastedQty = totalOrderedQty;
+                if (wastedQtyMap != null && wastedQtyMap.containsKey(varId)) {
+                    int userWasted = wastedQtyMap.get(varId);
+                    wastedQty = Math.min(totalOrderedQty, Math.max(0, userWasted));
+                }
+                int goodQty = Math.max(0, totalOrderedQty - wastedQty);
+
+                // Ghi sổ hao hụt phần hoa quả dập nát do vận chuyển
+                if (wastedQty > 0) {
+                    BigDecimal loss = price.multiply(BigDecimal.valueOf(wastedQty));
+                    psWaste.setLong(1, shopId);
+                    psWaste.setLong(2, varId);
+                    psWaste.setLong(3, subOrderId);
+                    psWaste.setInt(4, wastedQty);
+                    psWaste.setNString(5, unit != null ? unit : "kg");
+                    psWaste.setBigDecimal(6, price);
+                    psWaste.setBigDecimal(7, loss);
+                    psWaste.setNString(8, "Đứt chuỗi lạnh/dập nát khi giao: " + (note != null ? note : ""));
+                    if (loggedBy != null) {
+                        psWaste.setLong(9, loggedBy);
+                    } else {
+                        psWaste.setNull(9, Types.BIGINT);
+                    }
+                    psWaste.addBatch();
+                    hasWaste = true;
+                }
+
+                // Hoàn trả vào kho bán số lượng quả tươi còn lại
+                if (goodQty > 0) {
+                    psRestore.setInt(1, goodQty);
+                    psRestore.setLong(2, varId);
+                    psRestore.addBatch();
+                    hasRestore = true;
+                }
+            }
+
+            if (hasWaste) {
+                psWaste.executeBatch();
+            }
+            if (hasRestore) {
+                psRestore.executeBatch();
+            }
+        }
     }
 
     public boolean logTransitDamageWaste(long subOrderId, String note, Long loggedBy, Map<Long, Integer> wastedQtyMap) {
@@ -335,109 +470,20 @@ public class InventoryWasteDAO extends DBContext {
         try (conn) {
             conn.setAutoCommit(false);
 
-            String fetchOrderSql = "SELECT so.shop_id, so.cancel_reason, oi.variant_id, oi.quantity, oi.unit, oi.unit_price "
-                    + "FROM sub_orders so "
-                    + "JOIN order_items oi ON so.sub_order_id = oi.sub_order_id "
-                    + "WHERE so.sub_order_id = ?";
-
-            long shopId = 0;
-            String currentReason = "";
-            List<Object[]> items = new ArrayList<>();
-            try (PreparedStatement psFetch = conn.prepareStatement(fetchOrderSql)) {
-                psFetch.setLong(1, subOrderId);
-                try (ResultSet rs = psFetch.executeQuery()) {
-                    while (rs.next()) {
-                        shopId = rs.getLong("shop_id");
-                        currentReason = rs.getString("cancel_reason");
-                        long varId = rs.getLong("variant_id");
-                        int qty = rs.getInt("quantity");
-                        String unit = rs.getString("unit");
-                        BigDecimal price = rs.getBigDecimal("unit_price");
-                        items.add(new Object[]{varId, qty, unit, price});
-                    }
-                }
-            }
-
-            if (shopId == 0 || items.isEmpty()) {
+            TransitDamageData data = fetchTransitDamageData(conn, subOrderId);
+            if (data == null || data.getShopId() == 0 || data.getItems().isEmpty()) {
                 conn.rollback();
                 return false;
             }
 
-            if (currentReason != null && currentReason.contains("[ĐÃ XỬ LÝ")) {
+            if (data.isAlreadyProcessed()) {
                 conn.rollback();
                 return true;
             }
 
-            String updatedReason = (currentReason != null ? currentReason : "")
-                    + " [ĐÃ XỬ LÝ TIÊU HỦY: Ghi nhận hao hụt do vận chuyển" + (note != null && !note.isBlank() ? " - " + note.trim() : "") + "]";
+            updateTransitDamageReason(conn, subOrderId, data.getCurrentReason(), note);
 
-            String updateStatusSql = "UPDATE sub_orders SET cancel_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
-            try (PreparedStatement psUp = conn.prepareStatement(updateStatusSql)) {
-                psUp.setNString(1, updatedReason);
-                psUp.setLong(2, subOrderId);
-                psUp.executeUpdate();
-            }
-
-            String insertWasteSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, "
-                    + "quantity, unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
-                    + "VALUES (?, ?, ?, 'TRANSIT_DAMAGE', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
-
-            String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
-                    + "WHERE variant_id = ?";
-
-            try (PreparedStatement psWaste = conn.prepareStatement(insertWasteSql);
-                 PreparedStatement psRestore = conn.prepareStatement(restoreStockSql)) {
-
-                boolean hasWaste = false;
-                boolean hasRestore = false;
-
-                for (Object[] item : items) {
-                    long varId = (long) item[0];
-                    int totalOrderedQty = (int) item[1];
-                    String unit = (String) item[2];
-                    BigDecimal price = (BigDecimal) item[3];
-
-                    int wastedQty = totalOrderedQty;
-                    if (wastedQtyMap != null && wastedQtyMap.containsKey(varId)) {
-                        int userWasted = wastedQtyMap.get(varId);
-                        wastedQty = Math.min(totalOrderedQty, Math.max(0, userWasted));
-                    }
-                    int goodQty = Math.max(0, totalOrderedQty - wastedQty);
-
-                    if (wastedQty > 0) {
-                        BigDecimal loss = price.multiply(BigDecimal.valueOf(wastedQty));
-                        psWaste.setLong(1, shopId);
-                        psWaste.setLong(2, varId);
-                        psWaste.setLong(3, subOrderId);
-                        psWaste.setInt(4, wastedQty);
-                        psWaste.setNString(5, unit != null ? unit : "kg");
-                        psWaste.setBigDecimal(6, price);
-                        psWaste.setBigDecimal(7, loss);
-                        psWaste.setNString(8, "Đứt chuỗi lạnh/dập nát khi giao: " + (note != null ? note : ""));
-                        if (loggedBy != null) {
-                            psWaste.setLong(9, loggedBy);
-                        } else {
-                            psWaste.setNull(9, Types.BIGINT);
-                        }
-                        psWaste.addBatch();
-                        hasWaste = true;
-                    }
-
-                    if (goodQty > 0) {
-                        psRestore.setInt(1, goodQty);
-                        psRestore.setLong(2, varId);
-                        psRestore.addBatch();
-                        hasRestore = true;
-                    }
-                }
-
-                if (hasWaste) {
-                    psWaste.executeBatch();
-                }
-                if (hasRestore) {
-                    psRestore.executeBatch();
-                }
-            }
+            processTransitDamageWasteAndRestock(conn, data.getShopId(), subOrderId, data.getItems(), wastedQtyMap, note, loggedBy);
 
             conn.commit();
             return true;
