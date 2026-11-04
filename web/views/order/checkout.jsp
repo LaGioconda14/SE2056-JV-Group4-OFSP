@@ -171,16 +171,14 @@
                                 <!-- Shop Header -->
                                 <div class="px-6 py-3.5 border-b border-gray-100 flex items-center justify-between">
                                     <div class="flex items-center gap-2.5">
-                                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-50 text-[#00652c]">
-                                            <span class="material-symbols-outlined text-[18px]">storefront</span>
-                                        </span>
-                                        <strong class="text-sm font-bold text-gray-900">
-                                            <c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng nông sản'}"/>
-                                        </strong>
-                                        <span class="text-gray-300">|</span>
-                                        <button type="button" class="flex items-center gap-1 text-xs text-emerald-700 font-semibold hover:underline cursor-pointer">
-                                            <span class="material-symbols-outlined text-[15px]">chat</span> Chat ngay
-                                        </button>
+                                        <a href="${pageContext.request.contextPath}/store?id=${shopEntry.key}" class="flex items-center gap-2.5 group hover:opacity-85 transition-opacity">
+                                            <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-50 text-[#00652c]">
+                                                <span class="material-symbols-outlined text-[18px]">storefront</span>
+                                            </span>
+                                            <strong class="text-sm font-bold text-gray-900 group-hover:text-[#00652c] transition-colors">
+                                                <c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng nông sản'}"/>
+                                            </strong>
+                                        </a>
                                     </div>
                                     <span class="text-xs text-gray-400 font-medium"><c:out value="${shopItems.size()}"/> sản phẩm</span>
                                 </div>
@@ -356,32 +354,64 @@
                     <p id="vnpay-payment-notice" class="hidden text-sm text-blue-800 bg-blue-50 border border-blue-200 rounded-xl p-4">Bạn sẽ được chuyển sang cổng VNPAY Sandbox để hoàn tất thanh toán an toàn.</p>
 
                     <!-- Bảng tổng hợp chi phí (Căn phải giống Shopee) -->
-                    <div class="flex flex-col items-end space-y-3 pt-3 text-sm">
-                        <div class="flex justify-between w-full sm:w-80 text-gray-500">
+                    <div class="flex flex-col items-end space-y-2.5 pt-3 text-sm">
+                        <!-- 1. Tổng tiền hàng & chi tiết từng shop -->
+                        <div class="flex justify-between w-full sm:w-96 text-gray-500">
                             <span>Tổng tiền hàng:</span>
                             <span class="font-semibold text-gray-900"><fmt:formatNumber value="${draftOrder.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
                         </div>
-                        <div class="flex justify-between w-full sm:w-80 text-gray-500">
+                        <c:forEach var="sub" items="${draftOrder.subOrders}">
+                            <div class="flex justify-between w-full sm:w-96 text-xs text-gray-500 pl-3">
+                                <span class="truncate pr-2">• <c:out value="${sub.shopName}"/>:</span>
+                                <span class="font-medium text-gray-700 shrink-0"><fmt:formatNumber value="${sub.shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                            </div>
+                        </c:forEach>
+
+                        <!-- 2. Tổng tiền phí vận chuyển -->
+                        <div class="flex justify-between w-full sm:w-96 text-gray-500 pt-1">
                             <span>Tổng tiền phí vận chuyển:</span>
                             <span class="font-semibold text-gray-900"><fmt:formatNumber value="${draftOrder.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
                         </div>
-                        <c:set var="totalShopDiscount" value="${0}"/>
+
+                        <!-- 3. Tổng cộng giảm giá từ voucher -->
+                        <c:set var="totalVoucherDiscount" value="${0}"/>
                         <c:forEach var="sub" items="${draftOrder.subOrders}">
-                            <c:set var="totalShopDiscount" value="${totalShopDiscount + sub.shopDiscount}"/>
+                            <c:set var="totalVoucherDiscount" value="${totalVoucherDiscount + sub.shopDiscount}"/>
                         </c:forEach>
-                        <c:if test="${totalShopDiscount gt 0}">
-                            <div class="flex justify-between w-full sm:w-80 text-amber-700">
-                                <span>Giảm giá Voucher Shop:</span>
-                                <span class="font-bold">-<fmt:formatNumber value="${totalShopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
-                            </div>
-                        </c:if>
                         <c:if test="${draftOrder.platformDiscount gt 0}">
-                            <div class="flex justify-between w-full sm:w-80 text-red-600">
-                                <span>Giảm giá Voucher Gốc Vườn:</span>
-                                <span class="font-bold">-<fmt:formatNumber value="${draftOrder.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
-                            </div>
+                            <c:set var="totalVoucherDiscount" value="${totalVoucherDiscount + draftOrder.platformDiscount}"/>
                         </c:if>
-                        <div class="flex justify-between items-baseline w-full sm:w-80 pt-3 border-t border-gray-100">
+
+                        <c:choose>
+                            <c:when test="${totalVoucherDiscount gt 0}">
+                                <div class="flex justify-between w-full sm:w-96 text-amber-700 font-medium pt-1">
+                                    <span>Tổng cộng giảm giá từ voucher:</span>
+                                    <span class="font-bold text-amber-700">-<fmt:formatNumber value="${totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                                </div>
+                                <c:forEach var="sub" items="${draftOrder.subOrders}">
+                                    <c:if test="${sub.shopDiscount gt 0}">
+                                        <div class="flex justify-between w-full sm:w-96 text-xs text-amber-700 pl-3">
+                                            <span class="truncate pr-2">• Giảm giá sản phẩm từ <c:out value="${sub.shopName}"/>:</span>
+                                            <span class="font-semibold shrink-0">-<fmt:formatNumber value="${sub.shopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                                        </div>
+                                    </c:if>
+                                </c:forEach>
+                                <c:if test="${draftOrder.platformDiscount gt 0}">
+                                    <div class="flex justify-between w-full sm:w-96 text-xs text-rose-600 pl-3">
+                                        <span class="truncate pr-2">• Voucher sàn Gốc Vườn:</span>
+                                        <span class="font-semibold shrink-0">-<fmt:formatNumber value="${draftOrder.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                                    </div>
+                                </c:if>
+                            </c:when>
+                            <c:otherwise>
+                                <div class="flex justify-between w-full sm:w-96 text-gray-500 pt-1">
+                                    <span>Tổng cộng giảm giá từ voucher:</span>
+                                    <span class="font-semibold text-gray-900">0 đ</span>
+                                </div>
+                            </c:otherwise>
+                        </c:choose>
+
+                        <div class="flex justify-between items-baseline w-full sm:w-96 pt-3 border-t border-gray-100">
                             <span class="text-sm font-bold text-gray-900">Tổng thanh toán:</span>
                             <strong class="text-2xl sm:text-3xl font-extrabold text-[#00652c]">
                                 <fmt:formatNumber value="${draftOrder.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
@@ -389,11 +419,8 @@
                         </div>
                     </div>
 
-                    <!-- Nút Đặt Hàng & Điều khoản (Giống Shopee) -->
-                    <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p class="text-xs text-gray-500 text-center sm:text-left">
-                            Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo <a href="#" class="text-blue-600 hover:underline">Điều khoản Gốc Vườn</a>
-                        </p>
+                    <!-- Nút Đặt Hàng -->
+                    <div class="pt-6 border-t border-gray-100 flex justify-end">
                         <button type="submit" id="submit-order-btn" class="w-full sm:w-56 py-3.5 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold rounded-xl text-base shadow-md transition duration-200 active:scale-95 cursor-pointer">
                             Đặt hàng
                         </button>

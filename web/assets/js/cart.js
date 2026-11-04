@@ -88,7 +88,7 @@
 
         cart.querySelectorAll('[data-select-all]').forEach(checkbox => {
             checkbox.checked = allChecked;
-            checkbox.indeterminate = selectedCount > 0 && !allChecked;
+            checkbox.indeterminate = false;
         });
         cart.querySelectorAll('[data-shop-select]').forEach(shopCheckbox => {
             const shopItems = purchasableRows()
@@ -97,7 +97,7 @@
                 .filter(Boolean);
             const shopSelected = shopItems.filter(checkbox => checkbox.checked).length;
             shopCheckbox.checked = shopItems.length > 0 && shopSelected === shopItems.length;
-            shopCheckbox.indeterminate = shopSelected > 0 && shopSelected < shopItems.length;
+            shopCheckbox.indeterminate = false;
         });
     }
 
