@@ -50,53 +50,116 @@
 
                             <%-- CASE 2: ĐƠN MỚI CHỜ DUYỆT (NEW) --%>
                             <c:when test="${subOrder.status eq 'NEW'}">
-                                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+                                <c:set var="isWaitingPayment" value="${(subOrder.paymentMethod eq 'VNPAY' or subOrder.paymentMethod eq 'CARD') and subOrder.paymentStatus ne 'PAID'}" />
+                                <div class="bg-white rounded-2xl border ${isWaitingPayment ? 'border-amber-300' : 'border-slate-200'} p-6 shadow-xs">
                                     <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                                         <div class="flex items-center gap-2.5">
-                                            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-sm font-bold border border-amber-200">
-                                                <i class="fa-solid fa-clipboard-question"></i>
+                                            <div class="w-8 h-8 rounded-xl ${isWaitingPayment ? 'bg-amber-100 text-amber-700 border-amber-300' : 'bg-amber-50 text-amber-600 border-amber-200'} flex items-center justify-center text-sm font-bold border">
+                                                <i class="fa-solid ${isWaitingPayment ? 'fa-credit-card' : 'fa-clipboard-question'}"></i>
                                             </div>
                                             <div>
-                                                <h2 class="text-base font-extrabold text-slate-900">Kiểm Tra Nông Sản &amp; Tiếp Nhận Đơn Hàng</h2>
-                                                <p class="text-[11px] text-slate-400">Kiểm tra thực tế kho bảo quản trước khi xác nhận</p>
+                                                <h2 class="text-base font-extrabold text-slate-900">
+                                                    <c:choose>
+                                                        <c:when test="${isWaitingPayment}">Chờ Khách Hoàn Tất Thanh Toán VNPAY</c:when>
+                                                        <c:otherwise>Kiểm Tra Nông Sản &amp; Tiếp Nhận Đơn Hàng</c:otherwise>
+                                                    </c:choose>
+                                                </h2>
+                                                <p class="text-[11px] text-slate-400">
+                                                    <c:choose>
+                                                        <c:when test="${isWaitingPayment}">Đơn hàng cần được thanh toán thành công trước khi shop đóng gói</c:when>
+                                                        <c:otherwise>Kiểm tra thực tế kho bảo quản trước khi xác nhận</c:otherwise>
+                                                    </c:choose>
+                                                </p>
                                             </div>
                                         </div>
-                                        <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
-                                            Đơn mới chờ xác nhận
-                                        </span>
+                                        <c:choose>
+                                            <c:when test="${isWaitingPayment}">
+                                                <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-800 border border-amber-300 animate-pulse flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-clock"></i> Chờ thanh toán VNPAY
+                                                </span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-amber-50 text-amber-700 border border-amber-200 animate-pulse">
+                                                    Đơn mới chờ xác nhận
+                                                </span>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
 
-                                    <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold shrink-0">
-                                                <i class="fa-solid fa-leaf"></i>
-                                            </div>
-                                            <div>
-                                                <div class="text-xs font-black text-slate-900">
-                                                    Nông sản tươi có sẵn &amp; đạt chuẩn chất lượng? (Fresh fruit available &amp; qualified?)
+                                    <c:choose>
+                                        <c:when test="${isWaitingPayment}">
+                                            <!-- Cảnh báo đơn VNPAY chưa thanh toán -->
+                                            <div class="mt-4 p-4 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div class="flex items-start gap-3">
+                                                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold shrink-0 mt-0.5">
+                                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-xs font-black text-amber-950">
+                                                            Người mua chưa thanh toán đơn hàng (Phương thức: ${subOrder.paymentMethod})
+                                                        </div>
+                                                        <div class="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                                                            Khách hàng đã đặt đơn nhưng <b>chưa hoàn tất thanh toán trực tuyến</b> qua cổng VNPAY. Để bảo đảm quyền lợi tài chính cho Gian hàng, hệ thống <b>chưa cho phép xác nhận đóng gói</b> đơn này cho đến khi nhận được xác nhận thanh toán thành công từ VNPAY.
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div class="text-[11px] text-slate-500 mt-0.5">
-                                                    Kiểm tra số lượng tồn kho lạnh và chất lượng quả tươi đạt chuẩn trước khi tiếp nhận đóng gói.
+                                            </div>
+
+                                            <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                                                <div>
+                                                    <button type="button" disabled title="Khách hàng chưa thanh toán qua VNPAY" class="w-full py-3 px-4 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 font-extrabold text-xs flex items-center justify-center gap-2 cursor-not-allowed">
+                                                        <i class="fa-solid fa-lock text-slate-400"></i>
+                                                        <span>Chờ Thanh Toán - Chưa Thể Tiếp Nhận</span>
+                                                    </button>
+                                                    <div class="text-[10px] text-amber-700 font-semibold text-center mt-1.5 flex items-center justify-center gap-1">
+                                                        <i class="fa-solid fa-circle-info text-amber-600"></i> Nút xác nhận sẽ tự mở khóa khi khách thanh toán xong
+                                                    </div>
+                                                </div>
+
+                                                <button type="button" class="btn-open-cancel-modal w-full py-3 px-4 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-300 hover:border-rose-400 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                                                    <i class="fa-solid fa-ban"></i>
+                                                    <span>Hủy Đơn Hàng</span>
+                                                </button>
+                                            </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <!-- Đơn đã thanh toán hoặc COD: Cho phép xác nhận bình thường -->
+                                            <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold shrink-0">
+                                                        <i class="fa-solid fa-leaf"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-xs font-black text-slate-900">
+                                                            Nông sản tươi có sẵn &amp; đạt chuẩn chất lượng?
+                                                        </div>
+                                                        <div class="text-[11px] text-slate-500 mt-0.5">
+                                                            <c:if test="${subOrder.paymentMethod eq 'VNPAY'}">
+                                                                <span class="text-emerald-700 font-bold mr-1"><i class="fa-solid fa-circle-check"></i> Đã thanh toán VNPAY.</span>
+                                                            </c:if>
+                                                            Kiểm tra số lượng tồn kho lạnh và chất lượng quả tươi đạt chuẩn trước khi tiếp nhận đóng gói.
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="m-0">
-                                            <input type="hidden" name="action" value="confirm">
-                                            <input type="hidden" name="code" value="${subOrder.subOrderCode}">
-                                            <button type="submit" class="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
-                                                <i class="fa-solid fa-check"></i>
-                                                <span>Đạt Chuẩn - Tiếp Nhận &amp; Đóng Gói</span>
-                                            </button>
-                                        </form>
+                                            <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="m-0">
+                                                    <input type="hidden" name="action" value="confirm">
+                                                    <input type="hidden" name="code" value="${subOrder.subOrderCode}">
+                                                    <button type="submit" class="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
+                                                        <i class="fa-solid fa-check"></i>
+                                                        <span>Đạt Chuẩn - Tiếp Nhận &amp; Đóng Gói</span>
+                                                    </button>
+                                                </form>
 
-                                        <button type="button" class="btn-open-cancel-modal w-full py-3 px-4 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-300 hover:border-rose-400 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
-                                            <i class="fa-solid fa-ban"></i>
-                                            <span>Hết Hàng / Quả Hỏng - Hủy Đơn</span>
-                                        </button>
-                                    </div>
+                                                <button type="button" class="btn-open-cancel-modal w-full py-3 px-4 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-300 hover:border-rose-400 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                                                    <i class="fa-solid fa-ban"></i>
+                                                    <span>Hết Hàng / Quả Hỏng - Hủy Đơn</span>
+                                                </button>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </c:when>
 

@@ -977,7 +977,7 @@ public class OrderDAO extends DBContext {
                    + "       so.shop_id, sh.shop_name, sh.logo_url, so.delivery_slot, "
                    + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                    + "       so.status AS sub_order_status, so.cancel_reason, so.cancelled_by, so.cancelled_at, "
-                   + "       so.created_at, so.updated_at, "
+                   + "       COALESCE(so.created_at, o.created_at) AS created_at, so.updated_at, "
                    + "       o.payment_method, o.payment_status, o.platform_discount, "
                    + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city, "
                    + "       drv.full_name AS driver_name, drv.phone AS driver_phone "
@@ -988,7 +988,7 @@ public class OrderDAO extends DBContext {
                    + "LEFT JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
                    + "LEFT JOIN users drv ON d.driver_id = drv.user_id "
                    + "WHERE o.customer_id = ? "
-                   + "ORDER BY so.created_at DESC, so.sub_order_id DESC";
+                   + "ORDER BY COALESCE(so.created_at, o.created_at) DESC, so.sub_order_id DESC";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -999,9 +999,14 @@ public class OrderDAO extends DBContext {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
+                java.util.Set<Long> seenSubOrderIds = new java.util.HashSet<>();
                 while (rs.next()) {
+                    long subOrderId = rs.getLong("sub_order_id");
+                    if (!seenSubOrderIds.add(subOrderId)) {
+                        continue;
+                    }
                     SubOrder so = new SubOrder();
-                    so.setSubOrderId(rs.getLong("sub_order_id"));
+                    so.setSubOrderId(subOrderId);
                     so.setSubOrderCode(rs.getString("sub_order_code"));
                     so.setOrderId(rs.getLong("order_id"));
                     so.setOrderCode(rs.getString("order_code"));

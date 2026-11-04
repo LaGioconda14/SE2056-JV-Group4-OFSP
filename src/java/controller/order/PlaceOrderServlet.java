@@ -87,8 +87,9 @@ public class PlaceOrderServlet extends HttpServlet {
         String couponCode = request.getParameter("couponCode");
         boolean saveAddress = "true".equalsIgnoreCase(request.getParameter("saveAddress"));
 
-        // Thu thập shop coupon codes
+        // Thu thập shop coupon codes và shop notes
         Map<Long, String> shopCouponCodes = new LinkedHashMap<>();
+        Map<Long, String> shopNotes = new LinkedHashMap<>();
         Enumeration<String> paramNames = request.getParameterNames();
         while (paramNames.hasMoreElements()) {
             String pName = paramNames.nextElement();
@@ -98,6 +99,15 @@ public class PlaceOrderServlet extends HttpServlet {
                     String val = request.getParameter(pName);
                     if (val != null && !val.trim().isEmpty()) {
                         shopCouponCodes.put(sId, val.trim().toUpperCase(Locale.ROOT));
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            } else if (pName.startsWith("shopNote_")) {
+                try {
+                    long sId = Long.parseLong(pName.substring("shopNote_".length()));
+                    String val = request.getParameter(pName);
+                    if (val != null && !val.trim().isEmpty()) {
+                        shopNotes.put(sId, val.trim());
                     }
                 } catch (NumberFormatException ignored) {
                 }
@@ -148,10 +158,10 @@ public class PlaceOrderServlet extends HttpServlet {
             if (buyNow) {
                 orderId = orderService.placeBuyNowOrder((long) user.getId(), buyNowVariantId,
                         buyNowQuantity, shippingAddress, deliverySlot, paymentMethod, couponCode,
-                        shopCouponCodes, "new".equals(addressSelection) && saveAddress);
+                        shopCouponCodes, shopNotes, "new".equals(addressSelection) && saveAddress);
             } else {
                 orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
-                        deliverySlot, paymentMethod, couponCode, shopCouponCodes,
+                        deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes,
                         "new".equals(addressSelection) && saveAddress);
             }
 

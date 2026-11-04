@@ -66,12 +66,12 @@
     <!-- Driver Hero Info Card (Core MVP Scope) -->
     <div class="shipper-hero-card">
         <div class="row align-items-center g-3">
-            <div class="col-md-7 d-flex align-items-center gap-3">
-                <div class="driver-avatar-box">
+            <div class="col-md-7 d-flex align-items-start gap-3">
+                <div class="driver-avatar-box mt-1">
                     <img src="${not empty sessionScope.user.avatarUrl ? sessionScope.user.avatarUrl : (not empty driverProfile.avatarUrl ? driverProfile.avatarUrl : 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop')}" alt="Avatar">
                 </div>
                 <div>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <h4 class="fw-bold mb-0 text-dark">${not empty driverProfile.fullName ? driverProfile.fullName : sessionScope.user.fullName}</h4>
                         <c:choose>
                             <c:when test="${not empty driverProfile.shopName}">
@@ -86,13 +86,19 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
-                    <div class="text-muted small mt-1">
-                        <i class="bi bi-telephone me-1"></i> SĐT: <strong class="text-dark">${not empty sessionScope.user.phone ? sessionScope.user.phone : driverProfile.phone}</strong> 
-                        &bull; Phương tiện: <strong class="text-dark">${driverProfile.vehicleType}</strong>
-                        &bull; Biển số: <strong class="text-dark">${driverProfile.licensePlate}</strong> 
-                        <c:if test="${not empty driverProfile.coldBoxType}">
-                            <span class="text-muted">(${driverProfile.coldBoxType})</span>
-                        </c:if>
+                    <div class="text-muted small mt-2 d-flex flex-column gap-1">
+                        <div>
+                            <i class="bi bi-telephone text-primary me-1"></i> SĐT: <strong class="text-dark">${not empty sessionScope.user.phone ? sessionScope.user.phone : driverProfile.phone}</strong>
+                        </div>
+                        <div>
+                            <i class="bi bi-truck text-success me-1"></i> Phương tiện: <strong class="text-dark">${driverProfile.vehicleType}</strong>
+                        </div>
+                        <div>
+                            <i class="bi bi-card-heading text-secondary me-1"></i> Biển số: <strong class="text-dark">${driverProfile.licensePlate}</strong>
+                            <c:if test="${not empty driverProfile.coldBoxType}">
+                                <span class="text-muted ms-1">(${driverProfile.coldBoxType})</span>
+                            </c:if>
+                        </div>
                     </div>
                     <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
                         <span class="badge bg-light text-primary border border-primary-subtle">

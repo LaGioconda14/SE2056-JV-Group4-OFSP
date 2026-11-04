@@ -5,7 +5,7 @@
     <div class="user-avatar-wrap">
         <c:choose>
             <c:when test="${not empty user.avatarUrl}">
-                <c:set var="userSidebarAvatar" value="${user.avatarUrl.startsWith('http://') or user.avatarUrl.startsWith('https://') ? user.avatarUrl : pageContext.request.contextPath.concat('/').concat(user.avatarUrl)}" />
+                <c:set var="userSidebarAvatar" value="${user.avatarUrl.startsWith('http://') or user.avatarUrl.startsWith('https://') ? user.avatarUrl : (user.avatarUrl.startsWith('/') ? pageContext.request.contextPath.concat(user.avatarUrl) : pageContext.request.contextPath.concat('/').concat(user.avatarUrl))}" />
                 <img src="${userSidebarAvatar}" class="avatar-sidebar" alt="Avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${user.fullName}&background=046A38&color=fff';">
             </c:when>
             <c:otherwise>
@@ -95,14 +95,3 @@
         </a>
     </div>
 </div>
-
-<div class="farm-badge-box">
-    <div class="farm-badge-header">
-        <i class="bi bi-patch-check-fill fs-4 text-success"></i>
-        <strong class="text-dark small">Bảo chứng 100% Nông Trại</strong>
-    </div>
-    <p class="farm-guarantee-text">
-        Mỗi sản phẩm trái cây giao đến đều có tem QR truy xuất nguồn gốc từ các nông trại sạch VietGAP/GlobalGAP liên kết.
-    </p>
-</div>
-

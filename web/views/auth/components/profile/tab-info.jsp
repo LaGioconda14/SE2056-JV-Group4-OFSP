@@ -29,35 +29,52 @@
                 </div>
             </div>
 
+            <!-- Khung ảnh đại diện -->
             <div class="avatar-upload-box">
-                <div id="avatarContainer">
+                <div id="avatarContainer" role="button" onclick="triggerAvatarSelect()" title="Nhấp để tải ảnh mới" style="cursor: pointer; flex-shrink: 0;">
                     <c:choose>
                         <c:when test="${not empty user.avatarUrl}">
-                            <c:set var="formUserAvatar" value="${user.avatarUrl.startsWith('http://') or user.avatarUrl.startsWith('https://') ? user.avatarUrl : pageContext.request.contextPath.concat('/').concat(user.avatarUrl)}" />
-                            <img id="avatarImagePreview" src="${formUserAvatar}" class="avatar-form" alt="Avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${user.fullName}&background=046A38&color=fff';">
+                            <c:set var="formUserAvatar" value="${user.avatarUrl.startsWith('http://') or user.avatarUrl.startsWith('https://') ? user.avatarUrl : (user.avatarUrl.startsWith('/') ? pageContext.request.contextPath.concat(user.avatarUrl) : pageContext.request.contextPath.concat('/').concat(user.avatarUrl))}" />
+                            <img id="avatarImagePreview" src="${formUserAvatar}" class="avatar-form shadow-sm" alt="Avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${user.fullName}&background=046A38&color=fff';">
                             <div id="avatarPlaceholderPreview" class="avatar-placeholder avatar-form d-none">
                                 ${not empty user.fullName ? user.fullName.substring(0, 1).toUpperCase() : 'U'}
                             </div>
                         </c:when>
                         <c:otherwise>
-                            <img id="avatarImagePreview" src="" class="avatar-form d-none" alt="Avatar">
+                            <img id="avatarImagePreview" src="" class="avatar-form shadow-sm d-none" alt="Avatar">
                             <div id="avatarPlaceholderPreview" class="avatar-placeholder avatar-form">
                                 ${not empty user.fullName ? user.fullName.substring(0, 1).toUpperCase() : 'U'}
                             </div>
                         </c:otherwise>
                     </c:choose>
                 </div>
-                <div>
-                    <div class="avatar-actions">
-                        <button type="button" class="btn btn-fresh-green btn-sm" id="btnUploadAvatar" onclick="document.getElementById('avatarFileInput').click();" disabled>
-                            <i class="bi bi-upload me-1"></i> Tải ảnh mới
+
+                <div class="flex-grow-1">
+                    <!-- Trạng thái mặc định: Tải ảnh mới & Xóa ảnh -->
+                    <div id="avatarDefaultActions" class="avatar-actions">
+                        <button type="button" class="btn btn-fresh-green btn-sm px-3 shadow-sm" id="btnUploadAvatar" onclick="triggerAvatarSelect()">
+                            <i class="bi bi-camera-fill me-1.5"></i> Tải ảnh mới
                         </button>
-                        <button type="button" class="btn-pill-danger ${empty user.avatarUrl ? 'd-none' : ''}" id="btnDeleteAvatar" onclick="handleStageDeleteAvatar()" disabled>
-                            Xóa ảnh
+                        <button type="button" class="btn btn-outline-danger btn-sm px-3 ${empty user.avatarUrl ? 'd-none' : ''}" id="btnDeleteAvatar" onclick="confirmDeleteAvatar()">
+                            <i class="bi bi-trash3 me-1"></i> Xóa ảnh
                         </button>
                     </div>
-                    <div class="avatar-hint-text">
-                        Ảnh đại diện hiển thị trên đơn hàng và hồ sơ khách hàng. Định dạng JPG, PNG, WEBP tối đa 2MB.
+
+                    <!-- Trạng thái khi vừa chọn ảnh mới: Lưu ảnh & Hủy -->
+                    <div id="avatarPendingActions" class="avatar-actions d-none">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-2 rounded-pill fw-semibold me-1">
+                            <i class="bi bi-check2-circle me-1"></i> Đã chọn ảnh mới
+                        </span>
+                        <button type="button" class="btn btn-fresh-green btn-sm px-3 fw-semibold shadow-sm" id="btnSaveAvatarDirect" onclick="submitDirectAvatarUpload()">
+                            <i class="bi bi-cloud-arrow-up-fill me-1"></i> Lưu ảnh đại diện
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm px-2.5" onclick="cancelAvatarPreview()">
+                            <i class="bi bi-x-lg me-1"></i> Hủy
+                        </button>
+                    </div>
+
+                    <div class="avatar-hint-text mt-1.5">
+                        <i class="bi bi-info-circle me-1 text-muted"></i> Nhấp vào ảnh hoặc nút để chọn ảnh mới. Định dạng JPG, PNG, WEBP tối đa 2MB.
                     </div>
                 </div>
             </div>
@@ -111,13 +128,15 @@
 
                         <input type="radio" class="btn-check" name="gender" id="genderMale" value="MALE" autocomplete="off" ${user.gender == 'MALE' ? 'checked' : ''} disabled>
                         <label class="gender-choice" for="genderMale"><i class="bi bi-gender-male me-1"></i>Nam</label>
-
-                        <input type="radio" class="btn-check" name="gender" id="genderOther" value="OTHER" autocomplete="off" ${user.gender == 'OTHER' ? 'checked' : ''} disabled>
-                        <label class="gender-choice" for="genderOther"><i class="bi bi-gender-ambiguous me-1"></i>Khác</label>
                     </div>
                 </div>
             </div>
         </div>
+    </form>
+
+    <!-- Form ẩn thực hiện lưu / xóa avatar trực tiếp -->
+    <form id="avatarDirectForm" action="${pageContext.request.contextPath}/profile" method="POST" enctype="multipart/form-data" class="d-none">
+        <input type="hidden" name="action" id="avatarDirectAction" value="uploadAvatar">
     </form>
 
     <script>
@@ -147,6 +166,11 @@
             };
         }
 
+        window.triggerAvatarSelect = function() {
+            const fileInput = document.getElementById('avatarFileInput');
+            if (fileInput) fileInput.click();
+        };
+
         window.enableProfileEdit = function() {
             const form = document.getElementById('profileMainForm');
             if (!form) return;
@@ -168,17 +192,6 @@
                 r.disabled = false;
             });
 
-            const btnUpload = document.getElementById('btnUploadAvatar');
-            const btnDelete = document.getElementById('btnDeleteAvatar');
-            if (btnUpload) {
-                btnUpload.removeAttribute('disabled');
-                btnUpload.disabled = false;
-            }
-            if (btnDelete) {
-                btnDelete.removeAttribute('disabled');
-                btnDelete.disabled = false;
-            }
-
             const btnEditTop = document.getElementById('btnEditProfileTop');
             const btnCancelTop = document.getElementById('btnCancelEditTop');
             const btnSaveTop = document.getElementById('btnSaveProfileTop');
@@ -198,6 +211,10 @@
         window.cancelProfileEdit = function() {
             const form = document.getElementById('profileMainForm');
             if (!form) return;
+
+            if (typeof window.cancelAvatarPreview === 'function') {
+                window.cancelAvatarPreview();
+            }
 
             if (initialProfileData) {
                 const setVal = (id, val) => {
@@ -219,21 +236,7 @@
                 const deleteFlag = document.getElementById('deleteAvatarFlag');
                 if (deleteFlag) deleteFlag.value = 'false';
 
-                const previewImg = document.getElementById('avatarImagePreview');
-                const placeholder = document.getElementById('avatarPlaceholderPreview');
                 const deleteBtn = document.getElementById('btnDeleteAvatar');
-
-                if (previewImg && placeholder) {
-                    if (initialProfileData.hasAvatar) {
-                        previewImg.src = initialProfileData.avatarSrc;
-                        previewImg.classList.remove('d-none');
-                        placeholder.classList.add('d-none');
-                    } else {
-                        previewImg.src = '';
-                        previewImg.classList.add('d-none');
-                        placeholder.classList.remove('d-none');
-                    }
-                }
                 if (deleteBtn) {
                     if (initialProfileData.deleteBtnVisible) {
                         deleteBtn.classList.remove('d-none');
@@ -256,17 +259,6 @@
                 r.setAttribute('disabled', 'disabled');
                 r.disabled = true;
             });
-
-            const btnUpload = document.getElementById('btnUploadAvatar');
-            const btnDelete = document.getElementById('btnDeleteAvatar');
-            if (btnUpload) {
-                btnUpload.setAttribute('disabled', 'disabled');
-                btnUpload.disabled = true;
-            }
-            if (btnDelete) {
-                btnDelete.setAttribute('disabled', 'disabled');
-                btnDelete.disabled = true;
-            }
 
             form.classList.remove('profile-edit-mode');
             form.classList.add('profile-view-mode');
@@ -302,7 +294,7 @@
             if (input && input.files && input.files[0]) {
                 const file = input.files[0];
                 const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-                if (!validTypes.includes(file.type)) {
+                if (!validTypes.includes(file.type.toLowerCase())) {
                     alert('Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.');
                     input.value = '';
                     return;
@@ -317,7 +309,8 @@
                 reader.onload = function(e) {
                     const previewImg = document.getElementById('avatarImagePreview');
                     const placeholder = document.getElementById('avatarPlaceholderPreview');
-                    const deleteBtn = document.getElementById('btnDeleteAvatar');
+                    const defaultBox = document.getElementById('avatarDefaultActions');
+                    const pendingBox = document.getElementById('avatarPendingActions');
 
                     if (previewImg) {
                         previewImg.src = e.target.result;
@@ -326,10 +319,11 @@
                     if (placeholder) {
                         placeholder.classList.add('d-none');
                     }
-                    if (deleteBtn) {
-                        deleteBtn.classList.remove('d-none');
-                        deleteBtn.removeAttribute('disabled');
-                        deleteBtn.disabled = false;
+                    if (defaultBox) {
+                        defaultBox.classList.add('d-none');
+                    }
+                    if (pendingBox) {
+                        pendingBox.classList.remove('d-none');
                     }
 
                     const deleteFlag = document.getElementById('deleteAvatarFlag');
@@ -339,20 +333,73 @@
             }
         };
 
-        window.handleStageDeleteAvatar = function() {
-            const deleteFlag = document.getElementById('deleteAvatarFlag');
-            if (deleteFlag) deleteFlag.value = 'true';
-
+        window.cancelAvatarPreview = function() {
             const fileInput = document.getElementById('avatarFileInput');
             if (fileInput) fileInput.value = '';
 
+            const defaultBox = document.getElementById('avatarDefaultActions');
+            const pendingBox = document.getElementById('avatarPendingActions');
+
+            if (pendingBox) pendingBox.classList.add('d-none');
+            if (defaultBox) defaultBox.classList.remove('d-none');
+
             const previewImg = document.getElementById('avatarImagePreview');
             const placeholder = document.getElementById('avatarPlaceholderPreview');
-            const deleteBtn = document.getElementById('btnDeleteAvatar');
 
-            if (previewImg) previewImg.classList.add('d-none');
-            if (placeholder) placeholder.classList.remove('d-none');
-            if (deleteBtn) deleteBtn.classList.add('d-none');
+            if (previewImg && placeholder) {
+                if (initialProfileData && initialProfileData.hasAvatar) {
+                    previewImg.src = initialProfileData.avatarSrc;
+                    previewImg.classList.remove('d-none');
+                    placeholder.classList.add('d-none');
+                } else {
+                    previewImg.src = '';
+                    previewImg.classList.add('d-none');
+                    placeholder.classList.remove('d-none');
+                }
+            }
+        };
+
+        window.submitDirectAvatarUpload = function() {
+            const fileInput = document.getElementById('avatarFileInput');
+            if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                alert('Vui lòng chọn ảnh đại diện trước khi lưu!');
+                return;
+            }
+
+            const saveBtn = document.getElementById('btnSaveAvatarDirect');
+            if (saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Đang lưu...';
+            }
+
+            const directForm = document.getElementById('avatarDirectForm');
+            if (!directForm) return;
+
+            document.getElementById('avatarDirectAction').value = 'uploadAvatar';
+            directForm.appendChild(fileInput);
+            directForm.submit();
+        };
+
+        window.confirmDeleteAvatar = function() {
+            const pendingBox = document.getElementById('avatarPendingActions');
+            if (pendingBox && !pendingBox.classList.contains('d-none')) {
+                window.cancelAvatarPreview();
+                return;
+            }
+
+            if (!confirm('Bạn có chắc chắn muốn xóa ảnh đại diện hiện tại?')) {
+                return;
+            }
+
+            const directForm = document.getElementById('avatarDirectForm');
+            if (!directForm) return;
+
+            document.getElementById('avatarDirectAction').value = 'deleteAvatar';
+            directForm.submit();
+        };
+
+        window.handleStageDeleteAvatar = function() {
+            window.confirmDeleteAvatar();
         };
 
         if (document.readyState === 'loading') {
@@ -395,4 +442,3 @@
     })();
     </script>
 </div>
-

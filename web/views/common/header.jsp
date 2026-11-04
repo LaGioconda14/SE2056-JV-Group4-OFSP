@@ -130,7 +130,8 @@
                         <div class="flex items-center gap-2 py-1.5 px-3 rounded-full bg-[#f4f7f4] hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200">
                             <c:choose>
                                 <c:when test="${not empty currentUser.avatarUrl}">
-                                    <img alt="Profile" class="w-7 h-7 rounded-full object-cover" src="<c:out value='${currentUser.avatarUrl}'/>">
+                                    <c:set var="hdrAvatar" value="${currentUser.avatarUrl.startsWith('http://') or currentUser.avatarUrl.startsWith('https://') ? currentUser.avatarUrl : (currentUser.avatarUrl.startsWith('/') ? pageContext.request.contextPath.concat(currentUser.avatarUrl) : pageContext.request.contextPath.concat('/').concat(currentUser.avatarUrl))}" />
+                                    <img alt="Profile" class="w-7 h-7 rounded-full object-cover" src="${hdrAvatar}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${currentUser.fullName}&background=046A38&color=fff';">
                                 </c:when>
                                 <c:otherwise>
                                     <span class="w-7 h-7 rounded-full bg-[#00652c]/20 text-[#00652c] flex items-center justify-center text-xs font-bold">

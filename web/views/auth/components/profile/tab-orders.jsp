@@ -38,12 +38,20 @@
             <c:when test="${not empty orders}">
                 <div id="ordersContainer">
                     <c:forEach items="${orders}" var="order">
-                        <c:set var="statusUpper" value="${order.status.toUpperCase()}" />
+                        <c:set var="statusUpper" value="${not empty order.status ? order.status.toUpperCase() : ''}" />
+                        <c:set var="mainProductName" value="${order.hasItems() ? order.items[0].productName : (not empty order.note ? order.note : 'Hoa quả tươi')}" />
+                        <c:if test="${order.hasItems() and order.items.size() > 1}">
+                            <c:set var="mainProductName" value="${mainProductName.concat(' (+').concat(order.items.size() - 1).concat(' sản phẩm khác)')}" />
+                        </c:if>
                         <div class="shopee-order-card"
                              data-order-status="${statusUpper}"
                              data-payment-status="${order.paymentStatus != null ? order.paymentStatus.toUpperCase() : ''}"
                              data-payment-method="${order.paymentMethod != null ? order.paymentMethod.toUpperCase() : ''}"
                              data-order-id="${order.id}"
+                             data-sub-order-id="${order.subOrderId}"
+                             data-shop-id="${order.shopId}"
+                             data-product-name="<c:out value='${mainProductName}'/>"
+                             data-timestamp="${order.createdAt != null ? order.createdAt.time : 0}"
                              data-shop-name="${order.shopName}"
                              data-created-at="${order.createdAt}"
                              data-cancel-reason="${order.cancelReason != null ? order.cancelReason : ''}"
@@ -59,14 +67,17 @@
                              data-driver-name="${order.driverName != null ? order.driverName : ''}"
                              data-driver-phone="${order.driverPhone != null ? order.driverPhone : ''}">
                             <div class="shopee-card-header">
-                                <div class="shopee-shop-info">
+                                <div class="shopee-shop-info flex-wrap">
                                     <span class="shopee-shop-name">${order.shopName}</span>
-                                    <button type="button" class="shopee-btn-chat" onclick="openChatShop('${order.shopName}')">
+                                    <button type="button" class="shopee-btn-chat" onclick="openChatFromCard(this)">
                                         <i class="bi bi-chat-dots-fill"></i> Chat
                                     </button>
                                     <a href="${pageContext.request.contextPath}/store?id=${order.shopId}" class="shopee-btn-shop">
                                         <i class="bi bi-shop"></i> Xem Shop
                                     </a>
+
+                                    <span class="text-muted small ms-2 d-none d-sm-inline">•</span>
+                                    <span class="text-muted small ms-1"><i class="bi bi-clock me-1 text-secondary"></i>${not empty order.createdAtFormatted ? order.createdAtFormatted : 'Mới đặt'}</span>
                                 </div>
                                 <div class="shopee-status-right">
                                     <c:choose>
@@ -171,10 +182,7 @@
                                             <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
                                                 Mua Lại
                                             </a>
-                                            <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
-                                                Liên Hệ Người Bán
-                                            </button>
-                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${order.code}', '${order.hasItems() ? order.items[0].orderItemId : ''}')">
+                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${not empty order.code ? order.code : (not empty order.subOrderCode ? order.subOrderCode : order.orderCode)}', '${order.hasItems() ? order.items[0].orderItemId : ''}')">
                                                 Đánh Giá
                                             </button>
                                         </c:when>
@@ -185,9 +193,6 @@
                                             <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
                                                 <i class="bi bi-truck me-1"></i> Tra Cứu Vận Chuyển
                                             </button>
-                                            <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
-                                                Liên Hệ Người Bán
-                                            </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'CANCELLED' or statusUpper == 'CANCELED'}">
                                             <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
@@ -196,24 +201,20 @@
                                             <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
                                                 <i class="bi bi-info-circle me-1"></i> Xem Chi Tiết Hủy
                                             </button>
-                                            <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
-                                                Liên Hệ Người Bán
-                                            </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'FAILED'}">
                                             <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="showOrderTracking('${order.id}')">
                                                 <i class="bi bi-exclamation-triangle me-1"></i> Xem Chi Tiết Sự Cố
                                             </button>
-                                            <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
-                                                Liên Hệ Người Bán
-                                            </button>
                                         </c:when>
                                         <c:otherwise>
+                                            <c:if test="${order.paymentMethod == 'VNPAY' and (order.paymentStatus == 'PENDING' or order.paymentStatus == 'FAILED')}">
+                                                <a href="${pageContext.request.contextPath}/payment/vnpay/create?orderId=${order.orderId}" class="btn-shopee-primary text-decoration-none">
+                                                    <i class="bi bi-credit-card me-1"></i> ${order.paymentStatus == 'FAILED' ? 'Thanh toán lại VNPAY' : 'Thanh toán VNPAY'}
+                                                </a>
+                                            </c:if>
                                             <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="cancelOrder('${order.id}')">
                                                 <i class="bi bi-x-circle me-1"></i> Hủy Đơn Hàng
-                                            </button>
-                                            <button type="button" class="btn-shopee-outline" onclick="openChatShop('${order.shopName}')">
-                                                Liên Hệ Người Bán
                                             </button>
                                         </c:otherwise>
                                     </c:choose>

@@ -29,9 +29,17 @@ public interface IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception;
 
+    long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
+
     long placeBuyNowOrder(long customerId, long variantId, int quantity, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception;
+
+    long placeBuyNowOrder(long customerId, long variantId, int quantity, ShippingAddress address,
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
 
     Order getOrderDetails(long orderId);
 

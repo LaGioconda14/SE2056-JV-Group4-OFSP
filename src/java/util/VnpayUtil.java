@@ -63,7 +63,10 @@ public final class VnpayUtil {
         String forwardedFor = request.getHeader("X-Forwarded-For");
         String ip = forwardedFor != null && !forwardedFor.isBlank()
                 ? forwardedFor.split(",")[0].trim() : request.getRemoteAddr();
-        return ip != null && ip.length() <= 45 ? ip : "127.0.0.1";
+        if (ip == null || ip.isBlank() || "0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
+            return "127.0.0.1";
+        }
+        return ip.length() <= 45 ? ip : "127.0.0.1";
     }
 
     private static String hmacSha512(String key, String data) {
@@ -84,7 +87,7 @@ public final class VnpayUtil {
     private static String urlEncode(String value) {
         // VNPAY's Java reference implementation signs application/x-www-form-urlencoded
         // values, where a space is represented by '+', not "%20".
-        return java.net.URLEncoder.encode(value, StandardCharsets.US_ASCII);
+        return java.net.URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private static String first(String[] values) {

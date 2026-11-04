@@ -55,6 +55,15 @@
                     <c:if test="${order.paymentStatus eq 'PENDING' and order.paymentMethod eq 'CARD'}"><p>Đơn hàng đã được ghi nhận, thanh toán chưa hoàn tất. Không có khoản thanh toán thẻ nào được thực hiện tại trang này.</p></c:if>
                     <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'failed'}"><p>VNPAY chưa ghi nhận thanh toán thành công. Bạn có thể thực hiện lại thanh toán từ đơn hàng của mình.</p></c:if>
                     <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'invalid'}"><p>Không thể xác minh chữ ký phản hồi từ VNPAY. Trạng thái thanh toán không được thay đổi.</p></c:if>
+                    <c:if test="${order.paymentMethod eq 'VNPAY' and (param.payment eq 'failed' or param.payment eq 'invalid')}">
+                        <div class="mt-3 mb-2">
+                            <a href="${pageContext.request.contextPath}/payment/vnpay/create?orderId=${order.orderId}"
+                               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs transition shadow-sm text-decoration-none">
+                                <span class="material-symbols-outlined text-[16px]">refresh</span>
+                                Thanh toán lại qua VNPAY
+                            </a>
+                        </div>
+                    </c:if>
                     <c:remove var="orderSuccess" scope="session"/>
                     <div class="order-number">Mã đơn hàng <strong>#<c:out value="${order.orderId}"/></strong></div>
                 </section>

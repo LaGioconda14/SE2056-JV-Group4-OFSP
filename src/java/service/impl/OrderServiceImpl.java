@@ -296,9 +296,17 @@ public class OrderServiceImpl implements IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes,
             boolean saveAddress) throws Exception {
+        return placeOrder(customerId, cartItemIds, address, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
+    }
+
+    @Override
+    public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
+            boolean saveAddress) throws Exception {
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
         Order order = prepareOrder(customerId, selectedItems, address, deliverySlot,
-                paymentMethod, couponCode, shopCouponCodes);
+                paymentMethod, couponCode, shopCouponCodes, shopNotes);
         return orderDAO.createOrder(order, address, cartItemIds,
                 order.getPaymentMethod(), saveAddress);
     }
@@ -307,15 +315,23 @@ public class OrderServiceImpl implements IOrderService {
     public long placeBuyNowOrder(long customerId, long variantId, int quantity,
             ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception {
+        return placeBuyNowOrder(customerId, variantId, quantity, address, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
+    }
+
+    @Override
+    public long placeBuyNowOrder(long customerId, long variantId, int quantity,
+            ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
+            boolean saveAddress) throws Exception {
         CartItem item = getBuyNowItemForCheckout(variantId, quantity);
         Order order = prepareOrder(customerId, List.of(item), address, deliverySlot,
-                paymentMethod, couponCode, shopCouponCodes);
+                paymentMethod, couponCode, shopCouponCodes, shopNotes);
         return orderDAO.createBuyNowOrder(order, address, order.getPaymentMethod(), saveAddress);
     }
 
     private Order prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes) {
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes) {
         if (address == null || address.getRecipientName() == null
                 || address.getRecipientName().trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập họ tên người nhận!");
@@ -356,8 +372,16 @@ public class OrderServiceImpl implements IOrderService {
         address.setCity(address.getCity().trim());
 
         Order order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
+        String slotLabel = selectedSlot == DeliverySlot.MORNING ? "Giao buổi sáng (08:00 - 12:00)"
+                : selectedSlot == DeliverySlot.AFTERNOON ? "Giao buổi chiều (13:00 - 17:00)"
+                : selectedSlot == DeliverySlot.EVENING ? "Giao buổi tối (18:00 - 21:00)" : selectedSlot.name();
         for (SubOrder sub : order.getSubOrders()) {
-            sub.setDeliverySlot(selectedSlot);
+            String note = shopNotes != null ? shopNotes.get(sub.getShopId()) : null;
+            if (note != null && !note.trim().isEmpty()) {
+                sub.setDeliverySlot(slotLabel + " • Lời nhắn: " + note.trim());
+            } else {
+                sub.setDeliverySlot(slotLabel);
+            }
         }
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setPaymentMethod(selectedPayment);

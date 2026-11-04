@@ -60,6 +60,13 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
         if (subOrderCode == null || subOrderCode.trim().isEmpty() || newStatus == null) {
             return false;
         }
+        // Không cho phép xác nhận / đóng gói / giao hàng nếu đơn thanh toán trực tuyến chưa hoàn tất thanh toán
+        if (newStatus != SubOrderStatus.CANCELLED && newStatus != SubOrderStatus.NEW && newStatus != SubOrderStatus.FAILED) {
+            SubOrder details = fulfillmentDAO.getSubOrderDetails(subOrderCode.trim());
+            if (details != null && details.isWaitingOnlinePayment()) {
+                return false;
+            }
+        }
         return fulfillmentDAO.updateSubOrderStatus(subOrderCode.trim(), newStatus);
     }
 

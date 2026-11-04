@@ -59,6 +59,27 @@
                     </div>
                 </div>
 
+                <!-- Alert Banner for Unpaid Online Order -->
+                <c:if test="${param.error eq 'unpaid_vnpay' or not empty sessionScope.orderDetailError}">
+                    <div class="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs flex items-center justify-between gap-3 shadow-xs">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center text-sm font-bold shrink-0">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div>
+                                <div class="font-extrabold text-rose-950">Không thể tiếp nhận đóng gói:</div>
+                                <div class="text-[11px] text-rose-800 mt-0.5">
+                                    ${not empty sessionScope.orderDetailError ? sessionScope.orderDetailError : "Đơn hàng chọn thanh toán qua VNPAY nhưng người mua chưa hoàn tất thanh toán. Gian hàng chỉ được tiếp nhận xác nhận sau khi khách hàng thanh toán thành công!"}
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" onclick="this.parentElement.remove()" class="text-rose-400 hover:text-rose-700 p-1 cursor-pointer">
+                            <i class="fa-solid fa-xmark text-sm"></i>
+                        </button>
+                    </div>
+                    <c:remove var="orderDetailError" scope="session"/>
+                </c:if>
+
                 <!-- 3. Status Stepper Tracker (Component) -->
                 <jsp:include page="/views/shop/components/order/order-stepper.jsp" />
 

@@ -219,16 +219,8 @@ function cancelProfileEdit() {
         input.disabled = true;
     });
 
-    // Khóa lại các nút avatar
-    const btnUploadAvatar = document.getElementById('btnUploadAvatar');
-    const btnDeleteAvatar = document.getElementById('btnDeleteAvatar');
-    if (btnUploadAvatar) {
-        btnUploadAvatar.setAttribute('disabled', 'disabled');
-        btnUploadAvatar.disabled = true;
-    }
-    if (btnDeleteAvatar) {
-        btnDeleteAvatar.setAttribute('disabled', 'disabled');
-        btnDeleteAvatar.disabled = true;
+    if (typeof cancelAvatarPreview === 'function') {
+        cancelAvatarPreview();
     }
 
     form.classList.remove('profile-edit-mode');
@@ -275,11 +267,16 @@ function submitProfileForm() {
     }
 }
 
+function triggerAvatarSelect() {
+    const fileInput = document.getElementById('avatarFileInput');
+    if (fileInput) fileInput.click();
+}
+
 function handleAvatarFileSelect(input) {
     if (input && input.files && input.files[0]) {
         const file = input.files[0];
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-        if (!validTypes.includes(file.type)) {
+        if (!validTypes.includes(file.type.toLowerCase())) {
             alert('Định dạng file không hỗ trợ! Vui lòng chọn ảnh JPG, PNG hoặc WEBP.');
             input.value = '';
             return;
@@ -294,7 +291,8 @@ function handleAvatarFileSelect(input) {
         reader.onload = function(e) {
             const previewImg = document.getElementById('avatarImagePreview');
             const placeholder = document.getElementById('avatarPlaceholderPreview');
-            const deleteBtn = document.getElementById('btnDeleteAvatar');
+            const defaultBox = document.getElementById('avatarDefaultActions');
+            const pendingBox = document.getElementById('avatarPendingActions');
 
             if (previewImg) {
                 previewImg.src = e.target.result;
@@ -303,10 +301,11 @@ function handleAvatarFileSelect(input) {
             if (placeholder) {
                 placeholder.classList.add('d-none');
             }
-            if (deleteBtn) {
-                deleteBtn.classList.remove('d-none');
-                deleteBtn.removeAttribute('disabled');
-                deleteBtn.disabled = false;
+            if (defaultBox) {
+                defaultBox.classList.add('d-none');
+            }
+            if (pendingBox) {
+                pendingBox.classList.remove('d-none');
             }
 
             const deleteFlag = document.getElementById('deleteAvatarFlag');
@@ -316,31 +315,77 @@ function handleAvatarFileSelect(input) {
     }
 }
 
-function handleStageDeleteAvatar() {
-    const deleteFlag = document.getElementById('deleteAvatarFlag');
-    if (deleteFlag) deleteFlag.value = 'true';
-
+function cancelAvatarPreview() {
     const fileInput = document.getElementById('avatarFileInput');
     if (fileInput) fileInput.value = '';
 
+    const defaultBox = document.getElementById('avatarDefaultActions');
+    const pendingBox = document.getElementById('avatarPendingActions');
+
+    if (pendingBox) pendingBox.classList.add('d-none');
+    if (defaultBox) defaultBox.classList.remove('d-none');
+
     const previewImg = document.getElementById('avatarImagePreview');
     const placeholder = document.getElementById('avatarPlaceholderPreview');
-    const deleteBtn = document.getElementById('btnDeleteAvatar');
 
-    if (previewImg) previewImg.classList.add('d-none');
-    if (placeholder) placeholder.classList.remove('d-none');
-    if (deleteBtn) deleteBtn.classList.add('d-none');
+    if (previewImg && placeholder) {
+        if (typeof initialProfileData !== 'undefined' && initialProfileData && initialProfileData.hasAvatar) {
+            previewImg.src = initialProfileData.avatarSrc;
+            previewImg.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+        } else {
+            previewImg.src = '';
+            previewImg.classList.add('d-none');
+            placeholder.classList.remove('d-none');
+        }
+    }
 }
 
-function submitAvatarForm() {
-    // Tương thích ngược nếu còn lời gọi cũ
+function submitDirectAvatarUpload() {
     const fileInput = document.getElementById('avatarFileInput');
-    if (fileInput) handleAvatarFileSelect(fileInput);
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        alert('Vui lòng chọn ảnh đại diện trước khi lưu!');
+        return;
+    }
+
+    const saveBtn = document.getElementById('btnSaveAvatarDirect');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Đang lưu...';
+    }
+
+    const directForm = document.getElementById('avatarDirectForm');
+    if (!directForm) return;
+
+    document.getElementById('avatarDirectAction').value = 'uploadAvatar';
+    directForm.appendChild(fileInput);
+    directForm.submit();
 }
 
 function confirmDeleteAvatar() {
-    // Tương thích ngược nếu còn lời gọi cũ
-    handleStageDeleteAvatar();
+    const pendingBox = document.getElementById('avatarPendingActions');
+    if (pendingBox && !pendingBox.classList.contains('d-none')) {
+        cancelAvatarPreview();
+        return;
+    }
+
+    if (!confirm('Bạn có chắc chắn muốn xóa ảnh đại diện hiện tại?')) {
+        return;
+    }
+
+    const directForm = document.getElementById('avatarDirectForm');
+    if (!directForm) return;
+
+    document.getElementById('avatarDirectAction').value = 'deleteAvatar';
+    directForm.submit();
+}
+
+function handleStageDeleteAvatar() {
+    confirmDeleteAvatar();
+}
+
+function submitAvatarForm() {
+    submitDirectAvatarUpload();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -393,6 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    sortOrdersNewestFirst();
     updateOrderCounts();
 });
 
@@ -473,9 +519,29 @@ function updateOrderCounts() {
     }
 }
 
+function sortOrdersNewestFirst() {
+    const container = document.getElementById('ordersContainer');
+    if (!container) return;
+    const cards = Array.from(container.querySelectorAll('.shopee-order-card'));
+    if (cards.length <= 1) return;
+    cards.sort((a, b) => {
+        const timeA = parseInt(a.getAttribute('data-timestamp') || '0', 10);
+        const timeB = parseInt(b.getAttribute('data-timestamp') || '0', 10);
+        if (timeB !== timeA) return timeB - timeA;
+        const idA = parseInt(a.getAttribute('data-sub-order-id') || '0', 10);
+        const idB = parseInt(b.getAttribute('data-sub-order-id') || '0', 10);
+        return idB - idA;
+    });
+    cards.forEach(card => container.appendChild(card));
+}
+
 function filterOrders(filter, btn) {
     document.querySelectorAll('.order-filter-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+
+    if (filter === 'all') {
+        sortOrdersNewestFirst();
+    }
 
     const cards = document.querySelectorAll('#ordersContainer .shopee-order-card');
     let visibleCount = 0;
@@ -520,9 +586,156 @@ function filterOrders(filter, btn) {
     }
 }
 
-function openChatShop(shopName) {
-    alert('Đang mở khung chat trực tiếp với gian hàng: ' + (shopName || 'Gốc Vườn Shop') + '. Nhân viên tư vấn đang kết nối...');
+let currentContactShop = {
+    shopName: '',
+    shopId: '',
+    orderId: '',
+    productName: ''
+};
+
+function escapeContactHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>"']/g, function(m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[m];
+    });
 }
+
+function openChatFromCard(btn) {
+    if (!btn) return;
+    const card = btn.closest('.shopee-order-card');
+    if (!card) return;
+    const shopName = card.dataset.shopName || '';
+    const shopId = card.dataset.shopId || '';
+    const orderId = card.dataset.orderId || card.dataset.subOrderId || '';
+    const productName = card.dataset.productName || 'Hoa quả tươi';
+    openChatShop(shopName, shopId, orderId, productName);
+}
+
+function openChatShop(shopName, shopId, orderId, productName) {
+    currentContactShop.shopName = shopName || 'Gian Hàng Nông Trại';
+    currentContactShop.shopId = shopId || '';
+    currentContactShop.orderId = orderId || '';
+    currentContactShop.productName = productName || 'Hoa quả tươi';
+
+    const nameEl = document.getElementById('contactSellerShopName');
+    if (nameEl) nameEl.textContent = currentContactShop.shopName;
+
+    const prodEl = document.getElementById('contactSellerProductName');
+    if (prodEl) prodEl.textContent = currentContactShop.productName;
+
+    const storeLink = document.getElementById('contactSellerStoreLink');
+    if (storeLink) {
+        if (currentContactShop.shopId) {
+            storeLink.href = (window.contextPath || '') + '/store?id=' + currentContactShop.shopId;
+            storeLink.classList.remove('d-none');
+        } else {
+            storeLink.classList.add('d-none');
+        }
+    }
+
+    const chatContainer = document.getElementById('contactSellerChatMessages');
+    if (chatContainer) {
+        chatContainer.innerHTML = `
+            <div class="d-flex align-items-start gap-2.5">
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold shadow-xs flex-shrink-0" style="width: 34px; height: 34px; font-size: 14px;">
+                    <i class="bi bi-shop"></i>
+                </div>
+                <div class="p-3 rounded-4 bg-white border shadow-xs text-dark" style="max-width: 85%; font-size: 13px; line-height: 1.5;">
+                    <div class="fw-bold text-success small mb-1">${escapeContactHtml(currentContactShop.shopName)}</div>
+                    Xin kính chào quý khách! Cảm ơn bạn đã tin tưởng đặt hoa quả tại nông trại của chúng tôi. Bạn cần hỗ trợ vấn đề gì về sản phẩm <strong>${escapeContactHtml(currentContactShop.productName)}</strong> này ạ?
+                </div>
+            </div>
+        `;
+    }
+
+    const input = document.getElementById('contactSellerChatInput');
+    if (input) input.value = '';
+
+    const modalEl = document.getElementById('contactSellerModal');
+    if (modalEl && window.bootstrap && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        setTimeout(() => {
+            if (input) input.focus();
+        }, 400);
+    }
+}
+
+function sendQuickQuestion(questionText) {
+    const input = document.getElementById('contactSellerChatInput');
+    if (input) input.value = questionText;
+    sendContactChatMessage();
+}
+
+function handleContactChatKeyPress(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        sendContactChatMessage();
+    }
+}
+
+function sendContactChatMessage() {
+    const input = document.getElementById('contactSellerChatInput');
+    if (!input) return;
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const chatContainer = document.getElementById('contactSellerChatMessages');
+    if (!chatContainer) return;
+
+    // Render tin nhắn của người mua (bên phải)
+    const userMsgEl = document.createElement('div');
+    userMsgEl.className = 'd-flex justify-content-end';
+    userMsgEl.innerHTML = `
+        <div class="p-3 rounded-4 text-white shadow-xs" style="background: var(--primary-green, #046A38); max-width: 80%; font-size: 13px; line-height: 1.5;">
+            ${escapeContactHtml(msg)}
+        </div>
+    `;
+    chatContainer.appendChild(userMsgEl);
+    input.value = '';
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // Phản hồi thông minh tự động từ nhà vườn nhắc đến tên sản phẩm thay vì mã đơn
+    setTimeout(() => {
+        let reply = 'Dạ nhà vườn chúng tôi đã nhận được thông tin yêu cầu của bạn về sản phẩm ' + currentContactShop.productName + '. Nhân viên tư vấn đang xử lý và sẽ phản hồi hoặc liên hệ hỗ trợ bạn ngay ạ!';
+        const lowerMsg = msg.toLowerCase();
+
+        if (lowerMsg.includes('khi nào') || lowerMsg.includes('bao giờ') || lowerMsg.includes('thời gian') || lowerMsg.includes('giao')) {
+            reply = 'Dạ kiện hàng sản phẩm ' + currentContactShop.productName + ' của bạn đang được nông trại đóng thùng chuỗi lạnh và chuyển giao bưu tá. Bạn có thể theo dõi hành trình chi tiết bằng nút "Tra cứu vận chuyển" trên đơn hàng nhé!';
+        } else if (lowerMsg.includes('lạnh') || lowerMsg.includes('bảo quản') || lowerMsg.includes('đóng gói')) {
+            reply = 'Dạ toàn bộ ' + currentContactShop.productName + ' được thu hái tươi trong ngày, bọc xốp chống dập và đóng thùng giữ nhiệt FreshCold đạt chuẩn 2–8°C để bảo đảm độ giòn tươi ngon nhất khi đến tay bạn ạ!';
+        } else if (lowerMsg.includes('đổi giờ') || lowerMsg.includes('ghi chú') || lowerMsg.includes('hẹn')) {
+            reply = 'Dạ nông trại đã ghi nhận thay đổi của bạn cho kiện hàng ' + currentContactShop.productName + '. Bưu tá khi nhận đơn sẽ liên hệ trước khi phát hàng, bạn cũng có thể trao đổi trực tiếp giờ nhận thuận tiện nhất với tài xế ạ!';
+        } else if (lowerMsg.includes('đổi trả') || lowerMsg.includes('dập') || lowerMsg.includes('hỏng') || lowerMsg.includes('chất lượng')) {
+            reply = 'Dạ nông trại cam kết bảo hành 1 đổi 1 hoặc hoàn tiền nếu sản phẩm ' + currentContactShop.productName + ' có hiện tượng dập nát, hư hỏng. Quý khách vui lòng đồng kiểm cùng shipper hoặc chụp lại ảnh kiện hàng gửi shop để được hỗ trợ tức thì ạ!';
+        }
+
+        const shopMsgEl = document.createElement('div');
+        shopMsgEl.className = 'd-flex align-items-start gap-2.5';
+        shopMsgEl.innerHTML = `
+            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold shadow-xs flex-shrink-0" style="width: 34px; height: 34px; font-size: 14px;">
+                <i class="bi bi-shop"></i>
+            </div>
+            <div class="p-3 rounded-4 bg-white border shadow-xs text-dark" style="max-width: 80%; font-size: 13px; line-height: 1.5;">
+                <div class="fw-bold text-success small mb-1">${escapeContactHtml(currentContactShop.shopName)}</div>
+                ${reply}
+            </div>
+        `;
+        chatContainer.appendChild(shopMsgEl);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }, 700);
+}
+
+window.openChatFromCard = openChatFromCard;
+window.openChatShop = openChatShop;
+window.sendQuickQuestion = sendQuickQuestion;
+window.handleContactChatKeyPress = handleContactChatKeyPress;
+window.sendContactChatMessage = sendContactChatMessage;
 
 function confirmReceivedOrder(orderId) {
     if (confirm('Bạn xác nhận đã nhận được đầy đủ hoa quả của đơn hàng #' + orderId + ' và không có vấn đề gì?')) {
@@ -567,7 +780,16 @@ function showOrderTracking(orderId) {
     setText('trackRecipientName', getAttr('data-recipient-name', 'Người nhận'));
     setText('trackRecipientPhone', getAttr('data-recipient-phone', '0903 *** ***'));
     setText('trackRecipientAddress', recipientAddress);
-    setText('trackNoteText', deliverySlot ? ('Khung giờ giao đã chọn: ' + deliverySlot) : 'Đóng thùng cách nhiệt chuỗi lạnh FreshCold tiêu chuẩn.');
+    function formatDeliverySlotNote(raw) {
+        if (!raw || !raw.trim()) return 'Giao hàng chuỗi lạnh FreshCold tiêu chuẩn.';
+        const s = raw.trim();
+        const upper = s.toUpperCase();
+        if (upper === 'MORNING') return 'Giao buổi sáng (08:00 - 12:00)';
+        if (upper === 'AFTERNOON') return 'Giao buổi chiều (13:00 - 17:00)';
+        if (upper === 'EVENING') return 'Giao buổi tối (18:00 - 21:00)';
+        return s;
+    }
+    setText('trackNoteText', formatDeliverySlotNote(deliverySlot));
 
     const finalAmount = getAttr('data-final-amount', getAttr('data-goods-amount', 0));
     setText('trackFinalTotal', formatVND(finalAmount));

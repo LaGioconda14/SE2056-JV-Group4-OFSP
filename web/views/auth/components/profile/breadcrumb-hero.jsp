@@ -9,15 +9,6 @@
     </ol>
 </nav>
 
-<div class="profile-hero">
-    <div>
-        <h1 class="profile-title">Hồ Sơ Cá Nhân & Cài Đặt Tài Khoản</h1>
-    </div>
-    <button type="button" class="btn-security-quick" onclick="switchTab('nav-security-tab')">
-        <i class="bi bi-shield-check me-1"></i> Lịch sử đăng nhập & Bảo mật
-    </button>
-</div>
-
 <c:if test="${not empty successMessage}">
     <div class="alert alert-success alert-dismissible fade show profile-alert" role="alert">
         <i class="bi bi-check-circle-fill me-2 fs-5"></i>

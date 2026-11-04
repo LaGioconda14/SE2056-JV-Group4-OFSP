@@ -67,6 +67,21 @@ public class ProfileServlet extends HttpServlet {
 
         try {
             List<SubOrder> orders = orderService.getSubOrdersByCustomerId(targetUserId);
+            if (orders != null && !orders.isEmpty()) {
+                orders.sort((a, b) -> {
+                    java.sql.Timestamp t1 = a.getCreatedAt();
+                    java.sql.Timestamp t2 = b.getCreatedAt();
+                    if (t1 != null && t2 != null) {
+                        int cmp = t2.compareTo(t1);
+                        if (cmp != 0) return cmp;
+                    } else if (t1 != null) {
+                        return -1;
+                    } else if (t2 != null) {
+                        return 1;
+                    }
+                    return Long.compare(b.getSubOrderId(), a.getSubOrderId());
+                });
+            }
             request.setAttribute("orders", orders != null ? orders : Collections.emptyList());
             request.setAttribute("ordersCount", orders != null ? orders.size() : 0);
         } catch (Exception ex) {
@@ -179,13 +194,23 @@ public class ProfileServlet extends HttpServlet {
             String savedFilePath = uploadDirRealPath + File.separator + newFileName;
             filePart.write(savedFilePath);
 
+            try {
+                String devDirRealPath = uploadDirRealPath.replace(File.separator + "build" + File.separator + "web", File.separator + "web");
+                File devDir = new File(devDirRealPath);
+                if (devDir.exists()) {
+                    java.nio.file.Files.copy(
+                        Paths.get(savedFilePath),
+                        Paths.get(devDirRealPath, newFileName),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                    );
+                }
+            } catch (Exception ignoreDev) {
+            }
+
             String avatarUrl = "assets/images/avatars/" + newFileName;
             userService.updateAvatar(sessionUser.getId(), avatarUrl);
 
-            User refreshed = userService.getUserById(sessionUser.getId());
-            if (refreshed != null) {
-                session.setAttribute("user", refreshed);
-            }
+            refreshUserSession(session, sessionUser.getId());
             session.setAttribute("successMessage", "Cập nhật ảnh đại diện thành công!");
 
         } catch (Exception e) {
@@ -198,10 +223,7 @@ public class ProfileServlet extends HttpServlet {
             HttpSession session, User sessionUser) throws IOException {
         try {
             userService.updateAvatar(sessionUser.getId(), null);
-            User refreshed = userService.getUserById(sessionUser.getId());
-            if (refreshed != null) {
-                session.setAttribute("user", refreshed);
-            }
+            refreshUserSession(session, sessionUser.getId());
             session.setAttribute("successMessage", "Đã xóa ảnh đại diện thành công!");
         } catch (Exception e) {
             session.setAttribute("errorMessage", e.getMessage());
@@ -339,7 +361,22 @@ public class ProfileServlet extends HttpServlet {
                 uploadDir.mkdirs();
             }
 
-            filePart.write(uploadDirRealPath + File.separator + newFileName);
+            String savedFilePath = uploadDirRealPath + File.separator + newFileName;
+            filePart.write(savedFilePath);
+
+            try {
+                String devDirRealPath = uploadDirRealPath.replace(File.separator + "build" + File.separator + "web", File.separator + "web");
+                File devDir = new File(devDirRealPath);
+                if (devDir.exists()) {
+                    java.nio.file.Files.copy(
+                        Paths.get(savedFilePath),
+                        Paths.get(devDirRealPath, newFileName),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                    );
+                }
+            } catch (Exception ignoreDev) {
+            }
+
             userService.updateAvatar(sessionUser.getId(), "assets/images/avatars/" + newFileName);
         } catch (IllegalArgumentException e) {
             throw e;

@@ -1560,11 +1560,23 @@ body {
     opacity: 0.75;
 }
 
-.profile-view-mode #btnUploadAvatar:disabled,
-.profile-view-mode #btnDeleteAvatar:disabled {
-    opacity: 0.45 !important;
-    cursor: not-allowed !important;
-    pointer-events: none !important;
+/* Always interactive avatar buttons */
+#btnUploadAvatar,
+#btnDeleteAvatar {
+    opacity: 1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+}
+
+#avatarContainer {
+    cursor: pointer;
+    display: inline-block;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+#avatarContainer:hover {
+    transform: scale(1.04);
+    opacity: 0.92;
 }
 
 /* Edit mode transition & highlight */
@@ -1597,3 +1609,17 @@ body {
 
 
 
+
+/* Contact seller chat styles */
+.shadow-xs {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+#contactSellerChatMessages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#contactSellerChatMessages::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}

@@ -29,11 +29,22 @@
                                     </div>
                                 </c:when>
                                 <c:when test="${subOrder.status eq 'NEW'}">
-                                    <div class="w-9 h-9 rounded-full bg-amber-500 text-white ring-4 ring-amber-100 flex items-center justify-center font-bold text-sm shadow-sm animate-pulse">
-                                        <i class="fa-solid fa-clock"></i>
-                                    </div>
-                                    <div class="mt-2.5 font-extrabold text-xs text-amber-700">Chờ Shop Duyệt</div>
-                                    <div class="text-[11px] text-slate-400 mt-0.5">Kiểm định tồn kho</div>
+                                    <c:choose>
+                                        <c:when test="${(subOrder.paymentMethod eq 'VNPAY' or subOrder.paymentMethod eq 'CARD') and subOrder.paymentStatus ne 'PAID'}">
+                                            <div class="w-9 h-9 rounded-full bg-amber-500 text-white ring-4 ring-amber-100 flex items-center justify-center font-bold text-sm shadow-sm animate-pulse">
+                                                <i class="fa-solid fa-credit-card"></i>
+                                            </div>
+                                            <div class="mt-2.5 font-extrabold text-xs text-amber-700">Chờ Thanh Toán</div>
+                                            <div class="text-[11px] text-amber-600 font-semibold mt-0.5">${subOrder.paymentMethod} chưa trả</div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="w-9 h-9 rounded-full bg-amber-500 text-white ring-4 ring-amber-100 flex items-center justify-center font-bold text-sm shadow-sm animate-pulse">
+                                                <i class="fa-solid fa-clock"></i>
+                                            </div>
+                                            <div class="mt-2.5 font-extrabold text-xs text-amber-700">Chờ Shop Duyệt</div>
+                                            <div class="text-[11px] text-slate-400 mt-0.5">Kiểm định tồn kho</div>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </c:when>
                                 <c:otherwise>
                                     <div class="w-9 h-9 rounded-full bg-emerald-600 text-white ring-4 ring-emerald-50 flex items-center justify-center font-bold text-sm shadow-sm">

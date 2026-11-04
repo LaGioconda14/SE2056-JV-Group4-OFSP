@@ -12,10 +12,14 @@ import model.Order;
 import model.User;
 import service.VnpayPaymentService;
 import util.VnpayUtil;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import util.VnpayConfig;
 
 @WebServlet(name = "VnpayCreatePaymentServlet", urlPatterns = {"/payment/vnpay/create"})
 public class VnpayCreatePaymentServlet extends HttpServlet {
 
+    private static final Logger LOGGER = Logger.getLogger(VnpayCreatePaymentServlet.class.getName());
     private final VnpayPaymentService paymentService = new VnpayPaymentService();
 
     @Override
@@ -40,6 +44,15 @@ public class VnpayCreatePaymentServlet extends HttpServlet {
                         + "/order/confirmation?orderId=" + orderId + "&payment=success");
                 return;
             }
+            if (!VnpayConfig.isConfigured()) {
+                if (session != null) {
+                    session.setAttribute("errorMessage",
+                            "Cổng thanh toán VNPAY chưa được cấu hình thông tin kết nối (thiếu vnpay.tmn_code hoặc vnpay.hash_secret trong file vnpay.properties). Đơn hàng #"
+                            + orderId + " đã được ghi nhận ở trạng thái Chờ thanh toán.");
+                }
+                response.sendRedirect(request.getContextPath() + "/profile#orders");
+                return;
+            }
             String returnUrl = request.getScheme() + "://" + request.getServerName()
                     + (("http".equals(request.getScheme()) && request.getServerPort() == 80)
                     || ("https".equals(request.getScheme()) && request.getServerPort() == 443)
@@ -47,7 +60,8 @@ public class VnpayCreatePaymentServlet extends HttpServlet {
                     + request.getContextPath() + "/payment/vnpay/return";
             response.sendRedirect(paymentService.createPaymentUrl(
                     order, VnpayUtil.getClientIp(request), returnUrl));
-        } catch (IllegalArgumentException | IllegalStateException ex) {
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Không thể khởi tạo thanh toán VNPAY cho đơn hàng", ex);
             if (session != null) {
                 session.setAttribute("errorMessage", "Không thể khởi tạo thanh toán VNPAY: " + ex.getMessage());
             }

@@ -130,14 +130,43 @@
                                                     <div class="font-black text-emerald-700">
                                                         <fmt:formatNumber value="${o.shopTotal}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                                     </div>
-                                                    <div class="text-[10px] text-slate-400">${o.paymentMethod}</div>
+                                                    <div class="text-[10px] mt-0.5">
+                                                        <c:choose>
+                                                            <c:when test="${o.paymentMethod eq 'VNPAY'}">
+                                                                <c:choose>
+                                                                    <c:when test="${o.paymentStatus eq 'PAID'}">
+                                                                        <span class="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                                            <i class="fa-solid fa-circle-check text-[9px]"></i> VNPAY (Đã trả)
+                                                                        </span>
+                                                                    </c:when>
+                                                                    <c:otherwise>
+                                                                        <span class="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                                                            <i class="fa-solid fa-clock text-[9px]"></i> VNPAY (Chưa trả)
+                                                                        </span>
+                                                                    </c:otherwise>
+                                                                </c:choose>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <span class="text-slate-400 font-medium">${o.paymentMethod}</span>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </div>
                                                 </td>
                                                 <td class="py-3.5 px-4 text-center">
                                                     <c:choose>
                                                         <c:when test="${o.status eq 'NEW'}">
-                                                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                                                Chờ xác nhận
-                                                            </span>
+                                                            <c:choose>
+                                                                <c:when test="${(o.paymentMethod eq 'VNPAY' or o.paymentMethod eq 'CARD') and o.paymentStatus ne 'PAID'}">
+                                                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-300 animate-pulse inline-flex items-center gap-1">
+                                                                        <i class="fa-solid fa-clock text-[9px]"></i> Chờ khách trả tiền
+                                                                    </span>
+                                                                </c:when>
+                                                                <c:otherwise>
+                                                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                                        Chờ xác nhận
+                                                                    </span>
+                                                                </c:otherwise>
+                                                            </c:choose>
                                                         </c:when>
                                                         <c:when test="${o.status eq 'PACKING'}">
                                                             <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">

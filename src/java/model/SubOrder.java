@@ -158,6 +158,20 @@ public class SubOrder {
         this.paymentStatus = paymentStatus != null ? paymentStatus.name() : PaymentStatus.PENDING.name();
     }
 
+    public boolean isWaitingOnlinePayment() {
+        boolean isOnline = PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)
+                || PaymentMethod.CARD.name().equalsIgnoreCase(paymentMethod);
+        return isOnline && !PaymentStatus.PAID.name().equalsIgnoreCase(paymentStatus);
+    }
+
+    public boolean getWaitingOnlinePayment() {
+        return isWaitingOnlinePayment();
+    }
+
+    public boolean isPaid() {
+        return PaymentStatus.PAID.name().equalsIgnoreCase(paymentStatus);
+    }
+
     public String getTrackingNumber() {
         return trackingNumber != null ? trackingNumber : ("FFX-" + (subOrderCode != null ? subOrderCode.replace("SUB-", "") : subOrderId) + "-VN");
     }
@@ -263,7 +277,7 @@ public class SubOrder {
     }
 
     public String getStatus() {
-        return status;
+        return status != null ? status : SubOrderStatus.NEW.name();
     }
 
     public void setStatus(String status) {
@@ -306,6 +320,9 @@ public class SubOrder {
 
     public String getId() {
         return (subOrderCode != null && !subOrderCode.isEmpty()) ? subOrderCode : ("SUB-" + subOrderId);
+    }
+    public String getCode() {
+        return (subOrderCode != null && !subOrderCode.isEmpty()) ? subOrderCode : orderCode;
     }
 
     public String getShopLogoUrl() {

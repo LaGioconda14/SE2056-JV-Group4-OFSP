@@ -1,6 +1,9 @@
 package controller.auth;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.Cookie;
@@ -93,9 +96,9 @@ public class LoginServlet extends HttpServlet {
         }
         for (Cookie c : cookies) {
             if ("c_email".equals(c.getName())) {
-                request.setAttribute("rememberEmail", c.getValue());
+                request.setAttribute("rememberEmail", decodeCookieValue(c.getValue()));
             } else if ("c_pass".equals(c.getName())) {
-                request.setAttribute("rememberPassword", c.getValue());
+                request.setAttribute("rememberPassword", decodeCookieValue(c.getValue()));
             } else if ("c_rem".equals(c.getName())) {
                 request.setAttribute("rememberChecked", "checked");
             }
@@ -126,10 +129,30 @@ public class LoginServlet extends HttpServlet {
     }
 
     private void addCookie(HttpServletResponse response, String name, String value, int maxAge, String path) {
-        Cookie cookie = new Cookie(name, value);
+        String safeValue = encodeCookieValue(value);
+        Cookie cookie = new Cookie(name, safeValue);
         cookie.setMaxAge(maxAge);
         cookie.setPath(path);
+        cookie.setHttpOnly(true);
         response.addCookie(cookie);
+    }
+
+    private String encodeCookieValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private String decodeCookieValue(String value) {
+        if (value == null || value.isEmpty()) {
+            return "";
+        }
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            return value;
+        }
     }
 
     private void initShopSession(HttpSession session, int userId) {

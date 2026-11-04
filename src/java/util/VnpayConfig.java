@@ -10,6 +10,13 @@ public final class VnpayConfig {
 
     private VnpayConfig() {
     }
+    public static boolean isConfigured() {
+        String tmn = value("VNPAY_TMN_CODE", "vnpay.tmn_code", null);
+        String secret = value("VNPAY_HASH_SECRET", "vnpay.hash_secret", null);
+        return tmn != null && !tmn.isBlank() && !tmn.contains("YOUR_")
+                && secret != null && !secret.isBlank() && !secret.contains("YOUR_");
+    }
+
 
     public static String getTmnCode() {
         return required("VNPAY_TMN_CODE", "vnpay.tmn_code");
@@ -25,7 +32,7 @@ public final class VnpayConfig {
     }
 
     public static String getReturnUrl() {
-        return required("VNPAY_RETURN_URL", "vnpay.return_url");
+        return value("VNPAY_RETURN_URL", "vnpay.return_url", "");
     }
 
     public static String getVersion() {
@@ -56,16 +63,16 @@ public final class VnpayConfig {
             if (input != null) {
                 properties.load(input);
             }
-        } catch (IOException ex) {
-            throw new IllegalStateException("Không thể đọc cấu hình VNPAY", ex);
+        } catch (IOException ignored) {
         }
         return properties;
     }
 
     private static String required(String environmentName, String propertyName) {
         String configured = value(environmentName, propertyName, null);
-        if (configured == null || configured.isBlank()) {
-            throw new IllegalStateException("Thiếu cấu hình " + propertyName);
+        if (configured == null || configured.isBlank() || configured.contains("YOUR_")) {
+            throw new IllegalStateException("Thiếu cấu hình " + propertyName
+                    + ". Vui lòng thiết lập trong file vnpay.properties hoặc biến môi trường.");
         }
         return configured;
     }

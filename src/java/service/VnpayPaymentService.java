@@ -32,7 +32,7 @@ public class VnpayPaymentService {
         parameters.put("vnp_Command", VnpayConfig.getCommand());
         parameters.put("vnp_TmnCode", VnpayConfig.getTmnCode());
         parameters.put("vnp_Amount", order.getFinalAmount().movePointRight(2)
-                .setScale(0, RoundingMode.UNNECESSARY).toPlainString());
+                .setScale(0, RoundingMode.HALF_UP).toPlainString());
         parameters.put("vnp_CurrCode", "VND");
         parameters.put("vnp_TxnRef", Long.toString(order.getOrderId()));
         parameters.put("vnp_OrderInfo", "Thanh toan don hang " + order.getOrderCode());

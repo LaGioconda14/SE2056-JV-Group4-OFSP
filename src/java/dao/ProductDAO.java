@@ -420,6 +420,8 @@ public class ProductDAO extends DBContext {
                     ps.setInt(7, stockQuantity);
                     ps.setBigDecimal(8, importCost != null ? importCost : BigDecimal.ZERO);
                     ps.executeUpdate();
+                } catch (Exception ignored) {
+                    // Bỏ qua nếu bảng product_batches chưa được tạo
                 }
             }
 

@@ -8,7 +8,7 @@
         </jsp:include>
 
     Giá trị "active" hợp lệ:
-        overview | profile | products | add | inventory | orders | shipping | promotions | vouchers | reviews | finance | settings
+        overview | profile | products | add | inventory | orders | promotions | vouchers | reviews | finance | settings
 
     Dữ liệu lấy từ:
         - sessionScope.shopName / sessionScope.shopObj  (set lúc đăng nhập, cập nhật khi sửa Profile Shop)
@@ -93,12 +93,6 @@
                     <span>Đơn hàng con</span>
                 </span>
                 <span class="badge-counter-orange">${sbPendingOrders}</span>
-            </a>
-            <a href="${ctx}/shop/shipping" class="shop-sidebar-link ${param.active == 'shipping' ? 'active' : ''}">
-                <span class="flex items-center gap-3">
-                    <i class="fa-solid fa-truck-fast text-slate-400 text-sm w-4 text-center"></i>
-                    <span>Đóng gói & Vận đơn</span>
-                </span>
             </a>
             <a href="${pageContext.request.contextPath}/shop/shippers" 
                class="shop-sidebar-link ${param.active == 'shippers' || curMenu eq 'shippers' ? 'active' : ''}">

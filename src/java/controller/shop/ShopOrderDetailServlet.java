@@ -215,6 +215,13 @@ public class ShopOrderDetailServlet extends HttpServlet {
             return;
         }
 
+        // Kiểm tra bắt buộc: Đơn thanh toán online (VNPAY/CARD) phải thanh toán thành công mới được xác nhận/đóng gói/giao hàng
+        if (targetOrder.isWaitingOnlinePayment()) {
+            session.setAttribute("orderDetailError", "Đơn hàng thanh toán qua " + targetOrder.getPaymentMethod() + " nhưng người mua chưa hoàn tất thanh toán. Gian hàng chỉ được xác nhận và đóng gói sau khi khách hàng thanh toán thành công!");
+            response.sendRedirect(request.getContextPath() + "/shop/order-detail?code=" + code + "&error=unpaid_vnpay");
+            return;
+        }
+
         // Xác nhận đơn -> bắt đầu đóng gói
         if ("confirm".equals(action)) {
             fulfillmentService.updateSubOrderStatus(code, SubOrderStatus.PACKING);

@@ -181,32 +181,6 @@
                 </div>
             </div>
 
-            <!-- ========================================================
-                 2. QUY CHUẨN CHẤT LƯỢNG & BẢO QUẢN NÔNG SẢN
-                 ======================================================== -->
-            <div class="bg-gradient-to-br from-emerald-900 to-teal-950 text-white rounded-2xl p-6 shadow-xs mb-6 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="space-y-2">
-                    <div class="flex items-center gap-2 text-emerald-400 font-black text-xs uppercase tracking-wider">
-                        <i class="fa-solid fa-leaf"></i>
-                        <span>Quy Chuẩn Chất Lượng Nhà Vườn</span>
-                    </div>
-                    <h3 class="text-base sm:text-lg font-extrabold text-white leading-snug">
-                        Bảo Quản Kho Mát &amp; Giảm Thiểu Tỷ Lệ Hao Hụt Trái Cây
-                    </h3>
-                    <p class="text-xs text-emerald-100 max-w-2xl leading-relaxed">
-                        Duy trì nhiệt độ kho lạnh ổn định 2-8°C, bọc lưới xốp chống va đập dập nát khi xuất kho và phân loại kiểm định định kỳ để bảo đảm độ tươi giòn tốt nhất.
-                    </p>
-                </div>
-                <div class="flex items-center gap-4 shrink-0">
-                    <div class="text-right">
-                        <div class="text-xs text-emerald-300 font-bold">Chỉ số an toàn</div>
-                        <div class="text-xl font-black text-white">&lt; 3%</div>
-                    </div>
-                    <a href="${pageContext.request.contextPath}/shop/inventory" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs transition shadow-sm">
-                        Xem Tồn Kho &rarr;
-                    </a>
-                </div>
-            </div>
 
             <!-- ========================================================
                  4. BỘ LỌC TÌM KIẾM & GIAI ĐOẠN HAO HỤT

@@ -132,15 +132,7 @@
                         <span>Ngày đặt: <span id="trackModalOrderDate">--/--/----</span></span>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Đang kết nối xuất hóa đơn VAT điện tử...')">
-                        <i class="bi bi-file-earmark-text me-1"></i> Hóa đơn VAT
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Tổng đài hỗ trợ sự cố Gốc Vườn: 1900 6868 (Nhánh 1). Đang kết nối chuyên viên CSKH...')">
-                        <i class="bi bi-headset me-1"></i> Hỗ trợ sự cố
-                    </button>
-                    <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <div class="modal-body p-4 bg-slate-50">
@@ -203,9 +195,9 @@
                             <div class="p-3 rounded-4 bg-primary-subtle border border-primary-subtle d-flex align-items-start gap-3">
                                 <div class="stat-icon-circle bg-primary text-white fs-4 mt-1"><i class="bi bi-box-seam"></i></div>
                                 <div>
-                                    <h6 class="fw-bold text-primary mb-1">Nhà vườn đang xử lý đóng gói hoa quả</h6>
+                                    <h6 class="fw-bold text-primary mb-1">Nhà vườn đang đóng gói</h6>
                                     <p class="small text-muted mb-0 lh-base">
-                                        Đơn hàng của bạn đang được gian hàng kiểm tra chất lượng, đóng thùng cách nhiệt chuyên dụng. Thông tin tài xế và lộ trình giao hàng sẽ hiển thị ngay khi bưu tá tiếp nhận đơn.
+                                        Đơn hàng đang được kiểm tra và đóng gói. Thông tin giao hàng sẽ hiển thị khi tài xế nhận đơn.
                                     </p>
                                 </div>
                             </div>
@@ -285,31 +277,6 @@
                             </div>
                         </div>
 
-                                                <div class="tracking-card">
-                            <div class="fw-bold text-dark mb-2 d-flex align-items-center">
-                                <i class="bi bi-patch-check-fill text-success me-2"></i> Cam kết Gốc Vườn
-                            </div>
-                            <p class="small text-muted mb-3">
-                                <strong>Bảo đảm quả tươi 100%</strong> — Quý khách hàng hoàn toàn có quyền đồng kiểm tra ngoại quan (độ tươi, cuống lá, độ chín) cùng tài xế trước khi nhận hàng và thanh toán.
-                            </p>
-                            <div class="d-flex flex-column gap-2 small text-muted mb-3">
-                                <div class="d-flex align-items-start gap-2">
-                                    <i class="bi bi-arrow-repeat text-success mt-1"></i>
-                                    <span>Đổi trả 1-đổi-1 ngay lập tức nếu quả dập nát hoặc úng</span>
-                                </div>
-                                <div class="d-flex align-items-start gap-2">
-                                    <i class="bi bi-snow text-info mt-1"></i>
-                                    <span>Thùng cách nhiệt đảm bảo nhiệt độ chuẩn suốt chặng</span>
-                                </div>
-                                <div class="d-flex align-items-start gap-2">
-                                    <i class="bi bi-patch-check text-success mt-1"></i>
-                                    <span>Nguồn gốc xuất xứ minh bạch từ từng nhà vườn uy tín</span>
-                                </div>
-                            </div>
-                            <a href="${pageContext.request.contextPath}/home" class="small text-success text-decoration-none fw-semibold d-inline-flex align-items-center">
-                                Tìm hiểu chi tiết chính sách hoàn tiền 100% <i class="bi bi-arrow-right ms-1"></i>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -461,6 +428,97 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Liên Hệ Người Bán / Chat Với Shop -->
+<div class="modal fade" id="contactSellerModal" tabindex="-1" aria-labelledby="contactSellerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <!-- Header Modal -->
+            <div class="modal-header bg-fresh-header text-white px-4 py-3 align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 44px; height: 44px; font-size: 20px;">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0 text-white" id="contactSellerShopName">
+                            Nông Trại Gốc Vườn
+                        </h5>
+                        <div class="small text-white-50 d-flex align-items-center gap-2">
+                            <span class="d-inline-block rounded-circle bg-success border border-white" style="width: 8px; height: 8px;"></span>
+                            <span>Đang trực tuyến • Phản hồi tức thì</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-0 bg-light">
+                <!-- Thanh thông tin nhanh gian hàng -->
+                <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5 rounded-pill fw-semibold text-truncate" style="max-width: 320px;" title="Sản phẩm đang trao đổi">
+                            <i class="bi bi-basket2-fill me-1"></i> <span id="contactSellerProductName">Sản phẩm hoa quả tươi</span>
+                        </span>
+                        <span class="text-muted small d-none d-md-inline">Hotline hỗ trợ: <strong class="text-dark">1900 6868</strong></span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="#" id="contactSellerStoreLink" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-semibold">
+                            <i class="bi bi-shop me-1"></i> Xem Gian Hàng
+                        </a>
+                        <a href="tel:19006868" class="btn btn-sm btn-success rounded-pill px-3 fw-semibold shadow-sm">
+                            <i class="bi bi-telephone-fill me-1"></i> Gọi Hotline
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Khung tin nhắn trò chuyện -->
+                <div class="p-4" style="background: #f8fafc;">
+                    <div id="contactSellerChatMessages" class="d-flex flex-column gap-3 mb-3" style="max-height: 320px; min-height: 220px; overflow-y: auto; padding-right: 6px;">
+                        <!-- Tin nhắn khởi tạo sẽ được render tự động qua JS -->
+                    </div>
+
+                    <!-- Gợi ý câu hỏi nhanh -->
+                    <div class="mb-3">
+                        <div class="text-muted small fw-semibold mb-2">
+                            <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Gợi ý câu hỏi nhanh:
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill bg-white shadow-xs" onclick="sendQuickQuestion('Khi nào đơn hàng của tôi được giao đến?')">
+                                🚚 Khi nào đơn được giao?
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill bg-white shadow-xs" onclick="sendQuickQuestion('Hoa quả trong kiện hàng được bảo quản chuỗi lạnh thế nào?')">
+                                ❄️ Quy cách bảo quản lạnh?
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill bg-white shadow-xs" onclick="sendQuickQuestion('Tôi muốn thay đổi ghi chú hoặc khung giờ giao hàng.')">
+                                ⏰ Đổi giờ nhận hàng
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill bg-white shadow-xs" onclick="sendQuickQuestion('Nếu hoa quả bị dập nát khi nhận thì chính sách đổi trả ra sao?')">
+                                🛡️ Chính sách đổi trả hoa quả
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Ô nhập tin nhắn -->
+                    <div class="input-group shadow-sm rounded-4 overflow-hidden bg-white border">
+                        <input type="text" id="contactSellerChatInput" class="form-control border-0 px-3 py-2.5" placeholder="Nhập tin nhắn gửi đến gian hàng..." onkeypress="handleContactChatKeyPress(event)">
+                        <button type="button" class="btn btn-fresh-green px-4 fw-semibold" onclick="sendContactChatMessage()">
+                            <i class="bi bi-send-fill me-1"></i> Gửi
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-white border-top px-4 py-2.5 d-flex justify-content-between align-items-center">
+                <span class="text-muted small">
+                    <i class="bi bi-shield-check text-success me-1"></i> Gốc Vườn cam kết đồng hành & bảo vệ quyền lợi người mua 100%.
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">
+                    Đóng
+                </button>
+            </div>
         </div>
     </div>
 </div>
