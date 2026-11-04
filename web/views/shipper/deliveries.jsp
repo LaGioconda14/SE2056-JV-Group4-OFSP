@@ -355,7 +355,7 @@
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="${pageContext.request.contextPath}/shipper/deliveries">
+            <form method="post" action="${pageContext.request.contextPath}/shipper/deliveries" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="complete">
                 <input type="hidden" name="deliveryId" id="completeDeliveryId">
                 <div class="modal-body p-4">
@@ -375,14 +375,44 @@
 
                     <!-- Proof of Delivery Image Selection / Input -->
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-dark">
-                            <i class="bi bi-image text-success me-1"></i> Ảnh bằng chứng giao hàng (PoD):
+                        <label class="form-label fw-bold small text-dark d-flex align-items-center justify-content-between">
+                            <span><i class="bi bi-camera-fill text-success me-1"></i> Ảnh bằng chứng giao hàng (PoD): <span class="text-danger">*</span></span>
+                            <span class="text-muted" style="font-size: 0.7rem;">Hỗ trợ JPG, PNG (tối đa 10MB)</span>
                         </label>
-                        <input type="text" class="form-control" name="proofImageUrl" id="proofImageUrlInput"
-                               placeholder="Nhập link ảnh bằng chứng giao hàng..."
-                               value="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600">
-                    </div>
+                        
+                        <div class="p-3 border border-2 border-dashed rounded-3 text-center bg-light position-relative" style="border-color: #10b981 !important;">
+                            <input type="file" class="d-none" name="proofImageFile" id="proofImageFile" 
+                                   accept="image/*" capture="environment" onchange="handlePoDFileSelect(this)">
+                            <div id="podUploadPlaceholder" class="py-2" style="cursor: pointer;" onclick="document.getElementById('proofImageFile').click()">
+                                <i class="bi bi-cloud-arrow-up-fill fs-1 text-success d-block mb-1"></i>
+                                <span class="fw-bold text-dark small d-block">Bấm để chụp ảnh hoặc chọn ảnh từ máy</span>
+                                <span class="text-muted" style="font-size: 0.72rem;">Ảnh chụp giỏ hoa quả trao tay khách hoặc chữ ký nhận</span>
+                            </div>
+                            <!-- Khung xem trước ảnh vừa chọn/chụp -->
+                            <div id="podPreviewWrapper" class="d-none position-relative">
+                                <img id="podPreviewImg" src="" alt="PoD Preview" class="img-fluid rounded-3 shadow-sm border" style="max-height: 200px; object-fit: contain;">
+                                <div class="mt-2 d-flex justify-content-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="document.getElementById('proofImageFile').click()">
+                                        <i class="bi bi-arrow-repeat me-1"></i> Chọn ảnh khác
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="clearPoDSelection()">
+                                        <i class="bi bi-trash me-1"></i> Xóa ảnh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- Link URL dự phòng (tùy chọn) -->
+                        <div class="mt-2">
+                            <a href="javascript:void(0)" class="text-muted text-decoration-none" style="font-size: 0.72rem;" onclick="document.getElementById('manualUrlBox').classList.toggle('d-none')">
+                                <i class="bi bi-link-45deg me-1"></i> Hoặc nhập link ảnh trực tiếp (tùy chọn)
+                            </a>
+                            <div id="manualUrlBox" class="d-none mt-1">
+                                <input type="text" class="form-control form-control-sm" name="proofImageUrl" id="proofImageUrlInput"
+                                       placeholder="https://..." value="">
+                            </div>
+                        </div>
+                    </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" id="checkQcInspection" checked required>
                         <label class="form-check-label small text-muted" for="checkQcInspection">

@@ -31,6 +31,13 @@ public class Product {
     private String storageTemp;
     private String certification;
 
+    private long shopId;
+    private String categorySlug;
+    private String filterSlugs;
+    private long primaryVariantId;
+    private int variantCount;
+    private boolean activeForSale;
+
     // Khuyến mãi (Promotion) đang áp dụng - do util.PromotionPricing gắn vào
     private long promotionId;
     private String promotionName;
@@ -40,12 +47,6 @@ public class Product {
     private String promotionSchedule;   // VD: Thứ 7, Chủ nhật · 19:00–21:00 (rỗng nếu không có lịch)
     private java.sql.Timestamp promotionEndDate;
 
-    private long shopId;
-    private String categorySlug;
-    private String filterSlugs;
-    private long primaryVariantId;
-    private int variantCount;
-    private boolean activeForSale;   
     
     // Thuộc tính phục vụ trang Product Detail
     private List<String> images;             // Thư viện ảnh chi tiết
