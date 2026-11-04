@@ -1,6 +1,5 @@
 package controller.shop;
 
-import dao.PromotionDAO;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -10,6 +9,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.Promotion;
+import service.IShopPromotionService;
+import service.impl.ShopPromotionServiceImpl;
 
 /**
  * Quản lý Promotion (khuyến mãi tự động theo sản phẩm) của shop (FE-08).
@@ -24,7 +25,7 @@ import model.Promotion;
 @WebServlet(name = "ShopPromotionServlet", urlPatterns = {"/shop/promotions"})
 public class ShopPromotionServlet extends BaseShopServlet {
 
-    private final PromotionDAO promotionDAO = new PromotionDAO();
+    private final IShopPromotionService promotionService = new ShopPromotionServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -44,7 +45,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         }
         if ("edit".equals(action)) {
             Integer id = parseInt(request.getParameter("id"));
-            Promotion p = id == null ? null : promotionDAO.findByIdAndShop(id, shopId);
+            Promotion p = id == null ? null : promotionService.findByIdAndShop(id, shopId);
             if (p == null) {
                 flash(request, false, "Không tìm thấy chương trình khuyến mãi.");
                 response.sendRedirect(request.getContextPath() + "/shop/promotions");
@@ -66,9 +67,9 @@ public class ShopPromotionServlet extends BaseShopServlet {
         }
         String q = trimToNull(request.getParameter("q"));
 
-        request.setAttribute("promotions", paginate(request, promotionDAO.listByShop(shopId, tab, q), LIST_PAGE_SIZE));
-        request.setAttribute("tabCounts", promotionDAO.countByTab(shopId));
-        request.setAttribute("summary", promotionDAO.getShopSummary(shopId));
+        request.setAttribute("promotions", paginate(request, promotionService.listByShop(shopId, tab, q), LIST_PAGE_SIZE));
+        request.setAttribute("tabCounts", promotionService.countByTab(shopId));
+        request.setAttribute("summary", promotionService.getShopSummary(shopId));
         request.setAttribute("tab", tab);
         request.setAttribute("q", q == null ? "" : q);
         request.getRequestDispatcher("/views/shop/shop-promotions.jsp").forward(request, response);
@@ -91,11 +92,11 @@ public class ShopPromotionServlet extends BaseShopServlet {
                 msg = "Chương trình không hợp lệ.";
             } else if ("toggle".equals(action)) {
                 boolean active = "1".equals(request.getParameter("active"));
-                ok = promotionDAO.setActive(id, shopId, active);
+                ok = promotionService.setActive(id, shopId, active);
                 msg = ok ? (active ? "Đã kích hoạt chương trình khuyến mãi." : "Đã tạm dừng chương trình khuyến mãi.")
                          : "Không thay đổi được trạng thái (chương trình đã kết thúc hoặc không tồn tại).";
             } else {
-                ok = promotionDAO.terminate(id, shopId);
+                ok = promotionService.terminate(id, shopId);
                 msg = ok ? "Đã kết thúc chương trình khuyến mãi."
                          : "Không kết thúc được chương trình (đã kết thúc hoặc không tồn tại).";
             }
@@ -113,7 +114,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         Integer id = parseInt(request.getParameter("promotionId"));
         boolean editing = id != null && id > 0;
         if (editing) {
-            Promotion existing = promotionDAO.findByIdAndShop(id, shopId);
+            Promotion existing = promotionService.findByIdAndShop(id, shopId);
             if (existing == null || existing.getTerminatedAt() != null) {
                 flash(request, false, "Chương trình không tồn tại hoặc đã kết thúc, không thể chỉnh sửa.");
                 response.sendRedirect(request.getContextPath() + "/shop/promotions");
@@ -129,7 +130,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
             return;
         }
 
-        boolean ok = editing ? promotionDAO.update(p) : promotionDAO.create(p) > 0;
+        boolean ok = editing ? promotionService.update(p) : promotionService.create(p) > 0;
         if (!ok) {
             request.setAttribute("formError", "Không lưu được chương trình khuyến mãi, vui lòng thử lại.");
             showForm(request, response, shopId, p, editing ? "edit" : "create");
@@ -145,7 +146,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
             throws ServletException, IOException {
         request.setAttribute("promotion", p);
         request.setAttribute("mode", mode);
-        request.setAttribute("pickerProducts", promotionDAO.getShopProductsForPicker(shopId));
+        request.setAttribute("pickerProducts", promotionService.getShopProductsForPicker(shopId));
         request.getRequestDispatcher("/views/shop/shop-promotion-form.jsp").forward(request, response);
     }
 
@@ -214,7 +215,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
                 return "Suất ưu đãi phải từ 1 đến 1.000.000 (để trống nếu không giới hạn).";
             }
             if (editing) {
-                Promotion old = promotionDAO.findByIdAndShop(p.getPromotionId(), shopId);
+                Promotion old = promotionService.findByIdAndShop(p.getPromotionId(), shopId);
                 if (old != null && p.getQuota() < old.getSoldQuantity()) {
                     return "Suất ưu đãi không được nhỏ hơn số đã dùng (" + old.getSoldQuantity() + ").";
                 }
@@ -234,7 +235,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         }
         if (p.isFixedPrice() || p.isTimeWindow()) {
             List<String> tooLow = new java.util.ArrayList<>();
-            for (java.util.Map<String, Object> row : promotionDAO.getShopProductsForPicker(shopId)) {
+            for (java.util.Map<String, Object> row : promotionService.getShopProductsForPicker(shopId)) {
                 Long pid = (Long) row.get("productId");
                 BigDecimal minPrice = (BigDecimal) row.get("minPrice");
                 if (p.getProductIds().contains(pid) && minPrice != null && p.getDiscountValue().compareTo(minPrice) >= 0) {
@@ -248,7 +249,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
                         + (tooLow.size() > 3 ? " và " + (tooLow.size() - 3) + " sản phẩm khác" : "") + ".";
             }
         }
-        List<String> conflicts = promotionDAO.findConflictingProducts(shopId, p.getProductIds(), p.getStartDate(), p.getEndDate(), editing ? p.getPromotionId() : 0);
+        List<String> conflicts = promotionService.findConflictingProducts(shopId, p.getProductIds(), p.getStartDate(), p.getEndDate(), editing ? p.getPromotionId() : 0);
         if (!conflicts.isEmpty()) {
             String shown = String.join(", ", conflicts.size() > 3 ? conflicts.subList(0, 3) : conflicts);
             return "Sản phẩm đã tham gia chương trình khuyến mãi khác trong cùng thời gian: " + shown

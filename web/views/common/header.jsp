@@ -336,5 +336,65 @@
         }
     });
 
+    // Intercept Add to Cart form submissions for smooth instant notification & badge update
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form && form.action && form.action.includes('/cart/add')) {
+            const submitter = e.submitter;
+            if (submitter && submitter.value === 'buyNow') {
+                return; // allow normal Buy Now submission to /checkout
+            }
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                params.append(key, value);
+            }
+            params.append('ajax', 'true');
 
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                body: params,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (res.status === 401) {
+                    return res.json().then(data => {
+                        window.location.href = data.redirect || (window.contextPath + '/login');
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (submitBtn) submitBtn.disabled = false;
+                if (!data) return;
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
+                }
+                if (data.success) {
+                    if (data.cartSize !== undefined) {
+                        const badges = document.querySelectorAll('#nav-cart-badge, #cartBadge');
+                        badges.forEach(b => b.textContent = data.cartSize > 99 ? '99+' : data.cartSize);
+                        const notiCartCount = document.getElementById('noti-cart-count');
+                        if (notiCartCount) notiCartCount.textContent = data.cartSize;
+                    }
+                    window.showToast(data.message || 'Đã thêm sản phẩm vào giỏ hàng thành công!', 'success');
+                    addHeaderNotification('Thêm giỏ hàng', data.message || 'Đã thêm sản phẩm vào giỏ hàng!');
+                } else {
+                    window.showToast(data.message || 'Không thể thêm vào giỏ hàng!', 'error');
+                }
+            })
+            .catch(err => {
+                if (submitBtn) submitBtn.disabled = false;
+                form.submit(); // fallback
+            });
+        }
+    });
 </script>

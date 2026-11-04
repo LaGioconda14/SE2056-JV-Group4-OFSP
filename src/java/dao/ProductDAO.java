@@ -1291,12 +1291,9 @@ public class ProductDAO extends DBContext {
                     price = new BigDecimal("100000");
                 }
 
-                BigDecimal oldPrice = price.multiply(new BigDecimal("1.25"));
-                int discountPercent = 20;
-
                 double avgRating = rs.getDouble("avg_rating");
                 int revCount = rs.getInt("reviews_count");
-                Product p = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, avgRating, revCount);
+                Product p = new Product(id, name, categoryName, image, price, price, 0, avgRating, revCount);
                 p.setCategoryId(catId);
                 p.setCategorySlug(categorySlug);
                 p.setOrigin(rs.getString("origin"));
@@ -1467,6 +1464,7 @@ public class ProductDAO extends DBContext {
                             p.setTag("-" + p.getDiscountPercent() + "% SALE");
                         }
                     }
+
 
                     double[] rStats = getProductRatingStats(productId);
                     p.setRating(rStats[0]);
@@ -1665,8 +1663,8 @@ public class ProductDAO extends DBContext {
                         price = new BigDecimal("100000");
                     }
                     p.setPrice(price);
-                    p.setOldPrice(price.multiply(new BigDecimal("1.25")));
-                    p.setDiscountPercent(20);
+                    p.setOldPrice(price);
+                    p.setDiscountPercent(0);
                     p.setRating(rs.getDouble("avg_rating"));
                     p.setReviewsCount(rs.getInt("reviews_count"));
 

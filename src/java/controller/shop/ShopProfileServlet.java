@@ -1,8 +1,5 @@
 package controller.shop;
 
-import dao.ShopDAO;
-import dao.ShopRequestDAO;
-import dao.UserDAO;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -15,6 +12,8 @@ import jakarta.servlet.http.Part;
 import model.Shop;
 import model.ShopRequest;
 import model.User;
+import service.IShopProfileService;
+import service.impl.ShopProfileServiceImpl;
 import util.CloudinaryUtil;
 
 /**
@@ -29,9 +28,7 @@ import util.CloudinaryUtil;
 )
 public class ShopProfileServlet extends HttpServlet {
 
-    private final ShopRequestDAO shopRequestDAO = new ShopRequestDAO();
-    private final ShopDAO shopDAO = new ShopDAO();
-    private final UserDAO userDAO = new UserDAO();
+    private final IShopProfileService shopProfileService = new ShopProfileServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -47,15 +44,15 @@ public class ShopProfileServlet extends HttpServlet {
         }
 
         // Thông tin hồ sơ shop (shop_requests)
-        ShopRequest shop = shopRequestDAO.getShopRequestByUserId(user.getId());
+        ShopRequest shop = shopProfileService.getShopRequestByUserId(user.getId());
         request.setAttribute("shop", shop);
 
         // Trạng thái hiện tại của shop (shops.status): ACTIVE / PAUSED / CLOSED / ...
-        Shop realShop = shopDAO.getShopByOwnerId(user.getId());
+        Shop realShop = shopProfileService.getShopByOwnerId(user.getId());
         request.setAttribute("shopStatus", realShop != null ? realShop.getStatus() : "ACTIVE");
 
         // Thông tin chủ shop mới nhất (email, ngày sinh)
-        User owner = userDAO.findById(user.getId());
+        User owner = shopProfileService.getOwnerById(user.getId());
         request.setAttribute("owner", owner != null ? owner : user);
 
         request.getRequestDispatcher("/views/shop/shop-profile.jsp").forward(request, response);
@@ -109,7 +106,7 @@ public class ShopProfileServlet extends HttpServlet {
             return;
         }
 
-        // Đóng gói dữ liệu vào đối tượng ShopRequest để gọi DAO cập nhật
+        // Đóng gói dữ liệu vào đối tượng ShopRequest để service cập nhật
         ShopRequest shop = new ShopRequest();
         shop.setUserId(user.getId());
         shop.setShopName(shopName);
@@ -129,14 +126,14 @@ public class ShopProfileServlet extends HttpServlet {
         shop.setShopLogoUrl(logoUrl);
         shop.setShopBannerUrl(bannerUrl);
 
-        boolean success = shopRequestDAO.updateShopProfile(shop);
+        boolean success = shopProfileService.updateShopProfile(shop);
 
         if (success) {
             // Ngày sinh chủ shop (users.birth_date)
             if (birthDateStr != null && !birthDateStr.trim().isEmpty()) {
                 try {
                     java.sql.Date birthDate = java.sql.Date.valueOf(birthDateStr.trim());
-                    if (userDAO.updateBirthDate(user.getId(), birthDate)) {
+                    if (shopProfileService.updateBirthDate(user.getId(), birthDate)) {
                         user.setBirthDate(birthDate);
                     }
                 } catch (IllegalArgumentException ignored) {
@@ -146,7 +143,7 @@ public class ShopProfileServlet extends HttpServlet {
 
             // Logo/banner vào bảng shops để storefront hiển thị ảnh mới
             if (logoUrl != null || bannerUrl != null) {
-                shopDAO.updateShopMedia(user.getId(), logoUrl, bannerUrl);
+                shopProfileService.updateShopMedia(user.getId(), logoUrl, bannerUrl);
             }
 
             // Trạng thái shop: open / paused / closed
@@ -155,11 +152,11 @@ public class ShopProfileServlet extends HttpServlet {
             else if ("paused".equals(statusParam)) newStatus = "PAUSED";
             else if ("closed".equals(statusParam)) newStatus = "CLOSED";
             if (newStatus != null) {
-                shopDAO.updateShopStatusBySeller(user.getId(), newStatus);
+                shopProfileService.updateShopStatus(user.getId(), newStatus);
             }
 
             // Làm mới thông tin shop trong session để sidebar/header hiển thị đúng ngay
-            Shop refreshed = shopDAO.getShopByOwnerId(user.getId());
+            Shop refreshed = shopProfileService.getShopByOwnerId(user.getId());
             if (refreshed != null) {
                 session.setAttribute("shopObj", refreshed);
                 session.setAttribute("shopLogo", refreshed.getLogoUrl());

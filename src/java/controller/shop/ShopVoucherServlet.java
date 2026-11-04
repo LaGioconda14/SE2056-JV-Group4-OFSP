@@ -1,7 +1,5 @@
 package controller.shop;
 
-import dao.PromotionDAO;
-import dao.VoucherDAO;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -11,6 +9,10 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.Voucher;
+import service.IShopPromotionService;
+import service.IShopVoucherService;
+import service.impl.ShopPromotionServiceImpl;
+import service.impl.ShopVoucherServiceImpl;
 
 /**
  * Quản lý Voucher của shop (FE-08).
@@ -23,8 +25,8 @@ import model.Voucher;
 @WebServlet(name = "ShopVoucherServlet", urlPatterns = {"/shop/vouchers"})
 public class ShopVoucherServlet extends BaseShopServlet {
 
-    private final VoucherDAO voucherDAO = new VoucherDAO();
-    private final PromotionDAO promotionDAO = new PromotionDAO();
+    private final IShopVoucherService voucherService = new ShopVoucherServiceImpl();
+    private final IShopPromotionService promotionService = new ShopPromotionServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -44,7 +46,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
         }
         if ("edit".equals(action) || "usage".equals(action)) {
             Integer id = parseInt(request.getParameter("id"));
-            Voucher v = id == null ? null : voucherDAO.findByIdAndShop(id, shopId);
+            Voucher v = id == null ? null : voucherService.findByIdAndShop(id, shopId);
             if (v == null) {
                 flash(request, false, "Không tìm thấy voucher.");
                 response.sendRedirect(request.getContextPath() + "/shop/vouchers");
@@ -52,8 +54,8 @@ public class ShopVoucherServlet extends BaseShopServlet {
             }
             if ("usage".equals(action)) {
                 request.setAttribute("voucher", v);
-                request.setAttribute("usageStats", voucherDAO.getUsageStats(id));
-                request.setAttribute("usageList", voucherDAO.getUsageHistory(id, 200));
+                request.setAttribute("usageStats", voucherService.getUsageStats(id));
+                request.setAttribute("usageList", voucherService.getUsageHistory(id, 200));
                 request.getRequestDispatcher("/views/shop/shop-voucher-usage.jsp").forward(request, response);
                 return;
             }
@@ -73,9 +75,9 @@ public class ShopVoucherServlet extends BaseShopServlet {
         }
         String q = trimToNull(request.getParameter("q"));
 
-        request.setAttribute("vouchers", paginate(request, voucherDAO.listByShop(shopId, tab, q), LIST_PAGE_SIZE));
-        request.setAttribute("tabCounts", voucherDAO.countByTab(shopId));
-        request.setAttribute("summary", voucherDAO.getShopSummary(shopId));
+        request.setAttribute("vouchers", paginate(request, voucherService.listByShop(shopId, tab, q), LIST_PAGE_SIZE));
+        request.setAttribute("tabCounts", voucherService.countByTab(shopId));
+        request.setAttribute("summary", voucherService.getShopSummary(shopId));
         request.setAttribute("tab", tab);
         request.setAttribute("q", q == null ? "" : q);
         request.getRequestDispatcher("/views/shop/shop-vouchers.jsp").forward(request, response);
@@ -98,11 +100,11 @@ public class ShopVoucherServlet extends BaseShopServlet {
                 msg = "Voucher không hợp lệ.";
             } else if ("toggle".equals(action)) {
                 boolean active = "1".equals(request.getParameter("active"));
-                ok = voucherDAO.setActive(id, shopId, active);
+                ok = voucherService.setActive(id, shopId, active);
                 msg = ok ? (active ? "Đã kích hoạt voucher." : "Đã tạm dừng voucher.")
                          : "Không thay đổi được trạng thái (voucher đã kết thúc hoặc không tồn tại).";
             } else {
-                ok = voucherDAO.terminate(id, shopId);
+                ok = voucherService.terminate(id, shopId);
                 msg = ok ? "Đã kết thúc voucher. Lịch sử sử dụng vẫn được lưu lại."
                          : "Không kết thúc được voucher (đã kết thúc hoặc không tồn tại).";
             }
@@ -122,7 +124,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
 
         Voucher existing = null;
         if (editing) {
-            existing = voucherDAO.findByIdAndShop(id, shopId);
+            existing = voucherService.findByIdAndShop(id, shopId);
             if (existing == null || existing.getTerminatedAt() != null) {
                 flash(request, false, "Voucher không tồn tại hoặc đã kết thúc, không thể chỉnh sửa.");
                 response.sendRedirect(request.getContextPath() + "/shop/vouchers");
@@ -141,9 +143,9 @@ public class ShopVoucherServlet extends BaseShopServlet {
         boolean ok;
         if (editing) {
             v.setCouponId(id);
-            ok = voucherDAO.update(v, shopId);
+            ok = voucherService.update(v, shopId);
         } else {
-            ok = voucherDAO.create(v, shopId) > 0;
+            ok = voucherService.create(v, shopId) > 0;
         }
         if (!ok) {
             request.setAttribute("formError", "Không lưu được voucher, vui lòng thử lại.");
@@ -160,7 +162,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
             throws ServletException, IOException {
         request.setAttribute("voucher", v);
         request.setAttribute("mode", mode);
-        request.setAttribute("pickerProducts", promotionDAO.getShopProductsForPicker(shopId));
+        request.setAttribute("pickerProducts", promotionService.getShopProductsForPicker(shopId));
         request.getRequestDispatcher("/views/shop/shop-voucher-form.jsp").forward(request, response);
     }
 
@@ -199,7 +201,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
             if (!v.getCode().matches("^[A-Z0-9_-]{4,20}$")) {
                 return "Mã voucher gồm 4–20 ký tự: chữ cái không dấu, số, dấu gạch ngang hoặc gạch dưới.";
             }
-            if (voucherDAO.codeExists(v.getCode(), null)) {
+            if (voucherService.codeExists(v.getCode(), null)) {
                 return "Mã voucher \"" + v.getCode() + "\" đã tồn tại trên sàn, vui lòng chọn mã khác.";
             }
         }

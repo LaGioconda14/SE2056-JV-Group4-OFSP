@@ -1,7 +1,6 @@
 package controller.admin;
 
 import com.google.gson.Gson;
-
 import dao.AdminManagementDAO;
 import model.User;
 import java.io.IOException;
@@ -41,7 +40,6 @@ public class AdminShopServlet extends HttpServlet {
             request.setAttribute("flashType", "danger");
             session.removeAttribute("errorMessage");
         }
-
         String status = request.getParameter("status");
         if (status == null || status.trim().isEmpty()) {
             status = request.getParameter("tab");

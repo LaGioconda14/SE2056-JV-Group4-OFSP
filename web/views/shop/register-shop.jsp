@@ -19,7 +19,7 @@
 <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
     <%-- Header + menu giống hệt Trang chủ --%>
-    <jsp:include page="/views/common/site-header.jsp" />
+    <jsp:include page="/views/common/header.jsp" />
 
     <main class="max-w-5xl mx-auto px-4 py-6 sm:py-8" id="rsTop">
 
@@ -204,26 +204,24 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="rs-label">Province/City – Tỉnh / Thành phố <span class="text-red-500">*</span></label>
-                            <select name="province" class="rs-input" required>
-                                <option value="" selected disabled>-- Chọn Tỉnh / Thành phố --</option>
-                                <option value="Hà Nội">Hà Nội</option>
-                                <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                                <option value="Đà Nẵng">Đà Nẵng</option>
-                                <option value="Cần Thơ">Cần Thơ</option>
-                                <option value="Đồng Nai">Đồng Nai</option>
-                                <option value="Lâm Đồng">Lâm Đồng</option>
+                            <select name="province" id="rsProvince" class="rs-input" required>
+                                <option value="" selected disabled>Đang tải Tỉnh / Thành phố...</option>
                             </select>
                             <p class="rs-feedback">Vui lòng chọn Tỉnh / Thành phố.</p>
                         </div>
                         <div>
                             <label class="rs-label">District – Quận / Huyện <span class="text-red-500">*</span></label>
-                            <input type="text" name="district" class="rs-input" placeholder="Nhập Quận / Huyện" required>
-                            <p class="rs-feedback">Vui lòng nhập Quận / Huyện.</p>
+                            <select name="district" id="rsDistrict" class="rs-input" required disabled>
+                                <option value="" selected disabled>Chọn Tỉnh / Thành phố trước</option>
+                            </select>
+                            <p class="rs-feedback">Vui lòng chọn Quận / Huyện.</p>
                         </div>
                         <div>
                             <label class="rs-label">Ward – Phường / Xã <span class="text-red-500">*</span></label>
-                            <input type="text" name="ward" class="rs-input" placeholder="Nhập Phường / Xã" required>
-                            <p class="rs-feedback">Vui lòng nhập Phường / Xã.</p>
+                            <select name="ward" id="rsWard" class="rs-input" required disabled>
+                                <option value="" selected disabled>Chọn Quận / Huyện trước</option>
+                            </select>
+                            <p class="rs-feedback">Vui lòng chọn Phường / Xã.</p>
                         </div>
                         <div class="md:col-span-3">
                             <label class="rs-label">Street Address – Số nhà, tên đường <span class="text-red-500">*</span></label>

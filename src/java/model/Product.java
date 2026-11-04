@@ -30,6 +30,7 @@ public class Product {
     private String description;
     private String storageTemp;
     private String certification;
+
     private long shopId;
     private String categorySlug;
     private String filterSlugs;
@@ -45,6 +46,7 @@ public class Product {
     private String promotionType;
     private String promotionSchedule;   // VD: Thứ 7, Chủ nhật · 19:00–21:00 (rỗng nếu không có lịch)
     private java.sql.Timestamp promotionEndDate;
+
     
     // Thuộc tính phục vụ trang Product Detail
     private List<String> images;             // Thư viện ảnh chi tiết
