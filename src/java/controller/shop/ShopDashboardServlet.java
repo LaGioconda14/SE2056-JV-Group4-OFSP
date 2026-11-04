@@ -1,7 +1,6 @@
 package controller.shop;
 
 import com.google.gson.Gson;
-import dao.ShopDashboardDAO;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -15,6 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.User;
 import service.IShopProductService;
+import service.IShopDashboardService;
+import service.impl.ShopDashboardServiceImpl;
 import service.impl.ShopProductServiceImpl;
 
 /**
@@ -24,7 +25,7 @@ import service.impl.ShopProductServiceImpl;
 @WebServlet(name = "ShopDashboardServlet", urlPatterns = {"/shop/dashboard"})
 public class ShopDashboardServlet extends HttpServlet {
 
-    private final ShopDashboardDAO dashboardDAO = new ShopDashboardDAO();
+    private final IShopDashboardService dashboardService = new ShopDashboardServiceImpl();
     private final IShopProductService shopProductService = new ShopProductServiceImpl();
     private final Gson gson = new Gson();
 
@@ -70,7 +71,7 @@ public class ShopDashboardServlet extends HttpServlet {
             case "90":  from = today.minusDays(89);  rangeLabel = "90 ngày qua";  break;
             case "365": from = today.minusDays(364); rangeLabel = "12 tháng qua"; break;
             case "all": {
-                LocalDate first = dashboardDAO.getFirstOrderDate(shopId);
+                LocalDate first = dashboardService.getFirstOrderDate(shopId);
                 from = (first != null) ? first : today.minusDays(29);
                 hasCompare = false;
                 rangeLabel = "Toàn thời gian";
@@ -81,7 +82,7 @@ public class ShopDashboardServlet extends HttpServlet {
 
         try {
             // 3. KPI kỳ hiện tại + kỳ trước (để tính % tăng giảm)
-            Map<String, Object> cur = dashboardDAO.getSummary(shopId, from, to);
+            Map<String, Object> cur = dashboardService.getSummary(shopId, from, to);
             double revenue = (Double) cur.get("revenue");
             double commission = (Double) cur.get("commission");
             int orders = (Integer) cur.get("orders");
@@ -89,7 +90,7 @@ public class ShopDashboardServlet extends HttpServlet {
 
             if (hasCompare) {
                 long days = java.time.temporal.ChronoUnit.DAYS.between(from, to);
-                Map<String, Object> prev = dashboardDAO.getSummary(shopId, from.minusDays(days), from);
+                Map<String, Object> prev = dashboardService.getSummary(shopId, from.minusDays(days), from);
                 request.setAttribute("revenueChange", pct(revenue, (Double) prev.get("revenue")));
                 request.setAttribute("ordersChange", pct(orders, (Integer) prev.get("orders")));
                 int curItems = (Integer) cur.get("itemsSold");
@@ -113,13 +114,13 @@ public class ShopDashboardServlet extends HttpServlet {
 
             // 4. Biểu đồ doanh thu / đơn hàng
             boolean monthly = "365".equals(range) || "all".equals(range);
-            Map<String, List<?>> trend = dashboardDAO.getTrend(shopId, from, to, monthly);
+            Map<String, List<?>> trend = dashboardService.getTrend(shopId, from, to, monthly);
             request.setAttribute("trendLabelsJson", gson.toJson(trend.get("labels")));
             request.setAttribute("trendRevenueJson", gson.toJson(trend.get("revenue")));
             request.setAttribute("trendOrdersJson", gson.toJson(trend.get("orders")));
 
             // 5. Cơ cấu trạng thái đơn
-            Map<String, Integer> statusMap = dashboardDAO.getStatusBreakdown(shopId, from, to);
+            Map<String, Integer> statusMap = dashboardService.getStatusBreakdown(shopId, from, to);
             Map<String, Integer> statusView = new LinkedHashMap<>();
             String[][] statusDefs = {
                 {"NEW", "Mới"}, {"CONFIRMED", "Đã xác nhận"}, {"PACKING", "Đang đóng gói"},
@@ -140,18 +141,18 @@ public class ShopDashboardServlet extends HttpServlet {
             request.setAttribute("hasStatusData", !sValues.isEmpty());
 
             // 6. Danh sách / thống kê khác
-            request.setAttribute("bestSellers", dashboardDAO.getBestSellers(shopId, from, to, 5));
-            request.setAttribute("recentOrders", dashboardDAO.getRecentOrders(shopId, 6));
-            request.setAttribute("ratingStats", dashboardDAO.getRatingStats(shopId, from, to));
-            request.setAttribute("latestReviews", dashboardDAO.getLatestReviews(shopId, 3));
-            request.setAttribute("lowStockItems", dashboardDAO.getLowStockItems(shopId, 5));
-            request.setAttribute("latestPayout", dashboardDAO.getLatestPayout(shopId));
+            request.setAttribute("bestSellers", dashboardService.getBestSellers(shopId, from, to, 5));
+            request.setAttribute("recentOrders", dashboardService.getRecentOrders(shopId, 6));
+            request.setAttribute("ratingStats", dashboardService.getRatingStats(shopId, from, to));
+            request.setAttribute("latestReviews", dashboardService.getLatestReviews(shopId, 3));
+            request.setAttribute("lowStockItems", dashboardService.getLowStockItems(shopId, 5));
+            request.setAttribute("latestPayout", dashboardService.getLatestPayout(shopId));
 
-            request.setAttribute("pendingOrders", dashboardDAO.countPendingOrders(shopId));
-            request.setAttribute("shippingOrders", dashboardDAO.countShippingOrders(shopId));
-            request.setAttribute("openDisputes", dashboardDAO.countOpenDisputes(shopId));
-            request.setAttribute("lowStockCount", dashboardDAO.countLowStock(shopId));
-            request.setAttribute("unrepliedReviews", dashboardDAO.countUnrepliedReviews(shopId));
+            request.setAttribute("pendingOrders", dashboardService.countPendingOrders(shopId));
+            request.setAttribute("shippingOrders", dashboardService.countShippingOrders(shopId));
+            request.setAttribute("openDisputes", dashboardService.countOpenDisputes(shopId));
+            request.setAttribute("lowStockCount", dashboardService.countLowStock(shopId));
+            request.setAttribute("unrepliedReviews", dashboardService.countUnrepliedReviews(shopId));
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("errorMessage", "Không tải được số liệu tổng quan: " + e.getMessage());

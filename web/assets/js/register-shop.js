@@ -206,6 +206,68 @@
     b.addEventListener('scroll', function () { updateReadProgress(b.closest('.tm-overlay')); });
   });
 
+  /* ---------- Địa chỉ VN: Tỉnh -> Quận/Huyện -> Phường/Xã ---------- */
+  var VN_API = 'https://provinces.open-api.vn/api';
+
+  function fetchJson(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+  function fillSelect(sel, items, placeholder) {
+    sel.innerHTML = '';
+    var ph = new Option(placeholder, '');
+    ph.disabled = true;
+    ph.selected = true;
+    sel.add(ph);
+    items.forEach(function (it) {
+      var o = new Option(it.name, it.name);   // value = tên (servlet lưu tên vào DB)
+      o.dataset.code = it.code;
+      sel.add(o);
+    });
+    sel.disabled = items.length === 0;
+    sel.classList.remove('is-invalid');
+  }
+  function resetSelect(sel, msg) { fillSelect(sel, [], msg); }
+  function codeOf(sel) {
+    var o = sel.options[sel.selectedIndex];
+    return o ? o.dataset.code : '';
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var prov = $('rsProvince'), dist = $('rsDistrict'), ward = $('rsWard');
+    if (!prov || !dist || !ward) return;
+
+    fetchJson(VN_API + '/p/').then(function (list) {
+      list.sort(function (a, b) { return a.name.localeCompare(b.name, 'vi'); });
+      fillSelect(prov, list, '-- Chọn Tỉnh / Thành phố --');
+    }).catch(function () {
+      resetSelect(prov, 'Không tải được danh sách. Tải lại trang để thử lại');
+    });
+
+    prov.addEventListener('change', function () {
+      var code = codeOf(prov);
+      resetSelect(ward, 'Chọn Quận / Huyện trước');
+      resetSelect(dist, 'Đang tải Quận / Huyện...');
+      if (!code) return;
+      fetchJson(VN_API + '/p/' + code + '?depth=2').then(function (d) {
+        var list = (d.districts || []).map(function (x) { return { name: x.name, code: x.code }; });
+        fillSelect(dist, list, '-- Chọn Quận / Huyện --');
+      }).catch(function () { resetSelect(dist, 'Không tải được Quận / Huyện'); });
+    });
+
+    dist.addEventListener('change', function () {
+      var code = codeOf(dist);
+      resetSelect(ward, 'Đang tải Phường / Xã...');
+      if (!code) return;
+      fetchJson(VN_API + '/d/' + code + '?depth=2').then(function (d) {
+        var list = (d.wards || []).map(function (x) { return { name: x.name, code: x.code }; });
+        fillSelect(ward, list, '-- Chọn Phường / Xã --');
+      }).catch(function () { resetSelect(ward, 'Không tải được Phường / Xã'); });
+    });
+  });
+
   /* ---------- Submit ---------- */
   document.addEventListener('DOMContentLoaded', function () {
     var form = $('multiStepForm');

@@ -18,7 +18,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
-    <jsp:include page="/views/common/site-header.jsp" />
+    <jsp:include page="/views/common/header.jsp" />
 
     <main class="max-w-3xl mx-auto px-4 py-6 sm:py-8">
 
