@@ -231,9 +231,6 @@
         cart.addEventListener('input', event => {
             if (event.target.matches('[data-quantity-input]')) updateSummary();
         });
-        cart.querySelectorAll('[data-remove-form]').forEach(form => form.addEventListener('submit', event => {
-            if (!window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) event.preventDefault();
-        }));
         document.querySelectorAll('[data-variant-dialog]').forEach(dialog => {
             dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
             dialog.addEventListener('close', () => {

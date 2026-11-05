@@ -160,6 +160,6 @@
 </main>
 
 <%@ include file="components/cart-footer.jsp" %>
-<script src="<c:url value='/assets/js/cart.js?v=20261104'/>"></script>
+<script src="<c:url value='/assets/js/cart.js?v=20261104b'/>"></script>
 </body>
 </html>
