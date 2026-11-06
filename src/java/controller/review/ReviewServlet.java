@@ -131,6 +131,11 @@ public class ReviewServlet extends HttpServlet {
                 long reviewId = Long.parseLong(request.getParameter("reviewId"));
                 String replyComment = request.getParameter("replyComment");
                 boolean ok = reviewService.replyReview(reviewId, shopId, replyComment);
+                if (ok) {
+                    try {
+                        new NotificationServiceImpl().notifyCustomerReviewReplied(reviewId);
+                    } catch (Exception ignored) {}
+                }
                 sendResponseOrRedirect(request, response, ok, ok ? "Phản hồi đánh giá thành công!" : "Không thể phản hồi đánh giá này!", "/shop/reviews");
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Failed to reply review", ex);

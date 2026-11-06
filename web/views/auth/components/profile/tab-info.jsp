@@ -10,7 +10,6 @@
         <div class="profile-section-card">
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <div>
-                    <span class="section-tag">THÔNG TIN ĐỊNH DANH</span>
                     <h3 class="section-heading mb-0">Thông tin Cá Nhân Cơ Bản</h3>
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -113,7 +112,7 @@
                 </div>
 
                 <div class="col-md-6 field-box">
-                    <label class="field-label" for="birthDate">Ngày sinh (để nhận quà quả tươi sinh nhật)</label>
+                    <label class="field-label" for="birthDate">Ngày sinh</label>
                     <div class="input-icon-group">
                         <i class="bi bi-calendar3 lead-icon"></i>
                         <input type="date" id="birthDate" name="birthDate" value="${user.birthDate}" disabled>

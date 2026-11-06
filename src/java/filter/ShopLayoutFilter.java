@@ -52,6 +52,9 @@ public class ShopLayoutFilter implements Filter {
                     if (shopId != null && shopId > 0) {
                         req.setAttribute("sidebarLowStockCount", shopProductService.getLowStockCountByShopId(shopId));
                         req.setAttribute("sidebarPendingOrdersCount", fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.NEW));
+                        try {
+                            new service.impl.NotificationServiceImpl().checkAndNotifyExpiringBatches(shopId, ((User) u).getId());
+                        } catch (Exception ignored) {}
                     }
                 } catch (Exception e) {
                     // Không để lỗi đếm badge làm hỏng cả trang; sidebar sẽ hiện 0

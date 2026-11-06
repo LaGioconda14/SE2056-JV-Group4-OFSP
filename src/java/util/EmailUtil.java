@@ -108,4 +108,46 @@ public class EmailUtil {
             return false;
         }
     }
+
+    public static void sendNotificationEmailAsync(String recipientEmail, String subject, String htmlContent) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            return;
+        }
+        new Thread(() -> {
+            try {
+                if ("your_email@gmail.com".equals(SENDER_EMAIL) || "your_app_password_here".equals(SENDER_PASSWORD)) {
+                    LOGGER.info("=== [EmailUtil DEV MODE Notification] ===");
+                    LOGGER.info("Simulated email to: " + recipientEmail);
+                    LOGGER.info("Subject: " + subject);
+                    LOGGER.info("=========================================");
+                    return;
+                }
+                Properties props = new Properties();
+                props.put("mail.smtp.host", SMTP_HOST);
+                props.put("mail.smtp.port", SMTP_PORT);
+                props.put("mail.smtp.auth", "true");
+                props.put("mail.smtp.starttls.enable", "true");
+                props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+                props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+                props.put("mail.smtp.connectiontimeout", "10000");
+                props.put("mail.smtp.timeout", "10000");
+
+                Session session = Session.getInstance(props, new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD);
+                    }
+                });
+
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(SENDER_EMAIL, SENDER_NAME, "UTF-8"));
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
+                message.setSubject(subject);
+                message.setContent(htmlContent, "text/html; charset=UTF-8");
+                Transport.send(message);
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, "Failed to send notification email to " + recipientEmail, ex);
+            }
+        }).start();
+    }
 }

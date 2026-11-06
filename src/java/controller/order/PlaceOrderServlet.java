@@ -178,6 +178,15 @@ public class PlaceOrderServlet extends HttpServlet {
             try {
                 INotificationService notiService = new NotificationServiceImpl();
                 notiService.notifyOrderPlaced(user.getId(), orderId, String.valueOf(orderId), 0);
+                notiService.notifyShopsNewOrder(orderId);
+                notiService.checkAndNotifyLowStock(orderId);
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    String subject = "Xác nhận đặt hàng thành công #" + orderId + " - Gốc Vườn";
+                    String html = "<p>Xin chào <strong>" + user.getFullName() + "</strong>,</p>"
+                            + "<p>Đơn hàng <strong>#" + orderId + "</strong> của bạn đã được tiếp nhận thành công trên sàn Gốc Vườn.</p>"
+                            + "<p>Nhà vườn đang chuẩn bị đóng gói hoa quả tươi để chuyển tới bạn sớm nhất!</p>";
+                    util.EmailUtil.sendNotificationEmailAsync(user.getEmail(), subject, html);
+                }
             } catch (Exception ignored) {}
 
             if (PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)) {

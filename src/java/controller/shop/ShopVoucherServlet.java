@@ -146,6 +146,11 @@ public class ShopVoucherServlet extends BaseShopServlet {
             ok = voucherService.update(v, shopId);
         } else {
             ok = voucherService.create(v, shopId) > 0;
+            if (ok) {
+                try {
+                    new service.impl.NotificationServiceImpl().notifyPromotionToCustomers(shopId, v.getTitle(), v.getCode());
+                } catch (Exception ignored) {}
+            }
         }
         if (!ok) {
             request.setAttribute("formError", "Không lưu được voucher, vui lòng thử lại.");

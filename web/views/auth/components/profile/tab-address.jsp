@@ -5,8 +5,7 @@
     <div class="profile-section-card">
         <div class="profile-section-header">
             <div>
-                <span class="section-tag">ĐỊA ĐIỂM GIAO NHẬN</span>
-                <h3 class="section-heading">Địa Chỉ Nhận Trái Cây Chuỗi Lạnh</h3>
+                <h3 class="section-heading">ĐỊA ĐIỂM GIAO NHẬN</h3>
             </div>
             <c:if test="${not empty addresses}">
                 <button class="btn btn-fresh-green btn-sm px-3" data-bs-toggle="modal" data-bs-target="#addAddressModal">

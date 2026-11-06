@@ -27,12 +27,16 @@
                         <p class="text-xs text-gray-500">Cập nhật lộ trình đơn hàng, mã giảm giá và tin tức từ nhà vườn</p>
                     </div>
                 </div>
-                <c:if test="${unreadCount > 0}">
-                    <button type="button" onclick="markAllNotificationsRead()" class="text-xs font-bold text-[#00652c] hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 transition">
-                        <i class="bi bi-check2-all"></i> Đánh dấu đã đọc tất cả
+                <div class="flex items-center gap-2">
+                    <c:if test="${unreadCount > 0}">
+                        <button type="button" onclick="markAllNotificationsRead()" class="text-xs font-bold text-[#00652c] hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 transition">
+                            <i class="bi bi-check2-all"></i> Đánh dấu đã đọc tất cả
+                        </button>
+                    </c:if>
+                    <button type="button" onclick="deleteAllReadNotifications()" class="text-xs font-bold text-gray-500 hover:text-red-600 hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 transition" title="Xóa các thông báo đã đọc">
+                        <i class="bi bi-trash3"></i> Xóa đã đọc
                     </button>
-                </c:if>
-            </div>
+                </div>
 
             <div class="mt-6 divide-y divide-gray-100" id="notification-list">
                 <c:choose>
@@ -45,7 +49,12 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-baseline justify-between gap-2">
                                         <h3 class="text-sm font-bold text-gray-900 truncate ${n.read ? '' : 'text-[#00652c]'}"><c:out value="${n.title}"/></h3>
-                                        <span class="text-[11px] text-gray-400 whitespace-nowrap"><c:out value="${n.timeAgo}"/></span>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="text-[11px] text-gray-400 whitespace-nowrap"><c:out value="${n.timeAgo}"/></span>
+                                            <button type="button" onclick="deleteNotification(${n.notificationId})" class="text-gray-300 hover:text-red-600 p-1 rounded-lg transition" title="Xóa thông báo này">
+                                                <i class="bi bi-x-lg text-xs"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <p class="text-xs text-gray-600 mt-1 leading-relaxed"><c:out value="${n.message}"/></p>
                                     <c:if test="${not n.read}">
@@ -53,7 +62,6 @@
                                             Đánh dấu đã đọc
                                         </button>
                                     </c:if>
-                                </div>
                             </div>
                         </c:forEach>
                     </c:when>
@@ -92,6 +100,37 @@
                         row.classList.add('opacity-70');
                         row.classList.remove('bg-emerald-50/20');
                     }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteNotification(id) {
+            if (!confirm('Bạn có chắc muốn xóa thông báo này?')) return;
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/notifications/delete?notificationId=' + id, { method: 'POST' });
+                if (res.ok) {
+                    const row = document.getElementById('notif-row-' + id);
+                    if (row) {
+                        row.remove();
+                    }
+                    const list = document.getElementById('notification-list');
+                    if (list && list.children.length === 0) {
+                        location.reload();
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteAllReadNotifications() {
+            if (!confirm('Xóa tất cả các thông báo đã đọc?')) return;
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/api/notifications/delete-all-read', { method: 'POST' });
+                if (res.ok) {
+                    location.reload();
                 }
             } catch (e) {
                 console.error(e);

@@ -1257,6 +1257,14 @@ public class OrderDAO extends DBContext {
             }
 
             conn.commit();
+            try {
+                NotificationDAO notiDAO = new NotificationDAO();
+                if (matchedSubOrderId != -1) {
+                    notiDAO.notifyShopSubOrderCancelled(matchedSubOrderId, cancelReason);
+                } else if (matchedOrderId != -1) {
+                    notiDAO.notifyShopsOrderCancelled(matchedOrderId, cancelReason);
+                }
+            } catch (Exception ignored) {}
             return true;
         } catch (Exception ex) {
             try {

@@ -1,6 +1,7 @@
 package service.impl;
 
 import dao.NotificationDAO;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.List;
 import model.Notification;
@@ -39,17 +40,28 @@ public class NotificationServiceImpl implements INotificationService {
     }
 
     @Override
+    public boolean markAllRead(long userId) {
+        return notificationDAO.markAllAsRead(userId);
+    }
+
+    @Override
+    public boolean delete(long notificationId, long userId) {
+        return notificationDAO.deleteNotification(notificationId, userId);
+    }
+
+    @Override
+    public boolean deleteAllRead(long userId) {
+        return notificationDAO.deleteAllRead(userId);
+    }
+
+    @Override
     public void notifyOrderDeliveredBySubOrder(long subOrderId, String subOrderCode) {
         notificationDAO.notifyOrderDeliveredBySubOrder(subOrderId, subOrderCode);
     }
+
     @Override
     public void notifyShopReviewCreated(long reviewId) {
         notificationDAO.notifyShopReviewCreated(reviewId);
-    }
-
-
-    public boolean markAllRead(long userId) {
-        return notificationDAO.markAllAsRead(userId);
     }
 
     @Override
@@ -80,5 +92,76 @@ public class NotificationServiceImpl implements INotificationService {
         String title = "Đánh giá mới (" + rating + "★) từ " + (customerName != null ? customerName : "khách hàng");
         String message = "Sản phẩm '" + productName + "' vừa nhận được đánh giá " + rating + " sao. Nhấn để xem và phản hồi khách hàng.";
         send(shopOwnerId, title, message, "ORDER", "REVIEW", null);
+    }
+
+    @Override
+    public void notifyPaymentStatus(long customerId, long orderId, String orderCode, boolean success, BigDecimal amount, String paymentMethod) {
+        DecimalFormat df = new DecimalFormat("#,###");
+        String formatted = (amount != null ? df.format(amount) : "0") + "₫";
+        String codeStr = (orderCode != null && !orderCode.isBlank()) ? orderCode : String.valueOf(orderId);
+        String methodStr = (paymentMethod != null && !paymentMethod.isBlank()) ? paymentMethod : "cổng thanh toán";
+        if (success) {
+            String title = "Thanh toán thành công đơn hàng #" + codeStr;
+            String message = "Đơn hàng #" + codeStr + " trị giá " + formatted + " đã được thanh toán thành công qua " + methodStr + ". Gốc Vườn đang chuẩn bị chuyển hàng cho bạn.";
+            send(customerId, title, message, "ORDER", "ORDER", orderId);
+        } else {
+            String title = "Thanh toán chưa hoàn tất #" + codeStr;
+            String message = "Giao dịch thanh toán qua " + methodStr + " cho đơn hàng #" + codeStr + " chưa thành công. Vui lòng thử lại hoặc chọn hình thức trả tiền mặt (COD).";
+            send(customerId, title, message, "ORDER", "ORDER", orderId);
+        }
+    }
+
+    @Override
+    public void notifyCustomerReviewReplied(long reviewId) {
+        notificationDAO.notifyCustomerReviewReplied(reviewId);
+    }
+
+    @Override
+    public void notifyShopOrderCancelled(long shopOwnerId, String subOrderCode, String reason) {
+        String title = "Đơn hàng #" + subOrderCode + " đã bị hủy";
+        String reasonText = (reason != null && !reason.isBlank()) ? reason : "Khách hàng hủy đơn";
+        String message = "Đơn hàng #" + subOrderCode + " đã được khách hủy. Lý do: " + reasonText + ". Số lượng sản phẩm đã được tự động hoàn lại kho.";
+        send(shopOwnerId, title, message, "ORDER", "SUB_ORDER", null);
+    }
+
+    @Override
+    public void notifyShopLowStock(long shopOwnerId, String productName, String variantName, int remainingStock) {
+        String label = (variantName != null && !variantName.isBlank()) ? (productName + " - " + variantName) : productName;
+        String title = "Cảnh báo tồn kho thấp: " + label;
+        String message = "Sản phẩm '" + label + "' chỉ còn lại " + remainingStock + " sản phẩm trong kho bán. Vui lòng bổ sung thêm hàng sớm để tránh bị gián đoạn đơn!";
+        send(shopOwnerId, title, message, "SYSTEM", "PRODUCT", null);
+    }
+
+    @Override
+    public void notifyPromotionToCustomers(long shopId, String promotionTitle, String code) {
+        // Notify shop owner confirmation and record promotional event
+        String title = "Ưu đãi mới được kích hoạt: " + code;
+        String message = "Chương trình ưu đãi '" + promotionTitle + "' (Mã: " + code + ") đã bắt đầu có hiệu lực và hiển thị cho khách hàng.";
+        send(shopId, title, message, "PROMOTION", "COUPON", null);
+    }
+
+    @Override
+    public void checkAndNotifyExpiringBatches(long shopId, long ownerId) {
+        notificationDAO.checkAndNotifyExpiringBatches(shopId, ownerId);
+    }
+
+    @Override
+    public void notifyShopsNewOrder(long orderId) {
+        notificationDAO.notifyShopsNewOrder(orderId);
+    }
+
+    @Override
+    public void notifyShopsOrderCancelled(long orderId, String cancelReason) {
+        notificationDAO.notifyShopsOrderCancelled(orderId, cancelReason);
+    }
+
+    @Override
+    public void notifyShopSubOrderCancelled(long subOrderId, String cancelReason) {
+        notificationDAO.notifyShopSubOrderCancelled(subOrderId, cancelReason);
+    }
+
+    @Override
+    public void checkAndNotifyLowStock(long orderId) {
+        notificationDAO.checkAndNotifyLowStock(orderId);
     }
 }

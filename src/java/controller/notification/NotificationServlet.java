@@ -21,7 +21,9 @@ import service.impl.NotificationServiceImpl;
     "/api/notifications/recent",
     "/api/notifications/unread-count",
     "/api/notifications/mark-read",
-    "/api/notifications/mark-all-read"
+    "/api/notifications/mark-all-read",
+    "/api/notifications/delete",
+    "/api/notifications/delete-all-read"
 })
 public class NotificationServlet extends HttpServlet {
 
@@ -108,6 +110,24 @@ public class NotificationServlet extends HttpServlet {
         if ("/api/notifications/mark-all-read".equals(path)) {
             boolean ok = notificationService.markAllRead(user.getId());
             response.getWriter().write("{\"success\":" + ok + "}");
+        }
+
+        if ("/api/notifications/delete".equals(path)) {
+            try {
+                long id = Long.parseLong(request.getParameter("notificationId"));
+                boolean ok = notificationService.delete(id, user.getId());
+                response.getWriter().write("{\"success\":" + ok + "}");
+            } catch (Exception ex) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("{\"success\":false,\"error\":\"" + ex.getMessage() + "\"}");
+            }
+            return;
+        }
+
+        if ("/api/notifications/delete-all-read".equals(path)) {
+            boolean ok = notificationService.deleteAllRead(user.getId());
+            response.getWriter().write("{\"success\":" + ok + "}");
+            return;
         }
     }
 }

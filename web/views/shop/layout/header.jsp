@@ -50,12 +50,10 @@
         </button>
 
         <!-- Notification icon with badge -->
-        <button class="header-icon-action" type="button" title="Thông báo">
+        <a href="${pageContext.request.contextPath}/notifications" class="header-icon-action relative flex items-center justify-center text-decoration-none" title="Trung tâm thông báo">
             <i class="fa-regular fa-bell text-sm"></i>
-            <c:if test="${not empty notificationCount && notificationCount > 0}">
-                <span class="header-icon-badge">${notificationCount}</span>
-            </c:if>
-        </button>
+            <span id="shop-header-noti-badge" class="hidden header-icon-badge">0</span>
+        </a>
 
         <!-- User profile -->
         <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
@@ -78,3 +76,18 @@
         </div>
     </div>
 </header>
+
+<script>
+    (async function loadShopNotiBadge() {
+        try {
+            const res = await fetch('${pageContext.request.contextPath}/api/notifications/unread-count');
+            if (!res.ok) return;
+            const data = await res.json();
+            const badge = document.getElementById('shop-header-noti-badge');
+            if (badge && data && data.count > 0) {
+                badge.textContent = data.count > 99 ? '99+' : data.count;
+                badge.classList.remove('hidden');
+            }
+        } catch (e) {}
+    })();
+</script>
