@@ -77,7 +77,7 @@
         </div>
     </main>
 
-    <jsp:include page="/views/common/footer.jsp"/>
+    <jsp:include page="/views/common/site-footer.jsp"/>
 
     <script>
         async function markAllNotificationsRead() {

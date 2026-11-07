@@ -401,20 +401,27 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    const hash = window.location.hash;
-    if (hash === '#security') {
-        activateTab('#nav-security', 'nav-security-tab');
-    } else if (hash === '#orders') {
-        activateTab('#nav-orders', 'nav-orders-tab');
-    } else if (hash === '#vouchers') {
-        activateTab('#nav-vouchers', 'nav-vouchers-tab');
-    } else if (hash === '#notifications') {
-        activateTab('#nav-notifications', 'nav-notifications-tab');
-    } else if (hash === '#address') {
-        activateTab('#nav-address', 'nav-address-tab');
-    } else {
-        activateTab('#nav-profile', 'nav-profile-tab');
+    function syncTabFromUrl() {
+        const hash = window.location.hash;
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+
+        if (hash === '#security' || hash === '#nav-security' || tabParam === 'security') {
+            activateTab('#nav-security', 'nav-security-tab');
+        } else if (hash === '#orders' || hash === '#nav-orders' || tabParam === 'orders') {
+            activateTab('#nav-orders', 'nav-orders-tab');
+        } else if (hash === '#vouchers' || hash === '#nav-vouchers' || tabParam === 'vouchers') {
+            activateTab('#nav-vouchers', 'nav-vouchers-tab');
+        } else if (hash === '#notifications' || hash === '#nav-notifications' || tabParam === 'notifications') {
+            activateTab('#nav-notifications', 'nav-notifications-tab');
+        } else if (hash === '#address' || hash === '#nav-address' || tabParam === 'address') {
+            activateTab('#nav-address', 'nav-address-tab');
+        } else {
+            activateTab('#nav-profile', 'nav-profile-tab');
+        }
     }
+    syncTabFromUrl();
+    window.addEventListener('hashchange', syncTabFromUrl);
 
     document.querySelectorAll('#profileSidebarTab button[data-bs-target]').forEach(btn => {
         btn.addEventListener('click', function(e) {
