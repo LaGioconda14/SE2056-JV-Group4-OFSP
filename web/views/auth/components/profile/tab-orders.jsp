@@ -123,9 +123,27 @@
                                     <c:when test="${order.hasItems()}">
                                         <c:forEach items="${order.items}" var="item">
                                             <div class="shopee-item-row">
-                                                <img src="${item.imageUrl}" class="shopee-item-thumb" alt="${item.productName}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
+                                                <c:choose>
+                                                    <c:when test="${not empty item.productId and item.productId > 0}">
+                                                        <a href="${pageContext.request.contextPath}/detail?id=${item.productId}<c:if test='${not empty item.variantId and item.variantId > 0}'>&variantId=${item.variantId}</c:if>" onclick="event.stopPropagation();" title="Xem chi tiết sản phẩm">
+                                                            <img src="${item.imageUrl}" class="shopee-item-thumb" alt="${item.productName}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
+                                                        </a>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <img src="${item.imageUrl}" class="shopee-item-thumb" alt="${item.productName}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
+                                                    </c:otherwise>
+                                                </c:choose>
                                                 <div class="shopee-item-details">
-                                                    <div class="shopee-item-title">${item.productName}</div>
+                                                    <c:choose>
+                                                        <c:when test="${not empty item.productId and item.productId > 0}">
+                                                            <a href="${pageContext.request.contextPath}/detail?id=${item.productId}<c:if test='${not empty item.variantId and item.variantId > 0}'>&variantId=${item.variantId}</c:if>" onclick="event.stopPropagation();" class="shopee-item-title text-decoration-none" style="color: inherit;" title="Xem chi tiết sản phẩm">
+                                                                ${item.productName}
+                                                            </a>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <div class="shopee-item-title">${item.productName}</div>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                     <div class="shopee-item-variant">Phân loại hàng: ${not empty item.variantName ? item.variantName : 'Tiêu chuẩn'}</div>
                                                     <div class="shopee-item-qty">x${item.quantity}</div>
                                                 </div>
@@ -179,9 +197,20 @@
                                 <div class="shopee-actions">
                                     <c:choose>
                                         <c:when test="${statusUpper == 'COMPLETED' or statusUpper == 'DELIVERED'}">
-                                            <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
-                                                Mua Lại
-                                            </a>
+                                            <c:set var="targetPId" value="${order.hasItems() and not empty order.items[0].productId ? order.items[0].productId : (not empty order.firstProductId ? order.firstProductId : null)}" />
+                                            <c:set var="targetVId" value="${order.hasItems() and not empty order.items[0].variantId ? order.items[0].variantId : null}" />
+                                            <c:choose>
+                                                <c:when test="${not empty targetPId and targetPId > 0}">
+                                                    <a href="${pageContext.request.contextPath}/detail?id=${targetPId}<c:if test='${not empty targetVId and targetVId > 0}'>&variantId=${targetVId}</c:if>" class="btn-shopee-primary text-decoration-none">
+                                                        Mua Lại
+                                                    </a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${pageContext.request.contextPath}/products" class="btn-shopee-primary text-decoration-none">
+                                                        Mua Lại
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
                                             <button type="button" class="btn-shopee-review" onclick="openReviewModal('${not empty order.code ? order.code : (not empty order.subOrderCode ? order.subOrderCode : order.orderCode)}', '${order.hasItems() ? order.items[0].orderItemId : ''}')">
                                                 Đánh Giá
                                             </button>
@@ -195,9 +224,20 @@
                                             </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'CANCELLED' or statusUpper == 'CANCELED'}">
-                                            <a href="${pageContext.request.contextPath}/home" class="btn-shopee-primary">
-                                                Mua Lại
-                                            </a>
+                                            <c:set var="targetPId" value="${order.hasItems() and not empty order.items[0].productId ? order.items[0].productId : (not empty order.firstProductId ? order.firstProductId : null)}" />
+                                            <c:set var="targetVId" value="${order.hasItems() and not empty order.items[0].variantId ? order.items[0].variantId : null}" />
+                                            <c:choose>
+                                                <c:when test="${not empty targetPId and targetPId > 0}">
+                                                    <a href="${pageContext.request.contextPath}/detail?id=${targetPId}<c:if test='${not empty targetVId and targetVId > 0}'>&variantId=${targetVId}</c:if>" class="btn-shopee-primary text-decoration-none">
+                                                        Mua Lại
+                                                    </a>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a href="${pageContext.request.contextPath}/products" class="btn-shopee-primary text-decoration-none">
+                                                        Mua Lại
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
                                             <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
                                                 <i class="bi bi-info-circle me-1"></i> Xem Chi Tiết Hủy
                                             </button>

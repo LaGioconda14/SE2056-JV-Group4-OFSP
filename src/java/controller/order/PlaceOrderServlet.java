@@ -82,6 +82,7 @@ public class PlaceOrderServlet extends HttpServlet {
         }
 
         String addressSelection = request.getParameter("addressSelection");
+        String deliveryDate = request.getParameter("deliveryDate");
         String deliverySlot = request.getParameter("deliverySlot");
         String paymentMethod = request.getParameter("paymentMethod");
         String couponCode = request.getParameter("couponCode");
@@ -157,11 +158,11 @@ public class PlaceOrderServlet extends HttpServlet {
             long orderId;
             if (buyNow) {
                 orderId = orderService.placeBuyNowOrder((long) user.getId(), buyNowVariantId,
-                        buyNowQuantity, shippingAddress, deliverySlot, paymentMethod, couponCode,
+                        buyNowQuantity, shippingAddress, deliveryDate, deliverySlot, paymentMethod, couponCode,
                         shopCouponCodes, shopNotes, "new".equals(addressSelection) && saveAddress);
             } else {
                 orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
-                        deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes,
+                        deliveryDate, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes,
                         "new".equals(addressSelection) && saveAddress);
             }
 

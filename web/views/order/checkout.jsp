@@ -86,7 +86,6 @@
                         <input type="hidden" name="shopCoupon_${entry.key}" value="<c:out value='${entry.value}'/>">
                     </c:if>
                 </c:forEach>
-                <input type="hidden" name="deliverySlot" value="<c:out value='${not empty formDraft.deliverySlot ? formDraft.deliverySlot : "AFTERNOON"}'/>">
                 <input type="hidden" name="checkoutAction" id="checkout-action" disabled>
                 <input type="hidden" name="targetShopId" id="target-shop-id" disabled>
                 <input type="hidden" name="newCouponCode" id="new-coupon-code" disabled>
@@ -330,6 +329,39 @@
 
                 <!-- ==================== 5. PHƯƠNG THỨC THANH TOÁN & TỔNG KẾT (GIỐNG SHOPEE) ==================== -->
                 <div class="bg-white rounded-xl shadow-xs border border-gray-200/70 p-6 space-y-6">
+                    <!-- Hàng chọn ngày & khung giờ giao hàng (Delivery Slot & Date) -->
+                    <div class="pb-5 border-b border-gray-100 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <strong class="text-base text-gray-900 font-bold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[#00652c] text-[22px]">schedule</span>
+                                    <span>Thời gian nhận hàng chuỗi lạnh</span>
+                                </strong>
+                                <p class="text-xs text-gray-500 mt-0.5">Chọn ngày và khung giờ thuận tiện để shipper bảo quản và giao hoa quả lạnh tươi ngon nhất</p>
+                            </div>
+                        </div>
+
+                        <!-- 1. Tabs chọn Ngày nhận hàng (4 ngày) -->
+                        <div class="space-y-1.5">
+                            <span class="text-xs font-semibold text-gray-700">1. Chọn ngày nhận hàng:</span>
+                            <div class="flex flex-wrap gap-2" id="delivery-date-tabs">
+                                <!-- Dynamic date tabs injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- 2. Lưới khung giờ theo buổi (Sáng / Chiều / Tối) -->
+                        <div class="space-y-2">
+                            <span class="text-xs font-semibold text-gray-700">2. Chọn khung giờ giao:</span>
+                            <div id="delivery-slots-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                                <!-- Dynamic slot cards injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields to submit with form -->
+                        <input type="hidden" name="deliveryDate" id="checkout-delivery-date" value="<c:out value='${not empty formDraft.deliveryDate ? formDraft.deliveryDate : ""}'/>">
+                        <input type="hidden" name="deliverySlot" id="checkout-delivery-slot" value="<c:out value='${not empty formDraft.deliverySlot ? formDraft.deliverySlot : ""}'/>">
+                    </div>
+
                     <!-- Hàng chọn phương thức thanh toán -->
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
                         <strong class="text-base text-gray-900 font-bold">Phương thức thanh toán</strong>
@@ -878,6 +910,160 @@
 
     // 3. Xử lý chuyển đổi phương thức thanh toán
     const paymentForm = document.getElementById('checkout-form');
+        // ==================== KHUNG GIỜ VÀ NGÀY GIAO HÀNG CHUỖI LẠNH ====================
+    (function initDeliverySlotSystem() {
+        var dateTabsContainer = document.getElementById('delivery-date-tabs');
+        var slotsGridContainer = document.getElementById('delivery-slots-grid');
+        var inputDeliveryDate = document.getElementById('checkout-delivery-date');
+        var inputDeliverySlot = document.getElementById('checkout-delivery-slot');
+
+        if (!dateTabsContainer || !slotsGridContainer) return;
+
+        var today = new Date();
+        var dates = [];
+        var dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+
+        for (var i = 0; i < 4; i++) {
+            var d = new Date(today);
+            d.setDate(today.getDate() + i);
+            var yyyy = d.getFullYear();
+            var mm = String(d.getMonth() + 1).padStart(2, '0');
+            var dd = String(d.getDate()).padStart(2, '0');
+            var dateStr = yyyy + '-' + mm + '-' + dd;
+
+            var label = dd + '/' + mm;
+            if (i === 0) label = 'Hôm nay (' + dd + '/' + mm + ')';
+            else if (i === 1) label = 'Ngày mai (' + dd + '/' + mm + ')';
+            else label = dayNames[d.getDay()] + ' (' + dd + '/' + mm + ')';
+
+            dates.push({ dateStr: dateStr, label: label, isToday: (i === 0) });
+        }
+
+        var baseSlots = [
+            { code: '08:00 - 10:00', displayLabel: '08:00 - 10:00', period: 'MORNING', periodText: 'Sáng', startHour: 8, startMin: 0, endHour: 10, endMin: 0 },
+            { code: '10:00 - 12:00', displayLabel: '10:00 - 12:00', period: 'MORNING', periodText: 'Sáng', startHour: 10, startMin: 0, endHour: 12, endMin: 0 },
+            { code: '13:00 - 15:00', displayLabel: '13:00 - 15:00', period: 'AFTERNOON', periodText: 'Chiều', startHour: 13, startMin: 0, endHour: 15, endMin: 0 },
+            { code: '15:00 - 17:00', displayLabel: '15:00 - 17:00', period: 'AFTERNOON', periodText: 'Chiều', startHour: 15, startMin: 0, endHour: 17, endMin: 0 },
+            { code: '17:00 - 19:00', displayLabel: '17:00 - 19:00', period: 'EVENING', periodText: 'Tối', startHour: 17, startMin: 0, endHour: 19, endMin: 0 },
+            { code: '19:00 - 21:00', displayLabel: '19:00 - 21:00', period: 'EVENING', periodText: 'Tối', startHour: 19, startMin: 0, endHour: 21, endMin: 0 }
+        ];
+
+        var selectedDate = (inputDeliveryDate && inputDeliveryDate.value) ? inputDeliveryDate.value : dates[0].dateStr;
+        var selectedSlotCode = (inputDeliverySlot && inputDeliverySlot.value) ? inputDeliverySlot.value : '';
+
+        function renderDateTabs() {
+            dateTabsContainer.innerHTML = '';
+            dates.forEach(function(d) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                var isSelected = (d.dateStr === selectedDate);
+                btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ' +
+                    (isSelected
+                        ? 'border-2 border-[#00652c] bg-emerald-50 text-[#00652c] font-bold shadow-xs'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300');
+                btn.textContent = d.label;
+                btn.addEventListener('click', function() {
+                    selectedDate = d.dateStr;
+                    if (inputDeliveryDate) inputDeliveryDate.value = selectedDate;
+                    renderDateTabs();
+                    evaluateAndRenderSlots();
+                });
+                dateTabsContainer.appendChild(btn);
+            });
+        }
+
+        function evaluateAndRenderSlots() {
+            var now = new Date();
+            var isCurrentDateToday = (selectedDate === dates[0].dateStr);
+            var currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            var computedSlots = baseSlots.map(function(s) {
+                var isPassed = isCurrentDateToday && (currentMinutes >= (s.startHour * 60 + s.startMin));
+                return {
+                    code: s.code,
+                    displayLabel: s.displayLabel,
+                    period: s.period,
+                    periodText: s.periodText,
+                    available: !isPassed,
+                    statusBadge: isPassed ? 'Quá giờ' : null
+                };
+            });
+
+            // Nếu slot đang chọn không còn khả dụng trên ngày này, tự chọn slot đầu tiên khả dụng (nếu có)
+            var currentValid = computedSlots.some(function(s) {
+                return s.code === selectedSlotCode && s.available;
+            });
+
+            if (!currentValid) {
+                var firstAvail = computedSlots.find(function(s) { return s.available; });
+                if (firstAvail) {
+                    selectedSlotCode = firstAvail.code;
+                } else {
+                    selectedSlotCode = '';
+                }
+                if (inputDeliverySlot) inputDeliverySlot.value = selectedSlotCode;
+            }
+
+            renderSlots(computedSlots);
+        }
+
+        function renderSlots(slots) {
+            slotsGridContainer.innerHTML = '';
+
+            slots.forEach(function(slot) {
+                var isSelected = (slot.code === selectedSlotCode && slot.available);
+                var card = document.createElement('div');
+
+                var periodIcon = 'wb_sunny';
+                if (slot.period === 'EVENING') {
+                    periodIcon = 'bedtime';
+                }
+
+                if (!slot.available) {
+                    card.className = 'p-3 rounded-xl border border-gray-100 bg-gray-50/70 opacity-60 cursor-not-allowed flex items-center justify-between gap-2 text-xs select-none';
+                    card.innerHTML = 
+                        '<div class="flex items-center gap-2.5 min-w-0">' +
+                        '  <span class="material-symbols-outlined text-gray-300 text-[20px] shrink-0">' + periodIcon + '</span>' +
+                        '  <div class="truncate leading-tight">' +
+                        '    <span class="font-medium text-gray-600 block">' + slot.displayLabel + '</span>' +
+                        '    <span class="text-[11px] text-gray-400">' + slot.periodText + '</span>' +
+                        '  </div>' +
+                        '</div>' +
+                        '<span class="px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 bg-gray-100 text-gray-400 border border-gray-200/60">' +
+                        (slot.statusBadge || 'Quá giờ') +
+                        '</span>';
+                } else {
+                    card.className = 'p-3 rounded-xl border cursor-pointer transition select-none flex items-center justify-between gap-2 text-xs ' +
+                        (isSelected
+                            ? 'border-2 border-[#00652c] bg-emerald-50/60 shadow-xs'
+                            : 'border-gray-200 hover:border-gray-300 bg-white');
+
+                    card.innerHTML = 
+                        '<div class="flex items-center gap-2.5 min-w-0">' +
+                        '  <span class="material-symbols-outlined ' + (isSelected ? 'text-[#00652c]' : 'text-gray-400') + ' text-[20px] shrink-0">' +
+                        (isSelected ? 'check_circle' : periodIcon) +
+                        '  </span>' +
+                        '  <div class="truncate leading-tight">' +
+                        '    <span class="font-bold ' + (isSelected ? 'text-[#00652c]' : 'text-gray-900') + ' block">' + slot.displayLabel + '</span>' +
+                        '    <span class="text-[11px] ' + (isSelected ? 'text-emerald-700' : 'text-gray-500') + '">' + slot.periodText + '</span>' +
+                        '  </div>' +
+                        '</div>';
+
+                    card.addEventListener('click', function() {
+                        selectedSlotCode = slot.code;
+                        if (inputDeliverySlot) inputDeliverySlot.value = selectedSlotCode;
+                        evaluateAndRenderSlots();
+                    });
+                }
+                slotsGridContainer.appendChild(card);
+            });
+        }
+
+        renderDateTabs();
+        if (inputDeliveryDate) inputDeliveryDate.value = selectedDate;
+        evaluateAndRenderSlots();
+    })();
+
     const paymentLabels = document.querySelectorAll('.payment-method-pill');
     const submitBtn = document.getElementById('submit-order-btn');
 
@@ -909,6 +1095,21 @@
             }
         });
     });
+
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', function(e) {
+            var slotInput = document.getElementById('checkout-delivery-slot');
+            if (!slotInput || !slotInput.value || slotInput.value.trim() === '') {
+                e.preventDefault();
+                alert('Vui lòng chọn khung giờ nhận hàng khả dụng (hoặc chuyển sang ngày khác nếu hôm nay đã quá giờ)!');
+                var slotSection = document.getElementById('delivery-slots-grid');
+                if (slotSection) {
+                    slotSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+        });
+    }
 
     if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'VNPAY') {
         if (submitBtn) submitBtn.textContent = 'Thanh toán qua VNPAY';

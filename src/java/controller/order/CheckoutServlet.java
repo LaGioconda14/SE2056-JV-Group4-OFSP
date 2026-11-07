@@ -572,7 +572,7 @@ public class CheckoutServlet extends HttpServlet {
 
     private void saveDraft(HttpServletRequest request, Map<String, String> draft) {
         for (String key : List.of("addressSelection", "recipientName", "recipientPhone", "streetAddress",
-                "provinceCode", "wardCode", "paymentMethod", "deliverySlot")) {
+                "provinceCode", "wardCode", "paymentMethod", "deliveryDate", "deliverySlot")) {
             String value = request.getParameter(key);
             if (value != null) {
                 int maxLength = "addressSelection".equals(key) ? 32 : 255;

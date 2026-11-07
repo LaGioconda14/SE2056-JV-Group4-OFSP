@@ -125,7 +125,6 @@ public class OrderDAO extends DBContext {
                     item.setCartItemID(rs.getLong("cart_item_id"));
                     item.setVariant(v);
                     item.setQuantity(rs.getInt("quantity"));
-
                     items.add(item);
                 }
             }
@@ -735,9 +734,11 @@ public class OrderDAO extends DBContext {
                 + "WHERE so.order_id = ?";
 
         String sqlItems = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
+                + "COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
                 + "oi.product_name_snapshot, oi.variant_name_snapshot, oi.sku_snapshot, "
                 + "oi.unit, oi.unit_price, oi.quantity, oi.total_price "
                 + "FROM order_items oi "
+                + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
                 + "WHERE oi.sub_order_id = ?";
 
         Connection conn = getConnection();
@@ -806,6 +807,7 @@ public class OrderDAO extends DBContext {
                                         item.setSubOrderId(sub.getSubOrderId());
                                         long vId = rsItem.getLong("variant_id");
                                         item.setVariantId(rsItem.wasNull() ? null : vId);
+                                        item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
                                         item.setProductNameSnapshot(rsItem.getString("product_name_snapshot"));
                                         item.setVariantNameSnapshot(rsItem.getString("variant_name_snapshot"));
                                         item.setSkuSnapshot(rsItem.getString("sku_snapshot"));
@@ -886,7 +888,9 @@ public class OrderDAO extends DBContext {
     }
 
     private void loadOrderItemsAndShop(Order order) {
-        String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
+        String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
+                       + "       COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
+                       + "       oi.product_name_snapshot, "
                        + "       oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
                        + "       oi.total_price, s.shop_name, s.logo_url, "
                        + "       (SELECT TOP 1 pi.image_url FROM product_images pi "
@@ -894,6 +898,7 @@ public class OrderDAO extends DBContext {
                        + "        WHERE pv.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
                        + "FROM order_items oi "
                        + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
+                       + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
                        + "JOIN shops s ON so.shop_id = s.shop_id "
                        + "WHERE so.order_id = ?";
 
@@ -926,6 +931,8 @@ public class OrderDAO extends DBContext {
                         rs.getDouble("total_price"),
                         prodImg
                     );
+                    item.setVariantId(rs.getObject("variant_id") != null ? rs.getLong("variant_id") : null);
+                    item.setProductId(rs.getObject("product_id") != null ? rs.getLong("product_id") : null);
                     items.add(item);
 
                     if (firstShopName == null) {
@@ -1047,13 +1054,15 @@ public class OrderDAO extends DBContext {
             }
 
             // Tải chi tiết sản phẩm cho từng subOrder
-            String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
-                           + "       oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
+            String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
+                           + "       COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
+                           + "       oi.product_name_snapshot, oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
                            + "       oi.total_price, "
                            + "       (SELECT TOP 1 pi.image_url FROM product_images pi "
-                           + "        JOIN product_variants pv ON pi.product_id = pv.product_id "
-                           + "        WHERE pv.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
+                           + "        JOIN product_variants pv2 ON pi.product_id = pv2.product_id "
+                           + "        WHERE pv2.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
                            + "FROM order_items oi "
+                           + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
                            + "WHERE oi.sub_order_id = ?";
 
             try (PreparedStatement psItem = conn.prepareStatement(itemSql)) {
@@ -1077,6 +1086,8 @@ public class OrderDAO extends DBContext {
                                 rsItem.getDouble("total_price"),
                                 prodImg
                             );
+                            item.setVariantId(rsItem.getObject("variant_id") != null ? rsItem.getLong("variant_id") : null);
+                            item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
                             items.add(item);
                         }
                         so.setItems(items);

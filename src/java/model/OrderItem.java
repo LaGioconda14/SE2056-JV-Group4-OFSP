@@ -7,6 +7,7 @@ public class OrderItem {
     private long orderItemId;
     private long subOrderId;
     private Long variantId;
+    private Long productId;
     private String productNameSnapshot;
     private String variantNameSnapshot;
     private String skuSnapshot;
@@ -90,6 +91,14 @@ public class OrderItem {
 
     public void setSubOrderId(long subOrderId) {
         this.subOrderId = subOrderId;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
     public Long getVariantId() {
