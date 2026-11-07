@@ -10,7 +10,7 @@
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-        <jsp:param name="active" value="products" />
+            <jsp:param name="active" value="products" />
         </jsp:include>
 
         <div class="shop-main-wrapper">
@@ -20,6 +20,7 @@
             <main class="shop-content-container">
                 <div class="w-full max-w-7xl mx-auto space-y-6">
 
+                    <!-- Error Notification Alert -->
                     <c:if test="${not empty errorMessage}">
                         <div class="bg-rose-50 border border-rose-300 text-rose-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs">
                             <div class="flex items-center gap-3">
@@ -45,7 +46,7 @@
                             <div>
                                 <h1 class="text-2xl font-black text-slate-900 tracking-tight">Chỉnh Sửa Thông Tin Nông Sản</h1>
                                 <p class="text-xs text-slate-500 font-medium mt-1">
-                                    Cập nhật giá bán, tồn kho, quy cách và trạng thái mở bán nông sản.
+                                    Cập nhật danh mục, xuất xứ, bảo quản, chứng nhận và hình ảnh nông sản.
                                 </p>
                             </div>
 
@@ -58,44 +59,62 @@
                         </div>
                     </div>
 
-                    <form action="${pageContext.request.contextPath}/shop/product/edit" method="POST" class="bg-white p-8 rounded-2xl border border-slate-200 shadow-2xs space-y-8">
+                    <!-- FORM CHỈNH SỬA SẢN PHẨM -->
+                    <form action="${pageContext.request.contextPath}/shop/product/edit" method="POST" class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-8">
                         
-                        <input type="hidden" name="variantId" value="${product.variantId}">
+                        <!-- Ẩn ID sản phẩm để gửi lên Servlet -->
+                        <input type="hidden" name="productId" value="${product.productId}">
 
+                        <!-- Section 1: Thông tin nông sản -->
                         <div class="space-y-4">
                             <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
                                 <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">1</span>
-                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Thông tin chung nông sản</h3>
+                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Thông tin nông sản cơ bản</h3>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
                                     <label class="block text-xs font-bold text-slate-700 mb-1.5">Tên nông sản <span class="text-rose-500">*</span></label>
-                                    <input type="text" name="name" value="${product.productName}" required placeholder="Ví dụ: Dâu Tây Hana Đà Lạt Loại A1" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
+                                    <input type="text" name="name" value="${product.name}" required placeholder="Ví dụ: Xoài Cát Hòa Lộc" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Danh mục quả <span class="text-rose-500">*</span></label>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Danh mục nông sản <span class="text-rose-500">*</span></label>
                                     <select name="categoryId" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer">
-                                        <option value="">-- Chọn danh mục quả --</option>
-                                        <c:forEach var="c" items="${categories}">
-                                            <option value="${c.categoryId}" ${product.categoryId == c.categoryId ? 'selected' : ''}>${c.categoryName}</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Xuất xứ / Vùng trồng</label>
-                                    <input type="text" name="origin" value="${product.origin}" placeholder="Ví dụ: Nông trại Đà Lạt, Lâm Đồng" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Chứng nhận chất lượng</label>
-                                    <select name="certification" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer">
-                                        <option value="">-- Chọn chứng nhận --</option>
-                                        <c:forEach var="cert" items="${certifications}">
-                                            <option value="${cert}" ${product.certification == cert ? 'selected' : ''}>${cert}</option>
+                                        <option value="">-- Chọn danh mục --</option>
+                                        <c:forEach var="cat" items="${categories}">
+                                            <option value="${cat.categoryId}" ${product.categoryId == cat.categoryId ? 'selected' : ''}>${cat.categoryName}</option>
                                         </c:forEach>
                                     </select>
                                 </div>
                             </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Nơi xuất xứ (Tỉnh / Thành) <span class="text-rose-500">*</span></label>
+                                    <input type="text" name="origin" value="${product.origin}" required placeholder="Ví dụ: Tiền Giang, Đà Lạt..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Chứng nhận chất lượng</label>
+                                    <div class="relative">
+                                        <input type="text" name="certification" value="${product.certification}" list="certList" placeholder="Chọn hoặc tự gõ chứng nhận..." 
+                                               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
+                                        
+                                        <datalist id="certList">
+                                            <c:forEach var="c" items="${certifications}">
+                                                <option value="${c}">
+                                            </c:forEach>
+                                            <option value="VietGAP">
+                                            <option value="GlobalGAP">
+                                            <option value="Hữu cơ (Organic)">
+                                            <option value="OCOP 3 Sao">
+                                            <option value="OCOP 4 Sao">
+                                            <option value="OCOP 5 Sao">
+                                            <option value="Chuẩn Xuất Khẩu">
+                                        </datalist>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1.5">Bảo quản & Nhiệt độ</label>
                                 <div class="relative">
@@ -119,49 +138,11 @@
                             </div>
                         </div>
 
-                        <div class="space-y-4 pt-4">
-                            <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-                                <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">2</span>
-                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Quy cách đóng gói & Giá bán (SKU)</h3>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Mã SKU</label>
-                                    <input type="text" name="sku" value="${product.sku}" placeholder="Tự sinh nếu để trống" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Tên phiên bản / Quy cách</label>
-                                    <input type="text" name="variantName" value="${product.variantName}" placeholder="Ví dụ: Hộp 500g (Loại 1)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Đơn vị tính <span class="text-rose-500">*</span></label>
-                                    <select name="unit" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all cursor-pointer">
-                                        <option value="">-- Chọn đơn vị tính --</option>
-                                        <c:forEach var="u" items="${units}">
-                                            <option value="${u}" ${product.unit == u ? 'selected' : ''}>${u}</option>
-                                        </c:forEach>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Giá bán lẻ (VNĐ) <span class="text-rose-500">*</span></label>
-                                    <input type="number" name="price" value="${product.price}" required placeholder="160000" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Giá gốc niêm yết (VNĐ)</label>
-                                    <input type="number" name="originalPrice" value="${product.originalPrice}" placeholder="180000" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Số lượng tồn kho thực tế <span class="text-rose-500">*</span></label>
-                                    <input type="number" name="stockQuantity" value="${product.stockQuantity}" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                </div>
-                            </div>
-                        </div>
-
+                        <!-- Section 2: Hình ảnh nông sản (5 Ô Upload đầy đủ) -->
                         <div class="space-y-4 pt-4">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-100">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">3</span>
+                                    <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-black flex items-center justify-center">2</span>
                                     <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">Hình ảnh nông sản (Tối đa 5 ảnh)</h3>
                                 </div>
                                 <span class="text-xs text-slate-400 font-semibold">Ô 1 là Ảnh chính diện | Hỗ trợ kéo thả hoặc dán URL</span>
@@ -173,7 +154,7 @@
                                     <label class="block text-[11px] font-black text-emerald-700 uppercase tracking-wider">
                                         Ảnh chính diện <span class="text-rose-500">*</span>
                                     </label>
-                                    <div id="drop-zone-0" onclick="triggerInput(0)" ondragover="handleDragOver(event, 0)" ondragleave="handleDragLeave(0)" ondrop="handleDrop(event, 0)"
+                                    <div id="drop-zone-0" onclick="triggerInput(0)"
                                          class="relative h-36 rounded-2xl border-2 border-dashed border-emerald-400 bg-emerald-100/60 hover:bg-emerald-200/60 transition-all cursor-pointer flex flex-col items-center justify-center p-2 text-center group overflow-hidden shadow-xs">
                                         
                                         <img id="placeholder-0" src="https://images.unsplash.com/photo-1543528176-61b239494933?w=300&auto=format&fit=crop&q=80" alt="Placeholder" 
@@ -196,7 +177,7 @@
 
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-sky-700 uppercase tracking-wider">Góc nghiêng</label>
-                                    <div id="drop-zone-1" onclick="triggerInput(1)" ondragover="handleDragOver(event, 1)" ondragleave="handleDragLeave(1)" ondrop="handleDrop(event, 1)"
+                                    <div id="drop-zone-1" onclick="triggerInput(1)"
                                          class="relative h-36 rounded-2xl border-2 border-dashed border-sky-400 bg-sky-100/60 hover:bg-sky-200/60 transition-all cursor-pointer flex flex-col items-center justify-center p-2 text-center group overflow-hidden shadow-xs">
                                         
                                         <img id="placeholder-1" src="https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=300&auto=format&fit=crop&q=80" alt="Placeholder" 
@@ -217,7 +198,7 @@
 
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-amber-700 uppercase tracking-wider">Góc cận cảnh</label>
-                                    <div id="drop-zone-2" onclick="triggerInput(2)" ondragover="handleDragOver(event, 2)" ondragleave="handleDragLeave(2)" ondrop="handleDrop(event, 2)"
+                                    <div id="drop-zone-2" onclick="triggerInput(2)"
                                          class="relative h-36 rounded-2xl border-2 border-dashed border-amber-400 bg-amber-100/60 hover:bg-amber-200/60 transition-all cursor-pointer flex flex-col items-center justify-center p-2 text-center group overflow-hidden shadow-xs">
                                         
                                         <img id="placeholder-2" src="https://images.unsplash.com/photo-1595855759920-86582396756a?w=300&auto=format&fit=crop&q=80" alt="Placeholder" 
@@ -238,7 +219,7 @@
 
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-purple-700 uppercase tracking-wider">Góc chi tiết</label>
-                                    <div id="drop-zone-3" onclick="triggerInput(3)" ondragover="handleDragOver(event, 3)" ondragleave="handleDragLeave(3)" ondrop="handleDrop(event, 3)"
+                                    <div id="drop-zone-3" onclick="triggerInput(3)"
                                          class="relative h-36 rounded-2xl border-2 border-dashed border-purple-400 bg-purple-100/60 hover:bg-purple-200/60 transition-all cursor-pointer flex flex-col items-center justify-center p-2 text-center group overflow-hidden shadow-xs">
                                         
                                         <img id="placeholder-3" src="https://images.unsplash.com/photo-1528825871115-3581a5387919?w=300&auto=format&fit=crop&q=80" alt="Placeholder" 
@@ -259,7 +240,7 @@
 
                                 <div class="space-y-1.5">
                                     <label class="block text-[11px] font-black text-rose-700 uppercase tracking-wider">Góc toàn cảnh</label>
-                                    <div id="drop-zone-4" onclick="triggerInput(4)" ondragover="handleDragOver(event, 4)" ondragleave="handleDragLeave(4)" ondrop="handleDrop(event, 4)"
+                                    <div id="drop-zone-4" onclick="triggerInput(4)"
                                          class="relative h-36 rounded-2xl border-2 border-dashed border-rose-400 bg-rose-100/60 hover:bg-rose-200/60 transition-all cursor-pointer flex flex-col items-center justify-center p-2 text-center group overflow-hidden shadow-xs">
                                         
                                         <img id="placeholder-4" src="https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=300&auto=format&fit=crop&q=80" alt="Placeholder" 
@@ -282,7 +263,7 @@
 
                             <div class="flex items-center gap-2.5 pt-2">
                                 <input type="checkbox" name="isActive" id="isActive" value="true" ${product.active ? 'checked' : ''} class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                <label for="isActive" class="text-xs font-bold text-slate-700 cursor-pointer">Sửa thông tin nông sản ngay lập tức trên sàn</label>
+                                <label for="isActive" class="text-xs font-bold text-slate-700 cursor-pointer">Kích hoạt trạng thái bán hàng</label>
                             </div>
                         </div>
 
@@ -321,8 +302,8 @@
                         </div>
                     </form>
 
-            </div>
-        </main>
+                </div>
+            </main>
         </div>
 
     </body>

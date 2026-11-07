@@ -58,6 +58,10 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
+        // Rotate an existing session ID after authentication to prevent session fixation.
+        if (request.getSession(false) != null) {
+            request.changeSessionId();
+        }
         HttpSession session = request.getSession(true);
         initUserSession(session, user);
         handleRememberMeCookies(request, response, email, password, remember);
@@ -114,6 +118,7 @@ public class LoginServlet extends HttpServlet {
 
     private void initUserSession(HttpSession session, User user) {
         session.setAttribute("user", user);
+        session.setAttribute("userId", user.getId());
         session.setAttribute("userfullname", user.getFullName());
         session.setAttribute("email", user.getEmail());
     }

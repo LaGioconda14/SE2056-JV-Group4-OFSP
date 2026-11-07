@@ -75,7 +75,6 @@ public class HomeServlet extends HttpServlet {
             // Gọi Service lấy dữ liệu an toàn
             request.setAttribute("listProduct", productService.getHomeProducts());
             request.setAttribute("categories", productService.getAllCategories());
-            request.setAttribute("homeTabs", productService.getHomeFeaturedTabs());
             request.setAttribute("hierarchyCategories", productService.getHierarchyCategories());
         } catch (Exception e) {
             e.printStackTrace();
