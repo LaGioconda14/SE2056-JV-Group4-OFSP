@@ -145,20 +145,6 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Đang nhận đơn</span>
-                    </div>
-
-                    <button class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all" type="button" title="Tin nhắn">
-                        <i class="fa-regular fa-comment-dots text-sm"></i>
-                    </button>
-
-                    <button class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 relative transition-all" type="button" title="Thông báo">
-                        <i class="fa-regular fa-bell text-sm"></i>
-                        <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-xs">5</span>
-                    </button>
-
                     <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
                         <div class="text-right hidden sm:block">
                             <span class="text-xs font-black text-slate-900 block leading-tight">
@@ -224,14 +210,6 @@
 
                             <!-- Action buttons -->
                             <div class="flex items-center flex-wrap gap-2.5">
-                                <button type="button" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs transition-all" onclick="alert('Đang xuất dữ liệu danh sách nông sản ra file Excel (.xlsx)...');">
-                                    <i class="fa-solid fa-file-excel text-emerald-600 text-sm"></i>
-                                    <span>Xuất Excel</span>
-                                </button>
-                                <button type="button" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-xl text-xs font-bold flex items-center gap-2 shadow-2xs transition-all" onclick="alert('Hệ thống đang đồng bộ bảng giá loạt...');">
-                                    <i class="fa-solid fa-arrows-rotate text-purple-600 text-sm"></i>
-                                    <span>Đồng bộ giá loạt</span>
-                                </button>
                                 <a href="${pageContext.request.contextPath}/shop/product/add" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm shadow-emerald-600/30 transition-all">
                                     <i class="fa-solid fa-circle-plus text-sm"></i>
                                     <span>Thêm mới nông sản</span>
@@ -340,9 +318,6 @@
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-black text-slate-500 uppercase tracking-wider">
-                                        <th class="w-12 text-center py-3.5 px-4">
-                                            <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer">
-                                        </th>
                                         <th class="py-3.5 px-4 min-w-[280px]">SẢN PHẨM NÔNG SẢN</th>
                                         <th class="py-3.5 px-4 min-w-[150px]">KHOẢNG GIÁ</th>
                                         <th class="py-3.5 px-4 min-w-[160px]">TỔNG TỒN KHO</th>
@@ -356,11 +331,6 @@
                                         <c:when test="${not empty products}">
                                             <c:forEach var="product" items="${products}">
                                                 <tr class="hover:bg-slate-50/80 transition-colors group">
-                                                    <!-- Checkbox chọn dòng -->
-                                                    <td class="text-center py-4 px-4 align-middle">
-                                                        <input type="checkbox" name="productIds" value="${product.id}" class="product-row-checkbox w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
-                                                    </td>
-
                                                     <!-- Cột Sản phẩm: Ảnh + Tên + Danh mục + Xuất xứ -->
                                                     <td class="py-4 px-4 align-middle">
                                                         <div class="flex items-center gap-3.5">
@@ -530,7 +500,7 @@
                                         </c:when>
                                         <c:otherwise>
                                             <tr>
-                                                <td colspan="7" class="py-16 text-center bg-slate-50/50">
+                                                <td colspan="6" class="py-16 text-center bg-slate-50/50">
                                                     <div class="flex flex-col items-center justify-center space-y-3">
                                                         <div class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
                                                             <i class="fa-solid fa-seedling text-2xl"></i>
@@ -548,54 +518,11 @@
 
                         <!-- Pagination Footer -->
                         <div class="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                                <span>Hiển thị</span>
-                                <select class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:outline-none focus:border-emerald-500 transition-all shadow-2xs" onchange="const params = new URLSearchParams(window.location.search); params.set('page', '1'); params.set('pageSize', this.value); window.location.href = '${pageContext.request.contextPath}/shop/product/search?' + params.toString();">
-                                    <option value="10" ${pageSize == 10 ? 'selected' : ''}>10</option>
-                                    <option value="20" ${pageSize == 20 ? 'selected' : ''}>20</option>
-                                    <option value="50" ${pageSize == 50 ? 'selected' : ''}>50</option>
-                                </select>
-                                <span>trên tổng <strong class="text-slate-900">${not empty totalProductsCount ? totalProductsCount : (not empty products ? products.size() : 0)}</strong> nông sản</span>
-                            </div>
-
-                            <div class="flex items-center gap-1.5">
-                                <c:if test="${currentPage > 1}">
-                                    <a href="${pageContext.request.contextPath}/shop/product/search?page=${currentPage - 1}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-700 transition-all text-xs shadow-2xs">
-                                        <i class="fa-solid fa-chevron-left text-[10px]"></i>
-                                    </a>
-                                </c:if>
-
-                                <c:forEach begin="1" end="${totalPages > 0 ? totalPages : 1}" var="p">
-                                    <a href="${pageContext.request.contextPath}/shop/product/search?page=${p}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl font-bold flex items-center justify-center transition-all text-xs ${p == currentPage ? 'bg-emerald-700 text-white shadow-xs shadow-emerald-700/30' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-2xs'}">
-                                        ${p}
-                                    </a>
-                                </c:forEach>
-
-                                <c:if test="${currentPage < totalPages}">
-                                    <a href="${pageContext.request.contextPath}/shop/product/search?page=${currentPage + 1}&pageSize=${pageSize}&keyword=${param.keyword}&categoryId=${param.categoryId}&certification=${param.certification}&stockLevel=${param.stockLevel}&statusTab=${statusTab}" class="w-8 h-8 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold flex items-center justify-center hover:bg-emerald-50 hover:border-emerald-500 hover:text-emerald-700 transition-all text-xs shadow-2xs">
-                                        <i class="fa-solid fa-chevron-right text-[10px]"></i>
-                                    </a>
-                                </c:if>
-                            </div>
                         </div>
                     </div>
 
                 </div>
             </main>
         </div>
-
-        <!-- Checkbox selection helper script -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const selectAll = document.getElementById('selectAllCheckbox');
-                const rowCheckboxes = document.querySelectorAll('.product-row-checkbox');
-
-                if (selectAll) {
-                    selectAll.addEventListener('change', function () {
-                        rowCheckboxes.forEach(cb => cb.checked = selectAll.checked);
-                    });
-                }
-            });
-        </script>
     </body>
 </html>

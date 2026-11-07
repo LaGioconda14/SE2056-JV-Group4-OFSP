@@ -30,6 +30,108 @@
             .variant-card:hover {
                 box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07);
             }
+            .warehouse-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    margin-bottom: 20px;
+}
+
+/* Ô input tìm kiếm */
+.filter-search-box {
+    flex: 1; /* Tự động giãn rộng chiếm không gian lớn nhất */
+    display: flex;
+    align-items: center;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 40px;
+    transition: all 0.2s ease;
+}
+
+.filter-search-box:focus-within {
+    border-color: #10b981; /* Màu xanh lá chủ đạo của shop */
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.filter-search-box .search-icon {
+    color: #9ca3af;
+    margin-right: 8px;
+    font-size: 14px;
+}
+
+.filter-search-box input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-size: 14px;
+    color: #374151;
+}
+
+/* Khung Dropdown danh mục */
+.filter-select-box {
+    position: relative;
+    width: 220px;
+}
+
+.custom-select {
+    width: 100%;
+    height: 40px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0 32px 0 12px;
+    font-size: 14px;
+    color: #374151;
+    appearance: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-select:hover, .custom-select:focus {
+    border-color: #10b981;
+    background: #ffffff;
+    outline: none;
+}
+
+.filter-select-box .dropdown-arrow {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+/* Nút Reset / Refresh */
+.filter-reset-btn {
+    width: 40px;
+    height: 40px;
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-reset-btn:hover {
+    background: #f3f4f6;
+    color: #10b981;
+    border-color: #10b981;
+}
         </style>
     </head>
     <body class="min-h-screen flex bg-[#f8fafc] text-slate-800 font-['Plus_Jakarta_Sans',sans-serif]">
@@ -168,15 +270,42 @@
                         </div>
                     </section>
 
-                    <!-- Lọc & Tìm kiếm -->
-                    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                        <div class="relative w-full lg:max-w-md"><i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i><input id="searchInput" onkeyup="filterTable()" type="search" placeholder="Tìm tên trái cây, mã SKU, mã lô..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500"></div>
-                        <div class="flex items-center gap-2">
-                            <select class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"><option>Tất cả danh mục</option></select>
-                            <button type="button" onclick="filterTable()" class="w-10 h-10 rounded-xl text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200"><i class="fa-solid fa-rotate"></i></button>
-                        </div>
-                    </section>
+                    <form action="${pageContext.request.contextPath}/shop/inventory" method="GET">
+    <section class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6">
+        <!-- Ô tìm kiếm từ khóa -->
+        <div class="relative w-full lg:max-w-md">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input id="searchInput" 
+                   name="keyword"
+                   type="search" 
+                   placeholder="Tìm tên trái cây, mã SKU, mã lô..." 
+                   value="${param.keyword}"
+                   class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500">
+        </div>
 
+        <!-- Cụm bộ lọc Danh mục & Reset -->
+        <div class="flex items-center gap-2">
+            <select name="category" 
+                    onchange="this.form.submit()"
+                    class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                <option value="">Tất cả danh mục</option>
+                <!-- Lấy tất cả danh mục động từ Database thông qua JSTL -->
+                <c:forEach var="cat" items="${CATEGORY_LIST}">
+                    <option value="${cat.categoryId}" ${param.category == cat.categoryId ? 'selected' : ''}>
+                        ${cat.categoryName}
+                    </option>
+                </c:forEach>
+            </select>
+
+            <!-- Nút Làm mới (Reset) trỏ đúng về trang inventory của shop -->
+            <a href="${pageContext.request.contextPath}/shop/inventory" 
+               title="Làm mới bộ lọc"
+               class="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200 transition-all">
+                <i class="fa-solid fa-rotate"></i>
+            </a>
+        </div>
+    </section>
+</form>
                     <!-- Danh Sách Biến Thể Gom Nhóm Nhiều Lô -->
                     <section class="space-y-4" id="variantListContainer">
                         <c:forEach var="entry" items="${variantBatchMap}">
@@ -654,4 +783,4 @@
             });
         </script>
     </body>
-</html> 
+</html>     

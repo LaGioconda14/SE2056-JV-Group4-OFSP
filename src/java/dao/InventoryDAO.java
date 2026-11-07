@@ -322,13 +322,12 @@ public class InventoryDAO extends DBContext {
         return false;
     }
 
-    
-public boolean disposeBatch(long batchId, long variantId, long shopId, long userId, String reasonCode, String description) {
+    public boolean disposeBatch(long batchId, long variantId, long shopId, long userId, String reasonCode, String description) {
         String sqlGet = "SELECT variant_id, current_quantity FROM product_batches WHERE batch_id = ?";
         String sqlUpBatch = "UPDATE product_batches SET current_quantity = 0, status = 'INACTIVE', updated_at = GETDATE() WHERE batch_id = ?";
         String sqlUpVar = "UPDATE product_variants SET stock_quantity = stock_quantity - ?, updated_at = GETDATE() WHERE variant_id = ?";
         String sqlInsTrans = "INSERT INTO inventory_transactions (batch_id, variant_id, shop_id, user_id, transaction_type, quantity_changed, previous_stock, new_stock, reason, created_at) "
-                           + "VALUES (?, ?, ?, ?, 'DISPOSAL', ?, ?, 0, ?, GETDATE())";
+                + "VALUES (?, ?, ?, ?, 'DISPOSAL', ?, ?, 0, ?, GETDATE())";
 
         Connection conn = null;
         try {
@@ -406,7 +405,6 @@ public boolean disposeBatch(long batchId, long variantId, long shopId, long user
         }
     }
 
-
     private String buildReasonText(String reasonCode, String description) {
         String baseReason;
         if (reasonCode == null) {
@@ -421,7 +419,7 @@ public boolean disposeBatch(long batchId, long variantId, long shopId, long user
                 break;
             case "QUALITY_FAIL":
                 baseReason = "Không đạt tiêu chuẩn ATVSTP kiểm định";
-                break;
+                break; 
             case "EXPIRED":
                 baseReason = "Hàng hết hạn sử dụng (Hủy toàn bộ lô)";
                 break;
@@ -436,5 +434,88 @@ public boolean disposeBatch(long batchId, long variantId, long shopId, long user
             return baseReason + " - " + description.trim();
         }
         return baseReason;
+    }
+
+    public List<ProductBatch> searchAndFilterBatchesByShop(long shopId, String keyword, String categoryId) {
+        List<ProductBatch> list = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT b.batch_id, b.batch_code, b.variant_id, b.initial_quantity, " +
+                        "       b.current_quantity, b.expiry_date, b.status, " +
+                        "       DATEDIFF(day, GETDATE(), b.expiry_date) AS days_remaining, " +
+                        "       CASE " +
+                        "           WHEN b.expiry_date < GETDATE() THEN N'Quá hạn' " +
+                        "           WHEN DATEDIFF(day, GETDATE(), b.expiry_date) BETWEEN 0 AND 7 THEN N'Cận date' " +
+                        "           ELSE N'An toàn' " +
+                        "       END AS status_text, " +
+                        "       pv.sku, pv.variant_name, p.name AS product_name, " +
+                        "       c.category_id, c.category_name, product_image.image_url " +
+                        "FROM product_batches b " +
+                        "JOIN product_variants pv ON b.variant_id = pv.variant_id " +
+                        "JOIN products p ON pv.product_id = p.product_id " +
+                        "LEFT JOIN categories c ON p.category_id = c.category_id " +
+                        "OUTER APPLY (SELECT TOP 1 pi.image_url FROM product_images pi " +
+                        "             WHERE pi.product_id = p.product_id " +
+                        "             ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) product_image " +
+                        "WHERE p.shop_id = ? "
+        );
+
+        List<Object> params = new ArrayList<>();
+        params.add(shopId);
+
+        // Điều kiện tìm kiếm từ khóa (tên sản phẩm, biến thể, SKU, mã lô)
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append("AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR b.batch_code LIKE ?) ");
+            String searchParam = "%" + keyword.trim() + "%";
+            params.add(searchParam);
+            params.add(searchParam);
+            params.add(searchParam);
+            params.add(searchParam);
+        }
+
+        // Điều kiện lọc theo danh mục
+        if (categoryId != null && !categoryId.trim().isEmpty()) {
+            sql.append("AND c.category_id = ? ");
+            try {
+                params.add(Integer.parseInt(categoryId.trim()));
+            } catch (NumberFormatException e) {
+                // Ignore nếu parse lỗi
+            }
+        }
+
+        sql.append("ORDER BY b.expiry_date ASC");
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < params.size(); i++) {
+                ps.setObject(i + 1, params.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ProductBatch batch = new ProductBatch();
+                    batch.setBatchId(rs.getLong("batch_id"));
+                    batch.setBatchCode(rs.getString("batch_code"));
+                    batch.setVariantId(rs.getLong("variant_id"));
+                    batch.setInitialQuantity(rs.getInt("initial_quantity"));
+                    batch.setCurrentQuantity(rs.getInt("current_quantity"));
+                    batch.setExpiryDate(rs.getDate("expiry_date"));
+                    batch.setStatus(rs.getString("status"));
+
+                    batch.setDaysRemaining(rs.getInt("days_remaining"));
+                    batch.setStatusText(rs.getString("status_text"));
+
+                    batch.setSku(rs.getString("sku"));
+                    batch.setVariantName(rs.getString("variant_name"));
+                    batch.setProductName(rs.getString("product_name") + " (" + rs.getString("variant_name") + ")");
+                    batch.setImageUrl(rs.getString("image_url"));
+
+                    list.add(batch);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }

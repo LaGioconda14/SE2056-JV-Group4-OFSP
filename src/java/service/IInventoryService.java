@@ -24,4 +24,6 @@ public interface IInventoryService {
     boolean disposeBatch(long batchId, long variantId, long shopId, long userId, String reasonCode, String description) throws Exception;
 
     List<InventoryTransaction> getInventoryHistory(int variantId, int batchId, int shopId);
+
+    List<ProductBatch> searchAndFilterBatches(long shopId, String keyword, String categoryId);
 }

@@ -1,5 +1,6 @@
 package controller.shopinventory;
 
+import dao.CategoryDAO;
 import dao.ShopDAO;
 import java.io.IOException;
 import java.util.*;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.Category;
 import model.ProductBatch;
 import model.Shop;
 import model.User;
@@ -19,6 +21,7 @@ import service.impl.InventoryServiceImpl;
 public class InventoryDashboardServlet extends HttpServlet {
 
     private final ShopDAO shopDAO = new ShopDAO();
+    private final CategoryDAO categoryDAO = new CategoryDAO();
     private final IInventoryService inventoryService = new InventoryServiceImpl();
 
     @Override
@@ -49,15 +52,22 @@ public class InventoryDashboardServlet extends HttpServlet {
             session.setAttribute("shopObj", shop);
         }
 
-        // 1. Lấy danh sách lô từ service có sẵn
-        List<ProductBatch> allBatches = inventoryService.getBatchesByShopId(shopId);
+        String keyword = request.getParameter("keyword");
+String categoryId = request.getParameter("category");
+
+// 2. Lấy danh sách lô nông sản theo đúng Shop ID kết hợp Search & Filter
+List<ProductBatch> allBatches = inventoryService.searchAndFilterBatches(shopId, keyword, categoryId);
+
+// 3. Lấy toàn bộ danh mục để đổ vào Dropdown bộ lọc
+List<Category> categoryList = categoryDAO.getAllCategories();
+request.setAttribute("CATEGORY_LIST", categoryList);
 
         long totalStock = 0;
         int lowStockCount = 0;
         int totalBatches = 0;
         int nearExpiryCount = 0;
 
-        // 2. Gom nhóm trực tiếp bằng Map: Key là variantId, Value là danh sách ProductBatch của variant đó
+        // 4. Gom nhóm trực tiếp bằng Map: Key là variantId, Value là danh sách ProductBatch của variant đó
         Map<Long, List<ProductBatch>> variantBatchMap = new LinkedHashMap<>();
 
         if (allBatches != null) {
@@ -77,8 +87,9 @@ public class InventoryDashboardServlet extends HttpServlet {
             }
         }
 
-        // 3. Đẩy thẳng cái Map này sang JSP
+        // 5. Đẩy dữ liệu sang JSP
         request.setAttribute("variantBatchMap", variantBatchMap);
+        request.setAttribute("CATEGORY_LIST", categoryList);
         request.setAttribute("totalStock", totalStock);
         request.setAttribute("totalBatches", totalBatches);
         request.setAttribute("lowStockCount", lowStockCount);
