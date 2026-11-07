@@ -15,7 +15,7 @@ import model.User;
 import service.IInventoryService;
 import service.impl.InventoryServiceImpl;
 
-@WebServlet(name = "InventoryDashboardServlet", urlPatterns = {"/shop/inventory"})
+@WebServlet(name = "InventoryDashboardServlet", urlPatterns = {"/shop/inventory/batches", "/shop/batches"})
 public class InventoryDashboardServlet extends HttpServlet {
 
     private final ShopDAO shopDAO = new ShopDAO();
