@@ -125,8 +125,8 @@
             <div class="row g-3">
                 <c:forEach items="${deliveries}" var="del">
                     <c:set var="statusUpper" value="${del.deliveryStatus.toUpperCase()}" />
-                    <div class="col-12 col-lg-6">
-                        <div class="delivery-card h-100 d-flex flex-column justify-content-between">
+                    <div class="col-12">
+                        <div class="delivery-card d-flex flex-column justify-content-between">
                             <div>
                                 <!-- Card Header -->
                                 <div class="delivery-card-header">
