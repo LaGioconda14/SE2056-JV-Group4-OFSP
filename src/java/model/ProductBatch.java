@@ -18,6 +18,8 @@ public class ProductBatch {
     private String sku;
     private String imageUrl;
     private String categoryName;
+    private int daysRemaining;
+    private String statusText;
 
     public ProductBatch() {
     }
@@ -127,5 +129,21 @@ public class ProductBatch {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+    public int getDaysRemaining() {
+        return daysRemaining;
+    }
+
+    public void setDaysRemaining(int daysRemaining) {
+        this.daysRemaining = daysRemaining;
+    }
+
+    public String getStatusText() {
+        return statusText;
+    }
+
+    public void setStatusText(String statusText) {
+        this.statusText = statusText;
     }
 }

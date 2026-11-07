@@ -92,6 +92,7 @@ public class LoginServlet extends HttpServlet {
         session.setAttribute("user", user);
         session.setAttribute("userfullname", user.getFullName());
         session.setAttribute("email", user.getEmail());
+        session.setAttribute("userId", user.getId());
 
         // Remember the email for seven days; do not persist the password.
         int cookieMaxAge = (remember != null) ? (7 * 24 * 60 * 60) : 0;

@@ -563,3 +563,10 @@ CREATE INDEX IX_inventory_transactions_shop ON [dbo].[inventory_transactions]([s
 GO
 
 PRINT N'ĐÃ TẠO XONG CÁC BẢNG QUẢN LÝ KHO VÀ LÔ HÀNG THÀNH CÔNG!';
+
+-- Xóa ràng buộc CHECK cũ trên bảng product_batches
+ALTER TABLE product_batches DROP CONSTRAINT CHK_ProductBatches_Status;
+
+-- Thêm lại ràng buộc CHECK mới cho phép chấp nhận cả 'INACTIVE'
+ALTER TABLE product_batches ADD CONSTRAINT CHK_ProductBatches_Status 
+CHECK (status IN ('ACTIVE', 'EXPIRED', 'DEPLETED', 'INACTIVE'));
