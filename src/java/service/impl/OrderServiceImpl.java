@@ -467,11 +467,6 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public List<Order> getOrdersByCustomerId(long customerId) {
-        return orderDAO.getOrdersByCustomerId(customerId);
-    }
-
-    @Override
     public List<SubOrder> getSubOrdersByCustomerId(long customerId) {
         return orderDAO.getSubOrdersByCustomerId(customerId);
     }

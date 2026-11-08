@@ -54,40 +54,6 @@ public class DriverDAO extends DBContext {
         return null;
     }
 
-    /**
-     * Retrieve Driver Profile by Driver ID (primary key of driver_profiles)
-     */
-    public DriverProfile getDriverProfile(long driverId) {
-        String sql = "SELECT dp.driver_id, dp.user_id, dp.shop_id, s.shop_name, u.full_name, u.email, u.phone, u.avatar_url, "
-                + "       dp.license_number, dp.vehicle_type, dp.vehicle_plate, dp.cold_storage_type, "
-                + "       dp.operating_city, dp.operating_districts, dp.hub_name, "
-                + "       dp.approval_status, dp.availability_status, dp.reviewed_by, rev.full_name AS reviewer_name, "
-                + "       dp.reviewed_at, dp.rejection_reason, dp.rating, dp.total_trips, dp.max_capacity_orders, "
-                + "       dp.created_at, dp.updated_at, "
-                + "       dl.latitude, dl.longitude, dl.last_updated_at, "
-                + "       (SELECT COUNT(*) FROM deliveries d WHERE d.driver_id = dp.user_id AND d.delivery_status IN ('ASSIGNED', 'DELIVERING', 'IN_TRANSIT', 'PICKED_UP')) AS active_orders "
-                + "FROM driver_profiles dp "
-                + "JOIN users u ON dp.user_id = u.user_id "
-                + "LEFT JOIN shops s ON dp.shop_id = s.shop_id "
-                + "LEFT JOIN users rev ON dp.reviewed_by = rev.user_id "
-                + "LEFT JOIN driver_locations dl ON dp.driver_id = dl.driver_id "
-                + "WHERE dp.driver_id = ?";
-
-        Connection conn = getConnection();
-        if (conn == null) return null;
-
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, driverId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return extractDriverProfile(rs);
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error retrieving driver profile for driverId " + driverId, ex);
-        }
-        return null;
-    }
 
     /**
      * List all Driver Profiles belonging to a specific Shop (with optional status filter and keyword search)
@@ -152,12 +118,6 @@ public class DriverDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Get list of currently AVAILABLE drivers belonging to a specific Shop, ready for dispatch
-     */
-    public List<DriverProfile> getAvailableDriversByShopId(long shopId) {
-        return getDriversByShopId(shopId, "AVAILABLE", null);
-    }
 
     /**
      * Create a new Shipper / Delivery Staff belonging to a Shop
@@ -279,9 +239,12 @@ public class DriverDAO extends DBContext {
             conn.commit();
             return true;
         } catch (SQLException ex) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error creating shop shipper for shopId " + shopId, ex);
+            return false;
+        } finally {
+            closeQuietly(conn);
         }
-        return false;
     }
 
     /**
@@ -327,9 +290,12 @@ public class DriverDAO extends DBContext {
             conn.commit();
             return true;
         } catch (SQLException ex) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error updating shop shipper " + driverId, ex);
+            return false;
+        } finally {
+            closeQuietly(conn);
         }
-        return false;
     }
 
     /**
@@ -445,71 +411,14 @@ public class DriverDAO extends DBContext {
             conn.commit();
             return true;
         } catch (SQLException ex) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error assigning driver " + driverUserId + " to subOrderId " + subOrderId, ex);
+            return false;
+        } finally {
+            closeQuietly(conn);
         }
-        return false;
     }
 
-    /**
-     * List all Driver Profiles for Admin Review (supports status filter and keyword search)
-     */
-    public List<DriverProfile> getAllDriverProfiles(String approvalStatus, String keyword) {
-        List<DriverProfile> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder(
-                "SELECT dp.driver_id, dp.user_id, dp.shop_id, s.shop_name, u.full_name, u.email, u.phone, u.avatar_url, "
-                + "       dp.license_number, dp.vehicle_type, dp.vehicle_plate, dp.cold_storage_type, "
-                + "       dp.operating_city, dp.operating_districts, dp.hub_name, "
-                + "       dp.approval_status, dp.availability_status, dp.reviewed_by, rev.full_name AS reviewer_name, "
-                + "       dp.reviewed_at, dp.rejection_reason, dp.rating, dp.total_trips, dp.max_capacity_orders, "
-                + "       dp.created_at, dp.updated_at, "
-                + "       dl.latitude, dl.longitude, dl.last_updated_at, "
-                + "       (SELECT COUNT(*) FROM deliveries d WHERE d.driver_id = dp.user_id AND d.delivery_status IN ('ASSIGNED', 'DELIVERING', 'IN_TRANSIT', 'PICKED_UP')) AS active_orders "
-                + "FROM driver_profiles dp "
-                + "JOIN users u ON dp.user_id = u.user_id "
-                + "LEFT JOIN shops s ON dp.shop_id = s.shop_id "
-                + "LEFT JOIN users rev ON dp.reviewed_by = rev.user_id "
-                + "LEFT JOIN driver_locations dl ON dp.driver_id = dl.driver_id "
-                + "WHERE 1=1 "
-        );
-
-        if (approvalStatus != null && !approvalStatus.trim().isEmpty() && !"ALL".equalsIgnoreCase(approvalStatus)) {
-            sql.append(" AND dp.approval_status = ? ");
-        }
-
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (u.full_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR dp.vehicle_plate LIKE ? OR dp.operating_city LIKE ?) ");
-        }
-
-        sql.append(" ORDER BY CASE WHEN dp.approval_status = 'PENDING' THEN 1 WHEN dp.approval_status = 'NEEDS_REVISION' THEN 2 ELSE 3 END, dp.created_at DESC");
-
-        Connection conn = getConnection();
-        if (conn == null) return list;
-
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            int idx = 1;
-            if (approvalStatus != null && !approvalStatus.trim().isEmpty() && !"ALL".equalsIgnoreCase(approvalStatus)) {
-                ps.setString(idx++, approvalStatus.trim().toUpperCase());
-            }
-
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String kw = "%" + keyword.trim() + "%";
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-            }
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    list.add(extractDriverProfile(rs));
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error listing driver profiles", ex);
-        }
-        return list;
-    }
 
 
     private DriverProfile extractDriverProfile(ResultSet rs) throws SQLException {
@@ -568,5 +477,26 @@ public class DriverDAO extends DBContext {
         dp.setLastUpdatedAt(rs.getTimestamp("last_updated_at"));
         dp.setActiveOrderCount(rs.getInt("active_orders"));
         return dp;
+    }
+
+    private void rollbackQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Rollback failed", ex);
+            }
+        }
+    }
+
+    private void closeQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error closing connection", ex);
+            }
+        }
     }
 }

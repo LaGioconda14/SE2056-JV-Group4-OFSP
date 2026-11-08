@@ -7,14 +7,9 @@ public interface IDriverService {
 
     DriverProfile getDriverProfileByUserId(long userId);
 
-    DriverProfile getDriverProfile(long driverId);
-
-    List<DriverProfile> getAllDriverProfiles(String approvalStatus, String keyword);
 
     // Shop Delivery Staff (Shippers) Management
     List<DriverProfile> getDriversByShopId(long shopId, String statusFilter, String keyword);
-
-    List<DriverProfile> getAvailableDriversByShopId(long shopId);
 
     boolean createShopShipper(long shopId, String fullName, String email, String phone, String password,
             String vehicleType, String vehiclePlate, String coldStorageType, String operatingDistricts);

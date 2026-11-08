@@ -4,8 +4,12 @@
 <%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <fmt:setLocale value="vi_VN" />
 
+<c:set var="isFailedOrder" value="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}" />
+<c:set var="isDeliveredOrder" value="${subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED' or subOrder.deliveryStatus eq 'DELIVERED' or not empty subOrder.deliveredAt}" />
+<c:set var="isCancelledOrder" value="${subOrder.status eq 'CANCELLED'}" />
+
                         <c:choose>
-                            <%-- CASE 1: ĐƠN ĐÃ BỊ HỦY (CANCELLED) --%>
+                            
                             <c:when test="${subOrder.status eq 'CANCELLED'}">
                                 <div class="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs bg-rose-50/20">
                                     <div class="flex items-start gap-4">
@@ -48,7 +52,7 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE 2: ĐƠN MỚI CHỜ DUYỆT (NEW) --%>
+                            
                             <c:when test="${subOrder.status eq 'NEW'}">
                                 <c:set var="isWaitingPayment" value="${(subOrder.paymentMethod eq 'VNPAY' or subOrder.paymentMethod eq 'CARD') and subOrder.paymentStatus ne 'PAID'}" />
                                 <div class="bg-white rounded-2xl border ${isWaitingPayment ? 'border-amber-300' : 'border-slate-200'} p-6 shadow-xs">
@@ -88,7 +92,7 @@
 
                                     <c:choose>
                                         <c:when test="${isWaitingPayment}">
-                                            <!-- Cảnh báo đơn VNPAY chưa thanh toán -->
+                                            
                                             <div class="mt-4 p-4 rounded-xl bg-amber-50/90 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                 <div class="flex items-start gap-3">
                                                     <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-lg font-bold shrink-0 mt-0.5">
@@ -123,7 +127,7 @@
                                             </div>
                                         </c:when>
                                         <c:otherwise>
-                                            <!-- Đơn đã thanh toán hoặc COD: Cho phép xác nhận bình thường -->
+                                            
                                             <div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                 <div class="flex items-center gap-3">
                                                     <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg font-bold shrink-0">
@@ -149,13 +153,13 @@
                                                     <input type="hidden" name="code" value="${subOrder.subOrderCode}">
                                                     <button type="submit" class="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs transition shadow-2xs flex items-center justify-center gap-2 cursor-pointer">
                                                         <i class="fa-solid fa-check"></i>
-                                                        <span>Đạt Chuẩn - Tiếp Nhận &amp; Đóng Gói</span>
+                                                        <span>Tiếp Nhận &amp; Đóng Gói</span>
                                                     </button>
                                                 </form>
 
                                                 <button type="button" class="btn-open-cancel-modal w-full py-3 px-4 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-300 hover:border-rose-400 font-extrabold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
                                                     <i class="fa-solid fa-ban"></i>
-                                                    <span>Hết Hàng / Quả Hỏng - Hủy Đơn</span>
+                                                    <span>Hết Hàng / Quả Hỏng</span>
                                                 </button>
                                             </div>
                                         </c:otherwise>
@@ -163,7 +167,7 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE 3: ĐANG ĐÓNG GÓI (PACKING) --%>
+                            
                             <c:when test="${subOrder.status eq 'PACKING' or empty subOrder.status}">
                                 <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                                     <div class="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -243,7 +247,7 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE 4: GIAO THẤT BẠI / HOÀN HÀNG (FAILED / RETURNED) --%>
+                            
                             <c:when test="${isFailedOrder}">
                                 <div class="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs bg-rose-50/20">
                                     <div class="flex items-start gap-4">
@@ -295,7 +299,7 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE 5: ĐÃ GIAO THÀNH CÔNG (DELIVERED / COMPLETED) --%>
+                            
                             <c:when test="${isDeliveredOrder}">
                                 <div class="bg-white rounded-2xl border border-teal-200 p-6 shadow-xs bg-teal-50/20">
                                     <div class="flex items-center justify-between pb-3 border-b border-teal-100">
@@ -324,7 +328,7 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE: GIAO THẤT BẠI - CHUYỂN HOÀN VỀ SHOP (RETURNED / FAILED) --%>
+                            
                             <c:when test="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}">
                                 <c:set var="reasonLower" value="${not empty subOrder.cancelReason ? subOrder.cancelReason.toLowerCase() : ''}" />
                                 <c:set var="isDamageIncident" value="${fn:contains(reasonLower, 'dập') or fn:contains(reasonLower, 'hỏng') or fn:contains(reasonLower, 'úng') or fn:contains(reasonLower, 'lạnh') or fn:contains(reasonLower, 'biến chất')}" />
@@ -342,12 +346,11 @@
                                                         <c:otherwise>Kiện Hàng Chuyển Hoàn Do Không Phát Được Cho Khách</c:otherwise>
                                                     </c:choose>
                                                 </h2>
-                                                <p class="text-[11px] text-slate-500">
-                                                    <c:choose>
-                                                        <c:when test="${isDamageIncident}">Tài xế báo cáo nông sản bị sự cố khi giao. Khi nhận lại kiện hàng từ tài xế, vui lòng kiểm định số lượng để lập phiếu tiêu hủy và đối soát bồi thường.</c:when>
-                                                        <c:otherwise>Tài xế không liên lạc được với người nhận hoặc khách hẹn lại. Vui lòng mở thùng kiểm tra độ lạnh đá gel để xử lý tồn kho.</c:otherwise>
-                                                    </c:choose>
-                                                </p>
+                                                <c:if test="${not isDamageIncident}">
+                                                    <p class="text-[11px] text-slate-500">
+                                                        Tài xế không liên lạc được với người nhận hoặc khách hẹn lại. Vui lòng mở thùng kiểm tra độ lạnh đá gel để xử lý tồn kho.
+                                                    </p>
+                                                </c:if>
                                             </div>
                                         </div>
                                         <span class="px-3 py-1 rounded-full text-xs font-black ${isDamageIncident ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-amber-100 text-amber-800 border-amber-300'} border">
@@ -355,19 +358,43 @@
                                         </span>
                                     </div>
 
-                                    <!-- Thông tin lý do giao thất bại từ Shipper -->
-                                    <div class="p-3.5 rounded-xl bg-white border ${isDamageIncident ? 'border-rose-200' : 'border-amber-200'} text-xs space-y-1 shadow-2xs">
-                                        <div class="font-extrabold ${isDamageIncident ? 'text-rose-800' : 'text-amber-900'} flex items-center gap-1.5">
-                                            <i class="fa-solid fa-triangle-exclamation ${isDamageIncident ? 'text-rose-600' : 'text-amber-600'}"></i>
-                                            <span>Lý do chuyển hoàn từ tài xế / Shipper:</span>
+                                    
+                                    <div class="p-3.5 rounded-xl bg-white border ${isDamageIncident ? 'border-rose-200' : 'border-amber-200'} text-xs space-y-2.5 shadow-2xs">
+                                        <div>
+                                            <div class="font-extrabold ${isDamageIncident ? 'text-rose-800' : 'text-amber-900'} flex items-center gap-1.5 mb-1">
+                                                <i class="fa-solid fa-triangle-exclamation ${isDamageIncident ? 'text-rose-600' : 'text-amber-600'}"></i>
+                                                <span>Lý do chuyển hoàn từ tài xế / Shipper:</span>
+                                            </div>
+                                            <div class="text-slate-900 leading-relaxed font-bold pl-3 border-l-2 ${isDamageIncident ? 'border-rose-500' : 'border-amber-500'} py-0.5">
+                                                <c:choose>
+                                                    <c:when test="${not empty subOrder.cancelReason and fn:contains(subOrder.cancelReason, '[')}">
+                                                        ${fn:trim(fn:substringBefore(subOrder.cancelReason, '['))}
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        ${not empty subOrder.cancelReason ? subOrder.cancelReason : "Khách hàng từ chối nhận hoa quả hoặc không liên lạc được khi giao."}
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
                                         </div>
-                                        <div class="text-slate-800 leading-relaxed font-semibold pl-4 border-l-2 ${isDamageIncident ? 'border-rose-500' : 'border-amber-500'}">
-                                            ${not empty subOrder.cancelReason ? subOrder.cancelReason : "Khách hàng từ chối nhận hoa quả hoặc không liên lạc được khi giao."}
-                                        </div>
+
+                                        <c:if test="${not empty subOrder.cancelReason and fn:contains(subOrder.cancelReason, '[')}">
+                                            <c:set var="extractedRes" value="${fn:trim(fn:substringBefore(fn:substringAfter(subOrder.cancelReason, '['), ']'))}" />
+                                            <c:if test="${not empty extractedRes}">
+                                                <div class="pt-2.5 border-t border-slate-100">
+                                                    <div class="font-extrabold text-emerald-800 flex items-center gap-1.5 mb-1">
+                                                        <i class="fa-solid fa-clipboard-check text-emerald-600"></i>
+                                                        <span>Kết quả kiểm định &amp; xử lý:</span>
+                                                    </div>
+                                                    <div class="text-[11px] font-semibold text-emerald-950 bg-emerald-50/80 p-2.5 rounded-lg border border-emerald-200 pl-3 leading-relaxed">
+                                                        ${extractedRes}
+                                                    </div>
+                                                </div>
+                                            </c:if>
+                                        </c:if>
                                     </div>
 
                                     <c:choose>
-                                        <%-- ĐÃ XỬ LÝ KIỂM ĐỊNH XONG --%>
+                                        
                                         <c:when test="${not empty subOrder.cancelReason and subOrder.cancelReason.contains('[ĐÃ XỬ LÝ')}">
                                             <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-3 shadow-2xs">
                                                 <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-base shrink-0 font-bold">
@@ -380,7 +407,7 @@
                                             </div>
                                         </c:when>
 
-                                        <%-- KỊCH BẢN 1: TÀI XẾ BÁO HỎNG / DẬP NÁT -> HƯỚNG XỬ LÝ CHÍNH LÀ TIÊU HỦY --%>
+                                        
                                         <c:when test="${isDamageIncident}">
                                             <div class="p-4 rounded-xl border border-rose-300 bg-white space-y-3 shadow-2xs">
                                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -399,7 +426,7 @@
                                                     </button>
                                                 </div>
 
-                                                <!-- Trường hợp ngoại lệ nếu tài xế báo nhầm hoặc khách viện cớ -->
+                                                
                                                 <div class="pt-2.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-500">
                                                     <span>Trường hợp mở thùng thấy hoa quả vẫn còn tươi nguyên (tài xế báo nhầm hoặc khách viện cớ)?</span>
                                                     <form action="${pageContext.request.contextPath}/shop/order-detail" method="POST" class="m-0" onsubmit="return confirm('Bạn xác nhận đã kiểm tra thực tế và hoa quả vẫn còn tươi nguyên 100% để nhập lại kho bán?');">
@@ -414,10 +441,10 @@
                                             </div>
                                         </c:when>
 
-                                        <%-- KỊCH BẢN 2: TÀI XẾ KHÔNG PHÁT ĐƯỢC (VẮNG NHÀ, SAI ĐỊA CHỈ, ĐỔI Ý) -> 2 LỰA CHỌN THEO ĐỘ TƯƠI --%>
+                                        
                                         <c:otherwise>
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                                                <!-- LỰA CHỌN 1: ĐÁ GEL CÒN LẠNH, QUẢ CÒN TƯƠI -->
+                                                
                                                 <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 flex flex-col justify-between space-y-3">
                                                     <div class="space-y-1">
                                                         <div class="flex items-center gap-2 text-emerald-800 font-extrabold text-xs">
@@ -439,7 +466,7 @@
                                                     </form>
                                                 </div>
 
-                                                <!-- LỰA CHỌN 2: CHUYỂN HOÀN QUÁ LÂU ĐÁ TAN QUẢ HỎNG -->
+                                                
                                                 <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/40 flex flex-col justify-between space-y-3">
                                                     <div class="space-y-1">
                                                         <div class="flex items-center gap-2 text-rose-800 font-extrabold text-xs">
@@ -461,7 +488,7 @@
                                 </div>
                             </c:when>
 
-                            <%-- CASE 6: SẴN SÀNG GIAO / CHỜ XE LẠNH / ĐANG VẬN CHUYỂN --%>
+                            
                             <c:otherwise>
                                 <div class="bg-white rounded-2xl border border-emerald-200 p-6 shadow-xs bg-emerald-50/20">
                                     <div class="flex items-center justify-between pb-3 border-b border-emerald-100">
@@ -470,23 +497,28 @@
                                                 <i class="fa-solid fa-truck-fast"></i>
                                             </div>
                                             <div>
-                                                <h2 class="text-base font-extrabold text-slate-900">Sẵn Sàng Giao - Chờ Bàn Giao Xe Lạnh</h2>
-                                                <p class="text-[11px] text-slate-500">Kiện hàng đã hoàn tất đóng gói, bảo quản nhiệt độ mát 2-5°C chờ tài xế</p>
+                                                <h2 class="text-base font-extrabold text-slate-900">Kiện Hàng Đang Được Vận Chuyển</h2>
+                                                <p class="text-[11px] text-slate-500">Tài xế đang vận chuyển kiện hàng hoa quả tươi bảo ôn 2-5°C đến người mua</p>
                                             </div>
                                         </div>
                                         <span class="px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                            CHỜ BÀN GIAO
+                                            ĐANG VẬN CHUYỂN
                                         </span>
                                     </div>
                                     <div class="mt-4 p-4 rounded-xl bg-white border border-emerald-200 text-xs text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div>
                                             <div class="font-bold text-slate-900">Vận chuyển lạnh Gốc Vườn Express (GVX)</div>
                                             <div class="text-slate-500 text-[11px] mt-0.5">Mã vận đơn: <b class="font-mono text-emerald-800 text-xs">${not empty subOrder.trackingNumber ? subOrder.trackingNumber : subOrder.subOrderCode}</b></div>
+                                            <c:if test="${not empty subOrder.driverName}">
+                                                <div class="text-[11px] text-slate-500 mt-1">
+                                                    Tài xế phụ trách: <b class="text-slate-800">${subOrder.driverName}</b> <c:if test="${not empty subOrder.driverPhone}">(${subOrder.driverPhone})</c:if>
+                                                </div>
+                                            </c:if>
                                         </div>
                                         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 font-extrabold text-xs">
                                             <i class="fa-solid fa-snowflake"></i> Thùng bảo ôn 2-5°C
                                         </div>
                                     </div>
-                                </div>
+</div>
                             </c:otherwise>
                         </c:choose>

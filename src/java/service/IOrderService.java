@@ -61,8 +61,6 @@ public interface IOrderService {
 
     List<Coupon> getAvailableShopCoupons(long shopId);
 
-    List<Order> getOrdersByCustomerId(long customerId);
-
     List<SubOrder> getSubOrdersByCustomerId(long customerId);
 
     boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception;

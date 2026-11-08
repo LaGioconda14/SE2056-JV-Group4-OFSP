@@ -1,9 +1,9 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 <fmt:setLocale value="vi_VN" />
 
-                        <!-- Recipient Details -->
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                                 <div class="flex items-center gap-2">
@@ -43,24 +43,62 @@
                                 </div>
                             </div>
 
-                            <div class="mt-3.5 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                                <div class="flex items-center gap-1.5 text-slate-700 font-bold text-[11px] mb-1">
-                                    <i class="fa-regular fa-comment-dots"></i> GHI CHÚ GIAO HÀNG TỪ KHÁCH:
+                            <c:set var="rawSlot" value="${subOrder.deliverySlot}" />
+                            <c:set var="slotOnly" value="${rawSlot}" />
+                            <c:set var="noteOnly" value="" />
+                            <c:if test="${not empty rawSlot and fn:contains(rawSlot, 'Lời nhắn:')}">
+                                <c:set var="noteOnly" value="${fn:trim(fn:substringAfter(rawSlot, 'Lời nhắn:'))}" />
+                                <c:choose>
+                                    <c:when test="${fn:contains(rawSlot, '• Lời nhắn:')}">
+                                        <c:set var="slotOnly" value="${fn:trim(fn:substringBefore(rawSlot, '• Lời nhắn:'))}" />
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:set var="slotOnly" value="${fn:trim(fn:substringBefore(rawSlot, 'Lời nhắn:'))}" />
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:if>
+
+                            <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
+                                <div class="flex items-center gap-1.5 text-slate-700 font-bold text-[11px] pb-2 border-b border-slate-200/80">
+                                    <i class="fa-regular fa-comment-dots text-emerald-600"></i> GHI CHÚ GIAO HÀNG TỪ KHÁCH:
                                 </div>
-                                <p class="text-[11px] text-slate-600 leading-relaxed italic">
-                                    <c:choose>
-                                        <c:when test="${not empty subOrder.deliverySlot}">
-                                            Khung giờ giao yêu cầu: <strong class="text-slate-800 not-italic">${subOrder.deliverySlot}</strong>
-                                        </c:when>
-                                        <c:otherwise>
+
+                                <c:choose>
+                                    <c:when test="${not empty rawSlot}">
+                                        <div>
+                                            <div class="text-[10px] font-bold text-slate-400 uppercase">Khung giờ giao yêu cầu:</div>
+                                            <div class="text-xs font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+                                                <i class="fa-regular fa-clock text-emerald-600"></i>
+                                                <span>${not empty slotOnly ? slotOnly : "Tiêu chuẩn"}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="pt-2.5 border-t border-slate-200/60">
+                                            <div class="text-[10px] font-bold text-slate-400 uppercase">Lời nhắn từ khách:</div>
+                                            <c:choose>
+                                                <c:when test="${not empty noteOnly}">
+                                                    <div class="text-xs font-medium text-slate-800 bg-white p-2.5 rounded-lg border border-slate-200 mt-1 break-words shadow-2xs">
+                                                        <i class="fa-regular fa-message text-amber-500 mr-1"></i>
+                                                        ${noteOnly}
+                                                    </div>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="text-[11px] text-slate-400 italic mt-0.5">
+                                                        (Khách hàng không để lại lời nhắn)
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <p class="text-[11px] text-slate-400 italic">
                                             (Khách hàng không để lại ghi chú cho đơn hàng này)
-                                        </c:otherwise>
-                                    </c:choose>
-                                </p>
+                                        </p>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </div>
 
-                        <!-- Driver Info Card (when driver is already assigned) -->
                         <c:if test="${not empty subOrder.driverName}">
                             <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">

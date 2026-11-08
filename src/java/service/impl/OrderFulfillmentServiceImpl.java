@@ -19,32 +19,11 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
     }
 
     @Override
-    public String getFirstSubOrderCode(long shopId) {
-        return fulfillmentDAO.getFirstSubOrderCode(shopId);
-    }
-
-    @Override
-    public boolean cancelSubOrder(String subOrderCode, String cancelReason, Long cancelledBy) {
-        if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
-            return false;
-        }
-        return fulfillmentDAO.cancelSubOrder(subOrderCode.trim(), cancelReason, cancelledBy);
-    }
-
-    @Override
     public boolean cancelSubOrderWithRestock(String subOrderCode, String cancelReason, Long cancelledBy) {
         if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
             return false;
         }
         return fulfillmentDAO.cancelSubOrderWithRestock(subOrderCode.trim(), cancelReason, cancelledBy);
-    }
-
-    @Override
-    public boolean cancelSubOrderOutOfStock(String subOrderCode, String cancelReason, Long cancelledBy) {
-        if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
-            return false;
-        }
-        return fulfillmentDAO.cancelSubOrderOutOfStock(subOrderCode.trim(), cancelReason, cancelledBy);
     }
 
     @Override
@@ -68,11 +47,6 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
             }
         }
         return fulfillmentDAO.updateSubOrderStatus(subOrderCode.trim(), newStatus);
-    }
-
-    @Override
-    public boolean isSubOrderOwnedByShop(long subOrderId, long shopId) {
-        return fulfillmentDAO.isSubOrderOwnedByShop(subOrderId, shopId);
     }
 
     @Override

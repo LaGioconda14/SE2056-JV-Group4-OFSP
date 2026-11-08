@@ -23,23 +23,8 @@ public class DriverServiceImpl implements IDriverService {
     }
 
     @Override
-    public DriverProfile getDriverProfile(long driverId) {
-        return driverDAO.getDriverProfile(driverId);
-    }
-
-    @Override
-    public List<DriverProfile> getAllDriverProfiles(String approvalStatus, String keyword) {
-        return driverDAO.getAllDriverProfiles(approvalStatus, keyword);
-    }
-
-    @Override
     public List<DriverProfile> getDriversByShopId(long shopId, String statusFilter, String keyword) {
         return driverDAO.getDriversByShopId(shopId, statusFilter, keyword);
-    }
-
-    @Override
-    public List<DriverProfile> getAvailableDriversByShopId(long shopId) {
-        return driverDAO.getAvailableDriversByShopId(shopId);
     }
 
     @Override

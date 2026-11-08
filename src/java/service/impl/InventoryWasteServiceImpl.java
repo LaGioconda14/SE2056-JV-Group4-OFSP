@@ -38,11 +38,6 @@ public class InventoryWasteServiceImpl implements IInventoryWasteService {
     }
 
     @Override
-    public boolean logOrderCancellationWaste(long subOrderId, String reason, Long loggedBy) {
-        return wasteDAO.logOrderCancellationWaste(subOrderId, reason, loggedBy);
-    }
-
-    @Override
     public boolean logOrderCancellationWaste(long subOrderId, String reason, Long loggedBy, Map<Long, Integer> wastedQtyMap) {
         return wasteDAO.logOrderCancellationWaste(subOrderId, reason, loggedBy, wastedQtyMap);
     }
