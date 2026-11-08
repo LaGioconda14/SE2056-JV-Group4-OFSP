@@ -225,10 +225,6 @@
                             <h1 class="text-2xl font-black text-slate-900 tracking-tight">Quản lý Kho Hàng & Lô Nông Sản</h1>
                             <p class="text-xs text-slate-500 font-medium mt-1">Theo dõi tồn kho theo thời gian thực, hạn sử dụng và lịch sử biến động lô hàng.</p>
                         </div>
-                        <div class="flex items-center flex-wrap gap-2.5">
-                            <button type="button" onclick="openModal('modalAdjust')" class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all"><i class="fa-solid fa-minus text-rose-500"></i>Trừ hàng hỏng / Dập</button>
-                            <button type="button" onclick="openRestockModal(null)" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all"><i class="fa-solid fa-plus"></i>Nhập Kho Lô Mới</button>
-                        </div>
                     </div>
 
                     <!-- 4 Thẻ Thống Kê Tổng Quan -->

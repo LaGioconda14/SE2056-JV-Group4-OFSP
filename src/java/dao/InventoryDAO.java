@@ -449,7 +449,7 @@ public class InventoryDAO extends DBContext {
                         "       END AS status_text, " +
                         "       pv.sku, pv.variant_name, p.name AS product_name, " +
                         "       c.category_id, c.category_name, product_image.image_url " +
-                        "FROM product_batches b " +
+                        "FROM product_batches b " + 
                         "JOIN product_variants pv ON b.variant_id = pv.variant_id " +
                         "JOIN products p ON pv.product_id = p.product_id " +
                         "LEFT JOIN categories c ON p.category_id = c.category_id " +

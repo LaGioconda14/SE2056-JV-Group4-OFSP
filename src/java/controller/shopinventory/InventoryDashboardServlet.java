@@ -53,14 +53,14 @@ public class InventoryDashboardServlet extends HttpServlet {
         }
 
         String keyword = request.getParameter("keyword");
-String categoryId = request.getParameter("category");
+        String categoryId = request.getParameter("category");
 
 // 2. Lấy danh sách lô nông sản theo đúng Shop ID kết hợp Search & Filter
-List<ProductBatch> allBatches = inventoryService.searchAndFilterBatches(shopId, keyword, categoryId);
+        List<ProductBatch> allBatches = inventoryService.searchAndFilterBatches(shopId, keyword, categoryId);
 
 // 3. Lấy toàn bộ danh mục để đổ vào Dropdown bộ lọc
-List<Category> categoryList = categoryDAO.getAllCategories();
-request.setAttribute("CATEGORY_LIST", categoryList);
+        List<Category> categoryList = categoryDAO.getAllCategories();
+        request.setAttribute("CATEGORY_LIST", categoryList);
 
         long totalStock = 0;
         int lowStockCount = 0;

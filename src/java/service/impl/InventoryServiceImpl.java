@@ -118,8 +118,8 @@ public class InventoryServiceImpl implements IInventoryService {
     }
 
     @Override
-public List<ProductBatch> searchAndFilterBatches(long shopId, String keyword, String categoryId) {
-    return inventoryDAO.searchAndFilterBatchesByShop(shopId, keyword, categoryId);
-}
+    public List<ProductBatch> searchAndFilterBatches(long shopId, String keyword, String categoryId) {
+        return inventoryDAO.searchAndFilterBatchesByShop(shopId, keyword, categoryId);
+    }
 
 }
