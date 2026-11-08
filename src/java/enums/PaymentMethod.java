@@ -1,5 +1,7 @@
 package enums;
 
+import java.util.Locale;
+
 public enum PaymentMethod {
     COD,
     CARD,
@@ -12,10 +14,9 @@ public enum PaymentMethod {
             return null;
         }
         try {
-            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return null;
         }
     }
 }
-

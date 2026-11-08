@@ -30,7 +30,7 @@ public class OrderConfirmationServlet extends HttpServlet {
 
         String orderIdParam = request.getParameter("orderId");
         if (orderIdParam == null || orderIdParam.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            response.sendRedirect(request.getContextPath() + "/home");
             return;
         }
 
@@ -39,7 +39,7 @@ public class OrderConfirmationServlet extends HttpServlet {
             Order order = orderService.getOrderDetails(orderId);
 
             if (order == null || order.getCustomerId() != user.getId()) {
-                response.sendRedirect(request.getContextPath() + "/home.jsp");
+                response.sendRedirect(request.getContextPath() + "/home");
                 return;
             }
 
@@ -47,7 +47,7 @@ public class OrderConfirmationServlet extends HttpServlet {
             request.getRequestDispatcher("/views/order/order-confirmation.jsp").forward(request, response);
 
         } catch (NumberFormatException ex) {
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            response.sendRedirect(request.getContextPath() + "/home");
         }
     }
 }

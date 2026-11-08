@@ -162,7 +162,7 @@
 
                     <div class="mk-card mk-card-pad flex flex-col gap-4">
                         <h2 class="mk-h2"><i class="fa-solid fa-apple-whole"></i> Sản phẩm tham gia <span class="text-red-500">*</span></h2>
-                        <jsp:include page="/views/shop/layout/mk-product-picker.jsp" />
+                        <jsp:include page="/views/shop/components/marketing/product-picker-modal.jsp" />
                     </div>
                 </div>
 

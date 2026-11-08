@@ -19,7 +19,7 @@
     <main class="shop-main-wrapper">
         <div class="shop-content-container">
 
-            <jsp:include page="/views/shop/layout/mk-flash.jsp" />
+            <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
             <nav class="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <span>Kênh Người Bán</span>
@@ -140,7 +140,7 @@
                                                 <fmt:formatDate value="${v.createdAt}" pattern="dd/MM/yyyy HH:mm"/>
                                             </td>
                                             <td>
-                                                <jsp:include page="/views/shop/layout/mk-status.jsp"><jsp:param name="status" value="${v.status}"/></jsp:include>
+                                                <jsp:include page="/views/shop/components/marketing/status-badge.jsp"><jsp:param name="status" value="${v.status}"/></jsp:include>
                                             </td>                                           
                                             <td>
                                                 <div class="flex items-center justify-end gap-1.5">

@@ -1,5 +1,7 @@
 package enums;
 
+import java.util.Locale;
+
 public enum PaymentStatus {
     PENDING,
     PAID,
@@ -11,10 +13,9 @@ public enum PaymentStatus {
             return null;
         }
         try {
-            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return null;
         }
     }
 }
-

@@ -16,14 +16,15 @@
         <jsp:param name="active" value="products" />
     </jsp:include>
 
-    <div class="shop-main-wrapper">
-        <!-- Header Layout -->
-        <jsp:include page="/views/shop/layout/header.jsp">
-            <jsp:param name="searchAction" value="/shop/products" />
-        </jsp:include>
+    <!-- Header Layout -->
+    <jsp:include page="/views/shop/layout/header.jsp">
+        <jsp:param name="searchAction" value="/shop/products" />
+    </jsp:include>
 
-        <main class="shop-content-container">
+    <main class="shop-main-wrapper">
+        <div class="shop-content-container">
             <div class="w-full max-w-7xl mx-auto space-y-6">
+                <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
                 <!-- Breadcrumb -->
                 <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold mb-1">
@@ -154,7 +155,7 @@
                     </div>
                 </section>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 </body>
 </html>

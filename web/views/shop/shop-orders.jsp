@@ -17,11 +17,11 @@
             <jsp:param name="active" value="orders" />
         </jsp:include>
 
-        <div class="shop-main-wrapper">
+        <jsp:include page="/views/shop/layout/header.jsp" />
 
-            <jsp:include page="/views/shop/layout/header.jsp" />
-
-            <main class="shop-content-container">
+        <main class="shop-main-wrapper">
+            <div class="shop-content-container">
+                <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -223,8 +223,8 @@
                     </div>
                 </div>
 
-            </main>
-        </div>
+            </div>
+        </main>
 
     </body>
 </html>

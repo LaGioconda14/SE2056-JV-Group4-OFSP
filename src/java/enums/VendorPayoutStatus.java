@@ -1,36 +1,19 @@
 package enums;
 
-/**
- * Trạng thái kỳ quyết toán doanh thu cho nhà vườn (vendor_payouts.status).
- */
+import java.util.Locale;
+
 public enum VendorPayoutStatus {
-    PENDING("Chờ quyết toán", "bg-amber-100 text-amber-800 border-amber-200"),
-    PROCESSING("Đang chuyển khoản", "bg-blue-100 text-blue-800 border-blue-200"),
-    COMPLETED("Đã thanh toán", "bg-emerald-100 text-emerald-800 border-emerald-200"),
-    REJECTED("Từ chối quyết toán", "bg-rose-100 text-rose-800 border-rose-200");
-
-    private final String displayName;
-    private final String badgeClass;
-
-    VendorPayoutStatus(String displayName, String badgeClass) {
-        this.displayName = displayName;
-        this.badgeClass = badgeClass;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public String getBadgeClass() {
-        return badgeClass;
-    }
+    PENDING,
+    PROCESSING,
+    COMPLETED,
+    REJECTED;
 
     public static VendorPayoutStatus from(String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.isBlank()) {
             return null;
         }
         try {
-            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return null;
         }

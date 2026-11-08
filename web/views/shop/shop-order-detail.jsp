@@ -18,11 +18,12 @@
             <jsp:param name="active" value="orders" />
         </jsp:include>
 
-        <div class="shop-main-wrapper">
+
 
             <jsp:include page="/views/shop/layout/header.jsp" />
 
-            <main class="shop-content-container">
+        <main class="shop-main-wrapper">
+            <div class="shop-content-container">
 
                 <!-- 1. Header & Breadcrumb -->
                 <div class="flex items-center justify-between text-xs text-slate-500">

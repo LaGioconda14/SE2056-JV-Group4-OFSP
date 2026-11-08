@@ -95,8 +95,6 @@ public class HomeServlet extends HttpServlet {
         request.setAttribute("wishlistIds", wishlistIds);
         request.setAttribute("wishlistCount", wishlistIds.size());
 
-        // KIỂM TRA LẠI: Nếu file home.jsp nằm ở gốc web, hãy dùng "/home.jsp" 
-        // Nếu nằm trong thư mục views/customer/home.jsp thì chỉnh lại cho khớp.
         request.getRequestDispatcher("/views/home.jsp").forward(request, response);
     }
 

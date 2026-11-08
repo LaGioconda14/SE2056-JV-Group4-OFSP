@@ -1,5 +1,7 @@
 package enums;
 
+import java.util.Locale;
+
 public enum SubOrderStatus {
     NEW,
     CONFIRMED,
@@ -14,10 +16,9 @@ public enum SubOrderStatus {
             return null;
         }
         try {
-            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return null;
         }
     }
 }
-

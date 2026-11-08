@@ -10,27 +10,15 @@
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-        <jsp:param name="active" value="add" />
+            <jsp:param name="active" value="add" />
         </jsp:include>
 
-        <div class="shop-main-wrapper">
+        <jsp:include page="/views/shop/layout/header.jsp" />
 
-            <jsp:include page="/views/shop/layout/header.jsp" />
-
-            <main class="shop-content-container">
+        <main class="shop-main-wrapper">
+            <div class="shop-content-container">
                 <div class="w-full max-w-7xl mx-auto space-y-6">
-
-                    <c:if test="${not empty errorMessage}">
-                        <div class="bg-rose-50 border border-rose-300 text-rose-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs">
-                            <div class="flex items-center gap-3">
-                                <i class="fa-solid fa-circle-exclamation text-rose-600 text-base"></i>
-                                <span class="text-xs font-bold">${errorMessage}</span>
-                            </div>
-                            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-900">
-                                <i class="fa-solid fa-xmark text-sm"></i>
-                            </button>
-                        </div>
-                    </c:if>
+                    <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
                     <div class="flex flex-col gap-3">
                         <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold">
@@ -371,10 +359,9 @@
                             </button>
                         </div>
                     </form>
-
+                </div>
             </div>
         </main>
-        </div>
 
     </body>
 </html>

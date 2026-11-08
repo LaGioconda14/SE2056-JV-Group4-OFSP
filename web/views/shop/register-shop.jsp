@@ -328,7 +328,7 @@
     <jsp:include page="/views/common/site-footer.jsp" />
 
     <%-- 2 modal điều khoản (cuộn được) --%>
-    <jsp:include page="/views/shop/terms-modals.jsp" />
+    <jsp:include page="/views/shop/components/terms-modals.jsp" />
 
 </body>
 </html>

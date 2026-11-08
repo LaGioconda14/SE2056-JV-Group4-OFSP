@@ -16,20 +16,6 @@ import jakarta.servlet.http.HttpSession;
 import model.User;
 import model.VoucherCheckResult;
 
-/**
- * API cho trang checkout: kiểm tra mã voucher khách nhập và trả về số tiền giảm (JSON).
- *
- * POST /voucher/validate
- *   code      : mã voucher khách nhập
- *   shopId    : shop của đơn con đang áp mã
- *   subtotal  : tiền hàng của đơn con (đã trừ promotion)
- *   items     : (tuỳ chọn) "productId:thanhTien,productId:thanhTien" - cần để áp voucher theo sản phẩm
- *
- * Kết quả: {"valid":true,"message":"...","couponId":1,"code":"ABC","discount":30000,"discountType":"PERCENTAGE"}
- *
- * Lưu ý: API chỉ KIỂM TRA, chưa trừ lượt. Khi đặt hàng thành công, checkout gọi
- * VoucherDAO.redeem(conn, couponId, orderId, customerId, discount) trong cùng transaction tạo đơn.
- */
 @WebServlet(name = "VoucherApiServlet", urlPatterns = {"/voucher/validate"})
 public class VoucherApiServlet extends HttpServlet {
 
@@ -89,7 +75,6 @@ public class VoucherApiServlet extends HttpServlet {
                     BigDecimal amount = new BigDecimal(kv[1].trim());
                     map.merge(pid, amount, BigDecimal::add);
                 } catch (NumberFormatException ignored) {
-                    // bỏ qua phần tử sai định dạng
                 }
             }
         }

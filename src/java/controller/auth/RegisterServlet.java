@@ -46,16 +46,11 @@ public class RegisterServlet extends HttpServlet {
 
         try {
             userService.register(fullName, email, phone, password, confirmPassword);
-
             HttpSession session = request.getSession(true);
-
-            // Đăng nhập luôn cho người vừa đăng ký, rồi chuyển sang màn hình chọn vai trò
-            // (Khách hàng / Người bán). Tài khoản mới luôn có vai trò CUSTOMER.
             User newUser = null;
             try {
                 newUser = userService.login(email.trim(), password);
             } catch (Exception loginEx) {
-                // Không tự đăng nhập được thì quay về cách cũ: yêu cầu đăng nhập thủ công
             }
             if (newUser != null) {
                 session.setAttribute("user", newUser);

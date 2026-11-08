@@ -185,7 +185,7 @@ public class LoginServlet extends HttpServlet {
 
     private void redirectByUserRole(User user, HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (user == null || user.getRole() == null) {
-            response.sendRedirect(request.getContextPath() + "/home.jsp");
+            response.sendRedirect(request.getContextPath() + "/home");
             return;
         }
 

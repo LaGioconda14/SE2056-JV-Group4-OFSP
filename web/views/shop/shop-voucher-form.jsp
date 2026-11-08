@@ -134,7 +134,7 @@
                             <label><input type="radio" name="appliesTo" value="PRODUCTS" ${voucher.appliesTo == 'PRODUCTS' ? 'checked' : ''}><span><i class="fa-solid fa-apple-whole"></i> Sản phẩm được chọn</span></label>
                         </div>
                         <div id="scopeProducts" style="display:none;">
-                            <jsp:include page="/views/shop/layout/mk-product-picker.jsp" />
+                            <jsp:include page="/views/shop/components/marketing/product-picker-modal.jsp" />
                         </div>
                     </div>
                 </div>

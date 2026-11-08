@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${not empty shop.shopName ? shop.shopName : 'Nông Trại Hữu Cơ Mộc Châu'} - FreshFruit Storefront</title>
+    <title>${not empty shop.shopName ? shop.shopName : "Gian hàng nông sản"} - Gốc Vườn</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Plus Jakarta Sans -->
@@ -35,107 +35,7 @@
 
 
 
-    <!-- 2. MAIN HEADER -->
-    <header class="sticky top-0 z-40 bg-white shadow-sm border-b border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-3.5">
-            <div class="flex items-center justify-between gap-4">
-                
-                <!-- Logo -->
-                <a href="${pageContext.request.contextPath}/home" class="flex items-center gap-2.5 flex-shrink-0 group">
-                    <div class="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center p-1.5 border border-emerald-200 shadow-xs">
-                        <svg viewBox="0 0 100 100" class="w-full h-full">
-                            <circle cx="50" cy="56" r="32" fill="#16a34a"/>
-                            <path d="M 28 45 Q 36 34 50 34" stroke="#ffffff" stroke-width="6" stroke-linecap="round" fill="none"/>
-                            <circle cx="68" cy="46" r="5" fill="#ffffff"/>
-                            <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
-                        </svg>
-                    </div>
-                    <span class="text-xl sm:text-2xl font-black tracking-tight text-gray-900">
-                        Fresh<span class="text-emerald-600">Fruit</span>
-                    </span>
-                </a>
-
-                <!-- Search Bar with Category Select -->
-                <div class="flex-1 max-w-2xl mx-4 hidden md:block">
-                    <form action="${pageContext.request.contextPath}/search" method="GET" class="flex items-center bg-gray-50 border border-gray-200 hover:border-emerald-500 focus-within:border-emerald-600 rounded-full p-1 transition shadow-inner">
-                        <div class="relative pl-3 pr-2 py-1 border-r border-gray-200">
-                            <select name="categoryId" class="bg-transparent text-xs font-bold text-gray-700 focus:outline-none cursor-pointer pr-4">
-                                <option value="">Tất Cả Quả</option>
-                                <c:forEach var="c" items="${categories}">
-                                    <option value="${c.categoryId}">${c.categoryName}</option>
-                                </c:forEach>
-                            </select>
-                        </div>
-                        <input type="text" name="query" placeholder="Tìm kiếm dâu tây, cam canh mật ong, mận tam hoa, organic..."
-                               class="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-gray-800 focus:outline-none placeholder-gray-400">
-                        <button type="submit" class="w-9 h-9 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full flex items-center justify-center transition shadow-sm flex-shrink-0">
-                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Right Actions: Wishlist, Cart & Profile -->
-                <div class="flex items-center gap-3.5">
-                    <!-- Wishlist button -->
-                    <a href="#" class="relative p-2 text-gray-500 hover:text-emerald-700 transition" title="Danh sách yêu thích">
-                        <i class="fa-regular fa-heart text-xl"></i>
-                        <span class="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
-                    </a>
-
-                    <!-- Cart button with total amount -->
-                    <a href="${pageContext.request.contextPath}/cart" class="flex items-center gap-2.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 px-3.5 py-1.5 rounded-full transition group">
-                        <div class="relative">
-                            <i class="fa-solid fa-basket-shopping text-emerald-800 text-lg"></i>
-                            <span class="absolute -top-1.5 -right-2 bg-emerald-700 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-black">
-                                ${sessionScope.cartSize != null ? sessionScope.cartSize : 1}
-                            </span>
-                        </div>
-                        <div class="hidden sm:block text-left text-xs leading-tight">
-                            <span class="block text-[10px] text-gray-500 font-semibold uppercase">Giỏ hàng</span>
-                            <span class="font-extrabold text-emerald-800">285.000₫</span>
-                        </div>
-                    </a>
-
-                    <!-- User Account / Avatar -->
-                    <c:choose>
-                        <c:when test="${empty sessionScope.account and empty sessionScope.user}">
-                            <a href="${pageContext.request.contextPath}/login" class="text-xs font-bold bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-full transition shadow-xs">
-                                Đăng Nhập
-                            </a>
-                        </c:when>
-                        <c:otherwise>
-                            <c:set var="currentUser" value="${not empty sessionScope.account ? sessionScope.account : sessionScope.user}" />
-                            <div class="relative group cursor-pointer">
-                                <img src="${not empty currentUser.avatar ? currentUser.avatar : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop'}" 
-                                     alt="Avatar" class="w-9 h-9 rounded-full object-cover border border-emerald-500 shadow-xs">
-                                <!-- Dropdown -->
-                                <div class="absolute right-0 top-full pt-2 w-52 hidden group-hover:block z-50">
-                                    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-2 space-y-1 text-xs">
-                                        <div class="px-3 py-2 border-b border-gray-100">
-                                            <p class="font-bold text-gray-900 truncate">${currentUser.fullName}</p>
-                                            <p class="text-[11px] text-gray-400 truncate">${currentUser.email}</p>
-                                        </div>
-                                        <c:if test="${currentUser.role eq 'SHOP_OWNER'}">
-                                            <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center gap-2 px-3 py-2 font-bold text-emerald-700 bg-emerald-50 rounded-xl hover:bg-emerald-100 transition">
-                                                <i class="fa-solid fa-store"></i> Kênh Quản Lý Shop
-                                            </a>
-                                        </c:if>
-                                        <a href="${pageContext.request.contextPath}/profile" class="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition">
-                                            <i class="fa-solid fa-user text-gray-400"></i> Tài khoản của tôi
-                                        </a>
-                                        <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-xl font-semibold transition">
-                                            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </c:otherwise>
-                    </c:choose>
-
-                </div>
-            </div>
-        </div>
-    </header>
+    <jsp:include page="/views/common/header.jsp" />
 
     <!-- 3. SUB-NAV BAR -->
     <nav class="bg-white border-b border-gray-100 hidden md:block">
@@ -434,83 +334,7 @@
         </div>
     </section>
 
-    <!-- 9. FOOTER -->
-    <footer id="footer" class="bg-gray-950 text-gray-300 pt-16 pb-8 border-t border-gray-800 mt-auto">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
-                <!-- Brand Bio -->
-                <div>
-                    <div class="flex items-center gap-2.5 mb-4">
-                        <div class="w-9 h-9 bg-emerald-50 rounded-full flex items-center justify-center p-1">
-                            <svg viewBox="0 0 100 100" class="w-full h-full">
-                                <circle cx="50" cy="56" r="32" fill="#16a34a"/>
-                                <path d="M 28 45 Q 36 34 50 34" stroke="#ffffff" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                <circle cx="68" cy="46" r="5" fill="#ffffff"/>
-                                <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
-                            </svg>
-                        </div>
-                        <span class="text-xl font-extrabold text-white">Fresh<span class="text-emerald-500">Fruit</span></span>
-                    </div>
-                    <p class="text-xs text-gray-400 mb-6 leading-relaxed">
-                        Nông sản tươi sạch tuyển chọn từ các nông trại hữu cơ hàng đầu, thu hoạch chín tự nhiên và giao nhanh trong ngày.
-                    </p>
-                    <div class="flex items-center space-x-3 text-gray-400 text-sm">
-                        <a href="#" class="w-8 h-8 rounded-full bg-gray-900 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition"><i class="fa-brands fa-facebook-f"></i></a>
-                        <a href="#" class="w-8 h-8 rounded-full bg-gray-900 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition"><i class="fa-brands fa-instagram"></i></a>
-                        <a href="#" class="w-8 h-8 rounded-full bg-gray-900 hover:bg-emerald-600 hover:text-white flex items-center justify-center transition"><i class="fa-brands fa-tiktok"></i></a>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div>
-                    <h4 class="text-white font-bold text-sm mb-4">Liên Kết Nhanh</h4>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="${pageContext.request.contextPath}/home" class="hover:text-emerald-400 transition">Trang Chủ</a></li>
-                        <li><a href="${pageContext.request.contextPath}/store" class="hover:text-emerald-400 transition">Gian Hàng Nông Trại</a></li>
-                        <li><a href="#shop-products" class="hover:text-emerald-400 transition">Tất Cả Sản Phẩm</a></li>
-                        <li><a href="#reviews" class="hover:text-emerald-400 transition">Khách Hàng Đánh Giá</a></li>
-                    </ul>
-                </div>
-
-                <!-- Customer Service -->
-                <div>
-                    <h4 class="text-white font-bold text-sm mb-4">Chăm Sóc Khách Hàng</h4>
-                    <ul class="space-y-2 text-xs">
-                        <li><a href="#" class="hover:text-emerald-400 transition">Chính Sách Đổi Trả 1-1</a></li>
-                        <li><a href="#" class="hover:text-emerald-400 transition">Tiêu Chuẩn Chuỗi Lạnh</a></li>
-                        <li><a href="#" class="hover:text-emerald-400 transition">Hướng Dẫn Mua Hàng</a></li>
-                        <li><a href="#" class="hover:text-emerald-400 transition">Câu Hỏi Thường Gặp (FAQs)</a></li>
-                        <li><a href="#" class="hover:text-emerald-400 transition">Hỗ Trợ Trực Tuyến 24/7</a></li>
-                    </ul>
-                </div>
-
-                <!-- Contact & Payment -->
-                <div>
-                    <h4 class="text-white font-bold text-sm mb-4">Liên Hệ & Thanh Toán</h4>
-                    <ul class="space-y-2 text-xs text-gray-400 mb-4">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-phone text-emerald-500"></i> +1 (800) 673-7438</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-envelope text-emerald-500"></i> care@freshfruit.com</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-emerald-500"></i> Mộc Châu, Sơn La &bull; TP. Hà Nội</li>
-                    </ul>
-                    <div class="flex items-center space-x-2 text-xs text-gray-400">
-                        <span class="bg-gray-900 px-2 py-1 rounded border border-gray-800">VISA</span>
-                        <span class="bg-gray-900 px-2 py-1 rounded border border-gray-800">MasterCard</span>
-                        <span class="bg-gray-900 px-2 py-1 rounded border border-gray-800">Apple Pay</span>
-                        <span class="bg-gray-900 px-2 py-1 rounded border border-gray-800">VNPAY</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-8 border-t border-gray-800/80 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-4">
-                <p>&copy; 2026 FreshFruit Marketplace Inc. All rights reserved.</p>
-                <div class="flex space-x-6">
-                    <a href="#" class="hover:text-gray-400">Chính sách bảo mật</a>
-                    <a href="#" class="hover:text-gray-400">Điều khoản sử dụng</a>
-                    <a href="#" class="hover:text-gray-400">Sơ đồ trang</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <jsp:include page="/views/common/site-footer.jsp" />
 
     <!-- Interactive script for Follow Shop button -->
     <script>

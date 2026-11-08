@@ -1,5 +1,7 @@
 package enums;
 
+import java.util.Locale;
+
 public enum DeliveryStatus {
     ASSIGNING,
     ASSIGNED,
@@ -15,10 +17,9 @@ public enum DeliveryStatus {
             return null;
         }
         try {
-            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return null;
         }
     }
 }
-
