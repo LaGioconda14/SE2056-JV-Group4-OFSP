@@ -68,4 +68,30 @@
     nbproject/build-impl.xml file. 
 
     -->
+
+    <target name="-do-test-run" depends="init,compile-test,-pre-test-run" if="have.tests">
+        <mkdir dir="${build.test.results.dir}"/>
+        <java classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
+            <classpath>
+                <path path="${run.test.classpath}"/>
+            </classpath>
+            <jvmarg value="-XX:+EnableDynamicAgentLoading"/>
+            <arg value="--scan-classpath"/>
+            <arg value="--reports-dir"/>
+            <arg file="${build.test.results.dir}"/>
+        </java>
+    </target>
+
+    <target name="test-junit5" depends="compile-test" description="Run JUnit 5 tests with ConsoleLauncher">
+        <mkdir dir="${build.test.results.dir}"/>
+        <java classname="org.junit.platform.console.ConsoleLauncher" fork="true" failonerror="true">
+            <classpath>
+                <path path="${run.test.classpath}"/>
+            </classpath>
+            <jvmarg value="-XX:+EnableDynamicAgentLoading"/>
+            <arg value="--scan-classpath"/>
+            <arg value="--reports-dir"/>
+            <arg file="${build.test.results.dir}"/>
+        </java>
+    </target>
 </project>
