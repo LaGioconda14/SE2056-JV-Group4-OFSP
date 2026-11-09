@@ -125,7 +125,6 @@ public class OrderDAO extends DBContext {
                     item.setCartItemID(rs.getLong("cart_item_id"));
                     item.setVariant(v);
                     item.setQuantity(rs.getInt("quantity"));
-
                     items.add(item);
                 }
             }
@@ -735,9 +734,11 @@ public class OrderDAO extends DBContext {
                 + "WHERE so.order_id = ?";
 
         String sqlItems = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
+                + "COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
                 + "oi.product_name_snapshot, oi.variant_name_snapshot, oi.sku_snapshot, "
                 + "oi.unit, oi.unit_price, oi.quantity, oi.total_price "
                 + "FROM order_items oi "
+                + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
                 + "WHERE oi.sub_order_id = ?";
 
         Connection conn = getConnection();
@@ -806,6 +807,7 @@ public class OrderDAO extends DBContext {
                                         item.setSubOrderId(sub.getSubOrderId());
                                         long vId = rsItem.getLong("variant_id");
                                         item.setVariantId(rsItem.wasNull() ? null : vId);
+                                        item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
                                         item.setProductNameSnapshot(rsItem.getString("product_name_snapshot"));
                                         item.setVariantNameSnapshot(rsItem.getString("variant_name_snapshot"));
                                         item.setSkuSnapshot(rsItem.getString("sku_snapshot"));
@@ -827,148 +829,6 @@ public class OrderDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error getting order by id: " + orderId, ex);
         }
         return null;
-    }
-
-    public List<Order> getOrdersByCustomerId(long customerId) {
-        List<Order> list = new ArrayList<>();
-        String sql = "SELECT o.order_id, o.order_code, o.customer_id, o.coupon_id, "
-                   + "       o.total_goods_amount, o.total_shipping_fee, o.platform_discount, "
-                   + "       o.final_amount, o.payment_status, o.payment_method, "
-                   + "       CASE "
-                   + "           WHEN EXISTS (SELECT 1 FROM sub_orders so_c WHERE so_c.order_id = o.order_id) "
-                   + "                AND NOT EXISTS (SELECT 1 FROM sub_orders so_nc WHERE so_nc.order_id = o.order_id AND so_nc.status <> 'CANCELLED') THEN 'CANCELLED' "
-                   + "           ELSE o.order_status "
-                   + "       END AS order_status, o.created_at, o.updated_at, "
-                   + "       (SELECT STRING_AGG(CONCAT(oi.product_name_snapshot, ' (x', oi.quantity, ')'), ', ') "
-                   + "        FROM order_items oi "
-                   + "        JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
-                   + "        WHERE so.order_id = o.order_id) AS items_summary "
-                   + "FROM orders o "
-                   + "WHERE o.customer_id = ? "
-                   + "ORDER BY o.created_at DESC";
-
-        Connection conn = getConnection();
-        if (conn == null) {
-            return list;
-        }
-
-        try (conn;
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, customerId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Order order = new Order(
-                        rs.getLong("order_id"),
-                        rs.getString("order_code"),
-                        rs.getLong("customer_id"),
-                        rs.getObject("coupon_id") != null ? rs.getInt("coupon_id") : null,
-                        rs.getDouble("total_goods_amount"),
-                        rs.getDouble("total_shipping_fee"),
-                        rs.getDouble("platform_discount"),
-                        rs.getDouble("final_amount"),
-                        rs.getString("payment_status"),
-                        rs.getString("payment_method"),
-                        rs.getString("order_status"),
-                        rs.getTimestamp("created_at"),
-                        rs.getTimestamp("updated_at"),
-                        rs.getString("items_summary")
-                    );
-
-                    loadOrderItemsAndShop(order);
-                    loadShippingAddress(order);
-                    list.add(order);
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in getOrdersByCustomerId for customerId: " + customerId, ex);
-        }
-        return list;
-    }
-
-    private void loadOrderItemsAndShop(Order order) {
-        String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
-                       + "       oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
-                       + "       oi.total_price, s.shop_name, s.logo_url, "
-                       + "       (SELECT TOP 1 pi.image_url FROM product_images pi "
-                       + "        JOIN product_variants pv ON pi.product_id = pv.product_id "
-                       + "        WHERE pv.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
-                       + "FROM order_items oi "
-                       + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
-                       + "JOIN shops s ON so.shop_id = s.shop_id "
-                       + "WHERE so.order_id = ?";
-
-        Connection conn = getConnection();
-        if (conn == null) {
-            return;
-        }
-
-        try (conn;
-             PreparedStatement ps = conn.prepareStatement(itemSql)) {
-            ps.setLong(1, order.getOrderId());
-            try (ResultSet rs = ps.executeQuery()) {
-                List<OrderItem> items = new ArrayList<>();
-                String firstShopName = null;
-                String firstShopLogo = null;
-
-                while (rs.next()) {
-                    String prodImg = rs.getString("product_image");
-                    if (prodImg == null || prodImg.trim().isEmpty()) {
-                        prodImg = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop";
-                    }
-                    OrderItem item = new OrderItem(
-                        rs.getLong("order_item_id"),
-                        rs.getLong("sub_order_id"),
-                        rs.getString("product_name_snapshot"),
-                        rs.getString("variant_name_snapshot"),
-                        rs.getString("unit"),
-                        rs.getDouble("unit_price"),
-                        rs.getInt("quantity"),
-                        rs.getDouble("total_price"),
-                        prodImg
-                    );
-                    items.add(item);
-
-                    if (firstShopName == null) {
-                        firstShopName = rs.getString("shop_name");
-                        firstShopLogo = rs.getString("logo_url");
-                    }
-                }
-
-                order.setItems(items);
-                if (firstShopName != null) {
-                    order.setShopName(firstShopName);
-                    order.setShopLogoUrl(firstShopLogo);
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error in loadOrderItemsAndShop for orderId: " + order.getOrderId(), ex);
-        }
-    }
-
-    private void loadShippingAddress(Order order) {
-        String sql = "SELECT recipient_name, recipient_phone, street_address, ward, district, city "
-                   + "FROM order_shipping_addresses WHERE order_id = ?";
-        Connection conn = getConnection();
-        if (conn == null) return;
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, order.getOrderId());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    ShippingAddress addr = new ShippingAddress(
-                        order.getOrderId(),
-                        rs.getString("recipient_name"),
-                        rs.getString("recipient_phone"),
-                        rs.getString("street_address"),
-                        rs.getString("ward"),
-                        rs.getString("district"),
-                        rs.getString("city")
-                    );
-                    order.setShippingAddress(addr);
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error loading shipping address for orderId: " + order.getOrderId(), ex);
-        }
     }
 
     public List<SubOrder> getSubOrdersByCustomerId(long customerId) {
@@ -1047,13 +907,15 @@ public class OrderDAO extends DBContext {
             }
 
             // Tải chi tiết sản phẩm cho từng subOrder
-            String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
-                           + "       oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
+            String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
+                           + "       COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
+                           + "       oi.product_name_snapshot, oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
                            + "       oi.total_price, "
                            + "       (SELECT TOP 1 pi.image_url FROM product_images pi "
-                           + "        JOIN product_variants pv ON pi.product_id = pv.product_id "
-                           + "        WHERE pv.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
+                           + "        JOIN product_variants pv2 ON pi.product_id = pv2.product_id "
+                           + "        WHERE pv2.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
                            + "FROM order_items oi "
+                           + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
                            + "WHERE oi.sub_order_id = ?";
 
             try (PreparedStatement psItem = conn.prepareStatement(itemSql)) {
@@ -1077,6 +939,8 @@ public class OrderDAO extends DBContext {
                                 rsItem.getDouble("total_price"),
                                 prodImg
                             );
+                            item.setVariantId(rsItem.getObject("variant_id") != null ? rsItem.getLong("variant_id") : null);
+                            item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
                             items.add(item);
                         }
                         so.setItems(items);

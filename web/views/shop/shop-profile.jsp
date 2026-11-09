@@ -37,19 +37,7 @@
                 <span class="text-slate-700">Shop Profile</span>
             </nav>
 
-            <!-- Toast thông báo -->
-            <c:if test="${not empty sessionScope.successMessage}">
-                <div class="mb-4 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-circle-check"></i> ${sessionScope.successMessage}
-                </div>
-                <c:remove var="successMessage" scope="session"/>
-            </c:if>
-            <c:if test="${not empty sessionScope.errorMessage}">
-                <div class="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm flex items-center gap-2">
-                    <i class="fa-solid fa-circle-exclamation"></i> ${sessionScope.errorMessage}
-                </div>
-                <c:remove var="errorMessage" scope="session"/>
-            </c:if>
+            <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
             <!-- FORM (multipart để upload logo/banner) -->
             <form id="profileForm" action="${pageContext.request.contextPath}/shop/profile" method="POST" enctype="multipart/form-data">

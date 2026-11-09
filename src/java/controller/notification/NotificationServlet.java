@@ -78,7 +78,8 @@ public class NotificationServlet extends HttpServlet {
         int unread = notificationService.getUnreadCount(user.getId());
         request.setAttribute("notifications", list);
         request.setAttribute("unreadCount", unread);
-        request.getRequestDispatcher("/views/auth/notifications.jsp").forward(request, response);
+        response.sendRedirect(request.getContextPath() + "/profile#notifications");
+        return;
     }
 
     @Override

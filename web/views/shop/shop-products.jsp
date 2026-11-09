@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<fmt:setLocale value="vi_VN" />
 <!DOCTYPE html>
 <html lang="vi">
     <head>
@@ -10,30 +11,17 @@
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
         <jsp:include page="/views/shop/layout/sidebar.jsp">
-        <jsp:param name="active" value="products" />
+            <jsp:param name="active" value="products" />
         </jsp:include>
 
-        <div class="shop-main-wrapper">
+        <jsp:include page="/views/shop/layout/header.jsp">
+            <jsp:param name="searchAction" value="/shop/products" />
+        </jsp:include>
 
-            <jsp:include page="/views/shop/layout/header.jsp">
-                <jsp:param name="searchAction" value="/shop/products" />
-            </jsp:include>
-
-            <main class="shop-content-container">
+        <main class="shop-main-wrapper">
+            <div class="shop-content-container">
                 <div class="w-full max-w-7xl mx-auto space-y-6">
-
-                    <c:if test="${not empty sessionScope.successMessage}">
-                        <div class="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-xs">
-                            <div class="flex items-center gap-3">
-                                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
-                                <span class="text-xs font-bold">${sessionScope.successMessage}</span>
-                            </div>
-                            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-900">
-                                <i class="fa-solid fa-xmark text-sm"></i>
-                            </button>
-                        </div>
-                        <c:remove var="successMessage" scope="session"/>
-                    </c:if>
+                    <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
                     <div class="flex flex-col gap-3">
                         <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold">
@@ -260,12 +248,12 @@
                                                     <td class="py-4 px-4">
                                                         <div class="flex flex-col">
                                                             <span class="font-black text-sm text-emerald-800">
-                                                                ₫${v.formattedPrice}
+                                                                ₫<fmt:formatNumber value="${v.price}" pattern="#,##0"/>
                                                             </span>
                                                             <c:choose>
-                                                                <c:when test="${v.originalPrice > v.price}">
+                                                                <c:when test="${not empty v.originalPrice and v.originalPrice > v.price}">
                                                                     <span class="line-through text-[11px] text-slate-400 font-medium mt-0.5">
-                                                                        ₫${v.formattedOriginalPrice}
+                                                                        ₫<fmt:formatNumber value="${v.originalPrice}" pattern="#,##0"/>
                                                                     </span>
                                                                 </c:when>
                                                                 <c:otherwise>
@@ -398,9 +386,9 @@
                         </div>
                     </div>
 
+                </div>
             </div>
         </main>
-        </div>
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -411,25 +399,6 @@
                     selectAll.addEventListener('change', function () {
                         rowCheckboxes.forEach(cb => cb.checked = selectAll.checked);
                     });
-                }
-            });
-
-            function toggleShopUserDropdown(event) {
-                if (event) event.stopPropagation();
-                const menu = document.getElementById('shopUserDropdownMenu');
-                const arrow = document.getElementById('shopUserDropdownArrow');
-                if (!menu) return;
-                menu.classList.toggle('hidden');
-                if (arrow) arrow.classList.toggle('rotate-180');
-            }
-
-            document.addEventListener('click', function(e) {
-                const container = document.getElementById('shopUserDropdownContainer');
-                const menu = document.getElementById('shopUserDropdownMenu');
-                const arrow = document.getElementById('shopUserDropdownArrow');
-                if (container && menu && !container.contains(e.target)) {
-                    menu.classList.add('hidden');
-                    if (arrow) arrow.classList.remove('rotate-180');
                 }
             });
         </script>

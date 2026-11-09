@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,6 +20,7 @@ import util.DBContext;
 public class OrderFulfillmentDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(OrderFulfillmentDAO.class.getName());
+    private final PromotionDAO promotionDAO = new PromotionDAO();
 
     public SubOrder getSubOrderDetails(String subOrderCode) {
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
@@ -90,7 +92,8 @@ public class OrderFulfillmentDAO extends DBContext {
                     addr.setCity(rs.getString("city"));
                     so.setShippingAddress(addr);
 
-                    so.setItems(getOrderItemsBySubOrderId(so.getSubOrderId()));
+                    // Tái sử dụng cùng kết nối hiện tại để nạp danh sách sản phẩm
+                    so.setItems(getOrderItemsBySubOrderId(conn, so.getSubOrderId()));
                     return so;
                 }
             }
@@ -101,6 +104,19 @@ public class OrderFulfillmentDAO extends DBContext {
     }
 
     public List<OrderItem> getOrderItemsBySubOrderId(long subOrderId) {
+        Connection conn = getConnection();
+        if (conn == null) {
+            return Collections.emptyList();
+        }
+        try (conn) {
+            return getOrderItemsBySubOrderId(conn, subOrderId);
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting items for subOrderId " + subOrderId, ex);
+            return Collections.emptyList();
+        }
+    }
+
+    private List<OrderItem> getOrderItemsBySubOrderId(Connection conn, long subOrderId) throws SQLException {
         List<OrderItem> list = new ArrayList<>();
         String sql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
                 + "       oi.variant_name_snapshot, oi.sku_snapshot, oi.unit, oi.unit_price, oi.quantity, oi.total_price, "
@@ -112,19 +128,15 @@ public class OrderFulfillmentDAO extends DBContext {
                 + "LEFT JOIN products p ON pv.product_id = p.product_id "
                 + "WHERE oi.sub_order_id = ?";
 
-        Connection conn = getConnection();
-        if (conn == null) {
-            return list;
-        }
-
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, subOrderId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
+                    Long variantId = rs.getObject("variant_id") != null ? rs.getLong("variant_id") : null;
                     OrderItem item = new OrderItem(
                             rs.getLong("order_item_id"),
                             rs.getLong("sub_order_id"),
-                            rs.getLong("variant_id"),
+                            variantId,
                             rs.getString("product_name_snapshot"),
                             rs.getString("variant_name_snapshot"),
                             rs.getString("sku_snapshot"),
@@ -143,8 +155,6 @@ public class OrderFulfillmentDAO extends DBContext {
                     list.add(item);
                 }
             }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting items for subOrderId " + subOrderId, ex);
         }
         return list;
     }
@@ -173,12 +183,14 @@ public class OrderFulfillmentDAO extends DBContext {
                         psSync.executeUpdate();
                     }
                 } else if (newStatus == SubOrderStatus.DELIVERED) {
+                    // Cập nhật đơn cha thành COMPLETED nếu tất cả các đơn con (trừ các đơn đã hủy/hoàn tiền) đều đã DELIVERED
                     String syncDelivered = "UPDATE o SET o.order_status = '" + OrderStatus.COMPLETED.name()
                             + "', o.updated_at = CURRENT_TIMESTAMP "
                             + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
                             + "WHERE so.sub_order_code = ? "
-                            + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> '"
-                            + SubOrderStatus.DELIVERED.name() + "')";
+                            + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id "
+                            + "                  AND other.status NOT IN ('" + SubOrderStatus.DELIVERED.name() + "', '"
+                            + SubOrderStatus.CANCELLED.name() + "', 'REFUNDED'))";
                     try (PreparedStatement psSync = conn.prepareStatement(syncDelivered)) {
                         psSync.setString(1, subOrderCode);
                         psSync.executeUpdate();
@@ -200,7 +212,7 @@ public class OrderFulfillmentDAO extends DBContext {
                         + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                         + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
                         + "       o.order_code, o.payment_status, o.payment_method, "
-                        + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.city "
+                        + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city "
                         + "FROM sub_orders so "
                         + "JOIN orders o ON so.order_id = o.order_id "
                         + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
@@ -248,13 +260,7 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
                     so.setShopDiscount(rs.getBigDecimal("shop_discount"));
-
-                    BigDecimal total = rs.getBigDecimal("shop_total");
-                    if (total != null) {
-                        // so.setShopTotal(total.add(new BigDecimal("10000")));
-                        so.setShopTotal(rs.getBigDecimal("shop_total"));
-                    }
-
+                    so.setShopTotal(rs.getBigDecimal("shop_total"));
                     so.setStatus(rs.getString("status"));
                     so.setCancelReason(rs.getString("cancel_reason"));
                     so.setPaymentMethod(rs.getString("payment_method"));
@@ -266,10 +272,13 @@ public class OrderFulfillmentDAO extends DBContext {
                     addr.setRecipientName(rs.getString("recipient_name"));
                     addr.setRecipientPhone(rs.getString("recipient_phone"));
                     addr.setStreetAddress(rs.getString("street_address"));
+                    addr.setWard(rs.getString("ward"));
+                    addr.setDistrict(rs.getString("district"));
                     addr.setCity(rs.getString("city"));
                     so.setShippingAddress(addr);
 
-                    so.setItems(getOrderItemsBySubOrderId(so.getSubOrderId()));
+                    // Tái sử dụng cùng kết nối hiện tại để nạp danh sách món, triệt tiêu N+1 Connection
+                    so.setItems(getOrderItemsBySubOrderId(conn, so.getSubOrderId()));
                     list.add(so);
                 }
             }
@@ -307,180 +316,137 @@ public class OrderFulfillmentDAO extends DBContext {
         }
         return 0;
     }
-
-    public String getFirstSubOrderCode(long shopId) {
-        String sql = "SELECT TOP 1 sub_order_code FROM sub_orders WHERE shop_id = ? "
-                + "ORDER BY CASE "
-                + "  WHEN status = '" + SubOrderStatus.NEW.name() + "' THEN 1 "
-                + "  WHEN status = '" + SubOrderStatus.PACKING.name() + "' THEN 2 "
-                + "  WHEN status = '" + SubOrderStatus.SHIPPING.name() + "' THEN 3 "
-                + "  ELSE 4 END ASC, sub_order_id DESC";
-        Connection conn = getConnection();
-        if (conn == null)
-            return null;
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, shopId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("sub_order_code");
-                }
-            }
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting first suborder code for shop " + shopId, ex);
-        }
-        return null;
-    }
-
-    public boolean cancelSubOrder(String subOrderCode, String cancelReason, Long cancelledBy) {
-        String sql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name()
-                + "', cancel_reason = ?, cancelled_by = ?, "
-                + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
-                + "WHERE sub_order_code = ?";
-        Connection conn = getConnection();
-        if (conn == null)
-            return false;
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setNString(1, cancelReason);
-            if (cancelledBy != null) {
-                ps.setLong(2, cancelledBy);
-            } else {
-                ps.setNull(2, java.sql.Types.BIGINT);
-            }
-            ps.setString(3, subOrderCode);
-            int rows = ps.executeUpdate();
-            if (rows > 0) {
-                // Synchronize parent order status if all sub_orders are CANCELLED
-                String syncSql = "UPDATE o SET o.order_status = '" + OrderStatus.CANCELLED.name()
-                        + "', o.updated_at = CURRENT_TIMESTAMP "
-                        + "FROM orders o "
-                        + "JOIN sub_orders so ON o.order_id = so.order_id "
-                        + "WHERE so.sub_order_code = ? "
-                        + "  AND NOT EXISTS ( "
-                        + "      SELECT 1 FROM sub_orders other "
-                        + "      WHERE other.order_id = o.order_id "
-                        + "        AND other.status <> '" + SubOrderStatus.CANCELLED.name() + "' "
-                        + "  )";
-                try (PreparedStatement psSync = conn.prepareStatement(syncSql)) {
-                    psSync.setString(1, subOrderCode);
-                    psSync.executeUpdate();
-                }
-                return true;
-            }
-            return false;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error cancelling sub order: " + subOrderCode, e);
-            return false;
-        }
-    }
-
     public boolean cancelSubOrderWithRestock(String subOrderCode, String cancelReason, Long cancelledBy) {
         Connection conn = getConnection();
         if (conn == null) return false;
         try (conn) {
             conn.setAutoCommit(false);
-
-            String cancelSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name()
-                    + "', cancel_reason = ?, cancelled_by = ?, "
-                    + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
-                    + "WHERE sub_order_code = ?";
-            try (PreparedStatement ps = conn.prepareStatement(cancelSql)) {
-                ps.setNString(1, cancelReason);
-                if (cancelledBy != null) ps.setLong(2, cancelledBy);
-                else ps.setNull(2, java.sql.Types.BIGINT);
-                ps.setString(3, subOrderCode);
-                int rows = ps.executeUpdate();
-                if (rows <= 0) {
-                    conn.rollback();
-                    return false;
-                }
+            boolean ok = cancelSubOrderInternal(conn, subOrderCode, cancelReason, cancelledBy);
+            if (ok) {
+                conn.commit();
+                return true;
+            } else {
+                conn.rollback();
+                return false;
             }
-
-            String syncSql = "UPDATE o SET o.order_status = '" + SubOrderStatus.CANCELLED.name()
-                    + "', o.updated_at = CURRENT_TIMESTAMP "
-                    + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
-                    + "WHERE so.sub_order_code = ? "
-                    + "  AND NOT EXISTS ( "
-                    + "      SELECT 1 FROM sub_orders other "
-                    + "      WHERE other.order_id = o.order_id "
-                    + "        AND other.status <> '" + SubOrderStatus.CANCELLED.name() + "' "
-                    + "  )";
-            try (PreparedStatement psSync = conn.prepareStatement(syncSql)) {
-                psSync.setString(1, subOrderCode);
-                psSync.executeUpdate();
-            }
-
-            // Hoan tra 100% ton kho ban vi hoa qua con tuoi nguyen
-            String restoreSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, pv.updated_at = CURRENT_TIMESTAMP "
-                    + "FROM product_variants pv "
-                    + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
-                    + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
-                    + "WHERE so.sub_order_code = ? AND oi.variant_id IS NOT NULL";
-            try (PreparedStatement psRestock = conn.prepareStatement(restoreSql)) {
-                psRestock.setString(1, subOrderCode);
-                psRestock.executeUpdate();
-            }
-
-            conn.commit();
-            return true;
         } catch (SQLException e) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error cancelling sub order with restock: " + subOrderCode, e);
             return false;
+        } finally {
+            closeQuietly(conn);
         }
     }
 
-    public boolean cancelSubOrderOutOfStock(String subOrderCode, String cancelReason, Long cancelledBy) {
-        Connection conn = getConnection();
-        if (conn == null) return false;
-        try (conn) {
-            conn.setAutoCommit(false);
+    private boolean cancelSubOrderInternal(Connection conn, String subOrderCode, String cancelReason,
+            Long cancelledBy) throws SQLException {
+        String findSql = "SELECT sub_order_id, order_id, shop_id, status FROM sub_orders WHERE sub_order_code = ?";
+        long subOrderId = -1;
+        long parentOrderId = -1;
+        long shopId = -1;
+        String currentStatus = null;
 
-            String cancelSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name()
-                    + "', cancel_reason = ?, cancelled_by = ?, "
-                    + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
-                    + "WHERE sub_order_code = ?";
-            try (PreparedStatement ps = conn.prepareStatement(cancelSql)) {
-                ps.setNString(1, cancelReason);
-                if (cancelledBy != null) ps.setLong(2, cancelledBy);
-                else ps.setNull(2, java.sql.Types.BIGINT);
-                ps.setString(3, subOrderCode);
-                int rows = ps.executeUpdate();
-                if (rows <= 0) {
-                    conn.rollback();
-                    return false;
+        try (PreparedStatement psFind = conn.prepareStatement(findSql)) {
+            psFind.setString(1, subOrderCode);
+            try (ResultSet rs = psFind.executeQuery()) {
+                if (rs.next()) {
+                    subOrderId = rs.getLong("sub_order_id");
+                    parentOrderId = rs.getLong("order_id");
+                    shopId = rs.getLong("shop_id");
+                    currentStatus = rs.getString("status");
                 }
             }
+        }
 
-            String syncSql = "UPDATE o SET o.order_status = '" + SubOrderStatus.CANCELLED.name()
-                    + "', o.updated_at = CURRENT_TIMESTAMP "
-                    + "FROM orders o JOIN sub_orders so ON o.order_id = so.order_id "
-                    + "WHERE so.sub_order_code = ? "
-                    + "  AND NOT EXISTS ( "
-                    + "      SELECT 1 FROM sub_orders other "
-                    + "      WHERE other.order_id = o.order_id "
-                    + "        AND other.status <> '" + SubOrderStatus.CANCELLED.name() + "' "
-                    + "  )";
-            try (PreparedStatement psSync = conn.prepareStatement(syncSql)) {
-                psSync.setString(1, subOrderCode);
+        if (subOrderId == -1 || SubOrderStatus.CANCELLED.name().equalsIgnoreCase(currentStatus)
+                || SubOrderStatus.DELIVERED.name().equalsIgnoreCase(currentStatus)) {
+            return false;
+        }
+
+        String cancelSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name()
+                + "', cancel_reason = ?, cancelled_by = ?, "
+                + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE sub_order_id = ?";
+        try (PreparedStatement psCancel = conn.prepareStatement(cancelSql)) {
+            psCancel.setNString(1, cancelReason);
+            if (cancelledBy != null) {
+                psCancel.setLong(2, cancelledBy);
+            } else {
+                psCancel.setNull(2, java.sql.Types.BIGINT);
+            }
+            psCancel.setLong(3, subOrderId);
+            int rows = psCancel.executeUpdate();
+            if (rows <= 0) {
+                return false;
+            }
+        }
+
+        // 1. Hoàn trả 100% tồn kho bán vì hoa quả còn tươi nguyên
+        String restoreSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, pv.updated_at = CURRENT_TIMESTAMP "
+                + "FROM product_variants pv "
+                + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
+                + "WHERE oi.sub_order_id = ? AND oi.variant_id IS NOT NULL";
+        try (PreparedStatement psRestock = conn.prepareStatement(restoreSql)) {
+            psRestock.setLong(1, subOrderId);
+            psRestock.executeUpdate();
+        }
+        // 2. Giải phóng quota Flash Sale / Khuyến mãi
+        promotionDAO.releaseQuotaBySubOrder(conn, subOrderId);
+
+        // 3. Hoàn lại lượt voucher shop của sub_order này (nếu có)
+        String restoreShopVoucherSql = "UPDATE c SET c.used_count = CASE WHEN c.used_count > 0 THEN c.used_count - 1 ELSE 0 END "
+                + "FROM coupons c INNER JOIN coupon_usages u ON u.coupon_id = c.coupon_id "
+                + "WHERE u.order_id = ? AND c.shop_id = ?";
+        try (PreparedStatement psVoucher = conn.prepareStatement(restoreShopVoucherSql)) {
+            psVoucher.setLong(1, parentOrderId);
+            psVoucher.setLong(2, shopId);
+            psVoucher.executeUpdate();
+        }
+        String deleteShopUsageSql = "DELETE u FROM coupon_usages u "
+                + "INNER JOIN coupons c ON u.coupon_id = c.coupon_id "
+                + "WHERE u.order_id = ? AND c.shop_id = ?";
+        try (PreparedStatement psDel = conn.prepareStatement(deleteShopUsageSql)) {
+            psDel.setLong(1, parentOrderId);
+            psDel.setLong(2, shopId);
+            psDel.executeUpdate();
+        }
+
+        // 4. Đồng bộ trạng thái đơn cha (nếu tất cả đơn con đã CANCELLED)
+        String checkOthersSql = "SELECT 1 FROM sub_orders WHERE order_id = ? AND status <> '" + SubOrderStatus.CANCELLED.name() + "'";
+        boolean hasActiveSubOrders = false;
+        try (PreparedStatement psCheck = conn.prepareStatement(checkOthersSql)) {
+            psCheck.setLong(1, parentOrderId);
+            try (ResultSet rsCheck = psCheck.executeQuery()) {
+                hasActiveSubOrders = rsCheck.next();
+            }
+        }
+
+        if (!hasActiveSubOrders) {
+            String syncParentSql = "UPDATE orders SET order_status = '" + OrderStatus.CANCELLED.name()
+                    + "', updated_at = CURRENT_TIMESTAMP WHERE order_id = ?";
+            try (PreparedStatement psSync = conn.prepareStatement(syncParentSql)) {
+                psSync.setLong(1, parentOrderId);
                 psSync.executeUpdate();
             }
 
-            // Dong bo ton kho thuc te ve 0 de chan dat mua tiep
-            String zeroSql = "UPDATE pv SET pv.stock_quantity = 0, pv.updated_at = CURRENT_TIMESTAMP "
-                    + "FROM product_variants pv "
-                    + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
-                    + "JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
-                    + "WHERE so.sub_order_code = ? AND oi.variant_id IS NOT NULL";
-            try (PreparedStatement psZero = conn.prepareStatement(zeroSql)) {
-                psZero.setString(1, subOrderCode);
-                psZero.executeUpdate();
+            // Hoàn tiếp voucher sàn (nếu có)
+            String restorePlatformVoucherSql = "UPDATE c SET c.used_count = CASE WHEN c.used_count > 0 THEN c.used_count - 1 ELSE 0 END "
+                    + "FROM coupons c INNER JOIN coupon_usages u ON u.coupon_id = c.coupon_id "
+                    + "WHERE u.order_id = ? AND c.shop_id IS NULL";
+            try (PreparedStatement psPV = conn.prepareStatement(restorePlatformVoucherSql)) {
+                psPV.setLong(1, parentOrderId);
+                psPV.executeUpdate();
             }
-
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error cancelling sub order out of stock: " + subOrderCode, e);
-            return false;
+            String deletePlatformUsageSql = "DELETE u FROM coupon_usages u "
+                    + "INNER JOIN coupons c ON u.coupon_id = c.coupon_id "
+                    + "WHERE u.order_id = ? AND c.shop_id IS NULL";
+            try (PreparedStatement psDelP = conn.prepareStatement(deletePlatformUsageSql)) {
+                psDelP.setLong(1, parentOrderId);
+                psDelP.executeUpdate();
+            }
         }
+
+        return true;
     }
 
     public boolean processReturnedOrderRestock(String subOrderCode, String note, Long processedBy) {
@@ -532,25 +498,32 @@ public class OrderFulfillmentDAO extends DBContext {
             conn.commit();
             return true;
         } catch (SQLException e) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error restocking returned sub order: " + subOrderCode, e);
             return false;
+        } finally {
+            closeQuietly(conn);
         }
     }
 
-    public boolean isSubOrderOwnedByShop(long subOrderId, long shopId) {
-        String sql = "SELECT 1 FROM sub_orders WHERE sub_order_id = ? AND shop_id = ?";
-        Connection conn = getConnection();
-        if (conn == null)
-            return false;
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, subOrderId);
-            ps.setLong(2, shopId);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
+    private void rollbackQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Rollback failed", ex);
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error checking suborder shop ownership", e);
-            return false;
+        }
+    }
+
+    private void closeQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error closing connection", ex);
+            }
         }
     }
 }

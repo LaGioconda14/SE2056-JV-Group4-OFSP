@@ -108,7 +108,7 @@
                         </div>
                     </div>
                     <div class="pt-3 border-t border-gray-100 mt-3 text-center">
-                        <a href="${pageContext.request.contextPath}/notifications" class="text-xs text-[#00652c] font-semibold hover:underline">Xem tất cả thông báo</a>
+                        <a href="${pageContext.request.contextPath}/profile#notifications" onclick="const p = document.getElementById('header-noti-popover'); if (p) p.classList.add('hidden'); if (window.location.pathname.includes('/profile')) { if (typeof activateTab === 'function') { activateTab('#nav-notifications', 'nav-notifications-tab'); } }" class="text-xs text-[#00652c] font-semibold hover:underline">Xem tất cả thông báo</a>
                     </div>
                 </div>
             </div>

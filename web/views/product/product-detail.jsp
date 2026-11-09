@@ -262,8 +262,10 @@
                                         <c:choose>
                                             <c:when test="${not empty product.variants and fn:length(product.variants) > 1}">
                                                 <c:forEach var="variant" items="${product.variants}" varStatus="vStatus">
+                                                    <c:set var="isVarActive" value="${(not empty param.variantId and param.variantId == variant.variantId) or (empty param.variantId and vStatus.first)}" />
                                                     <div onclick="selectPackageVariant(${variant.variantId}, ${variant.price}, '${variant.unit}', ${variant.stockQuantity}, ${variant.originalPrice != null ? variant.originalPrice : variant.price}, this)" 
-                                                         class="variant-card cursor-pointer rounded-2xl border-2 p-3.5 transition-all text-left relative ${vStatus.first ? 'selected' : 'border-gray-200 hover:border-emerald-300 bg-white'}">
+                                                         data-variant-id="${variant.variantId}"
+                                                         class="variant-card cursor-pointer rounded-2xl border-2 p-3.5 transition-all text-left relative ${isVarActive ? 'selected' : 'border-gray-200 hover:border-emerald-300 bg-white'}">
                                                         <c:if test="${vStatus.index == 1}">
                                                             <span class="variant-badge absolute -top-2.5 right-3 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
                                                                 BÁN CHẠY
@@ -316,7 +318,7 @@
                             <form id="order-form" action="${pageContext.request.contextPath}/cart/add" method="POST" class="pt-4 border-t border-gray-100 space-y-3">
                                 <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
                                 <input type="hidden" name="returnUrl" value="/detail?id=${product.id}" />
-                                <input type="hidden" id="selected-variant-id" name="variantId" value="${not empty product.variants ? product.variants[0].variantId : (not empty product.defaultVariantId ? product.defaultVariantId : 1)}" />
+                                <input type="hidden" id="selected-variant-id" name="variantId" value="${not empty param.variantId ? param.variantId : (not empty product.variants ? product.variants[0].variantId : (not empty product.defaultVariantId ? product.defaultVariantId : 1))}" />
                                 
                                 <!-- Hàng 1: Bộ Tăng Giảm Số Lượng + Nút Thêm Vào Giỏ Hàng + Yêu Thích + Chia Sẻ -->
                                 <div class="flex items-center gap-3">
@@ -1302,6 +1304,14 @@
             }
 
             document.addEventListener('DOMContentLoaded', function () {
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetVariantId = urlParams.get('variantId');
+                if (targetVariantId) {
+                    const targetCard = document.querySelector('.variant-card[data-variant-id="' + targetVariantId + '"]');
+                    if (targetCard) {
+                        targetCard.click();
+                    }
+                }
                 recalculateCartTotal();
                 const toast = document.getElementById('product-toast');
                 if (toast) {

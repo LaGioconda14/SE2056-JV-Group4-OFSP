@@ -90,7 +90,6 @@ public class LoginGoogleServlet extends HttpServlet {
         }
     }
 
-    /** Điều hướng sau khi đăng nhập theo vai trò (chủ shop vào thẳng dashboard, tài khoản mới chọn vai trò). */
     private void redirectAfterLogin(User user, boolean isNewAccount, HttpSession session,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
         String ctx = request.getContextPath();

@@ -31,7 +31,7 @@
                 <div>
                     <div class="flex items-center flex-wrap gap-3">
                         <h1 class="text-2xl font-black text-slate-900 tracking-tight"><c:out value="${voucher.title}"/></h1>
-                        <jsp:include page="/views/shop/layout/mk-status.jsp"><jsp:param name="status" value="${voucher.status}"/></jsp:include>
+                        <jsp:include page="/views/shop/components/marketing/status-badge.jsp"><jsp:param name="status" value="${voucher.status}"/></jsp:include>
                     </div>
                     <p class="text-sm text-slate-500 mt-2 flex flex-wrap items-center gap-3">
                         <span class="mk-code"><c:out value="${voucher.code}"/></span>

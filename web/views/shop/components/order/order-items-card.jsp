@@ -3,7 +3,7 @@
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <fmt:setLocale value="vi_VN" />
 
-                        <!-- Products List Card -->
+                        
                         <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                             <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                                 <div class="flex items-center gap-2.5">
@@ -46,11 +46,6 @@
                                                         <div>
                                                             <div class="flex items-center gap-2">
                                                                 <span class="font-extrabold text-slate-900 text-xs">${item.productNameSnapshot}</span>
-                                                                <c:if test="${not empty item.variantNameSnapshot}">
-                                                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                        ${item.variantNameSnapshot}
-                                                                    </span>
-                                                                </c:if>
                                                             </div>
                                                             <div class="text-[11px] text-slate-500 mt-0.5 flex flex-wrap items-center gap-2">
                                                                 <span>SKU: <span class="font-mono text-slate-700">${item.skuSnapshot}</span></span>
@@ -76,7 +71,7 @@
                                 </table>
                             </div>
 
-                            <!-- Simplified Order Summary -->
+                            
                             <div class="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs">
                                 <div class="flex justify-between text-slate-600">
                                     <span>Tiền hàng (Tạm tính ${not empty subOrder.items ? subOrder.items.size() : 0} sản phẩm):</span>

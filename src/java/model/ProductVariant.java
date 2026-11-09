@@ -131,44 +131,33 @@ public class ProductVariant {
     public int getTotalVariantsCount() { return totalVariantsCount; }
     public void setTotalVariantsCount(int totalVariantsCount) { this.totalVariantsCount = totalVariantsCount; }
 
-    // Helpers for UI display
     public String getFormattedPrice() {
         if (price == null) return "0";
-        DecimalFormat df = new DecimalFormat("#,###");
-        return df.format(price).replace(',', '.');
+        return String.format(java.util.Locale.US, "%,.0f", price.doubleValue()).replace(',', '.');
     }
 
     public String getFormattedOriginalPrice() {
-        if (originalPrice == null || originalPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            return "";
-        }
-        DecimalFormat df = new DecimalFormat("#,###");
-        return df.format(originalPrice).replace(',', '.');
+        if (originalPrice == null) return "0";
+        return String.format(java.util.Locale.US, "%,.0f", originalPrice.doubleValue()).replace(',', '.');
     }
 
     public String getStockStatusText() {
-        if (stockQuantity <= 5) return "Nguy cấp";
-        if (stockQuantity <= 15) return "Sắp hết";
-        if (stockQuantity <= 40) return "Ổn định";
-        return "Dồi dào";
-    }
-
-    public int getStockProgressPercent() {
-        if (stockQuantity <= 5) return 15;
-        if (stockQuantity <= 15) return 32;
-        if (stockQuantity <= 40) return 60;
-        return 88;
-    }
-
-    public String getStockStatusColor() {
-        if (stockQuantity <= 5) return "text-red-600";
-        if (stockQuantity <= 15) return "text-amber-600";
-        return "text-emerald-600";
+        if (stockQuantity <= 0) return "Hết hàng";
+        if (stockQuantity <= 5) return "Sắp hết hàng";
+        if (stockQuantity <= 15) return "Cần bổ sung";
+        return "Tồn kho tốt";
     }
 
     public String getStockBarColor() {
-        if (stockQuantity <= 5) return "bg-red-500";
+        if (stockQuantity <= 5) return "bg-rose-500";
         if (stockQuantity <= 15) return "bg-amber-500";
         return "bg-emerald-600";
+    }
+
+    public int getStockProgressPercent() {
+        if (stockQuantity <= 0) return 0;
+        int threshold = lowStockThreshold > 0 ? lowStockThreshold * 3 : 50;
+        int pct = (int) Math.round(((double) stockQuantity / threshold) * 100.0);
+        return Math.min(100, Math.max(8, pct));
     }
 }

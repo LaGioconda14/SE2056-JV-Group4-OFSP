@@ -1,5 +1,7 @@
 package enums;
 
+import java.util.Locale;
+
 public enum AvailabilityStatus {
     OFFLINE,
     AVAILABLE,
@@ -10,7 +12,7 @@ public enum AvailabilityStatus {
             return null;
         }
         try {
-            return valueOf(value.trim().toUpperCase(java.util.Locale.ROOT));
+            return valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return null;
         }

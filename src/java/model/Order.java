@@ -277,4 +277,53 @@ public class Order {
     public boolean hasItems() {
         return items != null && !items.isEmpty();
     }
+
+    public Long getFirstProductId() {
+        if (items != null && !items.isEmpty()) {
+            for (OrderItem it : items) {
+                if (it.getProductId() != null && it.getProductId() > 0) {
+                    return it.getProductId();
+                }
+            }
+        }
+        if (subOrders != null) {
+            for (SubOrder sub : subOrders) {
+                Long pId = sub.getFirstProductId();
+                if (pId != null && pId > 0) {
+                    return pId;
+                }
+            }
+        }
+        return null;
+    }
+
+    public Long getFirstVariantId() {
+        if (items != null && !items.isEmpty()) {
+            for (OrderItem it : items) {
+                if (it.getVariantId() != null && it.getVariantId() > 0) {
+                    return it.getVariantId();
+                }
+            }
+        }
+        if (subOrders != null) {
+            for (SubOrder sub : subOrders) {
+                Long vId = sub.getFirstVariantId();
+                if (vId != null && vId > 0) {
+                    return vId;
+                }
+            }
+        }
+        return null;
+    }
+
+    public String getDeliverySlot() {
+        if (subOrders != null && !subOrders.isEmpty()) {
+            for (SubOrder sub : subOrders) {
+                if (sub.getDeliverySlot() != null && !sub.getDeliverySlot().isBlank()) {
+                    return sub.getDeliverySlot();
+                }
+            }
+        }
+        return null;
+    }
 }

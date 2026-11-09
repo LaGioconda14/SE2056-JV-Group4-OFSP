@@ -19,7 +19,7 @@
     <main class="shop-main-wrapper">
         <div class="shop-content-container">
 
-            <jsp:include page="/views/shop/layout/mk-flash.jsp" />
+            <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
             <nav class="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <span>Kênh Người Bán</span>
@@ -124,7 +124,7 @@
                                                 <fmt:formatDate value="${p.startDate}" pattern="dd/MM/yyyy HH:mm"/><br>
                                                 <span class="text-slate-400">đến</span> <fmt:formatDate value="${p.endDate}" pattern="dd/MM/yyyy HH:mm"/>
                                             </td>
-                                            <td><jsp:include page="/views/shop/layout/mk-status.jsp"><jsp:param name="status" value="${p.status}"/></jsp:include></td>
+                                            <td><jsp:include page="/views/shop/components/marketing/status-badge.jsp"><jsp:param name="status" value="${p.status}"/></jsp:include></td>
                                             <td>
                                                 <div class="flex items-center justify-end gap-1.5">
                                                     <c:if test="${p.status != 'ENDED'}">

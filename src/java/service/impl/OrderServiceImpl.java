@@ -24,6 +24,8 @@ import model.OrderItem;
 import model.ShippingAddress;
 import model.SubOrder;
 import service.IOrderService;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class OrderServiceImpl implements IOrderService {
 
@@ -304,8 +306,16 @@ public class OrderServiceImpl implements IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
+        return placeOrder(customerId, cartItemIds, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
+    }
+
+    @Override
+    public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
+            String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
+            boolean saveAddress) throws Exception {
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
-        Order order = prepareOrder(customerId, selectedItems, address, deliverySlot,
+        Order order = prepareOrder(customerId, selectedItems, address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
         return orderDAO.createOrder(order, address, cartItemIds,
                 order.getPaymentMethod(), saveAddress);
@@ -315,7 +325,7 @@ public class OrderServiceImpl implements IOrderService {
     public long placeBuyNowOrder(long customerId, long variantId, int quantity,
             ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception {
-        return placeBuyNowOrder(customerId, variantId, quantity, address, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
+        return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
     }
 
     @Override
@@ -323,14 +333,22 @@ public class OrderServiceImpl implements IOrderService {
             ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
+        return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
+    }
+
+    @Override
+    public long placeBuyNowOrder(long customerId, long variantId, int quantity,
+            ShippingAddress address, String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
+            boolean saveAddress) throws Exception {
         CartItem item = getBuyNowItemForCheckout(variantId, quantity);
-        Order order = prepareOrder(customerId, List.of(item), address, deliverySlot,
+        Order order = prepareOrder(customerId, List.of(item), address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
         return orderDAO.createBuyNowOrder(order, address, order.getPaymentMethod(), saveAddress);
     }
 
     private Order prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
+            String deliveryDateStr, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes) {
         if (address == null || address.getRecipientName() == null
                 || address.getRecipientName().trim().isEmpty()) {
@@ -352,11 +370,6 @@ public class OrderServiceImpl implements IOrderService {
                     "Vui lòng nhập đầy đủ phường/xã và tỉnh/thành phố!");
         }
 
-        DeliverySlot selectedSlot = DeliverySlot.from(deliverySlot);
-        if (selectedSlot == null) {
-            throw new IllegalArgumentException("Khung giờ giao hàng không hợp lệ!");
-        }
-
         PaymentMethod selectedPayment = PaymentMethod.from(paymentMethod);
         if (selectedPayment != PaymentMethod.COD && selectedPayment != PaymentMethod.CARD
                 && selectedPayment != PaymentMethod.VNPAY) {
@@ -372,9 +385,43 @@ public class OrderServiceImpl implements IOrderService {
         address.setCity(address.getCity().trim());
 
         Order order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
-        String slotLabel = selectedSlot == DeliverySlot.MORNING ? "Giao buổi sáng (08:00 - 12:00)"
-                : selectedSlot == DeliverySlot.AFTERNOON ? "Giao buổi chiều (13:00 - 17:00)"
-                : selectedSlot == DeliverySlot.EVENING ? "Giao buổi tối (18:00 - 21:00)" : selectedSlot.name();
+
+        // Chuẩn hóa ngày giao
+        LocalDate selectedDate;
+        try {
+            if (deliveryDateStr != null && !deliveryDateStr.trim().isEmpty()) {
+                selectedDate = LocalDate.parse(deliveryDateStr.trim());
+            } else {
+                selectedDate = LocalDate.now();
+            }
+        } catch (Exception ex) {
+            selectedDate = LocalDate.now();
+        }
+        String formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
+        // Chuẩn hóa khung giờ giao hàng
+        String slotText = "08:00 - 10:00";
+        if (deliverySlot != null && !deliverySlot.trim().isEmpty()) {
+            String trimmed = deliverySlot.trim();
+            if ("MORNING".equalsIgnoreCase(trimmed) || "M1".equalsIgnoreCase(trimmed)) {
+                slotText = "08:00 - 10:00";
+            } else if ("M2".equalsIgnoreCase(trimmed)) {
+                slotText = "10:00 - 12:00";
+            } else if ("AFTERNOON".equalsIgnoreCase(trimmed) || "A1".equalsIgnoreCase(trimmed)) {
+                slotText = "13:00 - 15:00";
+            } else if ("A2".equalsIgnoreCase(trimmed)) {
+                slotText = "15:00 - 17:00";
+            } else if ("EVENING".equalsIgnoreCase(trimmed) || "E1".equalsIgnoreCase(trimmed)) {
+                slotText = "17:00 - 19:00";
+            } else if ("E2".equalsIgnoreCase(trimmed)) {
+                slotText = "19:00 - 21:00";
+            } else {
+                slotText = trimmed;
+            }
+        }
+
+        String slotLabel = slotText + " (" + formattedDate + ")";
+
         for (SubOrder sub : order.getSubOrders()) {
             String note = shopNotes != null ? shopNotes.get(sub.getShopId()) : null;
             if (note != null && !note.trim().isEmpty()) {
@@ -417,11 +464,6 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public List<Coupon> getAvailableShopCoupons(long shopId) {
         return couponDAO.findAvailableForShop(shopId);
-    }
-
-    @Override
-    public List<Order> getOrdersByCustomerId(long customerId) {
-        return orderDAO.getOrdersByCustomerId(customerId);
     }
 
     @Override

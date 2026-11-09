@@ -24,79 +24,8 @@ public class InventoryWasteDAO extends DBContext {
     private static final Logger LOGGER = Logger.getLogger(InventoryWasteDAO.class.getName());
 
     public InventoryWasteDAO() {
-        initTable();
     }
 
-    private void initTable() {
-        String sql = "IF OBJECT_ID(N'dbo.inventory_waste_logs', N'U') IS NULL "
-                + "BEGIN "
-                + "    CREATE TABLE [dbo].[inventory_waste_logs] ( "
-                + "        [waste_id]          BIGINT IDENTITY(1,1) PRIMARY KEY, "
-                + "        [shop_id]           BIGINT NOT NULL, "
-                + "        [variant_id]        BIGINT NOT NULL, "
-                + "        [sub_order_id]      BIGINT NULL, "
-                + "        [waste_stage]       VARCHAR(50) NOT NULL, "
-                + "        [quantity]          INT NOT NULL, "
-                + "        [unit]              NVARCHAR(30) NOT NULL, "
-                + "        [cost_price]        DECIMAL(18, 2) NOT NULL, "
-                + "        [estimated_loss]    DECIMAL(18, 2) NOT NULL, "
-                + "        [reason_note]       NVARCHAR(500) NOT NULL, "
-                + "        [image_proof_url]   VARCHAR(500) NULL, "
-                + "        [logged_by]         BIGINT NULL, "
-                + "        [created_at]        DATETIME DEFAULT CURRENT_TIMESTAMP "
-                + "    ); "
-                + "END";
-        Connection conn = getConnection();
-        if (conn == null) {
-            return;
-        }
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.executeUpdate();
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error initializing inventory_waste_logs table", ex);
-        }
-    }
-
-    public boolean insertWasteLog(long shopId, long variantId, Long subOrderId, String wasteStage,
-            int quantity, String unit, BigDecimal costPrice, String reasonNote, String imageProofUrl, Long loggedBy) {
-        String sql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, quantity, "
-                + "unit, cost_price, estimated_loss, reason_note, image_proof_url, logged_by, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
-        Connection conn = getConnection();
-        if (conn == null) {
-            return false;
-        }
-        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
-            BigDecimal estimatedLoss = costPrice.multiply(BigDecimal.valueOf(quantity));
-            ps.setLong(1, shopId);
-            ps.setLong(2, variantId);
-            if (subOrderId != null) {
-                ps.setLong(3, subOrderId);
-            } else {
-                ps.setNull(3, Types.BIGINT);
-            }
-            ps.setString(4, wasteStage);
-            ps.setInt(5, quantity);
-            ps.setNString(6, unit != null ? unit : "kg");
-            ps.setBigDecimal(7, costPrice);
-            ps.setBigDecimal(8, estimatedLoss);
-            ps.setNString(9, reasonNote);
-            if (imageProofUrl != null) {
-                ps.setString(10, imageProofUrl);
-            } else {
-                ps.setNull(10, Types.VARCHAR);
-            }
-            if (loggedBy != null) {
-                ps.setLong(11, loggedBy);
-            } else {
-                ps.setNull(11, Types.BIGINT);
-            }
-            return ps.executeUpdate() > 0;
-        } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error inserting waste log", ex);
-            return false;
-        }
-    }
 
     public boolean recordManualWaste(long shopId, long variantId, int quantity, String reasonNote, Long loggedBy) {
         return recordManualWaste(shopId, variantId, "WAREHOUSE_EXPIRED", quantity, reasonNote, loggedBy);
@@ -183,13 +112,12 @@ public class InventoryWasteDAO extends DBContext {
             conn.commit();
             return true;
         } catch (SQLException ex) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error recording manual waste", ex);
+            return false;
+        } finally {
+            closeQuietly(conn);
         }
-        return false;
-    }
-
-    public boolean logOrderCancellationWaste(long subOrderId, String reason, Long loggedBy) {
-        return logOrderCancellationWaste(subOrderId, reason, loggedBy, null);
     }
 
 
@@ -354,9 +282,12 @@ public class InventoryWasteDAO extends DBContext {
             conn.commit();
             return true;
         } catch (SQLException ex) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error logging order cancellation waste", ex);
+            return false;
+        } finally {
+            closeQuietly(conn);
         }
-        return false;
     }
 
     private TransitDamageData fetchTransitDamageData(Connection conn, long subOrderId) throws SQLException {
@@ -488,8 +419,11 @@ public class InventoryWasteDAO extends DBContext {
             conn.commit();
             return true;
         } catch (SQLException ex) {
+            rollbackQuietly(conn);
             LOGGER.log(Level.SEVERE, "Error logging transit damage waste", ex);
             return false;
+        } finally {
+            closeQuietly(conn);
         }
     }
 
@@ -734,8 +668,7 @@ public class InventoryWasteDAO extends DBContext {
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
                 + "       o.order_code, o.payment_status, o.payment_method, "
-                + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.city "
-                + "FROM sub_orders so "
+                + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city "
                 + "JOIN orders o ON so.order_id = o.order_id "
                 + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
                 + "WHERE so.shop_id = ? AND so.status IN ('RETURNED', 'FAILED') "
@@ -772,8 +705,9 @@ public class InventoryWasteDAO extends DBContext {
                     addr.setRecipientName(rs.getString("recipient_name"));
                     addr.setRecipientPhone(rs.getString("recipient_phone"));
                     addr.setStreetAddress(rs.getString("street_address"));
+                    addr.setWard(rs.getString("ward"));
+                    addr.setDistrict(rs.getString("district"));
                     addr.setCity(rs.getString("city"));
-                    so.setShippingAddress(addr);
 
                     so.setItems(fulfillmentDAO.getOrderItemsBySubOrderId(so.getSubOrderId()));
                     list.add(so);
@@ -783,5 +717,26 @@ public class InventoryWasteDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error fetching pending returned orders for shop " + shopId, ex);
         }
         return list;
+    }
+
+    private void rollbackQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Rollback failed", ex);
+            }
+        }
+    }
+
+    private void closeQuietly(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Error closing connection", ex);
+            }
+        }
     }
 }

@@ -21,9 +21,7 @@
     <main class="shop-main-wrapper">
         <div class="shop-content-container">
 
-            <c:if test="${not empty errorMessage}">
-                <div class="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm"><c:out value="${errorMessage}"/></div>
-            </c:if>
+            <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
             <!-- ===== TIÊU ĐỀ + BỘ LỌC KỲ ===== -->
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">

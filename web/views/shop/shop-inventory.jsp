@@ -15,16 +15,6 @@
 </head>
 <body class="bg-[#f8fafc] text-[#0f172a]">
 
-    <!-- Flash Messages (if any) -->
-    <c:if test="${not empty sessionScope.successMessage}">
-        <div id="flashMsg" class="fixed top-20 right-8 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 text-xs font-bold animate-bounce">
-            <i class="fa-solid fa-circle-check text-base"></i>
-            <span>${sessionScope.successMessage}</span>
-            <button onclick="this.parentElement.remove()" class="ml-2 text-white/80 hover:text-white">&times;</button>
-        </div>
-        <c:remove var="successMessage" scope="session"/>
-    </c:if>
-
     <!-- ========================================================
          SIDEBAR + HEADER DÙNG CHUNG (views/shop/layout/)
          ======================================================== -->
@@ -40,6 +30,8 @@
          ======================================================== -->
     <main class="shop-main-wrapper">
         <div class="shop-content-container">
+
+            <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
             <!-- Breadcrumb & Header Title -->
             <div class="flex flex-col gap-2 mb-6">

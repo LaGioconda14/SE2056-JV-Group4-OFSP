@@ -2,12 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
-<%--
-    Trang theo dõi hồ sơ đăng ký bán hàng. sellerState (do SellerPortalServlet set):
-        PENDING  : đang chờ admin duyệt (tài khoản vẫn là khách hàng)
-        REJECTED : bị từ chối -> sửa và gửi lại
-        APPROVED : đã được duyệt -> nút "Vào trang người bán"
---%>
+
 <!DOCTYPE html>
 <html lang="vi" class="scroll-smooth">
 <head>

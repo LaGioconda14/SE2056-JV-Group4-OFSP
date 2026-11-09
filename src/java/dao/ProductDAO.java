@@ -2108,21 +2108,29 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
     public List<Product> getProductSummariesByShopId(long shopId) {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT p.product_id, p.name, p.origin, p.certification, "
-                + "(SELECT TOP 1 p2.storage_temp FROM products p2 WHERE p2.product_id = p.product_id) AS storage_temp, "
-                + "(SELECT TOP 1 p2.description FROM products p2 WHERE p2.product_id = p.product_id) AS description, "
-                + "c.category_name, "
+                + "p.storage_temp, p.description, c.category_name, p.is_active, "
                 + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
-                + "COALESCE(MIN(pv.variant_id), 0) AS primary_variant_id, "
-                + "COALESCE(MIN(pv.price), 0) AS min_price, COALESCE(MAX(pv.price), 0) AS max_price, "
-                + "COALESCE(SUM(pv.stock_quantity), 0) AS total_stock, "
-                + "(SELECT COUNT(*) FROM product_variants WHERE product_id = p.product_id) AS variant_count, "
-                + "CASE WHEN p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) THEN 1 ELSE 0 END AS active_for_sale "
+                + "COALESCE(stats.min_price, 0) AS min_price, "
+                + "COALESCE(stats.max_price, 0) AS max_price, "
+                + "COALESCE(stats.total_stock, 0) AS total_stock, "
+                + "COALESCE(stats.variant_count, 0) AS variant_count "
                 + "FROM products p "
-                + "LEFT JOIN product_variants pv ON p.product_id = pv.product_id "
                 + "LEFT JOIN categories c ON p.category_id = c.category_id "
-                + "LEFT JOIN (SELECT product_id, MAX(image_url) AS image_url FROM product_images WHERE is_thumbnail = 1 GROUP BY product_id) pi ON p.product_id = pi.product_id "
+                + "OUTER APPLY ("
+                + "    SELECT TOP 1 image_url FROM product_images "
+                + "    WHERE product_id = p.product_id "
+                + "    ORDER BY is_thumbnail DESC, display_order ASC"
+                + ") pi "
+                + "OUTER APPLY ("
+                + "    SELECT "
+                + "        MIN(price) AS min_price, "
+                + "        MAX(price) AS max_price, "
+                + "        SUM(CASE WHEN is_active = 1 THEN stock_quantity ELSE 0 END) AS total_stock, "
+                + "        COUNT(variant_id) AS variant_count "
+                + "    FROM product_variants "
+                + "    WHERE product_id = p.product_id"
+                + ") stats "
                 + "WHERE p.shop_id = ? "
-                + "GROUP BY p.product_id, p.name, p.origin, p.certification, c.category_name, p.is_active, pi.image_url "
                 + "ORDER BY p.product_id DESC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -2138,12 +2146,11 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     product.setDescription(rs.getString("description"));
                     product.setCategoryName(rs.getString("category_name"));
                     product.setImage(rs.getString("image_url"));
-                    product.setPrimaryVariantId(rs.getLong("primary_variant_id"));
                     product.setPrice(rs.getBigDecimal("min_price"));
                     product.setOldPrice(rs.getBigDecimal("max_price"));
                     product.setStockQuantity(rs.getInt("total_stock"));
                     product.setVariantCount(rs.getInt("variant_count"));
-                    product.setActiveForSale(rs.getBoolean("active_for_sale"));
+                    product.setActive(rs.getBoolean("is_active"));
                     products.add(product);
                 }
             }
@@ -2574,112 +2581,129 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
     }
 
 
-    // Find a variant by ID and include its related product details.
+    // -------------------------------------------------------------------------
+    // Product updates and category queries
+    // -------------------------------------------------------------------------
+    // Load product-level edit data without using a variant as an identifier.
+    public Product getShopProductForEdit(long productId, long shopId) {
+        String sql = "SELECT p.product_id, p.name, p.category_id, p.origin, p.storage_temp, "
+                + "p.certification, p.description, p.is_active, "
+                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url "
+                + "FROM products p LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
+                + "WHERE p.product_id = ? AND p.shop_id = ?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setLong(2, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                Product product = new Product();
+                product.setId(rs.getLong("product_id"));
+                product.setName(rs.getString("name"));
+                product.setCategoryId(rs.getInt("category_id"));
+                product.setOrigin(rs.getString("origin"));
+                product.setStorageTemp(rs.getString("storage_temp"));
+                product.setCertification(rs.getString("certification"));
+                product.setDescription(rs.getString("description"));
+                product.setActive(rs.getBoolean("is_active"));
+                product.setImage(rs.getString("image_url"));
+                return product;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
-    public boolean updateFullProduct(long shopId, long variantId, String name, int categoryId, String origin,
-            String storageTemp, String certification, String description,
-            String sku, String variantName, String unit, BigDecimal price,
-            BigDecimal originalPrice, int stockQuantity, boolean isActive,
-            String coverImageUrl) {
-
-        // Resolve the product through its variant and verify shop ownership.
-        String sqlGetProductId = "SELECT pv.product_id FROM product_variants pv "
-                + "JOIN products p ON pv.product_id = p.product_id "
-                + "WHERE pv.variant_id = ? AND p.shop_id = ?";
-
-        String sqlUpdateProduct = "UPDATE products SET name = ?, category_id = ?, origin = ?, storage_temp = ?, certification = ?, description = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE product_id = ?";
-        String sqlCheckImage = "SELECT image_id FROM product_images WHERE product_id = ? AND is_thumbnail = 1";
+    public boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
+            String storageTemp, String certification, String description, boolean isActive, String coverImageUrl) {
+        String sqlProduct = "UPDATE products SET name = ?, category_id = ?, origin = ?, storage_temp = ?, "
+                + "certification = ?, description = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE product_id = ? AND shop_id = ?";
         String sqlUpdateImage = "UPDATE product_images SET image_url = ? WHERE product_id = ? AND is_thumbnail = 1";
         String sqlInsertImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) VALUES (?, ?, 1, 1, CURRENT_TIMESTAMP)";
-
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
-            long productId = -1;
-
-            // Verify ownership and resolve the product ID.
-            try (PreparedStatement ps = conn.prepareStatement(sqlGetProductId)) {
-                ps.setLong(1, variantId);
-                ps.setLong(2, shopId);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        productId = rs.getLong("product_id");
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(sqlProduct)) {
+                    ps.setString(1, name);
+                    if (categoryId > 0) ps.setInt(2, categoryId); else ps.setNull(2, java.sql.Types.INTEGER);
+                    ps.setString(3, origin == null ? "" : origin.trim());
+                    ps.setString(4, storageTemp == null ? "" : storageTemp.trim());
+                    ps.setString(5, certification == null ? "" : certification.trim());
+                    ps.setString(6, description == null ? "" : description);
+                    ps.setBoolean(7, isActive);
+                    ps.setLong(8, productId);
+                    ps.setLong(9, shopId);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
                     }
                 }
-            }
-
-            // Reject a missing variant or one owned by another shop.
-            if (productId == -1) {
-                conn.rollback();
-                return false;
-            }
-
-            // Update shared product fields.
-            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateProduct)) {
-                ps.setString(1, name);
-                if (categoryId > 0) {
-                    ps.setInt(2, categoryId);
-                } else {
-                    ps.setNull(2, java.sql.Types.INTEGER);
-                }
-                ps.setString(3, origin != null ? origin.trim() : "");
-                ps.setString(4, storageTemp != null ? storageTemp.trim() : "");
-                ps.setString(5, certification != null ? certification.trim() : "");
-                ps.setString(6, description != null ? description : "");
-                ps.setBoolean(7, isActive);
-                ps.setLong(8, productId);
-                ps.executeUpdate();
-            }
-
-            // Update the thumbnail or insert one when none exists.
-            if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
-                boolean hasThumbnail = false;
-                try (PreparedStatement ps = conn.prepareStatement(sqlCheckImage)) {
-                    ps.setLong(1, productId);
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            hasThumbnail = true;
-                        }
-                    }
-                }
-
-                if (hasThumbnail) {
+                if (coverImageUrl != null && !coverImageUrl.trim().isEmpty()) {
+                    int changed;
                     try (PreparedStatement ps = conn.prepareStatement(sqlUpdateImage)) {
                         ps.setString(1, coverImageUrl.trim());
                         ps.setLong(2, productId);
-                        ps.executeUpdate();
+                        changed = ps.executeUpdate();
                     }
-                } else {
-                    try (PreparedStatement ps = conn.prepareStatement(sqlInsertImage)) {
-                        ps.setLong(1, productId);
-                        ps.setString(2, coverImageUrl.trim());
-                        ps.executeUpdate();
+                    if (changed == 0) {
+                        try (PreparedStatement ps = conn.prepareStatement(sqlInsertImage)) {
+                            ps.setLong(1, productId);
+                            ps.setString(2, coverImageUrl.trim());
+                            ps.executeUpdate();
+                        }
                     }
                 }
+                conn.commit();
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
             }
-
-            conn.commit();
-            return true;
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+    public List<Product> searchAndFilterProducts(String keyword, String categorySlug, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin) {
-        return searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, ratingStr, availability, origin, "default");
+        return searchAndFilterProducts(keyword, categorySlug, minPriceStr, maxPriceStr, ratingStr, availability, origin, "default");
     }
 
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+    public List<Product> searchAndFilterProducts(String keyword, String categorySlug, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin, String sortBy) {
-        List<Product> list = new ArrayList<>();
+
+        List<Product> productList = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+
+        // =========================================================================
+        // BƯỚC 1: XỬ LÝ LỌC THEO DANH MỤC (Hỗ trợ quét cả danh mục cha và các con cháu bên trong bằng CTE)
+        // =========================================================================
+        boolean filterByCategory = categorySlug != null && !categorySlug.trim().isEmpty() && !"0".equals(categorySlug.trim());
+
+        if (filterByCategory) {
+            String categoryValue = categorySlug.trim();
+            try {
+                params.add(Integer.parseInt(categoryValue));
+                sql.append("WITH CategoryTree AS (SELECT category_id FROM categories WHERE category_id = ? ")
+                        .append("UNION ALL SELECT child.category_id FROM categories child ")
+                        .append("INNER JOIN CategoryTree parent ON child.parent_id = parent.category_id) ");
+            } catch (NumberFormatException e) {
+                params.add(categoryValue);
+                sql.append("WITH CategoryTree AS (SELECT category_id FROM categories WHERE slug = ? ")
+                        .append("UNION ALL SELECT child.category_id FROM categories child ")
+                        .append("INNER JOIN CategoryTree parent ON child.parent_id = parent.category_id) ");
+            }
+        }
+
+        // =========================================================================
+        // BƯỚC 2: CÂU LỆNH SELECT CƠ BẢN VÀ CÁC SUBQUERY (Lấy giá, kho, đánh giá, ảnh)
+        // =========================================================================
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
                 .append("p.origin, p.certification, pi.image_url, ")
-                // Read the selling and original prices from the lowest-priced variant.
-                .append("(SELECT TOP 1 price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS price, ")
-                .append("(SELECT TOP 1 original_price FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY price ASC) AS original_price, ")
-                .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
+                .append("v.price, v.original_price, v.unit, ") // Lấy thẳng từ cụm biến thể rẻ nhất bên dưới
                 .append("(SELECT COALESCE(SUM(stock_quantity), 0) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
                 .append("(SELECT AVG(CAST(r.rating AS DECIMAL(5,2))) FROM reviews r ")
                 .append("JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
@@ -2697,31 +2721,30 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 .append("OUTER APPLY ( ")
                 .append("    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC ")
                 .append(") pi ")
+                .append("OUTER APPLY ( ")
+                .append("    SELECT TOP 1 price, original_price, unit FROM product_variants ")
+                .append("    WHERE product_id = p.product_id AND is_active = 1 ")
+                .append("    ORDER BY price ASC ")
+                .append(") v ") // <-- ĐÂY! Gom gọn tất cả giá, giá gốc, đơn vị vào chung 1 bảng ảo v này!
                 .append("WHERE p.is_active = 1 ");
 
-        List<Object> params = new ArrayList<>();
-
-        // Filter by product name or origin.
+        // =========================================================================
+        // BƯỚC 3: GẮN CÁC ĐIỀU KIỆN LỌC ĐỘNG (Tuỳ thuộc người dùng truyền tham số nào)
+        // =========================================================================
+        // Search by product name only; origin remains an independent filter below.
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ?) ");
+            sql.append(" AND p.name LIKE ? ");
             String kw = "%" + keyword.trim() + "%";
             params.add(kw);
-            params.add(kw);
         }
 
-        // Filter by category.
-        if (categoryId != null && !categoryId.trim().isEmpty() && !categoryId.equals("0")) {
-            try {
-                int catId = Integer.parseInt(categoryId.trim());
-                sql.append(" AND p.category_id = ? ");
-                params.add(catId);
-            } catch (NumberFormatException ignored) {
-                sql.append(" AND c.slug = ? ");
-                params.add(categoryId.trim());
-            }
+
+        // 3.2. Lọc theo danh mục (Sử dụng kết quả từ khối CTE ở Bước 1)
+        if (filterByCategory) {
+            sql.append(" AND p.category_id IN (SELECT category_id FROM CategoryTree) ");
         }
 
-        // Filter by the active variant price range.
+        // 3.3. Lọc theo giá tối thiểu (Min Price)
         if (minPriceStr != null && !minPriceStr.trim().isEmpty()) {
             try {
                 BigDecimal minPrice = new BigDecimal(minPriceStr.trim());
@@ -2731,6 +2754,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             }
         }
 
+        // 3.4. Lọc theo giá tối đa (Max Price)
         if (maxPriceStr != null && !maxPriceStr.trim().isEmpty()) {
             try {
                 BigDecimal maxPrice = new BigDecimal(maxPriceStr.trim());
@@ -2740,7 +2764,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             }
         }
 
-        // Filter by minimum rating.
+        // 3.5. Lọc theo số sao đánh giá trung bình tối thiểu
         if (ratingStr != null && !ratingStr.trim().isEmpty()) {
             try {
                 BigDecimal minRating = new BigDecimal(ratingStr.trim());
@@ -2753,19 +2777,22 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             }
         }
 
-        // Filter by stock availability.
-        if (availability != null && availability.equals("in_stock")) {
+        // 3.6. Lọc theo tình trạng tồn kho (Còn hàng / Hết hàng)
+        if ("in_stock".equals(availability)) {
             sql.append(" AND EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
-        } else if (availability != null && availability.equals("out_of_stock")) {
+        } else if ("out_of_stock".equals(availability)) {
             sql.append(" AND NOT EXISTS (SELECT 1 FROM product_variants av WHERE av.product_id = p.product_id AND av.is_active = 1 AND av.stock_quantity > 0) ");
         }
 
-        // Filter by origin.
+        // 3.7. Lọc theo xuất xứ
         if (origin != null && !origin.trim().isEmpty()) {
             sql.append(" AND p.origin LIKE ? ");
             params.add("%" + origin.trim() + "%");
         }
 
+        // =========================================================================
+        // BƯỚC 4: SẮP XẾP KẾT QUẢ (ORDER BY)
+        // =========================================================================
         String orderBy;
         if ("newest".equals(sortBy)) {
             orderBy = "p.created_at DESC, p.product_id DESC";
@@ -2778,11 +2805,16 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
         } else if ("rating_desc".equals(sortBy)) {
             orderBy = "avg_rating DESC, reviews_count DESC, p.product_id DESC";
         } else {
-            orderBy = "p.is_featured DESC, p.product_id DESC";
+            orderBy = "p.is_featured DESC, p.product_id DESC"; // Mặc định
         }
         sql.append(" ORDER BY ").append(orderBy);
 
+        // =========================================================================
+        // BƯỚC 5: THỰC THI TRUY VẤN VÀ MAP KẾT QUẢ RA OBJECT PRODUCT
+        // =========================================================================
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            // Đưa các tham số vào PreparedStatement an toàn (Chống SQL Injection)
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
@@ -2795,26 +2827,28 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     p.setCategoryId(rs.getInt("category_id"));
                     p.setCategoryName(rs.getString("category_name"));
 
+                    // Ảnh đại diện
                     String img = rs.getString("image_url");
                     if (img == null || img.trim().isEmpty()) {
                         img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
                     }
                     p.setImage(img);
 
+                    // Giá bán
                     BigDecimal price = rs.getBigDecimal("price");
                     if (price == null) {
                         price = BigDecimal.ZERO;
                     }
                     p.setPrice(price);
 
-                    // Read the original price from the database.
+                    // Giá gốc (để tính % giảm giá)
                     BigDecimal oldPrice = rs.getBigDecimal("original_price");
                     if (oldPrice == null || oldPrice.compareTo(price) < 0) {
-                        oldPrice = price; // Nếu giá gốc rỗng hoặc nhỏ hơn giá bán thì mặc định bằng giá bán
+                        oldPrice = price;
                     }
                     p.setOldPrice(oldPrice);
 
-                    // Calculate the actual discount percentage.
+                    // Tính phần trăm giảm giá
                     int discountPercent = 0;
                     if (oldPrice.compareTo(price) > 0) {
                         BigDecimal discountAmount = oldPrice.subtract(price);
@@ -2824,23 +2858,25 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     }
                     p.setDiscountPercent(discountPercent);
 
+                    // Đánh giá & Xuất xứ & Đơn vị tính
                     p.setRating(rs.getDouble("avg_rating"));
                     p.setReviewsCount(rs.getInt("reviews_count"));
-
                     p.setOrigin(rs.getString("origin"));
                     p.setCertification(rs.getString("certification"));
                     p.setUnit(rs.getString("unit"));
 
+                    // Tồn kho
                     int totalStock = rs.getInt("total_stock");
                     p.setStockQuantity(totalStock);
                     p.setInStock(totalStock > 0);
 
-                    list.add(p);
+                    productList.add(p);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return list;
+
+        return productList;
     }
 }

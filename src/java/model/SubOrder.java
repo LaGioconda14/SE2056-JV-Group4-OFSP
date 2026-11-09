@@ -372,6 +372,28 @@ public class SubOrder {
         return items != null && !items.isEmpty();
     }
 
+    public Long getFirstProductId() {
+        if (items != null && !items.isEmpty()) {
+            for (OrderItem it : items) {
+                if (it.getProductId() != null && it.getProductId() > 0) {
+                    return it.getProductId();
+                }
+            }
+        }
+        return null;
+    }
+
+    public Long getFirstVariantId() {
+        if (items != null && !items.isEmpty()) {
+            for (OrderItem it : items) {
+                if (it.getVariantId() != null && it.getVariantId() > 0) {
+                    return it.getVariantId();
+                }
+            }
+        }
+        return null;
+    }
+
     public String getNote() {
         return deliverySlot != null && !deliverySlot.trim().isEmpty() ? ("Khung giờ giao: " + deliverySlot) : "Đơn hàng nông sản chuỗi lạnh FreshFruit";
     }

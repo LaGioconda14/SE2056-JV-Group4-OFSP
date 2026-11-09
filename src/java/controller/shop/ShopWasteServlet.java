@@ -25,10 +25,6 @@ import service.impl.InventoryWasteServiceImpl;
 import service.impl.ProductServiceImpl;
 import service.impl.ShopProductServiceImpl;
 
-/**
- * Controller quản lý phân hệ hàng hao hụt, dập nát, hư hỏng và tiêu hủy nông sản cho nhà vườn.
- * Hỗ trợ thống kê tỷ lệ hao hụt, ghi nhận tiêu hủy tự động trừ tồn kho, và xử lý hoàn hàng hỏng.
- */
 @WebServlet(name = "ShopWasteServlet", urlPatterns = {"/shop/waste", "/shop/inventory/waste"})
 public class ShopWasteServlet extends HttpServlet {
 
@@ -49,13 +45,11 @@ public class ShopWasteServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
-        // 1. Phân quyền chủ shop (SHOP_OWNER)
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
-        // 2. Xác định shopId
         Long shopId = (Long) session.getAttribute("shopId");
         if (shopId == null || shopId <= 0) {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
@@ -68,7 +62,6 @@ public class ShopWasteServlet extends HttpServlet {
         }
 
         try {
-            // 3. Đọc các tham số lọc & tìm kiếm
             String stage = request.getParameter("stage");
             if (stage == null || stage.trim().isEmpty()) {
                 stage = "ALL";
@@ -91,7 +84,6 @@ public class ShopWasteServlet extends HttpServlet {
                 page = 1;
             }
 
-            // 4. Lấy danh sách nhật ký tiêu hủy theo phân trang & lọc
             List<InventoryWasteLog> logs = wasteService.getWasteLogsByShop(shopId, stage, keyword, page, DEFAULT_PAGE_SIZE);
             int totalItems = wasteService.countWasteLogsByShop(shopId, stage, keyword);
             int totalPages = (int) Math.ceil((double) totalItems / DEFAULT_PAGE_SIZE);
@@ -99,16 +91,10 @@ public class ShopWasteServlet extends HttpServlet {
                 totalPages = 1;
             }
 
-            // 5. Lấy số liệu thống kê chất lượng & tỷ lệ hao hụt
             WasteStatisticDTO stats = wasteService.getWasteStatisticsByShop(shopId);
-
-            // 6. Lấy danh mục sản phẩm của shop để chọn trong modal báo hỏng kho
             List<ProductVariant> variants = productService.getVariantsByShopId(shopId);
-
-            // 7. Lấy danh sách các đơn hàng chuyển hoàn (RETURNED/FAILED) đang chờ kiểm định / xử lý tiêu hủy
             List<SubOrder> pendingReturnedOrders = wasteService.getPendingReturnedOrdersByShop(shopId);
 
-            // 8. Đẩy dữ liệu sang View
             request.setAttribute("wasteLogs", logs);
             request.setAttribute("stats", stats);
             request.setAttribute("variants", variants);

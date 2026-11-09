@@ -17,11 +17,11 @@
             <jsp:param name="active" value="orders" />
         </jsp:include>
 
-        <div class="shop-main-wrapper">
+        <jsp:include page="/views/shop/layout/header.jsp" />
 
-            <jsp:include page="/views/shop/layout/header.jsp" />
-
-            <main class="shop-content-container">
+        <main class="shop-main-wrapper">
+            <div class="shop-content-container">
+                <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -115,14 +115,14 @@
                                                 </td>
                                                 <td class="py-3.5 px-4">
                                                     <div class="font-bold text-slate-900">${o.shippingAddress.recipientName}</div>
-                                                    <div class="text-[11px] text-slate-400 truncate max-w-xs">
-                                                        ${o.shippingAddress.city} • SĐT: ${fn:substring(o.shippingAddress.recipientPhone, 0, 7)}***
-                                                    </div>
+                                                    <div class="text-[11px] text-slate-500 truncate max-w-xs">${o.shippingAddress.city}</div>
+                                                    <div class="text-[11px] text-slate-400">SĐT: ${fn:substring(o.shippingAddress.recipientPhone, 0, 7)}***</div>
                                                 </td>
                                                 <td class="py-3.5 px-4">
                                                     <c:forEach items="${o.items}" var="it" varStatus="st">
-                                                        <div class="text-[11px] text-slate-700 leading-snug">
-                                                            • <span class="font-semibold text-slate-900">${it.productNameSnapshot}</span> (x${it.quantity} ${it.unit})
+                                                        <div class="text-[11px] text-slate-700 leading-snug mb-1 last:mb-0">
+                                                            <div class="font-semibold text-slate-900">• ${it.productNameSnapshot}</div>
+                                                            <div class="text-[11px] text-slate-500 pl-2.5">x${it.quantity} ${it.unit}</div>
                                                         </div>
                                                     </c:forEach>
                                                 </td>
@@ -223,8 +223,8 @@
                     </div>
                 </div>
 
-            </main>
-        </div>
+            </div>
+        </main>
 
     </body>
 </html>
