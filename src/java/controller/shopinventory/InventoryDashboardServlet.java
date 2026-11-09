@@ -9,9 +9,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.ProductBatch;
-import model.Shop;
-import model.User;
+import model.entity.inventory.ProductBatch;
+import model.entity.shop.Shop;
+import model.entity.user.User;
 import service.IInventoryService;
 import service.impl.InventoryServiceImpl;
 

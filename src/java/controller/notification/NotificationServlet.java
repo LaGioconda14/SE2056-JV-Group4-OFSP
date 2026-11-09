@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import model.Notification;
-import model.User;
+import model.entity.notification.Notification;
+import model.entity.user.User;
 import service.INotificationService;
 import service.impl.NotificationServiceImpl;
 

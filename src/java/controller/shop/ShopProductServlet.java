@@ -8,10 +8,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
-import model.Shop;
-import model.Product;
-import model.ProductVariant;
+import model.entity.user.User;
+import model.entity.shop.Shop;
+import model.dto.product.ProductCardDTO;
+import model.dto.product.ProductVariantStockDTO;
 import dao.ShopDAO;
 import service.IOrderFulfillmentService;
 import service.IProductService;
@@ -70,7 +70,7 @@ public class ShopProductServlet extends HttpServlet {
         // 4. Lấy danh sách sản phẩm và biến thể của shop
         if (shopId != null) {
             // Lấy danh sách tóm tắt Product (kèm biến thể count, giá min-max, tổng tồn kho)
-            List<Product> products = productService.getProductSummariesByShopId(shopId);
+            List<ProductCardDTO> products = productService.getProductSummariesByShopId(shopId);
             request.setAttribute("products", products);
             request.setAttribute("totalProductsCount", productService.countProductsByShopId(shopId));
 
@@ -81,7 +81,7 @@ public class ShopProductServlet extends HttpServlet {
             request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
 
             // Hỗ trợ tương thích ngược cho các tab variant
-            List<ProductVariant> listVariants = productService.getVariantsByShopId(shopId);
+            List<ProductVariantStockDTO> listVariants = productService.getVariantsByShopId(shopId);
             request.setAttribute("listVariants", listVariants);
             request.setAttribute("totalVariantsCount", listVariants != null ? listVariants.size() : 0);
             int totalProducts = productService.countProductsByShopId(shopId);

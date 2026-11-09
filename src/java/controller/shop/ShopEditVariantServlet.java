@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.ProductVariant;
-import model.User;
+import model.dto.product.ProductVariantDetailDTO;
+import model.entity.user.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -29,7 +29,7 @@ public class ShopEditVariantServlet extends HttpServlet {
             }
             return;
         }
-        ProductVariant variant = productService.getShopVariantById(variantId, shopId);
+        ProductVariantDetailDTO variant = productService.getShopVariantById(variantId, shopId);
         if (variant == null) {
             response.sendRedirect(request.getContextPath() + "/shop/products");
             return;
@@ -58,7 +58,7 @@ public class ShopEditVariantServlet extends HttpServlet {
                     request.getParameter("price"), request.getParameter("originalPrice"),
                     request.getParameter("stockQuantity"), request.getParameter("lowStockThreshold"),
                     request.getParameter("isActive") != null);
-            ProductVariant updatedVariant = productService.getShopVariantById(variantId, shopId);
+            ProductVariantDetailDTO updatedVariant = productService.getShopVariantById(variantId, shopId);
             if (updatedVariant == null) {
                 response.sendRedirect(request.getContextPath() + "/shop/products");
                 return;
@@ -67,7 +67,7 @@ public class ShopEditVariantServlet extends HttpServlet {
                     + updatedVariant.getProductId());
         } catch (IllegalArgumentException e) {
             request.setAttribute("errorMessage", e.getMessage());
-            ProductVariant variant = productService.getShopVariantById(variantId, shopId);
+            ProductVariantDetailDTO variant = productService.getShopVariantById(variantId, shopId);
             if (variant == null) {
                 response.sendRedirect(request.getContextPath() + "/shop/products");
                 return;

@@ -160,7 +160,7 @@
                         <c:forEach var="shopEntry" items="${itemsByShop}">
                             <c:set var="shopItems" value="${shopEntry.value}"/>
                             <c:set var="shopNoteKey" value="shopNote_${shopEntry.key}"/>
-                            <c:set var="shop" value="${shopItems[0].variant.product}"/>
+                            <c:set var="shop" value="${shopItems[0].variant}"/>
                             <c:set var="shopSubtotal" value="${0}"/>
                             <c:forEach var="item" items="${shopItems}">
                                 <c:set var="shopSubtotal" value="${shopSubtotal + item.subtotal}"/>
@@ -189,8 +189,8 @@
                                             <div class="md:col-span-6 flex items-center gap-3.5 min-w-0">
                                                 <div class="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
                                                     <c:choose>
-                                                        <c:when test="${not empty item.variant.product.image}">
-                                                            <img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" class="w-full h-full object-cover">
+                                                        <c:when test="${not empty item.variant.image}">
+                                                            <img src="<c:out value='${item.variant.image}'/>" alt="<c:out value='${item.variant.productName}'/>" class="w-full h-full object-cover">
                                                         </c:when>
                                                         <c:otherwise>
                                                             <div class="w-full h-full flex items-center justify-center text-gray-300"><span class="material-symbols-outlined">image</span></div>
@@ -198,7 +198,7 @@
                                                     </c:choose>
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <h4 class="text-sm font-bold text-gray-900 line-clamp-2 leading-snug"><c:out value="${item.variant.product.name}"/></h4>
+                                                    <h4 class="text-sm font-bold text-gray-900 line-clamp-2 leading-snug"><c:out value="${item.variant.productName}"/></h4>
                                                     <p class="text-xs text-gray-500 mt-1">Phân loại: <strong class="text-gray-700"><c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}">, <c:out value="${item.variant.unit}"/></c:if></strong></p>
                                                 </div>
                                             </div>

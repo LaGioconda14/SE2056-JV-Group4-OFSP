@@ -3,7 +3,7 @@ package service;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
-import model.Promotion;
+import model.entity.promotion.Promotion;
 
 /** Service boundary for shop promotion management. */
 public interface IShopPromotionService {

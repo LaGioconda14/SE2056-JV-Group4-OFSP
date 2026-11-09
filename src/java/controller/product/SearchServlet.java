@@ -13,8 +13,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
-import model.Category;
-import model.Product;
+import model.entity.product.Category;
+import model.dto.product.ProductCardDTO;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -72,7 +72,7 @@ public class SearchServlet extends HttpServlet {
         String origin = request.getParameter("origin");
         
         // Kết hợp từ khóa và các điều kiện bộ lọc
-        List<Product> listProduct = productService.searchAndFilterProducts(query, categoryId, minPriceStr, maxPriceStr,
+        List<ProductCardDTO> listProduct = productService.searchAndFilterProducts(query, categoryId, minPriceStr, maxPriceStr,
                 ratingStr, availability, origin);
         
         // Lấy danh sách danh mục đổ ra sidebar bộ lọc

@@ -99,7 +99,7 @@
                             </div>
                         </div>
 
-                        <c:if test="${not empty subOrder.driverName}">
+                        <c:if test="${not empty subOrder.delivery.driverName}">
                             <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
                                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                                     <div class="flex items-center gap-2">
@@ -115,16 +115,16 @@
                                         <i class="fa-solid fa-user-check"></i>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-extrabold text-slate-900">${subOrder.driverName}</div>
+                                        <div class="text-sm font-extrabold text-slate-900">${subOrder.delivery.driverName}</div>
                                         <div class="text-[11px] text-slate-500">
-                                            SĐT: <b class="text-slate-700">${not empty subOrder.driverPhone ? subOrder.driverPhone : 'Chưa có SĐT'}</b>
+                                            SĐT: <b class="text-slate-700">${not empty subOrder.delivery.driverPhone ? subOrder.delivery.driverPhone : 'Chưa có SĐT'}</b>
                                         </div>
                                     </div>
                                 </div>
-                                <c:if test="${not empty subOrder.driverVehiclePlate}">
+                                <c:if test="${not empty subOrder.delivery.driverVehiclePlate}">
                                     <div class="mt-3 pt-3 border-t border-slate-100 text-xs flex items-center justify-between">
                                         <span class="text-slate-500">Biển số phương tiện:</span>
-                                        <span class="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${subOrder.driverVehiclePlate}</span>
+                                        <span class="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">${subOrder.delivery.driverVehiclePlate}</span>
                                     </div>
                                 </c:if>
                             </div>

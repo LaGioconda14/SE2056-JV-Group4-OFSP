@@ -10,10 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
-import model.Product;
-import model.ProductVariant;
-import model.Category;
-import model.Review;
+import model.dto.product.ProductCardDTO;
+import model.dto.product.ProductDetailDTO;
+import model.dto.product.ProductVariantDetailDTO;
+import model.dto.product.ProductVariantStockDTO;
+import model.entity.product.ProductVariant;
+import model.entity.product.Category;
+import model.entity.review.Review;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import service.IProductService;
@@ -82,8 +85,8 @@ public class ProductDAO extends DBContext {
 
 
     // 1. Lấy danh sách sản phẩm/biến thể theo shopId
-    public List<ProductVariant> getVariantsByShopId(long shopId) {
-        List<ProductVariant> list = new ArrayList<>();
+    public List<ProductVariantStockDTO> getVariantsByShopId(long shopId) {
+        List<ProductVariantStockDTO> list = new ArrayList<>();
         String sql = "SELECT "
                 + "    COALESCE(pv.variant_id, 0) AS variant_id, "
                 + "    p.product_id, "
@@ -92,6 +95,7 @@ public class ProductDAO extends DBContext {
                 + "    COALESCE(pv.price, 0) AS price, "
                 + "    COALESCE(pv.original_price, 0) AS original_price, "
                 + "    COALESCE(pv.stock_quantity, 0) AS stock_quantity, "
+                + "    COALESCE(pv.low_stock_threshold, 10) AS low_stock_threshold, "
                 + "    COALESCE(pv.unit, 'kg') AS unit, "
                 + "    COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
                 + "    COALESCE(pv.is_active, 1) AS is_active, "
@@ -111,7 +115,7 @@ public class ProductDAO extends DBContext {
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProductVariant v = new ProductVariant();
+                    ProductVariantStockDTO v = new ProductVariantStockDTO();
                     v.setVariantId(rs.getInt("variant_id"));
                     v.setProductId(rs.getLong("product_id"));
                     v.setSku(rs.getString("sku"));
@@ -119,6 +123,7 @@ public class ProductDAO extends DBContext {
                     v.setPrice(rs.getBigDecimal("price"));
                     v.setOriginalPrice(rs.getBigDecimal("original_price"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
+                    v.setLowStockThreshold(rs.getInt("low_stock_threshold"));
                     v.setUnit(rs.getString("unit"));
 
                     String img = rs.getString("image_url");
@@ -177,7 +182,7 @@ public class ProductDAO extends DBContext {
         return 0;
     }
     
-    public ProductVariant getVariantDetailForEdit(long variantId, long shopId) {
+    public ProductVariantDetailDTO getVariantDetailForEdit(long variantId, long shopId) {
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, "
                    + "       pv.price, pv.original_price, pv.stock_quantity, pv.low_stock_threshold, pv.is_active, "
                    + "       p.name AS product_name, p.category_id, p.origin, p.storage_temp, p.certification, p.description, "
@@ -194,7 +199,7 @@ public class ProductDAO extends DBContext {
             ps.setLong(2, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    ProductVariant v = new ProductVariant();
+                    ProductVariantDetailDTO v = new ProductVariantDetailDTO();
                     v.setVariantId(rs.getInt("variant_id"));
                     v.setProductId(rs.getLong("product_id"));
                     v.setSku(rs.getString("sku"));
@@ -478,8 +483,8 @@ public class ProductDAO extends DBContext {
     }
 
     // Đếm số lượng biến thể theo từng tab trạng thái của shop
-    public List<ProductVariant> getFilteredVariantsByShop(long shopId, String keyword, String categoryId, String certification, String stockLevel, String statusTab, int page, int pageSize) {
-        List<ProductVariant> list = new ArrayList<>();
+    public List<ProductVariantStockDTO> getFilteredVariantsByShop(long shopId, String keyword, String categoryId, String certification, String stockLevel, String statusTab, int page, int pageSize) {
+        List<ProductVariantStockDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT ")
                 .append("    pv.variant_id, ")
@@ -489,6 +494,7 @@ public class ProductDAO extends DBContext {
                 .append("    pv.price, ")
                 .append("    pv.original_price, ")
                 .append("    pv.stock_quantity, ")
+                .append("    COALESCE(pv.low_stock_threshold, 10) AS low_stock_threshold, ")
                 .append("    pv.unit, ")
                 .append("    COALESCE(pi.image_url, (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC)) AS image_url, ")
                 .append("    pv.is_active, ")
@@ -562,7 +568,7 @@ public class ProductDAO extends DBContext {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProductVariant v = new ProductVariant();
+                    ProductVariantStockDTO v = new ProductVariantStockDTO();
                     v.setVariantId(rs.getInt("variant_id"));
                     v.setProductId(rs.getLong("product_id"));
                     v.setSku(rs.getString("sku"));
@@ -570,6 +576,7 @@ public class ProductDAO extends DBContext {
                     v.setPrice(rs.getBigDecimal("price"));
                     v.setOriginalPrice(rs.getBigDecimal("original_price"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
+                    v.setLowStockThreshold(rs.getInt("low_stock_threshold"));
                     v.setUnit(rs.getString("unit"));
 
                     String img = rs.getString("image_url");
@@ -966,8 +973,8 @@ public class ProductDAO extends DBContext {
     // =========================================================================
     // 1. LẤY THÔNG TIN CHI TIẾT SẢN PHẨM & BIẾN THỂ ĐỂ ĐỔ RA FORM SỬA
     // =========================================================================
-    public ProductVariant getVariantById(long variantId) {
-        ProductVariant pv = null;
+    public ProductVariantDetailDTO getVariantById(long variantId) {
+        ProductVariantDetailDTO pv = null;
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, "
                 + "pv.price, pv.original_price, pv.stock_quantity, pv.is_active, "
                 + "p.name AS product_name, p.category_id, p.origin, p.storage_temp, "
@@ -983,7 +990,7 @@ public class ProductDAO extends DBContext {
             ps.setLong(1, variantId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    pv = new ProductVariant();
+                    pv = new ProductVariantDetailDTO();
                     // Thông tin biến thể (Variant)
                     pv.setVariantId(rs.getLong("variant_id"));
                     pv.setProductId(rs.getLong("product_id"));
@@ -1111,8 +1118,8 @@ public class ProductDAO extends DBContext {
         return false;
     }
 
-    public List<Product> getAllProducts() {
-        List<Product> list = new ArrayList<>();
+    public List<ProductCardDTO> getAllProducts() {
+        List<ProductCardDTO> list = new ArrayList<>();
         String query = "SELECT p.product_id, p.name, c.category_name, "
                 + "(SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id AND is_thumbnail = 1) AS image_url, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price "
@@ -1144,7 +1151,7 @@ public class ProductDAO extends DBContext {
                 }
 
                 // Không còn giảm giá "giả": giá gạch ngang chỉ xuất hiện khi có Promotion thật (util.PromotionPricing)
-                list.add(new Product(id, name, categoryName, image, price, price, 0, 4.9, 18));
+                list.add(new ProductCardDTO(id, name, categoryName, image, price, price, 0, 4.9, 18));
             }
             rs.close();
             ps.close();
@@ -1239,8 +1246,8 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
-    public List<Product> getHomeProducts() {
-        List<Product> list = new ArrayList<>();
+    public List<ProductCardDTO> getHomeProducts() {
+        List<ProductCardDTO> list = new ArrayList<>();
         String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
                 + "p.origin, p.certification, p.storage_temp, pi.image_url, "
                 + "dv.variant_id AS default_variant_id, "
@@ -1295,7 +1302,7 @@ public class ProductDAO extends DBContext {
 
                 double avgRating = rs.getDouble("avg_rating");
                 int revCount = rs.getInt("reviews_count");
-                Product p = new Product(id, name, categoryName, image, price, price, 0, avgRating, revCount);
+                ProductCardDTO p = new ProductCardDTO(id, name, categoryName, image, price, price, 0, avgRating, revCount);
                 p.setCategoryId(catId);
                 p.setCategorySlug(categorySlug);
                 p.setOrigin(rs.getString("origin"));
@@ -1316,8 +1323,8 @@ public class ProductDAO extends DBContext {
     }
 
     // 9. Lấy danh sách sản phẩm theo category slug (Dùng cho trang danh mục sản phẩm)
-    public List<Product> getProductsByCategorySlug(String categorySlug) {
-        List<Product> list = new ArrayList<>();
+    public List<ProductCardDTO> getProductsByCategorySlug(String categorySlug) {
+        List<ProductCardDTO> list = new ArrayList<>();
         String query = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
                 + "p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
@@ -1362,7 +1369,7 @@ public class ProductDAO extends DBContext {
                         price = new BigDecimal("100000");
                     }
 
-                    Product p = new Product(id, name, categoryName, image, price, price, 0, 4.9, 32);
+                    ProductCardDTO p = new ProductCardDTO(id, name, categoryName, image, price, price, 0, 4.9, 32);
                     p.setCategoryId(catId);
                     p.setCategorySlug(categorySlugVal);
                     p.setOrigin(rs.getString("origin"));
@@ -1385,8 +1392,8 @@ public class ProductDAO extends DBContext {
     }
 
     // 1. Lấy thông tin chi tiết sản phẩm theo ID chuẩn theo model Product
-    public Product getProductById(int productId) {
-        Product p = null;
+    public ProductDetailDTO getProductById(int productId) {
+        ProductDetailDTO p = null;
         String sql = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
                 + "p.shop_id, p.origin, p.description, p.storage_temp, p.certification, "
                 + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop') AS image_url, "
@@ -1407,7 +1414,7 @@ public class ProductDAO extends DBContext {
             ps.setInt(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    p = new Product();
+                    p = new ProductDetailDTO();
                     p.setId(rs.getLong("product_id"));
                     p.setCategoryId(rs.getInt("category_id"));
                     p.setCategoryName(rs.getString("category_name"));
@@ -1451,14 +1458,14 @@ public class ProductDAO extends DBContext {
                     p.setInStock(totalStock > 0);
 
                     // Gắn danh sách biến thể
-                    List<ProductVariant> variants = getVariantsByProductId(productId);
+                    List<ProductVariantDetailDTO> variants = getVariantsByProductId(productId);
                     p.setVariants(variants);
 
                     // Giá gạch ngang chỉ lấy từ "giá gốc" seller nhập (nếu cao hơn giá bán); không còn tự bịa 17% / 20%.
                     p.setOldPrice(price);
                     p.setDiscountPercent(0);
                     if (variants != null && !variants.isEmpty()) {
-                        ProductVariant firstV = variants.get(0);
+                        ProductVariantDetailDTO firstV = variants.get(0);
                         if (firstV.getOriginalPrice() != null && firstV.getOriginalPrice().compareTo(price) > 0) {
                             p.setOldPrice(firstV.getOriginalPrice());
                             double disc = (p.getOldPrice().doubleValue() - price.doubleValue()) / p.getOldPrice().doubleValue() * 100.0;
@@ -1505,8 +1512,8 @@ public class ProductDAO extends DBContext {
     }
 
     // 2. Lấy danh sách biến thể (variants) khớp chuẩn model ProductVariant
-    public List<ProductVariant> getVariantsByProductId(long productId) {
-        List<ProductVariant> list = new ArrayList<>();
+    public List<ProductVariantDetailDTO> getVariantsByProductId(long productId) {
+        List<ProductVariantDetailDTO> list = new ArrayList<>();
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, "
                 + "pv.weight_kg, pv.price, pv.original_price, pv.stock_quantity, pv.is_active, "
                 + "p.name AS product_name, p.origin, p.description, p.certification, p.storage_temp, "
@@ -1524,7 +1531,7 @@ public class ProductDAO extends DBContext {
             ps.setLong(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProductVariant v = new ProductVariant();
+                    ProductVariantDetailDTO v = new ProductVariantDetailDTO();
                     v.setVariantId(rs.getLong("variant_id"));
                     v.setProductId(rs.getLong("product_id"));
                     v.setSku(rs.getString("sku"));
@@ -1574,8 +1581,8 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
-        List<Product> list = new ArrayList<>();
+    public List<ProductCardDTO> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
+        List<ProductCardDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
                 .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
@@ -1648,7 +1655,7 @@ public class ProductDAO extends DBContext {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Product p = new Product();
+                    ProductCardDTO p = new ProductCardDTO();
                     p.setId(rs.getLong("product_id"));
                     p.setName(rs.getString("name"));
                     p.setCategoryId(rs.getInt("category_id"));
@@ -1752,12 +1759,12 @@ public class ProductDAO extends DBContext {
         return minMax;
     }
 
-    public List<Product> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
+    public List<ProductCardDTO> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
                                                     BigDecimal minPrice, BigDecimal maxPrice,
                                                     Double minRating, List<String> origins,
                                                     Boolean inStockOnly, String sortBy,
                                                     int page, int pageSize) {
-        List<Product> list = new ArrayList<>();
+        List<ProductCardDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
            .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
@@ -1812,7 +1819,7 @@ public class ProductDAO extends DBContext {
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Product p = mapProductFromCatalogResultSet(rs);
+                    ProductCardDTO p = mapProductFromCatalogResultSet(rs);
                     list.add(p);
                 }
             }
@@ -1934,13 +1941,16 @@ public class ProductDAO extends DBContext {
         }
     }
 
-    private Product mapProductFromCatalogResultSet(ResultSet rs) throws SQLException {
-        Product p = new Product();
+    private ProductCardDTO mapProductFromCatalogResultSet(ResultSet rs) throws SQLException {
+        ProductCardDTO p = new ProductCardDTO();
         p.setId(rs.getLong("product_id"));
         p.setName(rs.getString("name"));
         p.setCategoryId(rs.getInt("category_id"));
         p.setCategoryName(rs.getString("category_name") != null ? rs.getString("category_name") : "Trái Cây Tươi");
         p.setCategorySlug(rs.getString("category_slug"));
+        p.setOrigin(rs.getString("origin"));
+        p.setCertification(rs.getString("certification"));
+        p.setStorageTemp(rs.getString("storage_temp"));
 
         String img = rs.getString("image_url");
         if (img == null || img.trim().isEmpty()) {
@@ -1980,9 +1990,6 @@ public class ProductDAO extends DBContext {
             p.setReviewsCount((int) rStats[1]);
         }
 
-        p.setOrigin(rs.getString("origin"));
-        p.setCertification(rs.getString("certification"));
-        p.setStorageTemp(rs.getString("storage_temp"));
         p.setDefaultVariantId(rs.getLong("default_variant_id"));
         String unit = rs.getString("unit");
         p.setUnit(unit != null && !unit.trim().isEmpty() ? unit : "kg");
@@ -1993,8 +2000,8 @@ public class ProductDAO extends DBContext {
 
         return p;
     }
-public List<Product> getProductsByShop(long shopId, Integer categoryId, String keyword, String sortBy) {
-        List<Product> list = new ArrayList<>();
+    public List<ProductCardDTO> getProductsByShop(long shopId, Integer categoryId, String keyword, String sortBy) {
+        List<ProductCardDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
            .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
@@ -2059,7 +2066,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Product p = mapProductFromCatalogResultSet(rs);
+                    ProductCardDTO p = mapProductFromCatalogResultSet(rs);
                     p.setShopId(shopId);
                     list.add(p);
                 }
@@ -2105,8 +2112,8 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
     // =========================================================================
 
     // Return one summary per product with totals derived from its variants.
-    public List<Product> getProductSummariesByShopId(long shopId) {
-        List<Product> products = new ArrayList<>();
+    public List<ProductCardDTO> getProductSummariesByShopId(long shopId) {
+        List<ProductCardDTO> products = new ArrayList<>();
         String sql = "SELECT p.product_id, p.name, p.origin, p.certification, "
                 + "p.storage_temp, p.description, c.category_name, p.is_active, "
                 + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
@@ -2137,7 +2144,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Product product = new Product();
+                    ProductCardDTO product = new ProductCardDTO();
                     product.setId(rs.getLong("product_id"));
                     product.setName(rs.getString("name"));
                     product.setOrigin(rs.getString("origin"));
@@ -2239,7 +2246,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
 
 
     // Find a variant only when it belongs to the specified shop.
-    public ProductVariant getShopVariantById(long variantId, long shopId) {
+    public ProductVariantDetailDTO getShopVariantById(long variantId, long shopId) {
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, pv.original_price, "
                 + "pv.stock_quantity, pv.low_stock_threshold, pv.is_active, p.name AS product_name, p.origin, "
                 + "p.storage_temp, p.certification, p.description, c.category_name, "
@@ -2255,7 +2262,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 if (!rs.next()) {
                     return null;
                 }
-                ProductVariant variant = new ProductVariant();
+                ProductVariantDetailDTO variant = new ProductVariantDetailDTO();
                 variant.setVariantId(rs.getLong("variant_id"));
                 variant.setProductId(rs.getLong("product_id"));
                 variant.setSku(rs.getString("sku"));
@@ -2301,8 +2308,8 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
 
 
     // Return the latest active products for home page tabs.
-    public List<Product> getHomeFeaturedTabs() {
-        List<Product> list = new ArrayList<>();
+    public List<ProductCardDTO> getHomeFeaturedTabs() {
+        List<ProductCardDTO> list = new ArrayList<>();
         // Select product details, category, thumbnail, and active variant prices.
 
         String query = "SELECT p.product_id, p.name, p.origin, c.category_name, "
@@ -2341,7 +2348,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                 int discountPercent = 0;
 
                 // Map the selected fields to a Product.
-                Product product = new Product(id, name, categoryName, image, price, oldPrice, discountPercent, 0.0, 0);
+                ProductCardDTO product = new ProductCardDTO(id, name, categoryName, image, price, oldPrice, discountPercent, 0.0, 0);
                 product.setOrigin(origin); // Set the product origin.
 
                 list.add(product);
@@ -2375,8 +2382,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
                     variant.setPrice(rs.getBigDecimal("price"));
                     variant.setOriginalPrice(rs.getBigDecimal("original_price"));
                     variant.setStockQuantity(rs.getInt("stock_quantity"));
-                    variant.setIsActive(rs.getBoolean("is_active"));
-                    variant.setProductName(rs.getString("product_name"));
+                    variant.setActive(rs.getBoolean("is_active"));
                     list.add(variant);
                 }
             }
@@ -2388,9 +2394,9 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
 
 
     // Search and filter active products belonging to a shop.
-    public List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId,
+    public List<ProductCardDTO> getShopFilteredProducts(long shopId, String keyword, Long categoryId,
             String certification, String stockLevel) {
-        List<Product> products = new ArrayList<>();
+        List<ProductCardDTO> products = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT p.product_id, p.shop_id, p.name, p.category_id, c.category_name, "
                 + "p.origin, p.certification, p.description, p.storage_temp, product_image.image_url, "
@@ -2462,7 +2468,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
 
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {
-                    Product product = new Product();
+                    ProductCardDTO product = new ProductCardDTO();
                     product.setId(rs.getLong("product_id"));
                     product.setShopId(rs.getLong("shop_id"));
                     product.setName(rs.getString("name"));
@@ -2585,7 +2591,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
     // Product updates and category queries
     // -------------------------------------------------------------------------
     // Load product-level edit data without using a variant as an identifier.
-    public Product getShopProductForEdit(long productId, long shopId) {
+    public ProductDetailDTO getShopProductForEdit(long productId, long shopId) {
         String sql = "SELECT p.product_id, p.name, p.category_id, p.origin, p.storage_temp, "
                 + "p.certification, p.description, p.is_active, "
                 + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url "
@@ -2596,7 +2602,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
             ps.setLong(2, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) return null;
-                Product product = new Product();
+                ProductDetailDTO product = new ProductDetailDTO();
                 product.setId(rs.getLong("product_id"));
                 product.setName(rs.getString("name"));
                 product.setCategoryId(rs.getInt("category_id"));
@@ -2666,15 +2672,15 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
         }
     }
 
-    public List<Product> searchAndFilterProducts(String keyword, String categorySlug, String minPriceStr, String maxPriceStr,
+    public List<ProductCardDTO> searchAndFilterProducts(String keyword, String categorySlug, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin) {
         return searchAndFilterProducts(keyword, categorySlug, minPriceStr, maxPriceStr, ratingStr, availability, origin, "default");
     }
 
-    public List<Product> searchAndFilterProducts(String keyword, String categorySlug, String minPriceStr, String maxPriceStr,
+    public List<ProductCardDTO> searchAndFilterProducts(String keyword, String categorySlug, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin, String sortBy) {
 
-        List<Product> productList = new ArrayList<>();
+        List<ProductCardDTO> productList = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
         List<Object> params = new ArrayList<>();
 
@@ -2821,7 +2827,7 @@ public List<Product> getProductsByShop(long shopId, Integer categoryId, String k
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Product p = new Product();
+                    ProductCardDTO p = new ProductCardDTO();
                     p.setId(rs.getLong("product_id"));
                     p.setName(rs.getString("name"));
                     p.setCategoryId(rs.getInt("category_id"));

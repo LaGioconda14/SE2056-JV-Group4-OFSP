@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import model.Promotion;
+import model.entity.promotion.Promotion;
 import util.DBContext;
 
 /**

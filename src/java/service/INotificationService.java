@@ -1,7 +1,7 @@
 package service;
 
 import java.util.List;
-import model.Notification;
+import model.entity.notification.Notification;
 
 public interface INotificationService {
 

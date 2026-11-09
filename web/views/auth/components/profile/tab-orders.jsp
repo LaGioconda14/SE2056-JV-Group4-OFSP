@@ -1,5 +1,7 @@
 <%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<fmt:setLocale value="vi_VN"/>
 
 <div class="tab-pane fade" id="nav-orders" role="tabpanel">
     <div class="profile-section-card">
@@ -39,15 +41,17 @@
                 <div id="ordersContainer">
                     <c:forEach items="${orders}" var="order">
                         <c:set var="statusUpper" value="${not empty order.status ? order.status.toUpperCase() : ''}" />
-                        <c:set var="mainProductName" value="${order.hasItems() ? order.items[0].productName : (not empty order.note ? order.note : 'Hoa quả tươi')}" />
-                        <c:if test="${order.hasItems() and order.items.size() > 1}">
+                        <c:set var="displayOrderId" value="${not empty order.subOrderCode ? order.subOrderCode : order.subOrderId}" />
+                        <c:set var="fallbackNote" value="${not empty order.deliverySlot ? 'Khung giờ giao: '.concat(order.deliverySlot) : 'Đơn hàng nông sản chuỗi lạnh FreshFruit'}" />
+                        <c:set var="mainProductName" value="${not empty order.items ? order.items[0].productNameSnapshot : fallbackNote}" />
+                        <c:if test="${not empty order.items and order.items.size() > 1}">
                             <c:set var="mainProductName" value="${mainProductName.concat(' (+').concat(order.items.size() - 1).concat(' sản phẩm khác)')}" />
                         </c:if>
                         <div class="shopee-order-card"
                              data-order-status="${statusUpper}"
                              data-payment-status="${order.paymentStatus != null ? order.paymentStatus.toUpperCase() : ''}"
                              data-payment-method="${order.paymentMethod != null ? order.paymentMethod.toUpperCase() : ''}"
-                             data-order-id="${order.id}"
+                             data-order-id="${displayOrderId}"
                              data-sub-order-id="${order.subOrderId}"
                              data-shop-id="${order.shopId}"
                              data-product-name="<c:out value='${mainProductName}'/>"
@@ -55,17 +59,17 @@
                              data-shop-name="${order.shopName}"
                              data-created-at="${order.createdAt}"
                              data-cancel-reason="${order.cancelReason != null ? order.cancelReason : ''}"
-                             data-failure-reason="${order.failureReason != null ? order.failureReason : ''}"
+                             data-failure-reason="${order.delivery != null and order.delivery.failureReason != null ? order.delivery.failureReason : ''}"
                              data-delivery-slot="${order.deliverySlot != null ? order.deliverySlot : ''}"
                              data-recipient-name="${order.shippingAddress != null ? order.shippingAddress.recipientName : user.fullName}"
                              data-recipient-phone="${order.shippingAddress != null ? order.shippingAddress.recipientPhone : user.phone}"
                              data-recipient-address="${order.shippingAddress != null ? order.shippingAddress.fullAddress : 'Địa chỉ nhận hàng'}"
-                             data-goods-amount="${order.shopSubtotal != null ? order.shopSubtotal : order.totalGoodsAmount}"
-                             data-shipping-fee="${order.shopShippingFee != null ? order.shopShippingFee : order.totalShippingFee}"
-                             data-discount="${order.shopDiscount != null ? order.shopDiscount : order.platformDiscount}"
-                             data-final-amount="${order.shopTotal != null ? order.shopTotal : order.totalAmount}"
-                             data-driver-name="${order.driverName != null ? order.driverName : ''}"
-                             data-driver-phone="${order.driverPhone != null ? order.driverPhone : ''}">
+                             data-goods-amount="${order.shopSubtotal}"
+                             data-shipping-fee="${order.shopShippingFee}"
+                             data-discount="${order.shopDiscount}"
+                             data-final-amount="${order.shopTotal}"
+                             data-driver-name="${order.delivery != null and order.delivery.driverName != null ? order.delivery.driverName : ''}"
+                             data-driver-phone="${order.delivery != null and order.delivery.driverPhone != null ? order.delivery.driverPhone : ''}">
                             <div class="shopee-card-header">
                                 <div class="shopee-shop-info flex-wrap">
                                     <span class="shopee-shop-name">${order.shopName}</span>
@@ -77,7 +81,7 @@
                                     </a>
 
                                     <span class="text-muted small ms-2 d-none d-sm-inline">•</span>
-                                    <span class="text-muted small ms-1"><i class="bi bi-clock me-1 text-secondary"></i>${not empty order.createdAtFormatted ? order.createdAtFormatted : 'Mới đặt'}</span>
+                                    <span class="text-muted small ms-1"><i class="bi bi-clock me-1 text-secondary"></i><c:choose><c:when test="${not empty order.createdAt}"><fmt:formatDate value="${order.createdAt}" pattern="dd/MM/yyyy HH:mm"/></c:when><c:otherwise>Mới đặt</c:otherwise></c:choose></span>
                                 </div>
                                 <div class="shopee-status-right">
                                     <c:choose>
@@ -118,37 +122,38 @@
                                 </div>
                             </div>
 
-                            <div class="shopee-items-list" onclick="showOrderTracking('${order.id}')" title="Bấm vào sản phẩm để xem lộ trình giao hàng">
+                            <div class="shopee-items-list" onclick="showOrderTracking('${displayOrderId}')" title="Bấm vào sản phẩm để xem lộ trình giao hàng">
                                 <c:choose>
-                                    <c:when test="${order.hasItems()}">
+                                    <c:when test="${not empty order.items}">
                                         <c:forEach items="${order.items}" var="item">
+                                            <c:set var="resolvedItemImg" value="${not empty item.imageUrl ? item.imageUrl : 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop'}" />
                                             <div class="shopee-item-row">
                                                 <c:choose>
                                                     <c:when test="${not empty item.productId and item.productId > 0}">
                                                         <a href="${pageContext.request.contextPath}/detail?id=${item.productId}<c:if test='${not empty item.variantId and item.variantId > 0}'>&variantId=${item.variantId}</c:if>" onclick="event.stopPropagation();" title="Xem chi tiết sản phẩm">
-                                                            <img src="${item.imageUrl}" class="shopee-item-thumb" alt="${item.productName}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
+                                                            <img src="${resolvedItemImg}" class="shopee-item-thumb" alt="${item.productNameSnapshot}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
                                                         </a>
                                                     </c:when>
                                                     <c:otherwise>
-                                                        <img src="${item.imageUrl}" class="shopee-item-thumb" alt="${item.productName}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
+                                                        <img src="${resolvedItemImg}" class="shopee-item-thumb" alt="${item.productNameSnapshot}" onerror="this.src='https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop';">
                                                     </c:otherwise>
                                                 </c:choose>
                                                 <div class="shopee-item-details">
                                                     <c:choose>
                                                         <c:when test="${not empty item.productId and item.productId > 0}">
                                                             <a href="${pageContext.request.contextPath}/detail?id=${item.productId}<c:if test='${not empty item.variantId and item.variantId > 0}'>&variantId=${item.variantId}</c:if>" onclick="event.stopPropagation();" class="shopee-item-title text-decoration-none" style="color: inherit;" title="Xem chi tiết sản phẩm">
-                                                                ${item.productName}
+                                                                ${item.productNameSnapshot}
                                                             </a>
                                                         </c:when>
                                                         <c:otherwise>
-                                                            <div class="shopee-item-title">${item.productName}</div>
+                                                            <div class="shopee-item-title">${item.productNameSnapshot}</div>
                                                         </c:otherwise>
                                                     </c:choose>
-                                                    <div class="shopee-item-variant">Phân loại hàng: ${not empty item.variantName ? item.variantName : 'Tiêu chuẩn'}</div>
+                                                    <div class="shopee-item-variant">Phân loại hàng: ${not empty item.variantNameSnapshot ? item.variantNameSnapshot : 'Tiêu chuẩn'}</div>
                                                     <div class="shopee-item-qty">x${item.quantity}</div>
                                                 </div>
                                                 <div class="shopee-item-price">
-                                                    <span class="shopee-price-current">${item.formattedUnitPrice}</span>
+                                                    <span class="shopee-price-current"><fmt:formatNumber value="${item.unitPrice}" pattern="#,##0"/>₫</span>
                                                 </div>
                                             </div>
                                         </c:forEach>
@@ -157,12 +162,12 @@
                                         <div class="shopee-item-row">
                                             <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop" class="shopee-item-thumb" alt="Trái cây tươi">
                                             <div class="shopee-item-details">
-                                                <div class="shopee-item-title">${order.note}</div>
+                                                <div class="shopee-item-title">${fallbackNote}</div>
                                                 <div class="shopee-item-variant">Phân loại hàng: Tiêu chuẩn Gốc Vườn</div>
                                                 <div class="shopee-item-qty">x1</div>
                                             </div>
                                             <div class="shopee-item-price">
-                                                <span class="shopee-price-current">${order.totalAmount}₫</span>
+                                                <span class="shopee-price-current"><fmt:formatNumber value="${order.shopTotal}" pattern="#,##0"/>₫</span>
                                             </div>
                                         </div>
                                     </c:otherwise>
@@ -171,7 +176,7 @@
 
                             <div class="shopee-summary-row">
                                 <span class="shopee-summary-label">Thành tiền:</span>
-                                <span class="shopee-summary-amount">${order.totalAmount}₫</span>
+                                <span class="shopee-summary-amount"><fmt:formatNumber value="${order.shopTotal}" pattern="#,##0"/>₫</span>
                             </div>
 
                             <div class="shopee-card-footer">
@@ -197,8 +202,17 @@
                                 <div class="shopee-actions">
                                     <c:choose>
                                         <c:when test="${statusUpper == 'COMPLETED' or statusUpper == 'DELIVERED'}">
-                                            <c:set var="targetPId" value="${order.hasItems() and not empty order.items[0].productId ? order.items[0].productId : (not empty order.firstProductId ? order.firstProductId : null)}" />
-                                            <c:set var="targetVId" value="${order.hasItems() and not empty order.items[0].variantId ? order.items[0].variantId : null}" />
+                                            <c:set var="targetPId" value="${null}" />
+                                            <c:set var="targetVId" value="${null}" />
+                                            <c:forEach items="${order.items}" var="it">
+                                                <c:if test="${empty targetPId and not empty it.productId and it.productId > 0}">
+                                                    <c:set var="targetPId" value="${it.productId}" />
+                                                    <c:set var="targetVId" value="${it.variantId}" />
+                                                </c:if>
+                                            </c:forEach>
+                                            <c:if test="${empty targetVId and not empty order.items}">
+                                                <c:set var="targetVId" value="${order.items[0].variantId}" />
+                                            </c:if>
                                             <c:choose>
                                                 <c:when test="${not empty targetPId and targetPId > 0}">
                                                     <a href="${pageContext.request.contextPath}/detail?id=${targetPId}<c:if test='${not empty targetVId and targetVId > 0}'>&variantId=${targetVId}</c:if>" class="btn-shopee-primary text-decoration-none">
@@ -211,21 +225,30 @@
                                                     </a>
                                                 </c:otherwise>
                                             </c:choose>
-                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${not empty order.code ? order.code : (not empty order.subOrderCode ? order.subOrderCode : order.orderCode)}', '${order.hasItems() ? order.items[0].orderItemId : ''}')">
+                                            <button type="button" class="btn-shopee-review" onclick="openReviewModal('${not empty order.subOrderCode ? order.subOrderCode : order.orderCode}', '${not empty order.items ? order.items[0].orderItemId : ''}')">
                                                 Đánh Giá
                                             </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'SHIPPING' or statusUpper == 'DELIVERING' or statusUpper == 'IN_TRANSIT'}">
-                                            <button type="button" class="btn-shopee-primary" onclick="confirmReceivedOrder('${order.id}')">
+                                            <button type="button" class="btn-shopee-primary" onclick="confirmReceivedOrder('${displayOrderId}')">
                                                 Đã Nhận Hàng
                                             </button>
-                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
+                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${displayOrderId}')">
                                                 <i class="bi bi-truck me-1"></i> Tra Cứu Vận Chuyển
                                             </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'CANCELLED' or statusUpper == 'CANCELED'}">
-                                            <c:set var="targetPId" value="${order.hasItems() and not empty order.items[0].productId ? order.items[0].productId : (not empty order.firstProductId ? order.firstProductId : null)}" />
-                                            <c:set var="targetVId" value="${order.hasItems() and not empty order.items[0].variantId ? order.items[0].variantId : null}" />
+                                            <c:set var="targetPId" value="${null}" />
+                                            <c:set var="targetVId" value="${null}" />
+                                            <c:forEach items="${order.items}" var="it">
+                                                <c:if test="${empty targetPId and not empty it.productId and it.productId > 0}">
+                                                    <c:set var="targetPId" value="${it.productId}" />
+                                                    <c:set var="targetVId" value="${it.variantId}" />
+                                                </c:if>
+                                            </c:forEach>
+                                            <c:if test="${empty targetVId and not empty order.items}">
+                                                <c:set var="targetVId" value="${order.items[0].variantId}" />
+                                            </c:if>
                                             <c:choose>
                                                 <c:when test="${not empty targetPId and targetPId > 0}">
                                                     <a href="${pageContext.request.contextPath}/detail?id=${targetPId}<c:if test='${not empty targetVId and targetVId > 0}'>&variantId=${targetVId}</c:if>" class="btn-shopee-primary text-decoration-none">
@@ -238,12 +261,12 @@
                                                     </a>
                                                 </c:otherwise>
                                             </c:choose>
-                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${order.id}')">
+                                            <button type="button" class="btn-shopee-outline" onclick="showOrderTracking('${displayOrderId}')">
                                                 <i class="bi bi-info-circle me-1"></i> Xem Chi Tiết Hủy
                                             </button>
                                         </c:when>
                                         <c:when test="${statusUpper == 'FAILED'}">
-                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="showOrderTracking('${order.id}')">
+                                            <button type="button" class="btn-shopee-outline text-warning border-warning-subtle" onclick="showOrderTracking('${displayOrderId}')">
                                                 <i class="bi bi-exclamation-triangle me-1"></i> Xem Chi Tiết Sự Cố
                                             </button>
                                         </c:when>
@@ -253,7 +276,7 @@
                                                     <i class="bi bi-credit-card me-1"></i> ${order.paymentStatus == 'FAILED' ? 'Thanh toán lại VNPAY' : 'Thanh toán VNPAY'}
                                                 </a>
                                             </c:if>
-                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="cancelOrder('${order.id}')">
+                                            <button type="button" class="btn-shopee-outline text-danger border-danger-subtle" onclick="cancelOrder('${displayOrderId}')">
                                                 <i class="bi bi-x-circle me-1"></i> Hủy Đơn Hàng
                                             </button>
                                         </c:otherwise>

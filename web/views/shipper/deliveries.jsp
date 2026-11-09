@@ -1,6 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<fmt:setLocale value="vi_VN"/>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -251,13 +252,13 @@
                                     <c:forEach items="${del.items}" var="it">
                                         <div class="d-flex align-items-center justify-content-between py-1 border-bottom border-light">
                                             <div class="d-flex align-items-center gap-2">
-                                                <img src="${it.imageUrl}" class="delivery-item-thumb" alt="${it.productNameSnapshot}">
+                                                <img src="${not empty it.imageUrl ? it.imageUrl : 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=200&h=200&fit=crop'}" class="delivery-item-thumb" alt="${it.productNameSnapshot}">
                                                 <div>
                                                     <div class="text-dark small fw-semibold">${it.productNameSnapshot}</div>
                                                     <div class="text-muted fs-xs">${it.variantNameSnapshot} &bull; x${it.quantity}</div>
                                                 </div>
                                             </div>
-                                            <span class="text-success small fw-bold">${it.formattedTotalPrice}</span>
+                                            <span class="text-success small fw-bold"><fmt:formatNumber value="${it.totalPrice}" type="currency" currencySymbol="₫" maxFractionDigits="0"/></span>
                                         </div>
                                     </c:forEach>
                                 </div>

@@ -2,28 +2,29 @@ package service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import model.Category;
-import model.Product;
-import model.ProductVariant; 
-import model.Review;
-import model.Shop;
+import model.dto.product.ProductCardDTO;
+import model.dto.product.ProductVariantDetailDTO;
+import model.dto.product.ProductVariantStockDTO;
+import model.entity.product.Category;
+import model.entity.review.Review;
+import model.entity.shop.Shop;
 
 public interface IShopProductService {
 
     /**
      * Lấy danh sách sản phẩm & biến thể theo shopId đơn giản.
      */
-    List<ProductVariant> getVariantsByShopId(long shopId) throws Exception;
+    List<ProductVariantStockDTO> getVariantsByShopId(long shopId) throws Exception;
 
     /**
      * Lấy danh sách sản phẩm & biến thể kèm bộ lọc tìm kiếm và tồn kho.
      */
-    List<ProductVariant> getVariantsByShop(long shopId, String keyword, String categoryId, String stockLevel) throws Exception;
+    List<ProductVariantStockDTO> getVariantsByShop(long shopId, String keyword, String categoryId, String stockLevel) throws Exception;
 
     /**
      * Lọc nâng cao theo đầy đủ tiêu chí và phân trang.
      */
-    List<ProductVariant> getFilteredVariants(long shopId, String keyword, String categoryId, 
+    List<ProductVariantStockDTO> getFilteredVariants(long shopId, String keyword, String categoryId, 
                                             String certification, String stockLevel, 
                                             String statusTab, int page, int pageSize) throws Exception;
 
@@ -54,7 +55,7 @@ public interface IShopProductService {
     /**
      * Lấy thông tin chi tiết của sản phẩm/biến thể phục vụ màn hình Chỉnh sửa.
      */
-    ProductVariant getVariantDetailForEdit(long variantId, long shopId) throws Exception;
+    ProductVariantDetailDTO getVariantDetailForEdit(long variantId, long shopId) throws Exception;
 
     /**
      * Cập nhật thông tin toàn diện của sản phẩm nông sản.
@@ -106,7 +107,7 @@ public interface IShopProductService {
 
     List<Shop> searchShops(String keyword);
 
-    List<Product> getProductsByShopId(long shopId, Integer categoryId, String sort);
+    List<ProductCardDTO> getProductsByShopId(long shopId, Integer categoryId, String sort);
 
     List<Category> getCategoriesWithCountByShopId(long shopId);
 

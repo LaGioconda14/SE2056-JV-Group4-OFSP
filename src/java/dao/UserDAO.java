@@ -10,7 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.User;
+import model.entity.user.User;
 
 /**
  * Data Access Object for User entity handling SQL Server operations.

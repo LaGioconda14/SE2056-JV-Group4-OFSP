@@ -13,8 +13,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.ProductVariant;
-import model.User;
+import model.dto.product.ProductVariantDetailDTO;
+import model.entity.user.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -77,7 +77,7 @@ public class ShopDeleteVariantServlet extends HttpServlet {
             return;
         }
 
-        ProductVariant variant = productService.getShopVariantById(variantId, shopId);
+        ProductVariantDetailDTO variant = productService.getShopVariantById(variantId, shopId);
         if (variant == null) {
             response.sendRedirect(request.getContextPath() + "/shop/products");
             return;
@@ -125,7 +125,7 @@ public class ShopDeleteVariantServlet extends HttpServlet {
             return;
         }
 
-        ProductVariant variant = productService.getShopVariantById(variantId, shopId);
+        ProductVariantDetailDTO variant = productService.getShopVariantById(variantId, shopId);
         if (variant == null) {
             response.sendRedirect(request.getContextPath() + "/shop/products");
             return;

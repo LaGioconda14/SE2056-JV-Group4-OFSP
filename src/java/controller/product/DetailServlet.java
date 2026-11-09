@@ -14,19 +14,20 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import model.Shop;
+import model.entity.shop.Shop;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Review;
-import model.Product;
-import model.Shop;
+import model.entity.review.Review;
+import model.dto.product.ProductCardDTO;
+import model.dto.product.ProductDetailDTO;
+import model.entity.shop.Shop;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
-import model.ReviewSummary;
+import model.dto.review.ReviewSummary;
 import service.IReviewService;
 import service.impl.ReviewServiceImpl;
 
@@ -58,7 +59,7 @@ public class DetailServlet extends HttpServlet {
                 
                 // 2. Gọi DAO lấy thông tin sản phẩm chi tiết
                 ProductDAO productDAO = new ProductDAO();
-                Product product = productDAO.getProductById(productId); // (Hoặc qua Service nếu nhóm ông dùng Service)
+                ProductDetailDTO product = productDAO.getProductById(productId);
 
                 if (product != null) {
                     request.setAttribute("product", product);
@@ -125,7 +126,7 @@ public class DetailServlet extends HttpServlet {
 
                     // Lấy danh sách sản phẩm liên quan
                     try {
-                        List<Product> relatedProducts = null;
+                        List<ProductCardDTO> relatedProducts = null;
                         if (product.getCategorySlug() != null && !product.getCategorySlug().trim().isEmpty()) {
                             relatedProducts = productDAO.getProductsByCategorySlug(product.getCategorySlug());
                         }
@@ -133,8 +134,8 @@ public class DetailServlet extends HttpServlet {
                             relatedProducts = productDAO.getAllProducts();
                         }
                         if (relatedProducts != null) {
-                            List<Product> filteredRelated = new ArrayList<>();
-                            for (Product rp : relatedProducts) {
+                            List<ProductCardDTO> filteredRelated = new ArrayList<>();
+                            for (ProductCardDTO rp : relatedProducts) {
                                 if (rp.getId() != product.getId()) {
                                     filteredRelated.add(rp);
                                 }

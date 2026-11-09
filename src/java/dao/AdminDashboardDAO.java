@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.AdminDashboardStats;
+import model.dto.admin.AdminDashboardStats;
 import util.DBContext;
 
 /**

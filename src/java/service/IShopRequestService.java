@@ -1,6 +1,6 @@
 package service;
 
-import model.ShopRequest;
+import model.entity.shop.ShopRequest;
 
 public interface IShopRequestService {
     boolean submitShopRequest(ShopRequest request);

@@ -11,8 +11,8 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import model.Category;
-import model.Product;
+import model.entity.product.Category;
+import model.dto.product.ProductCardDTO;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -121,7 +121,7 @@ public class ProductServlet extends HttpServlet {
         BigDecimal[] dbMinMax = productService.getMinMaxProductPrices();
 
         // 10. Query sản phẩm theo bộ lọc
-        List<Product> listProducts = productService.getFilteredCatalogProducts(
+        List<ProductCardDTO> listProducts = productService.getFilteredCatalogProducts(
                 keyword, selectedCategories, minPrice, maxPrice, minRating, selectedOrigins, inStockOnly, sortBy, page, pageSize
         );
         int totalProducts = productService.countFilteredCatalogProducts(

@@ -15,8 +15,8 @@ import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import model.Category;
-import model.User;
+import model.entity.product.Category;
+import model.entity.user.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 

@@ -11,8 +11,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Product;
-import model.User;
+import model.dto.product.ProductCardDTO;
+import model.entity.user.User;
 import service.IWishlistService;
 import service.impl.WishlistServiceImpl;
 
@@ -51,7 +51,7 @@ public class WishlistServlet extends HttpServlet {
             session.removeAttribute("wishlistError");
         }
 
-        List<Product> items;
+        List<ProductCardDTO> items;
         try {
             items = wishlistService.getProducts((long) user.getId());
         } catch (RuntimeException e) {
@@ -71,8 +71,8 @@ public class WishlistServlet extends HttpServlet {
         }
         current = Math.min(Math.max(current, 1), totalPages);
         int from = (current - 1) * WISHLIST_PAGE_SIZE;
-        List<Product> pageItems = total == 0
-                ? new ArrayList<Product>()
+        List<ProductCardDTO> pageItems = total == 0
+                ? new ArrayList<>()
                 : new ArrayList<>(items.subList(from, Math.min(from + WISHLIST_PAGE_SIZE, total)));
 
         request.setAttribute("wishlistItems", pageItems);

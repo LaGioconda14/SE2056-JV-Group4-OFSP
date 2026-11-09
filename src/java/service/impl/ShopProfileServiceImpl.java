@@ -3,9 +3,9 @@ package service.impl;
 import dao.ShopDAO;
 import dao.ShopRequestDAO;
 import dao.UserDAO;
-import model.Shop;
-import model.ShopRequest;
-import model.User;
+import model.entity.shop.Shop;
+import model.entity.shop.ShopRequest;
+import model.entity.user.User;
 import service.IShopProfileService;
 
 /** DAO access for shop profile operations. */

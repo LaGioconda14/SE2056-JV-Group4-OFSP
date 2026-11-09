@@ -1,8 +1,8 @@
 package service;
 
 import java.util.List;
-import model.Review;
-import model.ReviewSummary;
+import model.entity.review.Review;
+import model.dto.review.ReviewSummary;
 
 public interface IReviewService {
 

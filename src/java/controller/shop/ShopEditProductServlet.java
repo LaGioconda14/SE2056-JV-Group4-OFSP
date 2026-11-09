@@ -15,10 +15,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.math.BigDecimal;
 import java.util.List;
-import model.Category;
-import model.Product;
-import model.ProductVariant;
-import model.User;
+import model.entity.product.Category;
+import model.dto.product.ProductDetailDTO;
+import model.entity.user.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -86,7 +85,7 @@ public class ShopEditProductServlet extends HttpServlet {
             String idStr = request.getParameter("productId");
             if (idStr != null && !idStr.trim().isEmpty()) {
                 long productId = Long.parseLong(idStr.trim());
-                Product product = productService.getShopProductForEdit(productId, shopId);
+                ProductDetailDTO product = productService.getShopProductForEdit(productId, shopId);
                 if (product == null) {
                     response.sendRedirect(request.getContextPath() + "/shop/products");
                     return;
@@ -168,7 +167,7 @@ public class ShopEditProductServlet extends HttpServlet {
                 request.setAttribute("errorMessage", "Cập nhật thông tin nông sản thất bại. Vui lòng kiểm tra lại dữ liệu!");
                 
                 // Load lại dữ liệu để form không bị rỗng khi render lại
-                Product product = productService.getShopProductForEdit(productId, shopId);
+                ProductDetailDTO product = productService.getShopProductForEdit(productId, shopId);
                 request.setAttribute("product", product);
                 request.setAttribute("categories", productService.getAllCategories());
                 request.setAttribute("certifications", productService.getAllCertifications());

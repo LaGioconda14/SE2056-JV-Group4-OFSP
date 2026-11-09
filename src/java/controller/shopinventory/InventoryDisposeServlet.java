@@ -45,7 +45,7 @@ public class InventoryDisposeServlet extends HttpServlet {
 
         // Fallback lấy từ object user nếu session chưa set trực tiếp shopId/userId
         if (shopIdObj == null || userIdObj == null) {
-            model.User user = (model.User) session.getAttribute("user");
+            model.entity.user.User user = (model.entity.user.User) session.getAttribute("user");
             if (user != null) {
                 userIdObj = (long) user.getId();
                 dao.ShopDAO sDao = new dao.ShopDAO();

@@ -1,6 +1,6 @@
 package dao;
 
-import model.ShopRequest;
+import model.entity.shop.ShopRequest;
 import util.DBContext; // Import đúng package chứa DBContext của bạn
 
 import java.sql.Connection;

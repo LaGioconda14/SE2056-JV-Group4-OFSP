@@ -8,8 +8,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
-import model.SubOrder;
+import model.entity.user.User;
+import model.dto.order.SubOrderDTO;
 import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
 import service.impl.OrderFulfillmentServiceImpl;
@@ -57,7 +57,7 @@ public class ShopOrdersServlet extends HttpServlet {
         String keyword = request.getParameter("keyword");
 
         SubOrderStatus tabStatus = SubOrderStatus.from(statusTab);
-        List<SubOrder> list = fulfillmentService.getSubOrdersByShop(shopId, tabStatus, keyword);
+        List<SubOrderDTO> list = fulfillmentService.getSubOrdersByShop(shopId, tabStatus, keyword);
 
         int countAll = fulfillmentService.countSubOrdersByShop(shopId, null);
         int countNew = fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.NEW);

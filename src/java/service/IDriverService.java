@@ -1,7 +1,7 @@
 package service;
 
 import java.util.List;
-import model.DriverProfile;
+import model.entity.delivery.DriverProfile;
 
 public interface IDriverService {
 

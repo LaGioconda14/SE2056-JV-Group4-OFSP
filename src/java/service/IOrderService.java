@@ -3,12 +3,12 @@ package service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import model.CartItem;
-import model.Coupon;
-import model.CustomerAddress;
-import model.Order;
-import model.ShippingAddress;
-import model.SubOrder;
+import model.entity.cart.CartItem;
+import model.entity.promotion.Coupon;
+import model.entity.user.CustomerAddress;
+import model.dto.order.OrderDetailDTO;
+import model.dto.order.SubOrderDTO;
+import model.entity.order.ShippingAddress;
 
 public interface IOrderService {
 
@@ -16,9 +16,9 @@ public interface IOrderService {
 
     CartItem getBuyNowItemForCheckout(long variantId, int quantity);
 
-    Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode);
+    OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode);
 
-    Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
+    OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes);
 
     long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
@@ -49,7 +49,7 @@ public interface IOrderService {
             String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
 
-    Order getOrderDetails(long orderId);
+    OrderDetailDTO getOrderDetails(long orderId);
 
     CustomerAddress getDefaultCustomerAddress(long customerId);
 
@@ -61,7 +61,7 @@ public interface IOrderService {
 
     List<Coupon> getAvailableShopCoupons(long shopId);
 
-    List<SubOrder> getSubOrdersByCustomerId(long customerId);
+    List<SubOrderDTO> getSubOrdersByCustomerId(long customerId);
 
     boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception;
 }

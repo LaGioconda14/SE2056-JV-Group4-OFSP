@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import model.Voucher;
-import model.VoucherCheckResult;
+import model.dto.promotion.Voucher;
+import model.dto.promotion.VoucherCheckResult;
 import util.DBContext;
 
 /**

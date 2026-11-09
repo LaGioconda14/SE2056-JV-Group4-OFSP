@@ -8,7 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import model.Voucher;
+import model.dto.promotion.Voucher;
 import service.IShopPromotionService;
 import service.IShopVoucherService;
 import service.impl.ShopPromotionServiceImpl;

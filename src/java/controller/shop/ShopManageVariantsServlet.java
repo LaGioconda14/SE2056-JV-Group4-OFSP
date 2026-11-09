@@ -8,9 +8,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Product;
-import model.ProductVariant;
-import model.User;
+import model.dto.product.ProductCardDTO;
+import model.entity.product.ProductVariant;
+import model.entity.user.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -33,8 +33,8 @@ public class ShopManageVariantsServlet extends HttpServlet {
 
         try {
             long productId = Long.parseLong(request.getParameter("productId"));
-            Product productSummary = null;
-            for (Product item : productService.getProductSummariesByShopId(shopId)) {
+            ProductCardDTO productSummary = null;
+            for (ProductCardDTO item : productService.getProductSummariesByShopId(shopId)) {
                 if (item.getId() == productId) {
                     productSummary = item;
                     break;

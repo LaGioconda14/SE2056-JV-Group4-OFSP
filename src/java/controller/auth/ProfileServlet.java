@@ -16,10 +16,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
-import model.CustomerAddress;
-import model.Notification;
-import model.SubOrder;
-import model.User;
+import model.entity.user.CustomerAddress;
+import model.entity.notification.Notification;
+import model.dto.order.SubOrderDTO;
+import model.entity.user.User;
 import service.ICustomerAddressService;
 import service.IOrderService;
 import service.IUserService;
@@ -70,7 +70,7 @@ public class ProfileServlet extends HttpServlet {
         }
 
         try {
-            List<SubOrder> orders = orderService.getSubOrdersByCustomerId(targetUserId);
+            List<SubOrderDTO> orders = orderService.getSubOrdersByCustomerId(targetUserId);
             if (orders != null && !orders.isEmpty()) {
                 orders.sort((a, b) -> {
                     java.sql.Timestamp t1 = a.getCreatedAt();

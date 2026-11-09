@@ -2,7 +2,7 @@ package service.impl;
 
 import dao.DisputeDAO;
 import java.util.List;
-import model.Dispute;
+import model.entity.order.Dispute;
 import service.IDisputeService;
 
 public class DisputeServiceImpl implements IDisputeService {

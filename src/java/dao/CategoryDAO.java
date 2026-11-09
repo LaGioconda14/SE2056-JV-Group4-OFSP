@@ -2,7 +2,7 @@ package dao;
 
 import java.util.ArrayList;
 import java.util.List;
-import model.Category;
+import model.entity.product.Category;
 import util.DBContext;
 import java.sql.*;
 

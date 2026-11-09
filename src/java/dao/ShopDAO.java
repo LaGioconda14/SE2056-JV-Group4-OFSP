@@ -6,8 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import model.Review;
-import model.Shop;
+import model.entity.review.Review;
+import model.entity.shop.Shop;
 import util.DBContext;
 
 public class ShopDAO extends DBContext {

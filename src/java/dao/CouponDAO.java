@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.Coupon;
+import model.entity.promotion.Coupon;
 import util.DBContext;
 
 public class CouponDAO extends DBContext {

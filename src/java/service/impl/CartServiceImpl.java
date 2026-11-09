@@ -1,9 +1,9 @@
 package service.impl;
 
 import dao.CartDAO;
-import model.Cart;
-import model.CartItem;
-import model.CartMutationResult;
+import model.entity.cart.Cart;
+import model.entity.cart.CartItem;
+import model.dto.cart.CartMutationResult;
 import service.ICartService;
 
 public class CartServiceImpl implements ICartService {

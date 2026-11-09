@@ -3,9 +3,9 @@ package service.impl;
 import dao.InventoryWasteDAO;
 import java.util.List;
 import java.util.Map;
-import model.InventoryWasteLog;
-import model.SubOrder;
-import model.WasteStatisticDTO;
+import model.entity.inventory.InventoryWasteLog;
+import model.dto.order.SubOrderDTO;
+import model.dto.inventory.WasteStatisticDTO;
 import service.IInventoryWasteService;
 
 public class InventoryWasteServiceImpl implements IInventoryWasteService {
@@ -53,7 +53,7 @@ public class InventoryWasteServiceImpl implements IInventoryWasteService {
     }
 
     @Override
-    public List<SubOrder> getPendingReturnedOrdersByShop(long shopId) {
+    public List<SubOrderDTO> getPendingReturnedOrdersByShop(long shopId) {
         return wasteDAO.getPendingReturnedOrdersByShop(shopId);
     }
 }

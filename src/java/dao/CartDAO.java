@@ -15,11 +15,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import model.Cart;
-import model.CartItem;
-import model.CartMutationResult;
-import model.Product;
-import model.ProductVariant;
+import model.entity.cart.Cart;
+import model.entity.cart.CartItem;
+import model.dto.cart.CartMutationResult;
+import model.dto.product.ProductVariantDetailDTO;
 import util.DBContext;
 
 public class CartDAO extends DBContext {
@@ -89,7 +88,7 @@ public class CartDAO extends DBContext {
                 Cart cart = findOrCreateCart(conn, customerId);
                 CartItem existing = findItemByVariantId(conn, cart.getCartId(), variantId);
                 long requestedQuantity = (existing == null ? 0L : existing.getQuantity()) + quantity;
-                ProductVariant variant = findAvailableVariant(conn, variantId);
+                ProductVariantDetailDTO variant = findAvailableVariant(conn, variantId);
                 validateStock(variant, requestedQuantity);
 
                 long cartItemId;
@@ -165,12 +164,11 @@ public class CartDAO extends DBContext {
                     throw itemNotFound();
                 }
 
-                ProductVariant currentVariant = findVariantIncludingUnavailable(conn,
+                ProductVariantDetailDTO currentVariant = findVariantIncludingUnavailable(conn,
                         current.getVariant().getVariantId());
-                ProductVariant newVariant = findAvailableVariant(conn, newVariantId);
+                ProductVariantDetailDTO newVariant = findAvailableVariant(conn, newVariantId);
                 if (currentVariant == null || newVariant == null
-                        || currentVariant.getProduct().getProductId()
-                        != newVariant.getProduct().getProductId()) {
+                        || currentVariant.getProductId() != newVariant.getProductId()) {
                     throw new IllegalArgumentException("Biến thể thay thế không hợp lệ!");
                 }
                 if (current.getVariant().getVariantId() == newVariantId) {
@@ -279,14 +277,15 @@ public class CartDAO extends DBContext {
     private CartItem mapCartItem(ResultSet rs) throws SQLException {
         CartItem item = new CartItem(rs.getLong("cart_item_id"), mapVariant(rs), rs.getInt("quantity"));
         item.setPreviousQuantity(item.getQuantity());
-        item.getVariant().getProduct().setShopName(rs.getString("shop_name"));
-        item.getVariant().getProduct().setThumbnailUrl(rs.getString("thumbnail_url"));
+        item.getVariant().setShopName(rs.getString("shop_name"));
+        item.getVariant().setShopStatus(rs.getString("shop_status"));
+        item.getVariant().setImage(rs.getString("thumbnail_url"));
         return item;
     }
 
     private void determineAvailability(CartItem item, ResultSet rs) throws SQLException {
-        ProductVariant variant = item.getVariant();
-        boolean productAvailable = variant.getProduct().isActive()
+        ProductVariantDetailDTO variant = item.getVariant();
+        boolean productAvailable = variant.isProductActive()
                 && "ACTIVE".equalsIgnoreCase(rs.getString("shop_status"));
         if (!productAvailable) {
             item.setAvailability(CartItemAvailability.NOT_FOUND);
@@ -306,17 +305,17 @@ public class CartDAO extends DBContext {
     private void attachAlternativeVariants(Connection conn, List<CartItem> items) throws SQLException {
         List<Long> productIds = items.stream()
                 .filter(item -> item.getAvailability() != CartItemAvailability.NOT_FOUND)
-                .map(item -> item.getVariant().getProduct().getProductId())
+                .map(item -> item.getVariant().getProductId())
                 .distinct()
                 .toList();
         if (productIds.isEmpty()) {
             return;
         }
-        Map<Long, List<ProductVariant>> variantsByProduct = findVariantsByProductIds(conn, productIds);
+        Map<Long, List<ProductVariantDetailDTO>> variantsByProduct = findVariantsByProductIds(conn, productIds);
         for (CartItem item : items) {
             long currentVariantId = item.getVariant().getVariantId();
-            List<ProductVariant> alternatives = variantsByProduct
-                    .getOrDefault(item.getVariant().getProduct().getProductId(), List.of())
+            List<ProductVariantDetailDTO> alternatives = variantsByProduct
+                    .getOrDefault(item.getVariant().getProductId(), List.of())
                     .stream()
                     .filter(variant -> variant.getVariantId() != currentVariantId)
                     .collect(Collectors.toCollection(ArrayList::new));
@@ -324,7 +323,7 @@ public class CartDAO extends DBContext {
         }
     }
 
-    private Map<Long, List<ProductVariant>> findVariantsByProductIds(Connection conn,
+    private Map<Long, List<ProductVariantDetailDTO>> findVariantsByProductIds(Connection conn,
             Collection<Long> productIds) throws SQLException {
         String placeholders = productIds.stream().map(id -> "?").collect(Collectors.joining(","));
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
@@ -335,7 +334,7 @@ public class CartDAO extends DBContext {
                 + "WHERE pv.product_id IN (" + placeholders + ") "
                 + "AND p.is_active = 1 AND s.status = 'ACTIVE' "
                 + "ORDER BY p.product_id, CASE WHEN pv.is_active = 1 AND pv.stock_quantity > 0 THEN 0 ELSE 1 END, pv.price";
-        Map<Long, List<ProductVariant>> result = new LinkedHashMap<>();
+        Map<Long, List<ProductVariantDetailDTO>> result = new LinkedHashMap<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             int index = 1;
             for (Long productId : productIds) {
@@ -343,8 +342,8 @@ public class CartDAO extends DBContext {
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProductVariant variant = mapVariant(rs);
-                    result.computeIfAbsent(variant.getProduct().getProductId(), key -> new ArrayList<>())
+                    ProductVariantDetailDTO variant = mapVariant(rs);
+                    result.computeIfAbsent(variant.getProductId(), key -> new ArrayList<>())
                             .add(variant);
                 }
             }
@@ -352,7 +351,7 @@ public class CartDAO extends DBContext {
         return result;
     }
 
-    private ProductVariant findAvailableVariant(Connection conn, long variantId) throws SQLException {
+    private ProductVariantDetailDTO findAvailableVariant(Connection conn, long variantId) throws SQLException {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
                 + "p.product_id, p.shop_id, p.name AS product_name, p.origin, p.is_active AS product_active "
@@ -368,7 +367,7 @@ public class CartDAO extends DBContext {
         }
     }
 
-    private ProductVariant findVariantIncludingUnavailable(Connection conn, long variantId) throws SQLException {
+    private ProductVariantDetailDTO findVariantIncludingUnavailable(Connection conn, long variantId) throws SQLException {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
                 + "p.product_id, p.shop_id, p.name AS product_name, p.origin, p.is_active AS product_active "
@@ -402,7 +401,7 @@ public class CartDAO extends DBContext {
                 if (!rs.next()) {
                     return null;
                 }
-                ProductVariant variant = new ProductVariant();
+                ProductVariantDetailDTO variant = new ProductVariantDetailDTO();
                 variant.setVariantId(rs.getLong("variant_id"));
                 CartItem item = new CartItem(rs.getLong("cart_item_id"), variant, rs.getInt("quantity"));
                 if (rs.next()) {
@@ -480,7 +479,7 @@ public class CartDAO extends DBContext {
         }
     }
 
-    private void validateStock(ProductVariant variant, long quantity) {
+    private void validateStock(ProductVariantDetailDTO variant, long quantity) {
         if (variant == null) {
             throw new IllegalArgumentException("Sản phẩm hiện không khả dụng!");
         }
@@ -516,17 +515,14 @@ public class CartDAO extends DBContext {
                 "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!", cause);
     }
 
-    private ProductVariant mapVariant(ResultSet rs) throws SQLException {
-        Product product = new Product();
-        product.setProductId(rs.getLong("product_id"));
-        product.setShopId(rs.getLong("shop_id"));
-        product.setName(rs.getString("product_name"));
-        product.setOrigin(rs.getString("origin"));
-        product.setActive(rs.getBoolean("product_active"));
-
-        ProductVariant variant = new ProductVariant();
+    private ProductVariantDetailDTO mapVariant(ResultSet rs) throws SQLException {
+        ProductVariantDetailDTO variant = new ProductVariantDetailDTO();
         variant.setVariantId(rs.getLong("variant_id"));
-        variant.setProduct(product);
+        variant.setProductId(rs.getLong("product_id"));
+        variant.setShopId(rs.getLong("shop_id"));
+        variant.setProductName(rs.getString("product_name"));
+        variant.setOrigin(rs.getString("origin"));
+        variant.setProductActive(rs.getBoolean("product_active"));
         variant.setSku(rs.getString("sku"));
         variant.setVariantName(rs.getString("variant_name"));
         variant.setUnit(rs.getString("unit"));

@@ -2,7 +2,7 @@ package util;
 
 import dao.ShopDAO;
 import jakarta.servlet.http.HttpSession;
-import model.Shop;
+import model.entity.shop.Shop;
 
 /**
  * Tiện ích dùng chung cho luồng đăng ký / đăng nhập của người bán (seller).

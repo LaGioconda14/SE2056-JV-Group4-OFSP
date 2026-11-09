@@ -2,7 +2,7 @@ package service;
 
 import java.util.List;
 import java.util.Set;
-import model.Product;
+import model.dto.product.ProductCardDTO;
 
 public interface IWishlistService {
 
@@ -21,7 +21,7 @@ public interface IWishlistService {
     Set<Long> getProductIds(long userId);
 
     /** Sản phẩm yêu thích, mới thêm lên đầu. */
-    List<Product> getProducts(long userId);
+    List<ProductCardDTO> getProducts(long userId);
 
     int count(long userId);
 }

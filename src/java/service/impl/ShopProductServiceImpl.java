@@ -6,11 +6,12 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.List;
 import java.util.logging.Logger;
-import model.Category;
-import model.Product;
-import model.ProductVariant;
-import model.Review;
-import model.Shop;
+import model.dto.product.ProductCardDTO;
+import model.dto.product.ProductVariantDetailDTO;
+import model.dto.product.ProductVariantStockDTO;
+import model.entity.product.Category;
+import model.entity.review.Review;
+import model.entity.shop.Shop;
 import service.IShopProductService;
 
 public class ShopProductServiceImpl implements IShopProductService {
@@ -25,29 +26,66 @@ public class ShopProductServiceImpl implements IShopProductService {
     }
 
     @Override
-    public List<ProductVariant> getVariantsByShopId(long shopId) throws Exception {
+    public List<ProductVariantStockDTO> getVariantsByShopId(long shopId) throws Exception {
         if (shopId <= 0) {
             throw new Exception("Mã gian hàng không hợp lệ!");
         }
-        return productDAO.getVariantsByShopId(shopId);
+        List<ProductVariantStockDTO> list = productDAO.getVariantsByShopId(shopId);
+        populateStockMetrics(list);
+        return list;
     }
 
     @Override
-    public List<ProductVariant> getVariantsByShop(long shopId, String keyword, String categoryId, String stockLevel) throws Exception {
+    public List<ProductVariantStockDTO> getVariantsByShop(long shopId, String keyword, String categoryId, String stockLevel) throws Exception {
         if (shopId <= 0) {
             throw new Exception("Mã gian hàng không hợp lệ!");
         }
-        return productDAO.getFilteredVariantsByShop(shopId, keyword, categoryId, null, stockLevel, null, 1, 100);
+        List<ProductVariantStockDTO> list = productDAO.getFilteredVariantsByShop(shopId, keyword, categoryId, null, stockLevel, null, 1, 100);
+        populateStockMetrics(list);
+        return list;
     }
 
     @Override
-    public List<ProductVariant> getFilteredVariants(long shopId, String keyword, String categoryId, 
+    public List<ProductVariantStockDTO> getFilteredVariants(long shopId, String keyword, String categoryId, 
                                                     String certification, String stockLevel, 
                                                     String statusTab, int page, int pageSize) throws Exception {
         if (shopId <= 0) {
             throw new Exception("Mã gian hàng không hợp lệ!");
         }
-        return productDAO.getFilteredVariantsByShop(shopId, keyword, categoryId, certification, stockLevel, statusTab, page, pageSize);
+        List<ProductVariantStockDTO> list = productDAO.getFilteredVariantsByShop(shopId, keyword, categoryId, certification, stockLevel, statusTab, page, pageSize);
+        populateStockMetrics(list);
+        return list;
+    }
+
+    public static void populateStockMetrics(List<ProductVariantStockDTO> list) {
+        if (list == null) {
+            return;
+        }
+        for (ProductVariantStockDTO dto : list) {
+            int qty = dto.getStockQuantity();
+            int low = dto.getLowStockThreshold() > 0 ? dto.getLowStockThreshold() : 10;
+            int critical = Math.max(1, low / 2);
+
+            if (qty <= 0) {
+                dto.setStockStatusText("Hết hàng");
+                dto.setStockBarColor("bg-rose-500");
+                dto.setStockProgressPercent(0);
+            } else {
+                if (qty <= critical) {
+                    dto.setStockStatusText("Sắp hết hàng");
+                    dto.setStockBarColor("bg-rose-500");
+                } else if (qty <= low) {
+                    dto.setStockStatusText("Cần bổ sung");
+                    dto.setStockBarColor("bg-amber-500");
+                } else {
+                    dto.setStockStatusText("Tồn kho tốt");
+                    dto.setStockBarColor("bg-emerald-600");
+                }
+                int threshold = low * 3;
+                int pct = (int) Math.round(((double) qty / threshold) * 100.0);
+                dto.setStockProgressPercent(Math.min(100, Math.max(8, pct)));
+            }
+        }
     }
 
     @Override
@@ -150,11 +188,11 @@ public class ShopProductServiceImpl implements IShopProductService {
     }
 
     @Override
-    public ProductVariant getVariantDetailForEdit(long variantId, long shopId) throws Exception {
+    public ProductVariantDetailDTO getVariantDetailForEdit(long variantId, long shopId) throws Exception {
         if (variantId <= 0 || shopId <= 0) {
             throw new Exception("Mã sản phẩm hoặc cửa hàng không hợp lệ!");
         }
-        ProductVariant variant = productDAO.getVariantDetailForEdit(variantId, shopId);
+        ProductVariantDetailDTO variant = productDAO.getVariantDetailForEdit(variantId, shopId);
         if (variant == null) {
             throw new Exception("Không tìm thấy sản phẩm nông sản tương ứng!");
         }
@@ -281,7 +319,7 @@ public class ShopProductServiceImpl implements IShopProductService {
     }
 
     @Override
-    public List<Product> getProductsByShopId(long shopId, Integer categoryId, String sort) {
+    public List<ProductCardDTO> getProductsByShopId(long shopId, Integer categoryId, String sort) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 

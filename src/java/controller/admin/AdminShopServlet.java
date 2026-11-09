@@ -2,7 +2,7 @@ package controller.admin;
 
 import com.google.gson.Gson;
 import dao.AdminManagementDAO;
-import model.User;
+import model.entity.user.User;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

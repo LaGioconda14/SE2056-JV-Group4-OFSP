@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.GoogleAccount;
+import model.dto.auth.GoogleAccount;
 
 public class GoogleOAuthUtil {
 

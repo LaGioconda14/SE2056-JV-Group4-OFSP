@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import model.Order;
+import model.entity.order.Order;
 import util.VnpayConfig;
 import util.VnpayUtil;
 

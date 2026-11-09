@@ -148,7 +148,7 @@
                         </div>
                         <c:forEach var="shopEntry" items="${cart.itemsByShop}">
                             <c:set var="shopItems" value="${shopEntry.value}"/>
-                            <c:set var="shop" value="${shopItems[0].variant.product}"/>
+                            <c:set var="shop" value="${shopItems[0].variant}"/>
                             <%@ include file="components/cart-shop.jsp" %>
                         </c:forEach>
                         <%@ include file="components/cart-summary.jsp" %>

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.Product;
+import model.dto.product.ProductCardDTO;
 import util.DBContext;
 
 /**
@@ -128,7 +128,7 @@ public class WishlistDAO extends DBContext {
     }
 
     /** Danh sách sản phẩm yêu thích (mới thêm nằm trên cùng), cùng định dạng dữ liệu với trang chủ. */
-    public List<Product> getProducts(long userId) {
+    public List<ProductCardDTO> getProducts(long userId) {
         String sql = "SELECT p.product_id, p.name, p.category_id, c.category_name, p.origin, "
                 + "pi.image_url, dv.variant_id AS default_variant_id, "
                 + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
@@ -150,7 +150,7 @@ public class WishlistDAO extends DBContext {
                 + "WHERE w.user_id = ? "
                 + "ORDER BY w.created_at DESC, w.wishlist_id DESC";
 
-        List<Product> list = new ArrayList<>();
+        List<ProductCardDTO> list = new ArrayList<>();
         try (Connection conn = openConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -168,7 +168,7 @@ public class WishlistDAO extends DBContext {
                         price = BigDecimal.ZERO;
                     }
 
-                    Product p = new Product(rs.getLong("product_id"), rs.getString("name"),
+                    ProductCardDTO p = new ProductCardDTO(rs.getLong("product_id"), rs.getString("name"),
                             categoryName, image, price, price, 0, 0, 0);
                     p.setCategoryId(rs.getInt("category_id"));
                     p.setOrigin(rs.getString("origin"));

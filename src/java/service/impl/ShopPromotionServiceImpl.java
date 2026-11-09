@@ -4,7 +4,7 @@ import dao.PromotionDAO;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
-import model.Promotion;
+import model.entity.promotion.Promotion;
 import service.IShopPromotionService;
 
 /** DAO access for shop promotion management. */

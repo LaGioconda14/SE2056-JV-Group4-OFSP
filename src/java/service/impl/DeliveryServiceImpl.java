@@ -3,7 +3,7 @@ package service.impl;
 import dao.DeliveryDAO;
 import java.math.BigDecimal;
 import java.util.List;
-import model.Delivery;
+import model.entity.delivery.Delivery;
 import service.IDeliveryService;
 
 public class DeliveryServiceImpl implements IDeliveryService {

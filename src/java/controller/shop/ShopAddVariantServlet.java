@@ -8,8 +8,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Product;
-import model.User;
+import model.dto.product.ProductCardDTO;
+import model.entity.user.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
@@ -23,7 +23,7 @@ public class ShopAddVariantServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         Long productId = parseProductId(request);
-        Product productSummary = loadOwnedProduct(request, response, productId);
+        ProductCardDTO productSummary = loadOwnedProduct(request, response, productId);
         if (productSummary == null) {
             return;
         }
@@ -37,7 +37,7 @@ public class ShopAddVariantServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         Long productId = parseProductId(request);
-        Product productSummary = loadOwnedProduct(request, response, productId);
+        ProductCardDTO productSummary = loadOwnedProduct(request, response, productId);
         if (productSummary == null) {
             return;
         }
@@ -68,7 +68,7 @@ public class ShopAddVariantServlet extends HttpServlet {
         }
     }
 
-    private Product loadOwnedProduct(HttpServletRequest request, HttpServletResponse response, Long productId)
+    private ProductCardDTO loadOwnedProduct(HttpServletRequest request, HttpServletResponse response, Long productId)
             throws IOException {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
@@ -81,8 +81,8 @@ public class ShopAddVariantServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/shop/products");
             return null;
         }
-        List<Product> products = productService.getProductSummariesByShopId(shopId);
-        for (Product product : products) {
+        List<ProductCardDTO> products = productService.getProductSummariesByShopId(shopId);
+        for (ProductCardDTO product : products) {
             if (product.getId() == productId) {
                 return product;
             }

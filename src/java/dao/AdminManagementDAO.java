@@ -1,6 +1,6 @@
 package dao;
 
-import model.ShopRequest;
+import model.entity.shop.ShopRequest;
 import enums.DeliveryStatus;
 import enums.PaymentStatus;
 import enums.SubOrderStatus;

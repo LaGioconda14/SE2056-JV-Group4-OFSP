@@ -9,7 +9,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import model.User;
+import model.entity.user.User;
 import service.IShopProductService;
 import service.impl.ShopProductServiceImpl;
 

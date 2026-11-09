@@ -7,16 +7,19 @@ import java.util.List;
 import java.util.Collections;
 import java.util.Map;
 import java.util.ArrayList;
-import model.Category;
-import model.Product;
-import model.ProductVariant;
-import model.Review;
+import model.dto.product.ProductCardDTO;
+import model.dto.product.ProductDetailDTO;
+import model.dto.product.ProductVariantDetailDTO;
+import model.dto.product.ProductVariantStockDTO;
+import model.entity.product.Category;
+import model.entity.product.ProductVariant;
+import model.entity.review.Review;
 import service.IProductService;
 
 public class ProductServiceImpl implements IProductService {
 
     @Override
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
+    public List<ProductCardDTO> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr) {
         return searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, null, null, null, null);
     }
 
@@ -36,7 +39,7 @@ public class ProductServiceImpl implements IProductService {
     private final CategoryDAO categoryDAO = new CategoryDAO();
 
     @Override//lấy danh sách sản phẩm theo shopID 
-    public List<Product> getProductSummariesByShopId(long shopId) {
+    public List<ProductCardDTO> getProductSummariesByShopId(long shopId) {
         return productDAO.getProductSummariesByShopId(shopId);
     }
 
@@ -231,12 +234,12 @@ public class ProductServiceImpl implements IProductService {
     }
     
     @Override
-    public ProductVariant getVariantById(long variantId) {
+    public ProductVariantDetailDTO getVariantById(long variantId) {
         return productDAO.getVariantById(variantId);
     }
 
     @Override
-    public ProductVariant getShopVariantById(long variantId, long shopId) {
+    public ProductVariantDetailDTO getShopVariantById(long variantId, long shopId) {
         if (variantId <= 0 || shopId <= 0) {
             return null;
         }
@@ -266,7 +269,7 @@ public class ProductServiceImpl implements IProductService {
         if (originalPrice != null && originalPrice.compareTo(price) < 0) {
             throw new IllegalArgumentException("Giá gốc không được thấp hơn giá bán.");
         }
-        ProductVariant existingVariant = productDAO.getShopVariantById(variantId, shopId);
+        ProductVariantDetailDTO existingVariant = productDAO.getShopVariantById(variantId, shopId);
         if (existingVariant == null) {
             throw new IllegalArgumentException("Không tìm thấy biến thể thuộc cửa hàng này.");
         }
@@ -283,7 +286,7 @@ public class ProductServiceImpl implements IProductService {
     }
     
     @Override
-    public model.Product getShopProductForEdit(long productId, long shopId) {
+    public ProductDetailDTO getShopProductForEdit(long productId, long shopId) {
         if (productId <= 0 || shopId <= 0) return null;
         return productDAO.getShopProductForEdit(productId, shopId);
     }
@@ -305,7 +308,7 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<Product> getHomeProducts() {
+    public List<ProductCardDTO> getHomeProducts() {
         return productDAO.getHomeProducts();
     }
 
@@ -316,23 +319,25 @@ public class ProductServiceImpl implements IProductService {
     
 
     @Override
-    public List<Product> getProductsByCategorySlug(String categorySlug) {
+    public List<ProductCardDTO> getProductsByCategorySlug(String categorySlug) {
         return productDAO.getProductsByCategorySlug(categorySlug);
     }
     
     @Override
-    public Product getProductById(int productId) {
+    public ProductDetailDTO getProductById(int productId) {
         return productDAO.getProductById(productId);
     }
 
     @Override
-    public List<ProductVariant> getVariantsByProductId(long productId) {
+    public List<ProductVariantDetailDTO> getVariantsByProductId(long productId) {
         return productDAO.getVariantsByProductId(productId);
     }
 
     @Override
-    public List<ProductVariant> getVariantsByShopId(long shopId) {
-        return productDAO.getVariantsByShopId(shopId);
+    public List<ProductVariantStockDTO> getVariantsByShopId(long shopId) {
+        List<ProductVariantStockDTO> list = productDAO.getVariantsByShopId(shopId);
+        ShopProductServiceImpl.populateStockMetrics(list);
+        return list;
     }
 
     @Override
@@ -349,20 +354,20 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+    public List<ProductCardDTO> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin) {
         return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr, ratingStr, availability, origin);
     }
 
     @Override
-    public List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+    public List<ProductCardDTO> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin, String sortBy) {
         return productDAO.searchAndFilterProducts(keyword, categoryId, minPriceStr, maxPriceStr,
                 ratingStr, availability, origin, sortBy);
     }
 
     @Override
-    public List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId, String certification, String stockLevel) {
+    public List<ProductCardDTO> getShopFilteredProducts(long shopId, String keyword, Long categoryId, String certification, String stockLevel) {
         return productDAO.getShopFilteredProducts(shopId, keyword, categoryId, certification, stockLevel);
     }
 
@@ -387,7 +392,7 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<Product> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
+    public List<ProductCardDTO> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
                                                     BigDecimal minPrice, BigDecimal maxPrice,
                                                     Double minRating, List<String> origins,
                                                     Boolean inStockOnly, String sortBy,

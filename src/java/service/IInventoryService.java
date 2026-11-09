@@ -2,9 +2,9 @@ package service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import model.InventoryBatchItem;
-import model.InventoryTransaction;
-import model.ProductBatch;
+import model.dto.inventory.InventoryBatchItem;
+import model.entity.inventory.InventoryTransaction;
+import model.entity.inventory.ProductBatch;
 
 public interface IInventoryService {
 

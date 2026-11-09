@@ -3,7 +3,7 @@ package service.impl;
 import dao.WishlistDAO;
 import java.util.List;
 import java.util.Set;
-import model.Product;
+import model.dto.product.ProductCardDTO;
 import service.IWishlistService;
 
 public class WishlistServiceImpl implements IWishlistService {
@@ -39,7 +39,7 @@ public class WishlistServiceImpl implements IWishlistService {
     }
 
     @Override
-    public List<Product> getProducts(long userId) {
+    public List<ProductCardDTO> getProducts(long userId) {
         return wishlistDAO.getProducts(userId);
     }
 

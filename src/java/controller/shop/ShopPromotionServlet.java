@@ -8,7 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import model.Promotion;
+import model.entity.promotion.Promotion;
 import service.IShopPromotionService;
 import service.impl.ShopPromotionServiceImpl;
 

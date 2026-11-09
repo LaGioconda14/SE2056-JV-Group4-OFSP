@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.DriverProfile;
+import model.entity.delivery.DriverProfile;
 import enums.DeliveryStatus;
 import enums.OrderStatus;
 import enums.SubOrderStatus;
@@ -29,13 +29,11 @@ public class DriverDAO extends DBContext {
                 + "       dp.approval_status, dp.availability_status, dp.reviewed_by, rev.full_name AS reviewer_name, "
                 + "       dp.reviewed_at, dp.rejection_reason, dp.rating, dp.total_trips, dp.max_capacity_orders, "
                 + "       dp.created_at, dp.updated_at, "
-                + "       dl.latitude, dl.longitude, dl.last_updated_at, "
                 + "       (SELECT COUNT(*) FROM deliveries d WHERE d.driver_id = dp.user_id AND d.delivery_status IN ('ASSIGNED', 'DELIVERING', 'IN_TRANSIT', 'PICKED_UP')) AS active_orders "
                 + "FROM driver_profiles dp "
                 + "JOIN users u ON dp.user_id = u.user_id "
                 + "LEFT JOIN shops s ON dp.shop_id = s.shop_id "
                 + "LEFT JOIN users rev ON dp.reviewed_by = rev.user_id "
-                + "LEFT JOIN driver_locations dl ON dp.driver_id = dl.driver_id "
                 + "WHERE dp.user_id = ?";
 
         Connection conn = getConnection();
@@ -67,13 +65,11 @@ public class DriverDAO extends DBContext {
                 + "       dp.approval_status, dp.availability_status, dp.reviewed_by, rev.full_name AS reviewer_name, "
                 + "       dp.reviewed_at, dp.rejection_reason, dp.rating, dp.total_trips, dp.max_capacity_orders, "
                 + "       dp.created_at, dp.updated_at, "
-                + "       dl.latitude, dl.longitude, dl.last_updated_at, "
                 + "       (SELECT COUNT(*) FROM deliveries d WHERE d.driver_id = dp.user_id AND d.delivery_status IN ('ASSIGNED', 'DELIVERING', 'IN_TRANSIT', 'PICKED_UP')) AS active_orders "
                 + "FROM driver_profiles dp "
                 + "JOIN users u ON dp.user_id = u.user_id "
                 + "LEFT JOIN shops s ON dp.shop_id = s.shop_id "
                 + "LEFT JOIN users rev ON dp.reviewed_by = rev.user_id "
-                + "LEFT JOIN driver_locations dl ON dp.driver_id = dl.driver_id "
                 + "WHERE dp.shop_id = ? "
         );
 
@@ -465,16 +461,6 @@ public class DriverDAO extends DBContext {
         dp.setMaxCapacityOrders(rs.getInt("max_capacity_orders"));
         dp.setCreatedAt(rs.getTimestamp("created_at"));
         dp.setUpdatedAt(rs.getTimestamp("updated_at"));
-
-        double lat = rs.getDouble("latitude");
-        if (!rs.wasNull()) {
-            dp.setLatitude(lat);
-        }
-        double lng = rs.getDouble("longitude");
-        if (!rs.wasNull()) {
-            dp.setLongitude(lng);
-        }
-        dp.setLastUpdatedAt(rs.getTimestamp("last_updated_at"));
         dp.setActiveOrderCount(rs.getInt("active_orders"));
         return dp;
     }

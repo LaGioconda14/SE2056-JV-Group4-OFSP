@@ -365,15 +365,6 @@ CREATE TABLE [dbo].[driver_profiles] (
     CONSTRAINT FK_driver_profiles_shop FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops]([shop_id])
 );
 
-CREATE TABLE [dbo].[driver_locations] (
-    [location_id]         BIGINT IDENTITY(1,1) PRIMARY KEY,
-    [driver_id]           BIGINT NOT NULL UNIQUE,
-    [latitude]            FLOAT NOT NULL,
-    [longitude]           FLOAT NOT NULL,
-    [last_updated_at]     DATETIME DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT FK_driver_locations_profile FOREIGN KEY ([driver_id]) REFERENCES [dbo].[driver_profiles]([driver_id]) ON DELETE CASCADE
-);
-
 CREATE TABLE [dbo].[deliveries] (
     [delivery_id]       BIGINT IDENTITY(1,1) PRIMARY KEY,
     [sub_order_id]      BIGINT NOT NULL UNIQUE,

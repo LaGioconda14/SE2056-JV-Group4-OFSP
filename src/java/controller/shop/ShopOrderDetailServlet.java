@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import model.OrderItem;
+import model.dto.order.OrderItemFulfillmentDTO;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.servlet.ServletException;
@@ -13,9 +13,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
-import model.SubOrder;
-import model.DriverProfile;
+import model.entity.user.User;
+import model.dto.order.SubOrderDetailDTO;
+import model.entity.delivery.DriverProfile;
 import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
 import service.IDriverService;
@@ -56,7 +56,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
             return;
         }
 
-        SubOrder subOrder = fulfillmentService.getSubOrderDetails(code);
+        SubOrderDetailDTO subOrder = fulfillmentService.getSubOrderDetails(code);
         if (subOrder == null) {
             response.sendRedirect(request.getContextPath() + "/shop/orders?error=order_not_found");
             return;
@@ -107,7 +107,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
             return;
         }
 
-        SubOrder targetOrder = fulfillmentService.getSubOrderDetails(code);
+        SubOrderDetailDTO targetOrder = fulfillmentService.getSubOrderDetails(code);
         if (targetOrder == null) {
             response.sendRedirect(request.getContextPath() + "/shop/orders?error=order_not_found");
             return;
@@ -142,7 +142,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
                     || category.toLowerCase().contains("hỏng"))) {
                 Map<Long, Integer> wastedQtyMap = new HashMap<>();
                 if (targetOrder.getItems() != null) {
-                    for (OrderItem it : targetOrder.getItems()) {
+                    for (OrderItemFulfillmentDTO it : targetOrder.getItems()) {
                         if (it.getVariantId() != null) {
                             String paramVal = request.getParameter("wastedQty_" + it.getVariantId());
                             if (paramVal != null && !paramVal.trim().isEmpty()) {
@@ -190,7 +190,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
             String note = request.getParameter("wasteNote");
             Map<Long, Integer> wastedQtyMap = new HashMap<>();
             if (targetOrder.getItems() != null) {
-                for (OrderItem it : targetOrder.getItems()) {
+                for (OrderItemFulfillmentDTO it : targetOrder.getItems()) {
                     if (it.getVariantId() != null) {
                         String paramVal = request.getParameter("wastedQty_" + it.getVariantId());
                         if (paramVal != null && !paramVal.trim().isEmpty()) {
@@ -238,7 +238,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
             if (driverUserIdStr != null && !driverUserIdStr.trim().isEmpty()) {
                 try {
                     long driverUserId = Long.parseLong(driverUserIdStr.trim());
-                    SubOrder so = fulfillmentService.getSubOrderDetails(code);
+                    SubOrderDetailDTO so = fulfillmentService.getSubOrderDetails(code);
                     if (so != null) {
                         boolean assigned = driverService.assignDriverToSubOrder(so.getSubOrderId(), driverUserId);
                         if (assigned) {
@@ -257,7 +257,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
         // Sẵn sàng giao: chuyển sang SHIPPING & gán driver nếu có
         if ("ready_to_ship".equals(action)) {
             String driverUserIdStr = request.getParameter("driverUserId");
-            SubOrder so = fulfillmentService.getSubOrderDetails(code);
+            SubOrderDetailDTO so = fulfillmentService.getSubOrderDetails(code);
             if (so != null && driverUserIdStr != null && !driverUserIdStr.trim().isEmpty()) {
                 try {
                     long driverUserId = Long.parseLong(driverUserIdStr.trim());

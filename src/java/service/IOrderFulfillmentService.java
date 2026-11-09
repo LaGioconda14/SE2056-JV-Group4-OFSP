@@ -1,12 +1,13 @@
 package service;
 
 import java.util.List;
-import model.SubOrder;
+import model.dto.order.SubOrderDTO;
+import model.dto.order.SubOrderDetailDTO;
 import enums.SubOrderStatus;
 
 public interface IOrderFulfillmentService {
 
-    SubOrder getSubOrderDetails(String subOrderCode);
+    SubOrderDetailDTO getSubOrderDetails(String subOrderCode);
 
     boolean cancelSubOrderWithRestock(String subOrderCode, String cancelReason, Long cancelledBy);
 
@@ -14,7 +15,7 @@ public interface IOrderFulfillmentService {
 
     boolean updateSubOrderStatus(String subOrderCode, SubOrderStatus newStatus);
 
-    List<SubOrder> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword);
+    List<SubOrderDTO> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword);
 
     int countSubOrdersByShop(long shopId, SubOrderStatus status);
 }

@@ -1,7 +1,7 @@
 package service;
 
-import model.GoogleAccount;
-import model.User;
+import model.dto.auth.GoogleAccount;
+import model.entity.user.User;
 
 /**
  * Service interface for User operations and Authentication business logic.

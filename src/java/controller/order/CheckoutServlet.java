@@ -24,11 +24,11 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import enums.PaymentMethod;
-import model.CartItem;
-import model.Coupon;
-import model.CustomerAddress;
-import model.Order;
-import model.User;
+import model.entity.cart.CartItem;
+import model.entity.promotion.Coupon;
+import model.entity.user.CustomerAddress;
+import model.dto.order.OrderDetailDTO;
+import model.entity.user.User;
 import service.IAddressLookupService;
 import service.ICustomerAddressService;
 import service.IOrderService;
@@ -161,7 +161,7 @@ public class CheckoutServlet extends HttpServlet {
             try {
                 long shopId = parsePositiveId(request.getParameter("targetShopId"), "Cửa hàng không hợp lệ!");
                 if (loadSelectedItems(user.getId(), restoreSelection(session))
-                        .stream().noneMatch(item -> item.getVariant().getProduct().getShopId() == shopId)) {
+                        .stream().noneMatch(item -> item.getVariant().getShopId() == shopId)) {
                     throw new IllegalArgumentException("Cửa hàng không thuộc đơn hàng thanh toán!");
                 }
                 Map<Long, String> codes = restoredShopCoupons(session);
@@ -456,11 +456,10 @@ public class CheckoutServlet extends HttpServlet {
     private Map<Long, List<CartItem>> groupItemsByShop(List<CartItem> items) {
         Map<Long, List<CartItem>> grouped = new LinkedHashMap<>();
         for (CartItem item : items) {
-            if (item.getVariant() == null || item.getVariant().getProduct() == null
-                    || item.getVariant().getProduct().getShopId() <= 0) {
+            if (item.getVariant() == null || item.getVariant().getShopId() <= 0) {
                 throw new IllegalStateException("Sản phẩm thanh toán thiếu thông tin cửa hàng.");
             }
-            long shopId = item.getVariant().getProduct().getShopId();
+            long shopId = item.getVariant().getShopId();
             grouped.computeIfAbsent(shopId, key -> new ArrayList<>()).add(item);
         }
         return grouped;
@@ -500,7 +499,7 @@ public class CheckoutServlet extends HttpServlet {
             }
         }
 
-        Order draft = orderService.buildDraftOrder(customerId, items,
+        OrderDetailDTO draft = orderService.buildDraftOrder(customerId, items,
                 validPlatformCoupon, validShopCoupons);
         if (validShopCoupons.isEmpty()) {
             session.removeAttribute("checkoutShopCoupons");
@@ -655,7 +654,7 @@ public class CheckoutServlet extends HttpServlet {
         }
     }
 
-    private record DraftResult(Order order, String couponCode,
+    private record DraftResult(OrderDetailDTO order, String couponCode,
             Map<Long, String> shopCouponCodes) {
     }
 }

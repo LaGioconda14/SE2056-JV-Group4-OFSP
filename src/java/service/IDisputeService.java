@@ -1,7 +1,7 @@
 package service;
 
 import java.util.List;
-import model.Dispute;
+import model.entity.order.Dispute;
 
 public interface IDisputeService {
 

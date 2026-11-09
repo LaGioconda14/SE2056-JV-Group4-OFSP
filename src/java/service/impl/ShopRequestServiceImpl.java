@@ -1,7 +1,7 @@
 package service.impl;
 
 import dao.ShopRequestDAO;
-import model.ShopRequest;
+import model.entity.shop.ShopRequest;
 import service.IShopRequestService;
 
 public class ShopRequestServiceImpl implements IShopRequestService {

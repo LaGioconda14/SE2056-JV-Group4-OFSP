@@ -3,8 +3,8 @@
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <fmt:setLocale value="vi_VN" />
 
-<c:set var="isFailedOrder" value="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.deliveryStatus eq 'FAILED'}" />
-<c:set var="isDeliveredOrder" value="${subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED' or subOrder.deliveryStatus eq 'DELIVERED' or not empty subOrder.deliveredAt}" />
+<c:set var="isFailedOrder" value="${subOrder.status eq 'RETURNED' or subOrder.status eq 'FAILED' or subOrder.delivery.deliveryStatus eq 'FAILED'}" />
+<c:set var="isDeliveredOrder" value="${subOrder.status eq 'DELIVERED' or subOrder.status eq 'COMPLETED' or subOrder.delivery.deliveryStatus eq 'DELIVERED' or not empty subOrder.delivery.deliveredAt}" />
 <c:set var="isCancelledOrder" value="${subOrder.status eq 'CANCELLED'}" />
 
 <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs overflow-x-auto">
@@ -88,7 +88,7 @@
 
             <div class="flex flex-col items-center text-center w-36 z-10">
                 <c:choose>
-                    <c:when test="${(subOrder.status eq 'SHIPPING' or subOrder.deliveryStatus eq 'DELIVERING' or subOrder.deliveryStatus eq 'PICKED_UP' or subOrder.deliveryStatus eq 'IN_TRANSIT') and not isDeliveredOrder and not isFailedOrder}">
+                    <c:when test="${(subOrder.status eq 'SHIPPING' or subOrder.delivery.deliveryStatus eq 'DELIVERING' or subOrder.delivery.deliveryStatus eq 'PICKED_UP' or subOrder.delivery.deliveryStatus eq 'IN_TRANSIT') and not isDeliveredOrder and not isFailedOrder}">
                         <div class="w-9 h-9 rounded-full bg-emerald-700 text-white ring-4 ring-emerald-100 shadow-md scale-110 flex items-center justify-center font-bold text-sm animate-pulse">
                             <i class="fa-solid fa-truck-fast"></i>
                         </div>
@@ -141,7 +141,7 @@
             </div>
 
             <div class="absolute top-[18px] left-[72px] right-[72px] h-1 bg-slate-100 -z-0">
-                <div class="h-full ${isCancelledOrder or isFailedOrder ? 'bg-rose-500' : 'bg-emerald-600'} transition-all duration-500 ${isCancelledOrder or subOrder.status eq 'NEW' ? 'w-1/4' : (subOrder.status eq 'PACKING' ? 'w-2/4' : ((subOrder.status eq 'SHIPPING' or subOrder.deliveryStatus eq 'DELIVERING') and not isDeliveredOrder ? 'w-3/4' : 'w-full'))}"></div>
+                <div class="h-full ${isCancelledOrder or isFailedOrder ? 'bg-rose-500' : 'bg-emerald-600'} transition-all duration-500 ${isCancelledOrder or subOrder.status eq 'NEW' ? 'w-1/4' : (subOrder.status eq 'PACKING' ? 'w-2/4' : ((subOrder.status eq 'SHIPPING' or subOrder.delivery.deliveryStatus eq 'DELIVERING') and not isDeliveredOrder ? 'w-3/4' : 'w-full'))}"></div>
             </div>
 
         </div>

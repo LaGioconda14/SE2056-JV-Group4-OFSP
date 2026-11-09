@@ -1,6 +1,6 @@
 package service;
 
-import model.AdminDashboardStats;
+import model.dto.admin.AdminDashboardStats;
 
 /**
  * Service interface for Admin Dashboard business logic.

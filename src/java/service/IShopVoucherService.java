@@ -2,7 +2,7 @@ package service;
 
 import java.util.List;
 import java.util.Map;
-import model.Voucher;
+import model.dto.promotion.Voucher;
 
 /** Service boundary for shop voucher management. */
 public interface IShopVoucherService {

@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.InventoryWasteLog;
-import model.OrderCancellationData;
-import model.TransitDamageData;
-import model.WasteStatisticDTO;
-import model.SubOrder;
-import model.ShippingAddress;
+import model.entity.inventory.InventoryWasteLog;
+import model.dto.inventory.OrderCancellationData;
+import model.dto.inventory.TransitDamageData;
+import model.dto.inventory.WasteStatisticDTO;
+import model.dto.order.SubOrderDTO;
+import model.entity.order.ShippingAddress;
 import util.DBContext;
 
 public class InventoryWasteDAO extends DBContext {
@@ -662,13 +662,14 @@ public class InventoryWasteDAO extends DBContext {
         return logTransitDamageWaste(subOrderId, note, loggedBy, wastedQtyMap);
     }
 
-    public List<SubOrder> getPendingReturnedOrdersByShop(long shopId) {
-        List<SubOrder> list = new ArrayList<>();
+    public List<SubOrderDTO> getPendingReturnedOrdersByShop(long shopId) {
+        List<SubOrderDTO> list = new ArrayList<>();
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
                 + "       o.order_code, o.payment_status, o.payment_method, "
                 + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city "
+                + "FROM sub_orders so "
                 + "JOIN orders o ON so.order_id = o.order_id "
                 + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
                 + "WHERE so.shop_id = ? AND so.status IN ('RETURNED', 'FAILED') "
@@ -684,7 +685,7 @@ public class InventoryWasteDAO extends DBContext {
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    SubOrder so = new SubOrder();
+                    SubOrderDTO so = new SubOrderDTO();
                     so.setSubOrderId(rs.getLong("sub_order_id"));
                     so.setSubOrderCode(rs.getString("sub_order_code"));
                     so.setOrderId(rs.getLong("order_id"));
@@ -708,8 +709,8 @@ public class InventoryWasteDAO extends DBContext {
                     addr.setWard(rs.getString("ward"));
                     addr.setDistrict(rs.getString("district"));
                     addr.setCity(rs.getString("city"));
-
-                    so.setItems(fulfillmentDAO.getOrderItemsBySubOrderId(so.getSubOrderId()));
+                    so.setShippingAddress(addr);
+                    so.setItems(new ArrayList<>(fulfillmentDAO.getOrderItemsBySubOrderId(so.getSubOrderId())));
                     list.add(so);
                 }
             }

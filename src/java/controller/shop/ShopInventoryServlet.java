@@ -12,11 +12,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import dao.ShopDAO;
-import model.InventoryBatchItem;
-import model.InventoryWasteLog;
-import model.ProductVariant;
-import model.User;
-import model.WasteStatisticDTO;
+import model.dto.inventory.InventoryBatchItem;
+import model.entity.inventory.InventoryWasteLog;
+import model.dto.product.ProductVariantStockDTO;
+import model.entity.user.User;
+import model.dto.inventory.WasteStatisticDTO;
 import service.IInventoryService;
 import service.IInventoryWasteService;
 import service.IProductService;
@@ -116,7 +116,7 @@ public class ShopInventoryServlet extends HttpServlet {
                 request.setAttribute("lowStockCount", lowStockCount);
 
                 WasteStatisticDTO stats = wasteService.getWasteStatisticsByShop(shopId);
-                List<ProductVariant> variants = productService.getVariantsByShopId(shopId);
+                List<ProductVariantStockDTO> variants = productService.getVariantsByShopId(shopId);
 
                 request.setAttribute("wasteLogs", logs);
                 request.setAttribute("stats", stats);

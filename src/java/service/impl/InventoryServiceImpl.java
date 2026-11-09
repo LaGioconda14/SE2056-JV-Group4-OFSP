@@ -5,9 +5,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import model.InventoryBatchItem;
-import model.InventoryTransaction;
-import model.ProductBatch;
+import model.dto.inventory.InventoryBatchItem;
+import model.entity.inventory.InventoryTransaction;
+import model.entity.inventory.ProductBatch;
 import service.IInventoryService;
 
 public class InventoryServiceImpl implements IInventoryService {

@@ -13,11 +13,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.InventoryWasteLog;
-import model.ProductVariant;
-import model.SubOrder;
-import model.User;
-import model.WasteStatisticDTO;
+import model.entity.inventory.InventoryWasteLog;
+import model.dto.product.ProductVariantStockDTO;
+import model.dto.order.SubOrderDTO;
+import model.entity.user.User;
+import model.dto.inventory.WasteStatisticDTO;
 import service.IInventoryWasteService;
 import service.IProductService;
 import service.IShopProductService;
@@ -92,8 +92,8 @@ public class ShopWasteServlet extends HttpServlet {
             }
 
             WasteStatisticDTO stats = wasteService.getWasteStatisticsByShop(shopId);
-            List<ProductVariant> variants = productService.getVariantsByShopId(shopId);
-            List<SubOrder> pendingReturnedOrders = wasteService.getPendingReturnedOrdersByShop(shopId);
+            List<ProductVariantStockDTO> variants = productService.getVariantsByShopId(shopId);
+            List<SubOrderDTO> pendingReturnedOrders = wasteService.getPendingReturnedOrdersByShop(shopId);
 
             request.setAttribute("wasteLogs", logs);
             request.setAttribute("stats", stats);

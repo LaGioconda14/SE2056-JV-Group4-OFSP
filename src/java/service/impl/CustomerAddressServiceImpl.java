@@ -2,7 +2,7 @@ package service.impl;
 
 import dao.CustomerAddressDAO;
 import java.util.List;
-import model.CustomerAddress;
+import model.entity.user.CustomerAddress;
 import service.ICustomerAddressService;
 
 public class CustomerAddressServiceImpl implements ICustomerAddressService {

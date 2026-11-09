@@ -10,11 +10,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Category;
-import model.Product;
-import model.Review;
-import model.Shop;
-import model.User;
+import model.entity.product.Category;
+import model.dto.product.ProductCardDTO;
+import model.entity.review.Review;
+import model.entity.shop.Shop;
+import model.entity.user.User;
 
 @WebServlet(name = "ShopStorefrontServlet", urlPatterns = {"/store", "/shop/storefront", "/shop/detail", "/shop-detail"})
 public class ShopStorefrontServlet extends HttpServlet {
@@ -77,7 +77,7 @@ public class ShopStorefrontServlet extends HttpServlet {
             }
         }
 
-        List<Product> products = productDAO.getProductsByShop(shop.getShopId(), selectedCatId, keyword, sort);
+        List<ProductCardDTO> products = productDAO.getProductsByShop(shop.getShopId(), selectedCatId, keyword, sort);
         List<Category> categories = productDAO.getCategoriesByShopId(shop.getShopId());
         List<Review> reviews = shopDAO.getReviewsByShopId(shop.getShopId());
         int totalProductsCount = shopDAO.getTotalProductsCountByShopId(shop.getShopId());

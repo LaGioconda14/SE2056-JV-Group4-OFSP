@@ -3,7 +3,7 @@ package service.impl;
 import dao.VoucherDAO;
 import java.util.List;
 import java.util.Map;
-import model.Voucher;
+import model.dto.promotion.Voucher;
 import service.IShopVoucherService;
 
 /** DAO access for shop voucher management. */

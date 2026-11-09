@@ -2,7 +2,8 @@ package service.impl;
 
 import dao.OrderFulfillmentDAO;
 import java.util.List;
-import model.SubOrder;
+import model.dto.order.SubOrderDTO;
+import model.dto.order.SubOrderDetailDTO;
 import enums.SubOrderStatus;
 import service.IOrderFulfillmentService;
 
@@ -11,7 +12,7 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
     private final OrderFulfillmentDAO fulfillmentDAO = new OrderFulfillmentDAO();
 
     @Override
-    public SubOrder getSubOrderDetails(String subOrderCode) {
+    public SubOrderDetailDTO getSubOrderDetails(String subOrderCode) {
         if (subOrderCode == null || subOrderCode.trim().isEmpty()) {
             return null;
         }
@@ -41,7 +42,7 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
         }
         // Không cho phép xác nhận / đóng gói / giao hàng nếu đơn thanh toán trực tuyến chưa hoàn tất thanh toán
         if (newStatus != SubOrderStatus.CANCELLED && newStatus != SubOrderStatus.NEW && newStatus != SubOrderStatus.FAILED) {
-            SubOrder details = fulfillmentDAO.getSubOrderDetails(subOrderCode.trim());
+            SubOrderDetailDTO details = fulfillmentDAO.getSubOrderDetails(subOrderCode.trim());
             if (details != null && details.isWaitingOnlinePayment()) {
                 return false;
             }
@@ -50,7 +51,7 @@ public class OrderFulfillmentServiceImpl implements IOrderFulfillmentService {
     }
 
     @Override
-    public List<SubOrder> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
+    public List<SubOrderDTO> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
         return fulfillmentDAO.getSubOrdersByShop(shopId, status, keyword);
     }
 

@@ -2,7 +2,7 @@ package service;
 
 import java.math.BigDecimal;
 import java.util.List;
-import model.Delivery;
+import model.entity.delivery.Delivery;
 
 public interface IDeliveryService {
 

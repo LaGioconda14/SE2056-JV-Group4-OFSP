@@ -10,9 +10,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.OrderItem;
-import model.ShippingAddress;
-import model.SubOrder;
+import model.dto.order.DeliveryDTO;
+import model.dto.order.OrderItemFulfillmentDTO;
+import model.dto.order.SubOrderDTO;
+import model.dto.order.SubOrderDetailDTO;
+import model.entity.order.ShippingAddress;
 import enums.SubOrderStatus;
 import enums.OrderStatus;
 import util.DBContext;
@@ -22,7 +24,7 @@ public class OrderFulfillmentDAO extends DBContext {
     private static final Logger LOGGER = Logger.getLogger(OrderFulfillmentDAO.class.getName());
     private final PromotionDAO promotionDAO = new PromotionDAO();
 
-    public SubOrder getSubOrderDetails(String subOrderCode) {
+    public SubOrderDetailDTO getSubOrderDetails(String subOrderCode) {
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.cancelled_at, so.created_at, so.updated_at, "
@@ -53,7 +55,7 @@ public class OrderFulfillmentDAO extends DBContext {
             ps.setString(1, subOrderCode);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    SubOrder so = new SubOrder();
+                    SubOrderDetailDTO so = new SubOrderDetailDTO();
                     so.setSubOrderId(rs.getLong("sub_order_id"));
                     so.setSubOrderCode(rs.getString("sub_order_code"));
                     so.setOrderId(rs.getLong("order_id"));
@@ -72,14 +74,23 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setPaymentStatus(rs.getString("payment_status"));
                     so.setCreatedAt(rs.getTimestamp("created_at"));
                     so.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    so.setOrderCreatedAt(rs.getTimestamp("order_created_at"));
+                    so.setCustomerName(rs.getString("customer_name"));
+                    so.setCustomerPhone(rs.getString("customer_phone"));
 
-                    so.setTrackingNumber(rs.getString("tracking_number"));
-                    so.setDeliveryStatus(rs.getString("delivery_status"));
-                    so.setFailureReason(rs.getString("failure_reason"));
-                    so.setProofImageUrl(rs.getString("proof_image_url"));
-                    so.setDeliveredAt(rs.getTimestamp("delivered_at"));
-                    so.setDriverName(rs.getString("driver_name"));
-                    so.setDriverPhone(rs.getString("driver_phone"));
+                    DeliveryDTO delivery = new DeliveryDTO();
+                    delivery.setTrackingNumber(rs.getString("tracking_number"));
+                    delivery.setDeliveryStatus(rs.getString("delivery_status"));
+                    delivery.setFailureReason(rs.getString("failure_reason"));
+                    delivery.setProofImageUrl(rs.getString("proof_image_url"));
+                    delivery.setDeliveredAt(rs.getTimestamp("delivered_at"));
+                    delivery.setDriverId(rs.getObject("driver_id") != null ? rs.getLong("driver_id") : null);
+                    delivery.setDriverName(rs.getString("driver_name"));
+                    delivery.setDriverPhone(rs.getString("driver_phone"));
+                    delivery.setDriverAvatarUrl(rs.getString("driver_avatar"));
+                    delivery.setDriverVehiclePlate(rs.getString("driver_vehicle_plate"));
+                    delivery.setDriverVehicleType(rs.getString("driver_vehicle_type"));
+                    so.setDelivery(delivery);
 
                     // Shipping Address
                     ShippingAddress addr = new ShippingAddress();
@@ -103,7 +114,7 @@ public class OrderFulfillmentDAO extends DBContext {
         return null;
     }
 
-    public List<OrderItem> getOrderItemsBySubOrderId(long subOrderId) {
+    public List<OrderItemFulfillmentDTO> getOrderItemsBySubOrderId(long subOrderId) {
         Connection conn = getConnection();
         if (conn == null) {
             return Collections.emptyList();
@@ -116,9 +127,9 @@ public class OrderFulfillmentDAO extends DBContext {
         }
     }
 
-    private List<OrderItem> getOrderItemsBySubOrderId(Connection conn, long subOrderId) throws SQLException {
-        List<OrderItem> list = new ArrayList<>();
-        String sql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
+    private List<OrderItemFulfillmentDTO> getOrderItemsBySubOrderId(Connection conn, long subOrderId) throws SQLException {
+        List<OrderItemFulfillmentDTO> list = new ArrayList<>();
+        String sql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, pv.product_id, oi.product_name_snapshot, "
                 + "       oi.variant_name_snapshot, oi.sku_snapshot, oi.unit, oi.unit_price, oi.quantity, oi.total_price, "
                 + "       pv.stock_quantity, pv.weight_kg, "
                 + "       p.origin, p.certification, p.storage_temp, "
@@ -132,19 +143,18 @@ public class OrderFulfillmentDAO extends DBContext {
             ps.setLong(1, subOrderId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Long variantId = rs.getObject("variant_id") != null ? rs.getLong("variant_id") : null;
-                    OrderItem item = new OrderItem(
-                            rs.getLong("order_item_id"),
-                            rs.getLong("sub_order_id"),
-                            variantId,
-                            rs.getString("product_name_snapshot"),
-                            rs.getString("variant_name_snapshot"),
-                            rs.getString("sku_snapshot"),
-                            rs.getString("unit"),
-                            rs.getBigDecimal("unit_price"),
-                            rs.getInt("quantity"),
-                            rs.getBigDecimal("total_price"));
-
+                    OrderItemFulfillmentDTO item = new OrderItemFulfillmentDTO();
+                    item.setOrderItemId(rs.getLong("order_item_id"));
+                    item.setSubOrderId(rs.getLong("sub_order_id"));
+                    item.setVariantId(rs.getObject("variant_id") != null ? rs.getLong("variant_id") : null);
+                    item.setProductId(rs.getObject("product_id") != null ? rs.getLong("product_id") : null);
+                    item.setProductNameSnapshot(rs.getString("product_name_snapshot"));
+                    item.setVariantNameSnapshot(rs.getString("variant_name_snapshot"));
+                    item.setSkuSnapshot(rs.getString("sku_snapshot"));
+                    item.setUnit(rs.getString("unit"));
+                    item.setUnitPrice(rs.getBigDecimal("unit_price"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setTotalPrice(rs.getBigDecimal("total_price"));
                     item.setStockQuantity(rs.getInt("stock_quantity"));
                     item.setWeightKg(rs.getBigDecimal("weight_kg"));
                     item.setOrigin(rs.getString("origin"));
@@ -205,8 +215,8 @@ public class OrderFulfillmentDAO extends DBContext {
         }
     }
 
-    public List<SubOrder> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
-        List<SubOrder> list = new ArrayList<>();
+    public List<SubOrderDTO> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
+        List<SubOrderDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
                         + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
@@ -250,7 +260,7 @@ public class OrderFulfillmentDAO extends DBContext {
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    SubOrder so = new SubOrder();
+                    SubOrderDTO so = new SubOrderDTO();
                     so.setSubOrderId(rs.getLong("sub_order_id"));
                     so.setSubOrderCode(rs.getString("sub_order_code"));
                     so.setOrderId(rs.getLong("order_id"));
@@ -278,7 +288,7 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setShippingAddress(addr);
 
                     // Tái sử dụng cùng kết nối hiện tại để nạp danh sách món, triệt tiêu N+1 Connection
-                    so.setItems(getOrderItemsBySubOrderId(conn, so.getSubOrderId()));
+                    so.setItems(new ArrayList<>(getOrderItemsBySubOrderId(conn, so.getSubOrderId())));
                     list.add(so);
                 }
             }

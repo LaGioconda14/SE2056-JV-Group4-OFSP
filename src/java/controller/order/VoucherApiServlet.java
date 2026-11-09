@@ -13,8 +13,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
-import model.VoucherCheckResult;
+import model.entity.user.User;
+import model.dto.promotion.VoucherCheckResult;
 
 @WebServlet(name = "VoucherApiServlet", urlPatterns = {"/voucher/validate"})
 public class VoucherApiServlet extends HttpServlet {

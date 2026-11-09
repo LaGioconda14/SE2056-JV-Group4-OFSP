@@ -9,14 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.Delivery;
+import model.entity.delivery.Delivery;
 import enums.DeliveryStatus;
 import enums.OrderStatus;
 import enums.PaymentMethod;
 import enums.PaymentTransactionStatus;
 import enums.SubOrderStatus;
 import enums.PaymentStatus;
-import model.OrderItem;
+import model.dto.order.OrderItemFulfillmentDTO;
 import util.DBContext;
 
 public class DeliveryDAO extends DBContext {
@@ -396,26 +396,21 @@ public class DeliveryDAO extends DBContext {
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, del.getSubOrderId());
             try (ResultSet rs = ps.executeQuery()) {
-                List<OrderItem> items = new ArrayList<>();
+                List<OrderItemFulfillmentDTO> items = new ArrayList<>();
                 while (rs.next()) {
-                    OrderItem it = new OrderItem(
-                        rs.getLong("order_item_id"),
-                        rs.getLong("sub_order_id"),
-                        rs.getLong("variant_id"),
-                        rs.getString("product_name_snapshot"),
-                        rs.getString("variant_name_snapshot"),
-                        rs.getString("sku_snapshot"),
-                        rs.getString("unit"),
-                        rs.getBigDecimal("unit_price"),
-                        rs.getInt("quantity"),
-                        rs.getBigDecimal("total_price")
-                    );
+                    OrderItemFulfillmentDTO it = new OrderItemFulfillmentDTO();
+                    it.setOrderItemId(rs.getLong("order_item_id"));
+                    it.setSubOrderId(rs.getLong("sub_order_id"));
+                    it.setVariantId(rs.getObject("variant_id") != null ? rs.getLong("variant_id") : null);
+                    it.setProductNameSnapshot(rs.getString("product_name_snapshot"));
+                    it.setVariantNameSnapshot(rs.getString("variant_name_snapshot"));
+                    it.setSkuSnapshot(rs.getString("sku_snapshot"));
+                    it.setUnit(rs.getString("unit"));
+                    it.setUnitPrice(rs.getBigDecimal("unit_price"));
+                    it.setQuantity(rs.getInt("quantity"));
+                    it.setTotalPrice(rs.getBigDecimal("total_price"));
                     it.setStorageTemp(rs.getString("storage_temp"));
-                    String img = rs.getString("image_url");
-                    if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=200&h=200&fit=crop";
-                    }
-                    it.setImageUrl(img);
+                    it.setImageUrl(rs.getString("image_url"));
                     items.add(it);
                 }
                 del.setItems(items);

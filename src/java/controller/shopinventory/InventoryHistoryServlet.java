@@ -7,15 +7,15 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.User;
+import model.entity.user.User;
 import service.IInventoryService;
 import service.impl.InventoryServiceImpl;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.ArrayList;
-import model.InventoryTransaction;
-import model.ProductBatch;
+import model.entity.inventory.InventoryTransaction;
+import model.entity.inventory.ProductBatch;
 import dao.ShopDAO;
 
 @WebServlet(name = "InventoryHistoryServlet", urlPatterns = {"/shop/inventory/history"})

@@ -1,8 +1,8 @@
 package service;
 
-import model.Cart;
-import model.CartItem;
-import model.CartMutationResult;
+import model.entity.cart.Cart;
+import model.entity.cart.CartItem;
+import model.dto.cart.CartMutationResult;
 
 public interface ICartService {
 

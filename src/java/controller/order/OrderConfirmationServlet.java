@@ -7,8 +7,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.Order;
-import model.User;
+import model.dto.order.OrderDetailDTO;
+import model.entity.user.User;
 import service.IOrderService;
 import service.impl.OrderServiceImpl;
 
@@ -36,7 +36,7 @@ public class OrderConfirmationServlet extends HttpServlet {
 
         try {
             long orderId = Long.parseLong(orderIdParam.trim());
-            Order order = orderService.getOrderDetails(orderId);
+            OrderDetailDTO order = orderService.getOrderDetails(orderId);
 
             if (order == null || order.getCustomerId() != user.getId()) {
                 response.sendRedirect(request.getContextPath() + "/home");

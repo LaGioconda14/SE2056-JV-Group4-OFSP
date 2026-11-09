@@ -1,8 +1,8 @@
 package service;
 
-import model.Shop;
-import model.ShopRequest;
-import model.User;
+import model.entity.shop.Shop;
+import model.entity.shop.ShopRequest;
+import model.entity.user.User;
 
 /** Service boundary for viewing and updating a shop owner's profile. */
 public interface IShopProfileService {

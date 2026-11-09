@@ -1,7 +1,7 @@
 package service;
 
 import java.util.List;
-import model.CustomerAddress;
+import model.entity.user.CustomerAddress;
 
 public interface ICustomerAddressService {
 

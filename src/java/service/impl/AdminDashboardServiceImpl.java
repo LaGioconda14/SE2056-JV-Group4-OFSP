@@ -1,7 +1,7 @@
 package service.impl;
 
 import dao.AdminDashboardDAO;
-import model.AdminDashboardStats;
+import model.dto.admin.AdminDashboardStats;
 import service.IAdminDashboardService;
 
 /**

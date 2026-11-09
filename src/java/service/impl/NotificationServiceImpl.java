@@ -4,7 +4,7 @@ import dao.NotificationDAO;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.List;
-import model.Notification;
+import model.entity.notification.Notification;
 import service.INotificationService;
 
 public class NotificationServiceImpl implements INotificationService {

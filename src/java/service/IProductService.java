@@ -3,14 +3,17 @@ package service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import model.Category;
-import model.Product;
-import model.ProductVariant;
-import model.Review;
+import model.dto.product.ProductCardDTO;
+import model.dto.product.ProductDetailDTO;
+import model.dto.product.ProductVariantDetailDTO;
+import model.dto.product.ProductVariantStockDTO;
+import model.entity.product.Category;
+import model.entity.product.ProductVariant;
+import model.entity.review.Review;
 
 public interface IProductService {
     //lấy danh sách sản phẩm theo shopID
-    List<Product> getProductSummariesByShopId(long shopId);
+    List<ProductCardDTO> getProductSummariesByShopId(long shopId);
     int countProductsByShopId(long shopId);
     int countVariantsByShopId(long shopId);
     int countVariantsByStatusTab(long shopId, String tab);
@@ -39,13 +42,13 @@ public interface IProductService {
     boolean softDeleteProductAndVariants(long productId, long shopId);
     boolean softDeleteProduct(long productId, long shopId);
     // Lấy thông tin biến thể sản phẩm theo ID để sửa
-    ProductVariant getVariantById(long variantId);
-    ProductVariant getShopVariantById(long variantId, long shopId);
+    ProductVariantDetailDTO getVariantById(long variantId);
+    ProductVariantDetailDTO getShopVariantById(long variantId, long shopId);
     boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName, String unit,
                                  String price, String originalPrice, String stockQuantity,
                                  String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     //sửa
-    model.Product getShopProductForEdit(long productId, long shopId);
+    ProductDetailDTO getShopProductForEdit(long productId, long shopId);
     boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
                               String storageTemp, String certification, String description,
                               boolean isActive, String coverImageUrl);
@@ -53,7 +56,7 @@ public interface IProductService {
     /**
      * Lấy danh sách sản phẩm nổi bật hiển thị trên trang chủ.
      */
-    List<Product> getHomeProducts();
+    List<ProductCardDTO> getHomeProducts();
 
     /**
      * Lấy danh sách danh mục theo cấu trúc phân cấp đa tầng (cha - con).
@@ -61,30 +64,29 @@ public interface IProductService {
     List<Category> getHierarchyCategories();
     
     // Thêm các phương thức cho tính năng Browse by Category
-    List<Product> getProductsByCategorySlug(String categorySlug);
+    List<ProductCardDTO> getProductsByCategorySlug(String categorySlug);
     
     // Các phương thức cho View Product Details
-    Product getProductById(int productId);
-    List<ProductVariant> getVariantsByProductId(long productId);
+    ProductDetailDTO getProductById(int productId);
+    List<ProductVariantDetailDTO> getVariantsByProductId(long productId);
     List<ProductVariant> getShopVariantsByProductId(long shopId, long productId);
-    List<ProductVariant> getVariantsByShopId(long shopId);
+    List<ProductVariantStockDTO> getVariantsByShopId(long shopId);
     List<String> getImagesByProductId(long productId);
     
-    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr);
-    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+    List<ProductCardDTO> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr);
+    List<ProductCardDTO> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin);
-    List<Product> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
+    List<ProductCardDTO> searchAndFilterProducts(String keyword, String categoryId, String minPriceStr, String maxPriceStr,
             String ratingStr, String availability, String origin, String sortBy);
 
     // Thanh tìm kiếm cho shop
-    List<Product> getShopFilteredProducts(long shopId, String keyword, Long categoryId, String certification, String stockLevel);
-
+    List<ProductCardDTO> getShopFilteredProducts(long shopId, String keyword, Long categoryId, String certification, String stockLevel);
     // Advanced Catalog methods
     List<Category> getAllCategoriesWithCount();
     Map<String, Integer> getOriginsWithCount();
     int countInStockProducts();
     BigDecimal[] getMinMaxProductPrices();
-    List<Product> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
+    List<ProductCardDTO> getFilteredCatalogProducts(String keyword, List<String> categoryParams,
                                             BigDecimal minPrice, BigDecimal maxPrice,
                                             Double minRating, List<String> origins,
                                             Boolean inStockOnly, String sortBy,

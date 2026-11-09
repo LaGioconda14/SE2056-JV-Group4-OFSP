@@ -9,8 +9,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.Cart;
-import model.User;
+import model.entity.cart.Cart;
+import model.entity.user.User;
 import service.ICartService;
 import service.impl.CartServiceImpl;
 
@@ -65,7 +65,7 @@ public class CartServlet extends HttpServlet {
             cart = new Cart();
         }
         request.setAttribute("cart", cart);
-        if (cart.getItems().stream().anyMatch(model.CartItem::isQuantityAdjusted)) {
+        if (cart.getItems().stream().anyMatch(model.entity.cart.CartItem::isQuantityAdjusted)) {
             request.setAttribute("stockNotice",
                     "Một số sản phẩm đã được tự động giảm số lượng theo tồn kho hiện tại.");
         }

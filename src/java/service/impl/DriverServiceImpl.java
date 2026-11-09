@@ -2,7 +2,7 @@ package service.impl;
 
 import dao.DriverDAO;
 import java.util.List;
-import model.DriverProfile;
+import model.entity.delivery.DriverProfile;
 import service.IDriverService;
 
 public class DriverServiceImpl implements IDriverService {

@@ -14,8 +14,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.ShippingAddress;
-import model.User;
+import model.entity.order.ShippingAddress;
+import model.entity.user.User;
 import service.IOrderService;
 import service.impl.OrderServiceImpl;
 import service.INotificationService;
@@ -126,7 +126,7 @@ public class PlaceOrderServlet extends HttpServlet {
         if (addressSelection != null && addressSelection.startsWith("saved:")) {
             try {
                 long addressId = Long.parseLong(addressSelection.substring("saved:".length()));
-                model.CustomerAddress savedAddress = orderService.getCustomerAddress((long) user.getId(), addressId);
+                model.entity.user.CustomerAddress savedAddress = orderService.getCustomerAddress((long) user.getId(), addressId);
                 if (savedAddress == null) {
                     throw new IllegalArgumentException("Địa chỉ giao hàng không thuộc tài khoản của bạn!");
                 }

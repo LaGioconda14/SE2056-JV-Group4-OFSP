@@ -9,8 +9,8 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import model.CartMutationResult;
-import model.User;
+import model.dto.cart.CartMutationResult;
+import model.entity.user.User;
 import service.ICartService;
 import service.impl.CartServiceImpl;
 

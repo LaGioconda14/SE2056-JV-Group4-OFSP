@@ -16,13 +16,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import model.CartItem;
-import model.Coupon;
-import model.CustomerAddress;
-import model.Order;
-import model.OrderItem;
-import model.ShippingAddress;
-import model.SubOrder;
+import model.entity.cart.CartItem;
+import model.entity.promotion.Coupon;
+import model.entity.user.CustomerAddress;
+import model.dto.order.OrderDetailDTO;
+import model.dto.order.OrderItemDetailDTO;
+import model.dto.order.SubOrderDTO;
+import model.entity.order.ShippingAddress;
 import service.IOrderService;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -88,21 +88,20 @@ public class OrderServiceImpl implements IOrderService {
     private void validateCheckoutItems(List<CartItem> items) {
         for (CartItem item : items) {
             if (item.getVariant() == null || !item.getVariant().isActive()
-                    || item.getVariant().getProduct() == null
-                    || !item.getVariant().getProduct().isActive()) {
+                    || !item.getVariant().isProductActive()) {
                 throw new IllegalStateException("Sản phẩm '"
                         + (item.getVariant() != null ? item.getVariant().getVariantName() : "")
                         + "' hiện không còn khả dụng!");
             }
-            if (!"ACTIVE".equalsIgnoreCase(item.getVariant().getProduct().getShopStatus())) {
+            if (!"ACTIVE".equalsIgnoreCase(item.getVariant().getShopStatus())) {
                 throw new IllegalStateException("Cửa hàng của sản phẩm '"
-                        + item.getVariant().getProduct().getName() + "' hiện không hoạt động!");
+                        + item.getVariant().getProductName() + "' hiện không hoạt động!");
             }
             if (item.getQuantity() <= 0) {
                 throw new IllegalStateException("Số lượng sản phẩm thanh toán phải lớn hơn 0!");
             }
             if (item.getVariant().getStockQuantity() < item.getQuantity()) {
-                throw new IllegalStateException("Sản phẩm '" + item.getVariant().getProduct().getName() + " - "
+                throw new IllegalStateException("Sản phẩm '" + item.getVariant().getProductName() + " - "
                         + item.getVariant().getVariantName() + "' chỉ còn "
                         + item.getVariant().getStockQuantity() + " sản phẩm trong kho!");
             }
@@ -111,48 +110,48 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode) {
+    public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode) {
         return buildDraftOrder(customerId, selectedItems, couponCode, Collections.emptyMap());
     }
 
     @Override
-    public Order buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
+    public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes) {
-        Order order = new Order();
+        OrderDetailDTO order = new OrderDetailDTO();
         order.setCustomerId(customerId);
 
         Map<Long, List<CartItem>> itemsByShop = new HashMap<>();
         Map<Long, String> shopNames = new HashMap<>();
 
         for (CartItem cartItem : selectedItems) {
-            long shopId = cartItem.getVariant().getProduct().getShopId();
+            long shopId = cartItem.getVariant().getShopId();
             itemsByShop.computeIfAbsent(shopId, key -> new ArrayList<>()).add(cartItem);
-            if (cartItem.getVariant().getProduct().getShopName() != null) {
-                shopNames.put(shopId, cartItem.getVariant().getProduct().getShopName());
+            if (cartItem.getVariant().getShopName() != null) {
+                shopNames.put(shopId, cartItem.getVariant().getShopName());
             }
         }
 
         BigDecimal totalGoods = BigDecimal.ZERO;
         BigDecimal totalShipping = BigDecimal.ZERO;
         BigDecimal totalShopDiscount = BigDecimal.ZERO;
-        List<SubOrder> subOrders = new ArrayList<>();
+        List<SubOrderDTO> subOrders = new ArrayList<>();
 
         for (Map.Entry<Long, List<CartItem>> entry : itemsByShop.entrySet()) {
             long shopId = entry.getKey();
             List<CartItem> shopItems = entry.getValue();
 
-            SubOrder sub = new SubOrder();
+            SubOrderDTO sub = new SubOrderDTO();
             sub.setShopId(shopId);
             sub.setShopName(shopNames.getOrDefault(shopId, "Cửa hàng"));
             sub.setStatus("NEW");
 
             BigDecimal shopSubtotal = BigDecimal.ZERO;
-            List<OrderItem> orderItems = new ArrayList<>();
+            List<OrderItemDetailDTO> orderItems = new ArrayList<>();
 
             for (CartItem cartItem : shopItems) {
-                OrderItem orderItem = new OrderItem();
+                OrderItemDetailDTO orderItem = new OrderItemDetailDTO();
                 orderItem.setVariantId(cartItem.getVariant().getVariantId());
-                orderItem.setProductNameSnapshot(cartItem.getVariant().getProduct().getName());
+                orderItem.setProductNameSnapshot(cartItem.getVariant().getProductName());
                 orderItem.setVariantNameSnapshot(cartItem.getVariant().getVariantName());
                 orderItem.setSkuSnapshot(cartItem.getVariant().getSku());
                 orderItem.setUnit(cartItem.getVariant().getUnit() != null
@@ -315,7 +314,7 @@ public class OrderServiceImpl implements IOrderService {
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
-        Order order = prepareOrder(customerId, selectedItems, address, deliveryDate, deliverySlot,
+        OrderDetailDTO order = prepareOrder(customerId, selectedItems, address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
         return orderDAO.createOrder(order, address, cartItemIds,
                 order.getPaymentMethod(), saveAddress);
@@ -342,12 +341,12 @@ public class OrderServiceImpl implements IOrderService {
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
         CartItem item = getBuyNowItemForCheckout(variantId, quantity);
-        Order order = prepareOrder(customerId, List.of(item), address, deliveryDate, deliverySlot,
+        OrderDetailDTO order = prepareOrder(customerId, List.of(item), address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
         return orderDAO.createBuyNowOrder(order, address, order.getPaymentMethod(), saveAddress);
     }
 
-    private Order prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
+    private OrderDetailDTO prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
             String deliveryDateStr, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes) {
         if (address == null || address.getRecipientName() == null
@@ -384,7 +383,7 @@ public class OrderServiceImpl implements IOrderService {
         address.setDistrict(address.getDistrict() != null ? address.getDistrict().trim() : "");
         address.setCity(address.getCity().trim());
 
-        Order order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
+        OrderDetailDTO order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
 
         // Chuẩn hóa ngày giao
         LocalDate selectedDate;
@@ -422,7 +421,7 @@ public class OrderServiceImpl implements IOrderService {
 
         String slotLabel = slotText + " (" + formattedDate + ")";
 
-        for (SubOrder sub : order.getSubOrders()) {
+        for (SubOrderDTO sub : order.getSubOrders()) {
             String note = shopNotes != null ? shopNotes.get(sub.getShopId()) : null;
             if (note != null && !note.trim().isEmpty()) {
                 sub.setDeliverySlot(slotLabel + " • Lời nhắn: " + note.trim());
@@ -437,7 +436,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public Order getOrderDetails(long orderId) {
+    public OrderDetailDTO getOrderDetails(long orderId) {
         return orderDAO.getOrderById(orderId);
     }
 
@@ -467,7 +466,7 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     @Override
-    public List<SubOrder> getSubOrdersByCustomerId(long customerId) {
+    public List<SubOrderDTO> getSubOrdersByCustomerId(long customerId) {
         return orderDAO.getSubOrdersByCustomerId(customerId);
     }
 
