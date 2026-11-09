@@ -17,7 +17,15 @@ public class VnpayPaymentService {
 
     private static final ZoneId VNPAY_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final DateTimeFormatter VNPAY_TIME = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-    private final VnpayPaymentDAO paymentDAO = new VnpayPaymentDAO();
+    private final VnpayPaymentDAO paymentDAO;
+
+    public VnpayPaymentService() {
+        this(new VnpayPaymentDAO());
+    }
+
+    public VnpayPaymentService(VnpayPaymentDAO paymentDAO) {
+        this.paymentDAO = paymentDAO;
+    }
 
     public String createPaymentUrl(Order order, String clientIp, String returnUrl) {
         if (order == null || order.getFinalAmount() == null) {

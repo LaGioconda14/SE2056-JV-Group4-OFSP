@@ -467,7 +467,11 @@ public class PromotionDAO extends DBContext {
                 + "WHERE p.is_active = 1 AND p.terminated_at IS NULL AND p.start_date <= GETDATE() AND p.end_date >= GETDATE() "
                 + "AND (p.quota IS NULL OR p.sold_quantity < p.quota) AND p.promotion_type <> 'BUY_X_GET_Y' AND " + scheduleOk("p") + " "
                 + "AND pp.product_id IN (" + in + ") ORDER BY p.start_date";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        Connection conn = getConnection();
+        if (conn == null) {
+            return result;
+        }
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
             int i = 1;
             for (Long pid : productIds) {
                 ps.setLong(i++, pid);
