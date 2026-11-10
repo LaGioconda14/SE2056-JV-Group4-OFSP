@@ -117,7 +117,7 @@ public class InventoryAdjustServlet extends HttpServlet {
             session.setAttribute("inventoryAdjustSuccess", Boolean.FALSE);
             session.setAttribute("inventoryAdjustMessage", e.getMessage() != null ? e.getMessage() : "Đã xảy ra lỗi hệ thống.");
         }
-        response.sendRedirect(request.getContextPath() + "/shop/inventory");
+        response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
     }
 
     /**

@@ -308,18 +308,18 @@
                                                             </button>
 
                                                             <c:if test="${batch.currentQuantity > 0}">
-    <button type="button"
-            data-batch-id="${batch.batchId}"
-            data-variant-id="${batch.variantId != null ? batch.variantId : variantId}"
-            data-product-name="<c:out value='${firstBatch.productName}'/>"
-            data-sku="${firstBatch.sku}"
-            data-batch-code="${batch.batchCode}"
-            data-current-qty="${batch.currentQuantity}"
-            onclick="openDisposeModal(this)"
-            class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs" title="Hủy toàn bộ lô hàng ngay lập tức">
-        <i class="fa-solid fa-ban text-[10px]"></i> Hủy lô
-    </button>
-</c:if>
+                                                                <button type="button"
+                                                                        data-batch-id="${batch.batchId}"
+                                                                        data-variant-id="${batch.variantId != null ? batch.variantId : variantId}"
+                                                                        data-product-name="<c:out value='${firstBatch.productName}'/>"
+                                                                        data-sku="${firstBatch.sku}"
+                                                                        data-batch-code="${batch.batchCode}"
+                                                                        data-current-qty="${batch.currentQuantity}"
+                                                                        onclick="openDisposeModal(this)"
+                                                                        class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs" title="Hủy toàn bộ lô hàng ngay lập tức">
+                                                                    <i class="fa-solid fa-ban text-[10px]"></i> Hủy lô
+                                                                </button>
+                                                            </c:if>
 
                                                             <!-- 3. Nút Lịch sử -->
                                                             <c:url var="historyUrl" value="/shop/inventory/history">
@@ -608,15 +608,15 @@
 
             // Hàm mở Modal Hủy lô
             function openDisposeModal(btn) {
-    if (btn && btn.dataset) {
-        document.getElementById('disposeVariantId').value = btn.dataset.variantId || '';
-        document.getElementById('disposeBatchId').value = btn.dataset.batchId || '';
-        document.getElementById('disposeProductName').value = (btn.dataset.productName || '') + ' (' + (btn.dataset.sku || '') + ')';
-        document.getElementById('disposeBatchCode').value = btn.dataset.batchCode || '';
-        document.getElementById('disposeCurrentQty').value = (btn.dataset.currentQty || '0') + ' đơn vị';
-    }
-    openModal('modalDispose');
-}
+                if (btn && btn.dataset) {
+                    document.getElementById('disposeVariantId').value = btn.dataset.variantId || '';
+                    document.getElementById('disposeBatchId').value = btn.dataset.batchId || '';
+                    document.getElementById('disposeProductName').value = (btn.dataset.productName || '') + ' (' + (btn.dataset.sku || '') + ')';
+                    document.getElementById('disposeBatchCode').value = btn.dataset.batchCode || '';
+                    document.getElementById('disposeCurrentQty').value = (btn.dataset.currentQty || '0') + ' đơn vị';
+                }
+                openModal('modalDispose');
+            }
 
             // Kiểm tra an toàn trước khi submit hủy lô
             function validateDisposeForm() {

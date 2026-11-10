@@ -92,12 +92,12 @@ public class InventoryDisposeServlet extends HttpServlet {
             flash(session, false, "Lỗi hệ thống: " + e.getMessage());
         }
 
-        response.sendRedirect(request.getContextPath() + "/shop/inventory");
+        response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.sendRedirect(request.getContextPath() + "/shop/inventory");
+        response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
     }
 }

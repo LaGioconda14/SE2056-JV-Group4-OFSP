@@ -47,13 +47,13 @@
                     <span>Tất cả sản phẩm</span>
                 </span>
             </a>
-            <a href="${ctx}/shop/product/add" class="shop-sidebar-link ${param.active == 'add' ? 'active' : ''}">
+            <a href="${ctx}/shop/inventory" class="shop-sidebar-link ${param.active == 'add' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
                     <i class="fa-solid fa-circle-plus text-slate-400 text-sm w-4 text-center"></i>
                     <span>Thêm mới nông sản</span>
                 </span>
             </a>
-            <a href="${ctx}/shop/inventory" class="shop-sidebar-link ${param.active == 'inventory' ? 'active' : ''}">
+            <a href="${ctx}/shop/inventory/batches" class="shop-sidebar-link ${param.active == 'inventory' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
                     <i class="fa-solid fa-boxes-stacked text-slate-400 text-sm w-4 text-center"></i>
                     <span>Kho & Cảnh báo tồn</span>
