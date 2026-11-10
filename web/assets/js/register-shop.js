@@ -133,7 +133,7 @@
   function fillSummary() {
     set('sum-owner', [val('fullName'), val('phone'), val('email')].filter(Boolean).join(' · '));
     set('sum-shop', [val('shopName'), selText('businessType')].filter(function (x) { return x && x.indexOf('--') !== 0; }).join(' · '));
-    set('sum-address', [val('streetAddress'), val('ward'), val('district'), val('province')].filter(Boolean).join(', '));
+    set('sum-address', [val('streetAddress'), val('ward'), val('province')].filter(Boolean).join(', '));
     set('sum-bank', [selText('bankName'), val('bankAccountNumber'), val('bankAccountHolder')].filter(function (x) { return x && x.indexOf('--') !== 0; }).join(' · '));
   }
 
@@ -206,8 +206,8 @@
     b.addEventListener('scroll', function () { updateReadProgress(b.closest('.tm-overlay')); });
   });
 
-  /* ---------- Địa chỉ VN: Tỉnh -> Quận/Huyện -> Phường/Xã ---------- */
-  var VN_API = 'https://provinces.open-api.vn/api';
+  /* ---------- Địa chỉ VN 2 cấp: Tỉnh/Thành -> Phường/Xã ---------- */
+  var VN_API = 'https://provinces.open-api.vn/api/v2';
 
   function fetchJson(url) {
     return fetch(url).then(function (r) {
@@ -236,8 +236,8 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var prov = $('rsProvince'), dist = $('rsDistrict'), ward = $('rsWard');
-    if (!prov || !dist || !ward) return;
+    var prov = $('rsProvince'), ward = $('rsWard');
+    if (!prov || !ward) return;
 
     fetchJson(VN_API + '/p/').then(function (list) {
       list.sort(function (a, b) { return a.name.localeCompare(b.name, 'vi'); });
@@ -248,20 +248,9 @@
 
     prov.addEventListener('change', function () {
       var code = codeOf(prov);
-      resetSelect(ward, 'Chọn Quận / Huyện trước');
-      resetSelect(dist, 'Đang tải Quận / Huyện...');
-      if (!code) return;
-      fetchJson(VN_API + '/p/' + code + '?depth=2').then(function (d) {
-        var list = (d.districts || []).map(function (x) { return { name: x.name, code: x.code }; });
-        fillSelect(dist, list, '-- Chọn Quận / Huyện --');
-      }).catch(function () { resetSelect(dist, 'Không tải được Quận / Huyện'); });
-    });
-
-    dist.addEventListener('change', function () {
-      var code = codeOf(dist);
       resetSelect(ward, 'Đang tải Phường / Xã...');
       if (!code) return;
-      fetchJson(VN_API + '/d/' + code + '?depth=2').then(function (d) {
+      fetchJson(VN_API + '/p/' + code + '?depth=2').then(function (d) {
         var list = (d.wards || []).map(function (x) { return { name: x.name, code: x.code }; });
         fillSelect(ward, list, '-- Chọn Phường / Xã --');
       }).catch(function () { resetSelect(ward, 'Không tải được Phường / Xã'); });

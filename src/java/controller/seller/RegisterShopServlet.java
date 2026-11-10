@@ -113,7 +113,6 @@ public class RegisterShopServlet extends HttpServlet {
             String taxCode = request.getParameter("taxCode");
 
             String province = request.getParameter("province");
-            String district = request.getParameter("district");
             String ward = request.getParameter("ward");
             String streetAddress = request.getParameter("streetAddress");
             String pickupAddress = request.getParameter("pickupAddress");
@@ -138,7 +137,7 @@ public class RegisterShopServlet extends HttpServlet {
             shopReq.setIdCardNumber(idCardNumber);
             shopReq.setTaxCode(taxCode);
             shopReq.setProvince(province);
-            shopReq.setDistrict(district);
+            shopReq.setDistrict("");
             shopReq.setWard(ward);
             shopReq.setStreetAddress(streetAddress);
             shopReq.setPickupAddress(pickupAddress);

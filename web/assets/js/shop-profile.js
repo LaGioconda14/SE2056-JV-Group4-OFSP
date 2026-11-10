@@ -222,7 +222,7 @@ class Combo {
 }
 
 /* ---------- ĐỊA CHỈ VIỆT NAM (provinces.open-api.vn) ---------- */
-const VN_API = 'https://provinces.open-api.vn/api';
+const VN_API = 'https://provinces.open-api.vn/api/v2';
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -232,43 +232,28 @@ async function fetchJson(url) {
 
 function initAddress() {
   const ward = new Combo('comboWard');
-  const district = new Combo('comboDistrict', async item => {
-    ward.clear();
-    await loadWards(item.code);
-  });
   const province = new Combo('comboProvince', async item => {
-    district.clear();
     ward.clear();
     ward.setItems([]);
-    await loadDistricts(item.code);
+    await loadWards(item.code);
   });
 
-  async function loadDistricts(provinceCode) {
+  async function loadWards(provinceCode) {
     try {
       const data = await fetchJson(VN_API + '/p/' + provinceCode + '?depth=2');
-      district.setItems((data.districts || []).map(d => ({ name: d.name, code: d.code })));
-    } catch (e) { district.setItems([]); }
-  }
-  async function loadWards(districtCode) {
-    try {
-      const data = await fetchJson(VN_API + '/d/' + districtCode + '?depth=2');
       ward.setItems((data.wards || []).map(w => ({ name: w.name, code: w.code })));
     } catch (e) { ward.setItems([]); }
   }
 
-  // Tải tỉnh/thành, rồi khôi phục huyện/xã theo dữ liệu đã lưu
+  // Tải tỉnh/thành, rồi khôi phục phường/xã theo dữ liệu đã lưu
   (async () => {
     try {
       const provinces = await fetchJson(VN_API + '/p/');
       province.setItems(provinces.map(p => ({ name: p.name, code: p.code })));
       const p = province.matchCurrent();
       if (p) {
-        await loadDistricts(p.code);
-        const d = district.matchCurrent();
-        if (d) {
-          await loadWards(d.code);
-          ward.matchCurrent();
-        }
+        await loadWards(p.code);
+        ward.matchCurrent();
       }
     } catch (e) {
       console.warn('Không tải được danh sách địa chỉ VN', e);
