@@ -2,10 +2,13 @@ package dao;
 
 import com.google.gson.Gson;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,6 +28,136 @@ public class AdminDashboardDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(AdminDashboardDAO.class.getName());
     private static final Gson GSON = new Gson();
+
+    private static Timestamp atStart(LocalDate date) {
+        return Timestamp.valueOf(date.atStartOfDay());
+    }
+
+    public LocalDate getFirstOrderDate() {
+        String sql = "SELECT MIN(created_at) FROM orders";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next() && rs.getTimestamp(1) != null) return rs.getTimestamp(1).toLocalDateTime().toLocalDate();
+        } catch (SQLException ex) { LOGGER.log(Level.WARNING, "Failed to load first order date", ex); }
+        return null;
+    }
+
+    public List<Map<String, Object>> getAvailableShops() {
+        List<Map<String, Object>> shops = new ArrayList<>();
+        String sql = "SELECT shop_id,shop_name,status FROM shops ORDER BY CASE WHEN status='ACTIVE' THEN 0 ELSE 1 END,shop_name";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String,Object> shop = new HashMap<>();
+                shop.put("shopId", rs.getLong("shop_id")); shop.put("shopName", rs.getString("shop_name"));
+                shop.put("status", rs.getString("status")); shops.add(shop);
+            }
+        } catch (SQLException ex) { LOGGER.log(Level.WARNING, "Failed to load shops", ex); }
+        return shops;
+    }
+
+    public Map<String,Object> getShop(long shopId) {
+        String sql = "SELECT shop_id,shop_name,status,logo_url FROM shops WHERE shop_id=?";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, shopId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Map<String,Object> shop = new HashMap<>();
+                    shop.put("shopId", rs.getLong("shop_id")); shop.put("shopName", rs.getString("shop_name"));
+                    shop.put("status", rs.getString("status")); shop.put("logoUrl", rs.getString("logo_url")); return shop;
+                }
+            }
+        } catch (SQLException ex) { LOGGER.log(Level.WARNING, "Failed to load shop", ex); }
+        return null;
+    }
+
+    public AdminDashboardStats getDashboardStats(LocalDate from, LocalDate to, boolean compare) {
+        AdminDashboardStats stats = new AdminDashboardStats();
+        Connection conn = getConnection();
+        if (conn == null) {
+            initFallbackStats(stats); stats.setDataAvailable(false); stats.setErrorMessage("Không thể kết nối cơ sở dữ liệu."); return stats;
+        }
+        try (conn) {
+            loadPeriodKpis(conn, stats, from, to);
+            loadCurrentOperations(conn, stats);
+            if (compare) {
+                long days = java.time.temporal.ChronoUnit.DAYS.between(from, to);
+                AdminDashboardStats previous = new AdminDashboardStats();
+                loadPeriodKpis(conn, previous, from.minusDays(days), from);
+                stats.setGmvGrowth(percent(stats.getTotalGmv(), previous.getTotalGmv()));
+                stats.setCommissionGrowth(percent(stats.getNetCommission(), previous.getNetCommission()));
+                stats.setOrderGrowth(percent(stats.getTotalOrdersCount(), previous.getTotalOrdersCount()));
+                stats.setUserGrowth(percent(stats.getTotalUsersCount(), countBefore(conn, "users", from, null)));
+                stats.setShopGrowth(percent(stats.getActiveShopsCount(), countBefore(conn, "shops", from, "status='ACTIVE'")));
+            }
+            loadPlatformTrend(conn, stats, from, to, java.time.temporal.ChronoUnit.DAYS.between(from, to) > 120);
+            loadPlatformStatuses(conn, stats, from, to);
+            loadTopProductsByPeriod(conn, stats, from, to);
+            loadPendingShops(conn, stats);
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, "Failed period dashboard", ex); stats.setDataAvailable(false);
+            stats.setErrorMessage("Không thể tải đầy đủ số liệu dashboard.");
+        }
+        return stats;
+    }
+
+    private void loadPeriodKpis(Connection conn, AdminDashboardStats stats, LocalDate from, LocalDate to) throws SQLException {
+        String sql = "SELECT "
+                + "(SELECT COALESCE(SUM(shop_total),0) FROM sub_orders WHERE status='DELIVERED' AND created_at>=? AND created_at<?) gmv,"
+                + "(SELECT COALESCE(SUM(commission_amount),0) FROM sub_orders WHERE status='DELIVERED' AND created_at>=? AND created_at<?) commission,"
+                + "(SELECT COUNT(*) FROM orders WHERE created_at>=? AND created_at<?) orders_count,"
+                + "(SELECT COUNT(*) FROM users WHERE created_at<?) users_count,"
+                + "(SELECT COUNT(*) FROM shops WHERE status='ACTIVE' AND created_at<?) shops_count";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            int i=1; ps.setTimestamp(i++,atStart(from)); ps.setTimestamp(i++,atStart(to));
+            ps.setTimestamp(i++,atStart(from)); ps.setTimestamp(i++,atStart(to));
+            ps.setTimestamp(i++,atStart(from)); ps.setTimestamp(i++,atStart(to));
+            ps.setTimestamp(i++,atStart(to)); ps.setTimestamp(i,atStart(to));
+            try (ResultSet rs=ps.executeQuery()) { if(rs.next()) {
+                stats.setTotalGmv(rs.getDouble("gmv")); stats.setNetCommission(rs.getDouble("commission"));
+                stats.setTotalOrdersCount(rs.getInt("orders_count")); stats.setTotalUsersCount(rs.getInt("users_count"));
+                stats.setActiveUsersCount(rs.getInt("users_count")); stats.setActiveShopsCount(rs.getInt("shops_count"));
+            }}
+        }
+    }
+
+    private void loadCurrentOperations(Connection conn, AdminDashboardStats stats) throws SQLException {
+        String sql="SELECT (SELECT COUNT(*) FROM shop_requests WHERE status='PENDING') pending_shops,"
+                + "(SELECT COUNT(*) FROM products WHERE is_active=0) pending_products,"
+                + "(SELECT COUNT(*) FROM disputes WHERE status IN ('OPEN','MEDIATING')) disputes,"
+                + "(SELECT COUNT(*) FROM orders WHERE order_status IN ('PENDING','CONFIRMED','PROCESSING','SHIPPING')) processing_orders";
+        try(PreparedStatement ps=conn.prepareStatement(sql);ResultSet rs=ps.executeQuery()){if(rs.next()){
+            stats.setPendingKycCount(rs.getInt("pending_shops"));stats.setFlaggedProductsCount(rs.getInt("pending_products"));
+            stats.setOpenDisputesCount(rs.getInt("disputes"));stats.setProcessingOrdersCount(rs.getInt("processing_orders"));}}
+    }
+
+    private int countBefore(Connection conn,String table,LocalDate date,String extra)throws SQLException{
+        String sql="SELECT COUNT(*) FROM "+table+" WHERE created_at<?"+(extra==null?"":" AND "+extra);
+        try(PreparedStatement ps=conn.prepareStatement(sql)){ps.setTimestamp(1,atStart(date));try(ResultSet rs=ps.executeQuery()){return rs.next()?rs.getInt(1):0;}}
+    }
+    private double percent(double current,double previous){return previous<=0?(current>0?100:0):Math.round((current-previous)*1000/previous)/10.0;}
+
+    private void loadPlatformTrend(Connection conn,AdminDashboardStats stats,LocalDate from,LocalDate to,boolean monthly)throws SQLException{
+        String key=monthly?"CONVERT(VARCHAR(7),created_at,120)":"CONVERT(VARCHAR(10),created_at,120)";
+        String sql="SELECT "+key+" k,COALESCE(SUM(shop_total),0) gmv,COALESCE(SUM(commission_amount),0) commission FROM sub_orders WHERE status='DELIVERED' AND created_at>=? AND created_at<? GROUP BY "+key;
+        Map<String,double[]> rows=new HashMap<>();try(PreparedStatement ps=conn.prepareStatement(sql)){ps.setTimestamp(1,atStart(from));ps.setTimestamp(2,atStart(to));try(ResultSet rs=ps.executeQuery()){while(rs.next())rows.put(rs.getString("k"),new double[]{rs.getDouble("gmv"),rs.getDouble("commission")});}}
+        List<String> labels=new ArrayList<>();List<Double> gmv=new ArrayList<>();List<Double> comm=new ArrayList<>();LocalDate last=to.minusDays(1);
+        if(monthly){for(YearMonth m=YearMonth.from(from),end=YearMonth.from(last);!m.isAfter(end);m=m.plusMonths(1)){String k=String.format("%04d-%02d",m.getYear(),m.getMonthValue());double[]v=rows.getOrDefault(k,new double[]{0,0});labels.add(String.format("%02d/%04d",m.getMonthValue(),m.getYear()));gmv.add(v[0]);comm.add(v[1]);}}
+        else{for(LocalDate d=from;!d.isAfter(last);d=d.plusDays(1)){double[]v=rows.getOrDefault(d.toString(),new double[]{0,0});labels.add(String.format("%02d/%02d",d.getDayOfMonth(),d.getMonthValue()));gmv.add(v[0]);comm.add(v[1]);}}
+        stats.setChartLabelsJson(GSON.toJson(labels));stats.setChartGmvJson(GSON.toJson(gmv));stats.setChartCommissionJson(GSON.toJson(comm));
+    }
+
+    private void loadPlatformStatuses(Connection conn,AdminDashboardStats stats,LocalDate from,LocalDate to)throws SQLException{
+        Map<String,Integer> counts=new HashMap<>();String sql="SELECT order_status,COUNT(*) c FROM orders WHERE created_at>=? AND created_at<? GROUP BY order_status";
+        try(PreparedStatement ps=conn.prepareStatement(sql)){ps.setTimestamp(1,atStart(from));ps.setTimestamp(2,atStart(to));try(ResultSet rs=ps.executeQuery()){while(rs.next())counts.put(rs.getString(1),rs.getInt(2));}}
+        String[][]defs={{"PENDING","Chờ xác nhận"},{"CONFIRMED","Đã xác nhận"},{"PROCESSING","Đang xử lý"},{"SHIPPING","Đang giao"},{"COMPLETED","Hoàn thành"},{"CANCELLED","Đã hủy"}};List<String>labels=new ArrayList<>();List<Integer>values=new ArrayList<>();
+        for(String[]d:defs){int c=counts.getOrDefault(d[0],0);if(c>0){labels.add(d[1]);values.add(c);}}stats.setStatusLabelsJson(GSON.toJson(labels));stats.setStatusDataJson(GSON.toJson(values));
+    }
+
+    private void loadTopProductsByPeriod(Connection conn,AdminDashboardStats stats,LocalDate from,LocalDate to)throws SQLException{
+        String sql="SELECT TOP 5 oi.product_name_snapshot product_name,s.shop_name,SUM(oi.quantity) total_sold,SUM(oi.total_price) revenue,MAX(oi.unit) unit FROM order_items oi JOIN sub_orders so ON so.sub_order_id=oi.sub_order_id JOIN shops s ON s.shop_id=so.shop_id WHERE so.status='DELIVERED' AND so.created_at>=? AND so.created_at<? GROUP BY oi.product_name_snapshot,s.shop_name ORDER BY revenue DESC,total_sold DESC";
+        List<Map<String,Object>>list=new ArrayList<>();DecimalFormat money=new DecimalFormat("#,### ₫");try(PreparedStatement ps=conn.prepareStatement(sql)){ps.setTimestamp(1,atStart(from));ps.setTimestamp(2,atStart(to));try(ResultSet rs=ps.executeQuery()){while(rs.next()){Map<String,Object>r=new HashMap<>();r.put("productName",rs.getString("product_name"));r.put("shopName",rs.getString("shop_name"));r.put("soldFormatted",rs.getInt("total_sold")+" "+rs.getString("unit"));r.put("revenueFormatted",money.format(rs.getDouble("revenue")));list.add(r);}}}stats.setTopProducts(list);
+    }
 
     /**
      * Fetch complete real-time dashboard statistics from SQL Server.

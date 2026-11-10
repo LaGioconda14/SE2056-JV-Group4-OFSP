@@ -274,28 +274,39 @@
                                             </div>
                                             <div class="text-[11px] text-gray-400 mt-0.5">Được đồng kiểm khi nhận hàng</div>
                                         </div>
-                                        <strong class="text-sm font-bold text-gray-900">0₫</strong>
+                                        <div class="text-right shrink-0">
+                                            <div class="text-[10px] text-gray-400">Phí vận chuyển</div>
+                                            <strong class="text-sm font-bold text-gray-900">
+                                                <fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopShippingFee : 0}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                            </strong>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- Shop Subtotal (Giống Shopee) -->
-                                <div class="px-6 py-3.5 border-t border-gray-100 bg-white flex justify-end items-center gap-3 text-sm">
-                                    <span class="text-gray-500">Tổng số tiền (${shopItems.size()} sản phẩm):</span>
-                                    <c:choose>
-                                        <c:when test="${not empty currentSubOrder and currentSubOrder.shopDiscount gt 0}">
-                                            <span class="text-xs text-gray-400 line-through">
-                                                <fmt:formatNumber value="${shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
-                                            </span>
-                                            <strong class="text-base text-[#00652c] font-extrabold">
-                                                <fmt:formatNumber value="${currentSubOrder.shopTotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                <!-- Shop Cost Breakdown -->
+                                <div class="px-6 py-4 border-t border-gray-100 bg-white flex justify-end">
+                                    <div class="w-full sm:w-80 space-y-1.5 text-xs">
+                                        <div class="flex justify-between gap-4 text-gray-500">
+                                            <span>Tiền hàng (${shopItems.size()} sản phẩm)</span>
+                                            <strong class="text-gray-800"><fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopSubtotal : shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
+                                        </div>
+                                        <div class="flex justify-between gap-4 text-gray-500">
+                                            <span>Phí vận chuyển</span>
+                                            <strong class="text-gray-800"><fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopShippingFee : 0}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
+                                        </div>
+                                        <c:if test="${not empty currentSubOrder and currentSubOrder.shopDiscount gt 0}">
+                                            <div class="flex justify-between gap-4 text-amber-700">
+                                                <span>Voucher của Shop</span>
+                                                <strong>-<fmt:formatNumber value="${currentSubOrder.shopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
+                                            </div>
+                                        </c:if>
+                                        <div class="flex justify-between items-baseline gap-4 pt-2 mt-2 border-t border-dashed border-gray-200">
+                                            <span class="text-sm font-bold text-gray-800">Tạm tính Shop</span>
+                                            <strong class="text-lg text-[#00652c] font-extrabold">
+                                                <fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopTotal : shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
                                             </strong>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <strong class="text-base text-[#00652c] font-extrabold">
-                                                <fmt:formatNumber value="${shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
-                                            </strong>
-                                        </c:otherwise>
-                                    </c:choose>
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
                         </c:forEach>
@@ -397,6 +408,12 @@
                             <span>Tổng tiền phí vận chuyển:</span>
                             <span class="font-semibold text-gray-900"><fmt:formatNumber value="${draftOrder.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
                         </div>
+                        <c:forEach var="sub" items="${draftOrder.subOrders}">
+                            <div class="flex justify-between w-full sm:w-96 text-xs text-blue-700 pl-3">
+                                <span class="truncate pr-2">• Phí giao từ <c:out value="${sub.shopName}"/>:</span>
+                                <span class="font-semibold shrink-0"><fmt:formatNumber value="${sub.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                            </div>
+                        </c:forEach>
 
                         <!-- 3. Tổng cộng giảm giá từ voucher -->
                         <c:set var="totalVoucherDiscount" value="${0}"/>

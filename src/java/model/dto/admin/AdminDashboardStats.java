@@ -31,6 +31,8 @@ public class AdminDashboardStats implements Serializable {
     private double gmvGrowth;
     private double commissionGrowth;
     private double orderGrowth;
+    private double userGrowth;
+    private double shopGrowth;
     private double orderCompletionRate;
     private double activeUserRate;
     private double certifiedProductRate;
@@ -50,6 +52,10 @@ public class AdminDashboardStats implements Serializable {
     private String chartCommissionJson;
     private String categoryLabelsJson;
     private String categoryDataJson;
+    private String statusLabelsJson;
+    private String statusDataJson;
+    private boolean dataAvailable = true;
+    private String errorMessage;
 
     // Category detail breakdown
     private List<Map<String, Object>> categoryStats = new ArrayList<>();
@@ -261,6 +267,15 @@ public class AdminDashboardStats implements Serializable {
         return categoryDataJson != null ? categoryDataJson : "[]";
     }
 
+    public String getStatusLabelsJson() { return statusLabelsJson != null ? statusLabelsJson : "[]"; }
+    public void setStatusLabelsJson(String value) { this.statusLabelsJson = value; }
+    public String getStatusDataJson() { return statusDataJson != null ? statusDataJson : "[]"; }
+    public void setStatusDataJson(String value) { this.statusDataJson = value; }
+    public boolean isDataAvailable() { return dataAvailable; }
+    public void setDataAvailable(boolean value) { this.dataAvailable = value; }
+    public String getErrorMessage() { return errorMessage; }
+    public void setErrorMessage(String value) { this.errorMessage = value; }
+
     public void setCategoryDataJson(String categoryDataJson) {
         this.categoryDataJson = categoryDataJson;
     }
@@ -324,6 +339,11 @@ public class AdminDashboardStats implements Serializable {
     public String getOrderGrowthFormatted() {
         return (orderGrowth >= 0 ? "+" : "") + String.format("%.1f%%", orderGrowth);
     }
+
+    public double getUserGrowth() { return userGrowth; }
+    public void setUserGrowth(double value) { this.userGrowth = value; }
+    public double getShopGrowth() { return shopGrowth; }
+    public void setShopGrowth(double value) { this.shopGrowth = value; }
 
     public double getOrderCompletionRate() {
         return orderCompletionRate;

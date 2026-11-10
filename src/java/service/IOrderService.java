@@ -21,6 +21,9 @@ public interface IOrderService {
     OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes);
 
+    OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
+            Map<Long, String> shopCouponCodes, String customerProvince);
+
     long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
             boolean saveAddress) throws Exception;

@@ -11,19 +11,6 @@
     </div>
 
     <div class="d-flex align-items-center gap-2">
-        <!-- Date Filter Dropdown -->
-        <button class="btn-date-range" type="button">
-            <i class="bi bi-calendar3"></i>
-            <span data-i18n="btn_date_filter">Last 30 Days</span>
-            <i class="bi bi-chevron-down ms-1" style="font-size: 0.65rem;"></i>
-        </button>
-
-        <!-- Export Report Button -->
-        <button class="btn-export-report" type="button" onclick="alert('Đang tạo báo cáo tài chính & vận hành sàn...');">
-            <i class="bi bi-download"></i>
-            <span data-i18n="btn_export_report">Export Report</span>
-        </button>
-
         <!-- Language Switcher Dropdown -->
         <div class="dropdown lang-dropdown ms-1">
             <button class="btn-lang-switcher dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="currentLangBtn" title="Chuyển đổi ngôn ngữ / Change language">

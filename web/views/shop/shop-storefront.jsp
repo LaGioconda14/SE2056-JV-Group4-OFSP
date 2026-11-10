@@ -307,7 +307,9 @@
                                 <img src="${rev.customerAvatar}" alt="Customer" class="w-10 h-10 rounded-full object-cover border border-gray-200">
                                 <div>
                                     <h4 class="font-extrabold text-sm text-gray-900 leading-tight">${rev.customerName}</h4>
-                                    <span class="text-[11px] text-gray-400 font-medium">Đã mua hàng &bull; ${rev.timeAgo}</span>
+                                    <span class="text-[11px] text-gray-400 font-medium">
+                                        Đã mua hàng &bull; <fmt:formatDate value="${rev.createdAt}" pattern="dd/MM/yyyy"/>
+                                    </span>
                                 </div>
                             </div>
                             <div class="flex text-amber-400 text-[11px] gap-0.5">

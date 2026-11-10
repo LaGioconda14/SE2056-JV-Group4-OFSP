@@ -93,7 +93,31 @@
                         </section>
                         <section class="panel compact-panel">
                             <div class="panel-heading"><span class="panel-icon material-symbols-outlined">receipt_long</span><div><p class="section-kicker">Thanh toán</p><h2>Tổng đơn hàng</h2></div></div>
-                            <div class="totals confirmation-totals"><div><span>Tiền hàng</span><strong><fmt:formatNumber value="${order.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div><div><span>Phí giao hàng</span><strong><fmt:formatNumber value="${order.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div><c:if test="${order.platformDiscount gt 0}"><div class="discount"><span>Giảm giá</span><strong>-<fmt:formatNumber value="${order.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div></c:if><div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${order.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div></div>
+                            <c:set var="totalVoucherDiscount" value="${order.platformDiscount}"/>
+                            <c:forEach var="sub" items="${order.subOrders}">
+                                <c:set var="totalVoucherDiscount" value="${totalVoucherDiscount + sub.shopDiscount}"/>
+                            </c:forEach>
+                            <div class="totals confirmation-totals">
+                                <div><span>Tổng tiền hàng</span><strong><fmt:formatNumber value="${order.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <c:forEach var="sub" items="${order.subOrders}">
+                                    <div class="total-detail"><span>• <c:out value="${sub.shopName}"/></span><strong><fmt:formatNumber value="${sub.shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                </c:forEach>
+                                <div><span>Tổng phí vận chuyển</span><strong><fmt:formatNumber value="${order.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <c:forEach var="sub" items="${order.subOrders}">
+                                    <div class="total-detail"><span>• <c:out value="${sub.shopName}"/></span><strong><fmt:formatNumber value="${sub.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                </c:forEach>
+                                <div class="discount"><span>Tổng giảm giá voucher</span><strong><c:if test="${totalVoucherDiscount gt 0}">-</c:if><fmt:formatNumber value="${totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <c:forEach var="sub" items="${order.subOrders}">
+                                    <c:if test="${sub.shopDiscount gt 0}">
+                                        <div class="total-detail discount"><span>• Voucher <c:out value="${sub.shopName}"/></span><strong>-<fmt:formatNumber value="${sub.shopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                    </c:if>
+                                </c:forEach>
+                                <c:if test="${order.platformDiscount gt 0}">
+                                    <div class="total-detail discount platform-discount"><span>• Voucher sàn Gốc Vườn</span><strong>-<fmt:formatNumber value="${order.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                </c:if>
+                                <div class="payment-method-row"><span>Phương thức thanh toán</span><strong><c:choose><c:when test="${order.paymentMethod eq 'VNPAY'}">VNPAY</c:when><c:when test="${order.paymentMethod eq 'COD'}">Thanh toán khi nhận hàng</c:when><c:when test="${order.paymentMethod eq 'CARD'}">Thẻ ngân hàng</c:when><c:otherwise><c:out value="${order.paymentMethod}"/></c:otherwise></c:choose></strong></div>
+                                <div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${order.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                            </div>
                             <div class="payment-state">
                                 <span class="material-symbols-outlined"><c:choose><c:when test="${order.paymentStatus eq 'PAID'}">check_circle</c:when><c:when test="${order.paymentStatus eq 'FAILED'}">cancel</c:when><c:when test="${order.paymentStatus eq 'REFUNDED'}">currency_exchange</c:when><c:otherwise>schedule</c:otherwise></c:choose></span>
                                 <span>

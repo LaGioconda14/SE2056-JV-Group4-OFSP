@@ -5,7 +5,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import model.entity.review.Review;
 import model.entity.shop.Shop;
 import util.DBContext;
@@ -72,6 +75,30 @@ public class ShopDAO extends DBContext {
         }
 
         return null;
+    }
+
+    public Map<Long, String> getShopProvinces(Collection<Long> shopIds) {
+        Map<Long, String> provinces = new HashMap<>();
+        if (shopIds == null || shopIds.isEmpty()) {
+            return provinces;
+        }
+
+        String placeholders = String.join(",", java.util.Collections.nCopies(shopIds.size(), "?"));
+        String sql = "SELECT shop_id, province FROM shops WHERE shop_id IN (" + placeholders + ")";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            int index = 1;
+            for (Long shopId : shopIds) {
+                ps.setLong(index++, shopId);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    provinces.put(rs.getLong("shop_id"), rs.getString("province"));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return provinces;
     }
 
     /**

@@ -2,6 +2,7 @@ package service.impl;
 
 import dao.CouponDAO;
 import dao.OrderDAO;
+import dao.ShopDAO;
 import model.dto.order.OrderDetailDTO;
 import model.dto.order.SubOrderDTO;
 import model.dto.product.ProductVariantDetailDTO;
@@ -40,11 +41,14 @@ class OrderServiceImplTest {
     @Mock
     private CouponDAO couponDAO;
 
+    @Mock
+    private ShopDAO shopDAO;
+
     private OrderServiceImpl orderService;
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderServiceImpl(orderDAO, couponDAO);
+        orderService = new OrderServiceImpl(orderDAO, couponDAO, shopDAO);
     }
 
     private CartItem createMockCartItem(long cartItemId, long shopId, String shopName,
@@ -239,6 +243,41 @@ class OrderServiceImplTest {
     @Nested
     @DisplayName("buildDraftOrder & Coupon Calculation Tests")
     class BuildDraftOrderTests {
+
+        @Test
+        @DisplayName("Shipping fee should be 14k for same province and 30k otherwise")
+        void testBuildDraftOrder_ShippingFeeByProvince() {
+            CartItem sameProvince = createMockCartItem(1L, 10L, "Shop Alpha", "ACTIVE", true, true, 10, 1, BigDecimal.valueOf(100000));
+            CartItem otherProvince = createMockCartItem(2L, 20L, "Shop Beta", "ACTIVE", true, true, 10, 1, BigDecimal.valueOf(200000));
+            when(shopDAO.getShopProvinces(anyCollection())).thenReturn(Map.of(
+                    10L, "Thành phố Hồ Chí Minh",
+                    20L, "Lâm Đồng"));
+
+            OrderDetailDTO order = orderService.buildDraftOrder(1L,
+                    List.of(sameProvince, otherProvince), null, Collections.emptyMap(), "TP. Ho Chi Minh");
+
+            Map<Long, BigDecimal> fees = new HashMap<>();
+            for (SubOrderDTO subOrder : order.getSubOrders()) {
+                fees.put(subOrder.getShopId(), subOrder.getShopShippingFee());
+            }
+            assertEquals(0, new BigDecimal("14000").compareTo(fees.get(10L)));
+            assertEquals(0, new BigDecimal("30000").compareTo(fees.get(20L)));
+            assertEquals(0, new BigDecimal("44000").compareTo(order.getTotalShippingFee()));
+            assertEquals(0, new BigDecimal("344000").compareTo(order.getFinalAmount()));
+        }
+
+        @Test
+        @DisplayName("Missing shop province should use the 30k inter-province fee")
+        void testBuildDraftOrder_MissingShopProvinceUsesFallbackFee() {
+            CartItem item = createMockCartItem(1L, 10L, "Shop Alpha", "ACTIVE", true, true, 10, 1, BigDecimal.valueOf(100000));
+            when(shopDAO.getShopProvinces(anyCollection())).thenReturn(Collections.emptyMap());
+
+            OrderDetailDTO order = orderService.buildDraftOrder(1L, List.of(item), null,
+                    Collections.emptyMap(), "Hà Nội");
+
+            assertEquals(0, new BigDecimal("30000").compareTo(order.getTotalShippingFee()));
+            assertEquals(0, new BigDecimal("130000").compareTo(order.getFinalAmount()));
+        }
 
         @Test
         @DisplayName("Multi-shop items should be grouped into separate SubOrders")
