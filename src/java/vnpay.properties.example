@@ -2,7 +2,7 @@
 vnpay.tmn_code=YOUR_TERMINAL_ID
 vnpay.hash_secret=YOUR_HASH_SECRET
 vnpay.payment_url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-vnpay.return_url=http://localhost:8081/SE2056-JV-Group4-OFSP/payment/vnpay/return
+vnpay.return_url=http://localhost:8080/SE2056-JV-Group4-OFSP/payment/vnpay/return
 vnpay.version=2.1.0
 vnpay.command=pay
 vnpay.locale=vn

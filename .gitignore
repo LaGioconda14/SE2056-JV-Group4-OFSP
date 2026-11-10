@@ -38,4 +38,5 @@ src/java/oauth.properties
 
 *vnpay.properties
 !*vnpay.properties.example
+!src/java/vnpay.properties
 .vscode/
