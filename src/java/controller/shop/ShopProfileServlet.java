@@ -80,7 +80,6 @@ public class ShopProfileServlet extends HttpServlet {
         String idCardNumber = request.getParameter("idCardNumber");
         String taxCode = request.getParameter("taxCode");
         String province = request.getParameter("province");
-        String district = request.getParameter("district");
         String ward = request.getParameter("ward");
         String streetAddress = request.getParameter("streetAddress");
         String pickupAddress = request.getParameter("pickupAddress");
@@ -115,7 +114,8 @@ public class ShopProfileServlet extends HttpServlet {
         shop.setIdCardNumber(idCardNumber);
         shop.setTaxCode(taxCode);
         shop.setProvince(province);
-        shop.setDistrict(district);
+        // Địa chỉ hành chính hiện dùng 2 cấp; xóa dữ liệu quận/huyện cũ khi lưu.
+        shop.setDistrict("");
         shop.setWard(ward);
         shop.setStreetAddress(streetAddress);
         shop.setPickupAddress(pickupAddress);

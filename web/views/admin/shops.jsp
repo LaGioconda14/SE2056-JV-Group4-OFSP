@@ -251,7 +251,7 @@
                                         <div>
                                             <strong class="text-dark fs-6" style="font-size: 0.85rem !important;"><c:out value="${s.shopName}"/></strong>
                                             <div class="text-muted" style="font-size: 0.7rem;">CCCD: ${s.idCardNumber} • MST: ${not empty s.taxCode ? s.taxCode : 'Không có'}</div>
-                                            <div class="text-muted" style="font-size: 0.68rem;"><i class="bi bi-geo-alt"></i> ${s.streetAddress}, ${s.ward}, ${s.district}, ${s.province}</div>
+                                            <div class="text-muted" style="font-size: 0.68rem;"><i class="bi bi-geo-alt"></i> ${s.streetAddress}, ${s.ward}, ${s.province}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -554,7 +554,7 @@
         var sv = STATUS_VIEW[s.status] || ['st-closed', 'bi-dot', s.status];
         var banner = imgUrl(s.shopBannerUrl);
         var logo = imgUrl(s.shopLogoUrl);
-        var address = [s.streetAddress, s.ward, s.district, s.province].filter(Boolean).join(', ');
+        var address = [s.streetAddress, s.ward, s.province].filter(Boolean).join(', ');
 
         var h = '';
         // --- Banner + logo (kiểu trang profile) ---
@@ -584,7 +584,7 @@
 
         // --- Địa chỉ ---
         h += '<div class="dt-section"><div class="dt-title"><i class="bi bi-geo-alt"></i> Địa chỉ &amp; kho hàng</div><div class="dt-grid">' +
-             field('Tỉnh / Thành phố', val(s.province)) + field('Quận / Huyện', val(s.district)) +
+             field('Tỉnh / Thành phố', val(s.province)) +
              field('Phường / Xã', val(s.ward)) + field('Địa chỉ chi tiết', val(s.streetAddress)) +
              field('Địa chỉ lấy hàng', val(s.pickupAddress)) + field('Địa chỉ hoàn trả', val(s.returnAddress)) + '</div></div>';
 

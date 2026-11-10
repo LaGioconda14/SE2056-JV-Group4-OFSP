@@ -192,19 +192,11 @@
                 <div class="tab-content hidden flex-col gap-6 mt-6" id="tab-fulfillment">
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-5">
                         <h2 class="text-lg font-bold text-slate-900 border-b pb-3">Địa Chỉ &amp; Kho Hàng</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tỉnh / Thành phố</label>
                                 <div class="combo" id="comboProvince">
                                     <input class="combo-input" type="text" name="province" autocomplete="off" placeholder="Chọn hoặc gõ để tìm tỉnh / thành phố" value="<c:out value='${shop.province}'/>"/>
-                                    <i class="fa-solid fa-chevron-down combo-arrow"></i>
-                                    <div class="combo-list hidden"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Quận / Huyện</label>
-                                <div class="combo" id="comboDistrict">
-                                    <input class="combo-input" type="text" name="district" autocomplete="off" placeholder="Chọn hoặc gõ để tìm quận / huyện" value="<c:out value='${shop.district}'/>"/>
                                     <i class="fa-solid fa-chevron-down combo-arrow"></i>
                                     <div class="combo-list hidden"></div>
                                 </div>

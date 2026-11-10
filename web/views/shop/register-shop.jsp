@@ -201,7 +201,7 @@
                 <!-- BƯỚC 3: ĐỊA CHỈ -->
                 <div class="rs-step-panel" id="step-3">
                     <div class="rs-section-title"><span class="rs-section-num">3</span><span>Address Information (Thông Tin Địa Chỉ)</span></div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="rs-label">Province/City – Tỉnh / Thành phố <span class="text-red-500">*</span></label>
                             <select name="province" id="rsProvince" class="rs-input" required>
@@ -210,16 +210,9 @@
                             <p class="rs-feedback">Vui lòng chọn Tỉnh / Thành phố.</p>
                         </div>
                         <div>
-                            <label class="rs-label">District – Quận / Huyện <span class="text-red-500">*</span></label>
-                            <select name="district" id="rsDistrict" class="rs-input" required disabled>
-                                <option value="" selected disabled>Chọn Tỉnh / Thành phố trước</option>
-                            </select>
-                            <p class="rs-feedback">Vui lòng chọn Quận / Huyện.</p>
-                        </div>
-                        <div>
                             <label class="rs-label">Ward – Phường / Xã <span class="text-red-500">*</span></label>
                             <select name="ward" id="rsWard" class="rs-input" required disabled>
-                                <option value="" selected disabled>Chọn Quận / Huyện trước</option>
+                                <option value="" selected disabled>Chọn Tỉnh / Thành phố trước</option>
                             </select>
                             <p class="rs-feedback">Vui lòng chọn Phường / Xã.</p>
                         </div>
