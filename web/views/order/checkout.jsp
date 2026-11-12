@@ -86,6 +86,7 @@
                         <input type="hidden" name="shopCoupon_${entry.key}" value="<c:out value='${entry.value}'/>">
                     </c:if>
                 </c:forEach>
+                <input type="hidden" name="deliverySlot" value="<c:out value='${not empty formDraft.deliverySlot ? formDraft.deliverySlot : "AFTERNOON"}'/>">
                 <input type="hidden" name="checkoutAction" id="checkout-action" disabled>
                 <input type="hidden" name="targetShopId" id="target-shop-id" disabled>
                 <input type="hidden" name="newCouponCode" id="new-coupon-code" disabled>
@@ -160,7 +161,7 @@
                         <c:forEach var="shopEntry" items="${itemsByShop}">
                             <c:set var="shopItems" value="${shopEntry.value}"/>
                             <c:set var="shopNoteKey" value="shopNote_${shopEntry.key}"/>
-                            <c:set var="shop" value="${shopItems[0].variant}"/>
+                            <c:set var="shop" value="${shopItems[0].variant.product}"/>
                             <c:set var="shopSubtotal" value="${0}"/>
                             <c:forEach var="item" items="${shopItems}">
                                 <c:set var="shopSubtotal" value="${shopSubtotal + item.subtotal}"/>
@@ -189,8 +190,8 @@
                                             <div class="md:col-span-6 flex items-center gap-3.5 min-w-0">
                                                 <div class="w-16 h-16 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shrink-0">
                                                     <c:choose>
-                                                        <c:when test="${not empty item.variant.image}">
-                                                            <img src="<c:out value='${item.variant.image}'/>" alt="<c:out value='${item.variant.productName}'/>" class="w-full h-full object-cover">
+                                                        <c:when test="${not empty item.variant.product.image}">
+                                                            <img src="<c:out value='${item.variant.product.image}'/>" alt="<c:out value='${item.variant.product.name}'/>" class="w-full h-full object-cover">
                                                         </c:when>
                                                         <c:otherwise>
                                                             <div class="w-full h-full flex items-center justify-center text-gray-300"><span class="material-symbols-outlined">image</span></div>
@@ -198,7 +199,7 @@
                                                     </c:choose>
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <h4 class="text-sm font-bold text-gray-900 line-clamp-2 leading-snug"><c:out value="${item.variant.productName}"/></h4>
+                                                    <h4 class="text-sm font-bold text-gray-900 line-clamp-2 leading-snug"><c:out value="${item.variant.product.name}"/></h4>
                                                     <p class="text-xs text-gray-500 mt-1">Phân loại: <strong class="text-gray-700"><c:out value="${item.variant.variantName}"/><c:if test="${not empty item.variant.unit}">, <c:out value="${item.variant.unit}"/></c:if></strong></p>
                                                 </div>
                                             </div>
@@ -274,39 +275,28 @@
                                             </div>
                                             <div class="text-[11px] text-gray-400 mt-0.5">Được đồng kiểm khi nhận hàng</div>
                                         </div>
-                                        <div class="text-right shrink-0">
-                                            <div class="text-[10px] text-gray-400">Phí vận chuyển</div>
-                                            <strong class="text-sm font-bold text-gray-900">
-                                                <fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopShippingFee : 0}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
-                                            </strong>
-                                        </div>
+                                        <strong class="text-sm font-bold text-gray-900">0₫</strong>
                                     </div>
                                 </div>
 
-                                <!-- Shop Cost Breakdown -->
-                                <div class="px-6 py-4 border-t border-gray-100 bg-white flex justify-end">
-                                    <div class="w-full sm:w-80 space-y-1.5 text-xs">
-                                        <div class="flex justify-between gap-4 text-gray-500">
-                                            <span>Tiền hàng (${shopItems.size()} sản phẩm)</span>
-                                            <strong class="text-gray-800"><fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopSubtotal : shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
-                                        </div>
-                                        <div class="flex justify-between gap-4 text-gray-500">
-                                            <span>Phí vận chuyển</span>
-                                            <strong class="text-gray-800"><fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopShippingFee : 0}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
-                                        </div>
-                                        <c:if test="${not empty currentSubOrder and currentSubOrder.shopDiscount gt 0}">
-                                            <div class="flex justify-between gap-4 text-amber-700">
-                                                <span>Voucher của Shop</span>
-                                                <strong>-<fmt:formatNumber value="${currentSubOrder.shopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong>
-                                            </div>
-                                        </c:if>
-                                        <div class="flex justify-between items-baseline gap-4 pt-2 mt-2 border-t border-dashed border-gray-200">
-                                            <span class="text-sm font-bold text-gray-800">Tạm tính Shop</span>
-                                            <strong class="text-lg text-[#00652c] font-extrabold">
-                                                <fmt:formatNumber value="${not empty currentSubOrder ? currentSubOrder.shopTotal : shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                <!-- Shop Subtotal (Giống Shopee) -->
+                                <div class="px-6 py-3.5 border-t border-gray-100 bg-white flex justify-end items-center gap-3 text-sm">
+                                    <span class="text-gray-500">Tổng số tiền (${shopItems.size()} sản phẩm):</span>
+                                    <c:choose>
+                                        <c:when test="${not empty currentSubOrder and currentSubOrder.shopDiscount gt 0}">
+                                            <span class="text-xs text-gray-400 line-through">
+                                                <fmt:formatNumber value="${shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                            </span>
+                                            <strong class="text-base text-[#00652c] font-extrabold">
+                                                <fmt:formatNumber value="${currentSubOrder.shopTotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
                                             </strong>
-                                        </div>
-                                    </div>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <strong class="text-base text-[#00652c] font-extrabold">
+                                                <fmt:formatNumber value="${shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/>
+                                            </strong>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </section>
                         </c:forEach>
@@ -340,47 +330,18 @@
 
                 <!-- ==================== 5. PHƯƠNG THỨC THANH TOÁN & TỔNG KẾT (GIỐNG SHOPEE) ==================== -->
                 <div class="bg-white rounded-xl shadow-xs border border-gray-200/70 p-6 space-y-6">
-                    <!-- Hàng chọn ngày & khung giờ giao hàng (Delivery Slot & Date) -->
-                    <div class="pb-5 border-b border-gray-100 space-y-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div>
-                                <strong class="text-base text-gray-900 font-bold flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[#00652c] text-[22px]">schedule</span>
-                                    <span>Thời gian nhận hàng chuỗi lạnh</span>
-                                </strong>
-                                <p class="text-xs text-gray-500 mt-0.5">Chọn ngày và khung giờ thuận tiện để shipper bảo quản và giao hoa quả lạnh tươi ngon nhất</p>
-                            </div>
-                        </div>
-
-                        <!-- 1. Tabs chọn Ngày nhận hàng (4 ngày) -->
-                        <div class="space-y-1.5">
-                            <span class="text-xs font-semibold text-gray-700">1. Chọn ngày nhận hàng:</span>
-                            <div class="flex flex-wrap gap-2" id="delivery-date-tabs">
-                                <!-- Dynamic date tabs injected by JS -->
-                            </div>
-                        </div>
-
-                        <!-- 2. Lưới khung giờ theo buổi (Sáng / Chiều / Tối) -->
-                        <div class="space-y-2">
-                            <span class="text-xs font-semibold text-gray-700">2. Chọn khung giờ giao:</span>
-                            <div id="delivery-slots-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                                <!-- Dynamic slot cards injected by JS -->
-                            </div>
-                        </div>
-
-                        <!-- Hidden fields to submit with form -->
-                        <input type="hidden" name="deliveryDate" id="checkout-delivery-date" value="<c:out value='${not empty formDraft.deliveryDate ? formDraft.deliveryDate : ""}'/>">
-                        <input type="hidden" name="deliverySlot" id="checkout-delivery-slot" value="<c:out value='${not empty formDraft.deliverySlot ? formDraft.deliverySlot : ""}'/>">
-                    </div>
-
                     <!-- Hàng chọn phương thức thanh toán -->
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
                         <strong class="text-base text-gray-900 font-bold">Phương thức thanh toán</strong>
                         <div class="flex flex-wrap items-center gap-3" id="payment-options-container">
                             <label class="payment-method-pill px-4 py-2 rounded-xl border-2 border-[#00652c] bg-emerald-50/60 text-[#00652c] text-xs font-bold cursor-pointer transition select-none flex items-center gap-1.5">
-                                <input type="radio" name="paymentMethod" value="COD" <c:if test="${formDraft.paymentMethod ne 'VNPAY'}">checked</c:if> class="hidden">
+                                <input type="radio" name="paymentMethod" value="COD" <c:if test="${formDraft.paymentMethod ne 'CARD' and formDraft.paymentMethod ne 'VNPAY'}">checked</c:if> class="hidden">
                                 <span class="material-symbols-outlined text-[16px]">check</span>
                                 <span>Thanh toán khi nhận hàng (COD)</span>
+                            </label>
+                            <label class="payment-method-pill px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-medium cursor-pointer transition select-none flex items-center gap-1.5">
+                                <input type="radio" name="paymentMethod" value="CARD" <c:if test="${formDraft.paymentMethod eq 'CARD'}">checked</c:if> class="hidden">
+                                <span>Thẻ ngân hàng (CARD)</span>
                             </label>
                             <label class="payment-method-pill px-4 py-2 rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 text-xs font-medium cursor-pointer transition select-none flex items-center gap-1.5">
                                 <input type="radio" name="paymentMethod" value="VNPAY" <c:if test="${formDraft.paymentMethod eq 'VNPAY'}">checked</c:if> class="hidden">
@@ -388,6 +349,9 @@
                             </label>
                         </div>
                     </div>
+
+                    <p id="card-payment-notice" class="hidden text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4">Thanh toán thẻ chưa được kết nối. Đơn hàng sẽ được ghi nhận ở trạng thái chờ thanh toán; không nhập thông tin thẻ tại đây.</p>
+                    <p id="vnpay-payment-notice" class="hidden text-sm text-blue-800 bg-blue-50 border border-blue-200 rounded-xl p-4">Bạn sẽ được chuyển sang cổng VNPAY Sandbox để hoàn tất thanh toán an toàn.</p>
 
                     <!-- Bảng tổng hợp chi phí (Căn phải giống Shopee) -->
                     <div class="flex flex-col items-end space-y-2.5 pt-3 text-sm">
@@ -408,12 +372,6 @@
                             <span>Tổng tiền phí vận chuyển:</span>
                             <span class="font-semibold text-gray-900"><fmt:formatNumber value="${draftOrder.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
                         </div>
-                        <c:forEach var="sub" items="${draftOrder.subOrders}">
-                            <div class="flex justify-between w-full sm:w-96 text-xs text-blue-700 pl-3">
-                                <span class="truncate pr-2">• Phí giao từ <c:out value="${sub.shopName}"/>:</span>
-                                <span class="font-semibold shrink-0"><fmt:formatNumber value="${sub.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
-                            </div>
-                        </c:forEach>
 
                         <!-- 3. Tổng cộng giảm giá từ voucher -->
                         <c:set var="totalVoucherDiscount" value="${0}"/>
@@ -452,6 +410,47 @@
                                 </div>
                             </c:otherwise>
                         </c:choose>
+
+                        <%-- FE-14: dùng điểm thưởng --%>
+                        <c:if test="${draftOrder.loyaltyPointsUsed gt 0}">
+                            <div class="flex justify-between w-full sm:w-96 text-sky-700 font-medium pt-1">
+                                <span>Dùng <c:out value="${draftOrder.loyaltyPointsUsed}"/> điểm thưởng:</span>
+                                <span class="font-bold">-<fmt:formatNumber value="${draftOrder.loyaltyDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                            </div>
+                        </c:if>
+                        <c:if test="${not empty loyaltyQuote}">
+                            <div class="w-full sm:w-96 mt-3 p-3 rounded-xl border border-sky-200 bg-sky-50/60 text-xs space-y-2" id="loyalty-box" data-rate="${loyaltyQuote.vndPerPoint}">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold text-sky-800">
+                                        Điểm thưởng<c:if test="${not empty loyaltyQuote.tierName}"> (hạng <c:out value="${loyaltyQuote.tierName}"/>)</c:if>
+                                    </span>
+                                    <span class="text-gray-600">Bạn có <strong><fmt:formatNumber value="${loyaltyQuote.balance}"/></strong> điểm</span>
+                                </div>
+                                <c:choose>
+                                    <c:when test="${draftOrder.loyaltyPointsUsed gt 0}">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sky-800 font-semibold">Đang dùng <c:out value="${draftOrder.loyaltyPointsUsed}"/> điểm</span>
+                                            <button type="button" onclick="removeLoyaltyPoints()" class="px-3 py-1 rounded-lg bg-white border border-sky-200 text-sky-700 font-bold hover:bg-sky-100">Gỡ bỏ</button>
+                                        </div>
+                                    </c:when>
+                                    <c:when test="${loyaltyQuote.maxPoints gt 0}">
+                                        <div class="flex gap-2">
+                                            <input type="number" id="loyalty-points-input" min="1" max="${loyaltyQuote.maxPoints}" data-max="${loyaltyQuote.maxPoints}"
+                                                   placeholder="Số điểm muốn dùng" oninput="updateLoyaltyPreview()"
+                                                   class="flex-1 min-w-0 rounded-lg border border-sky-200 px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-sky-300">
+                                            <button type="button" onclick="useMaxLoyaltyPoints()" class="px-2.5 py-1.5 rounded-lg bg-white border border-sky-200 text-sky-700 font-bold hover:bg-sky-100 whitespace-nowrap">Tối đa</button>
+                                            <button type="button" onclick="applyLoyaltyPoints()" class="px-3 py-1.5 rounded-lg bg-sky-600 text-white font-bold hover:bg-sky-700 whitespace-nowrap">Áp dụng</button>
+                                        </div>
+                                        <p id="loyalty-preview" class="text-gray-500">Giảm: 0đ</p>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <p class="text-gray-500">Chưa có điểm dùng được cho đơn hàng này. Mua sắm để tích điểm nhé!</p>
+                                    </c:otherwise>
+                                </c:choose>
+                                <p class="text-gray-500">1 điểm = <fmt:formatNumber value="${loyaltyQuote.vndPerPoint}"/>đ · tối đa
+                                    <strong><fmt:formatNumber value="${loyaltyQuote.maxPoints}"/></strong> điểm cho đơn này (không quá ${loyaltyQuote.capPercent}% giá trị đơn).</p>
+                            </div>
+                        </c:if>
 
                         <div class="flex justify-between items-baseline w-full sm:w-96 pt-3 border-t border-gray-100">
                             <span class="text-sm font-bold text-gray-900">Tổng thanh toán:</span>
@@ -925,163 +924,50 @@
         submitCheckoutAction('removeCoupon');
     }
 
+    // ===== FE-14: dùng điểm thưởng =====
+    function setLoyaltyField(points) {
+        const form = document.getElementById('checkout-form');
+        if (!form) return;
+        let input = form.elements.namedItem('loyaltyPoints');
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'loyaltyPoints';
+            form.appendChild(input);
+        }
+        input.value = points || '';
+    }
+    function applyLoyaltyPoints() {
+        const el = document.getElementById('loyalty-points-input');
+        const points = parseInt(el ? el.value : '', 10);
+        if (!points || points <= 0) { alert('Vui lòng nhập số điểm muốn dùng.'); return; }
+        const max = parseInt(el.dataset.max, 10);
+        if (points > max) { alert('Đơn hàng này chỉ được dùng tối đa ' + max + ' điểm.'); return; }
+        setLoyaltyField(points);
+        submitCheckoutAction('applyLoyalty');
+    }
+    function removeLoyaltyPoints() {
+        setLoyaltyField('');
+        submitCheckoutAction('removeLoyalty');
+    }
+    function useMaxLoyaltyPoints() {
+        const el = document.getElementById('loyalty-points-input');
+        if (el) { el.value = el.dataset.max; updateLoyaltyPreview(); }
+    }
+    function updateLoyaltyPreview() {
+        const el = document.getElementById('loyalty-points-input');
+        const box = document.getElementById('loyalty-box');
+        const out = document.getElementById('loyalty-preview');
+        if (!el || !box || !out) return;
+        const pts = Math.min(parseInt(el.value, 10) || 0, parseInt(el.dataset.max, 10));
+        out.textContent = 'Giảm: ' + (pts * parseInt(box.dataset.rate, 10)).toLocaleString('vi-VN') + 'đ';
+    }
+
     // 3. Xử lý chuyển đổi phương thức thanh toán
     const paymentForm = document.getElementById('checkout-form');
-        // ==================== KHUNG GIỜ VÀ NGÀY GIAO HÀNG CHUỖI LẠNH ====================
-    (function initDeliverySlotSystem() {
-        var dateTabsContainer = document.getElementById('delivery-date-tabs');
-        var slotsGridContainer = document.getElementById('delivery-slots-grid');
-        var inputDeliveryDate = document.getElementById('checkout-delivery-date');
-        var inputDeliverySlot = document.getElementById('checkout-delivery-slot');
-
-        if (!dateTabsContainer || !slotsGridContainer) return;
-
-        var today = new Date();
-        var dates = [];
-        var dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-
-        for (var i = 0; i < 4; i++) {
-            var d = new Date(today);
-            d.setDate(today.getDate() + i);
-            var yyyy = d.getFullYear();
-            var mm = String(d.getMonth() + 1).padStart(2, '0');
-            var dd = String(d.getDate()).padStart(2, '0');
-            var dateStr = yyyy + '-' + mm + '-' + dd;
-
-            var label = dd + '/' + mm;
-            if (i === 0) label = 'Hôm nay (' + dd + '/' + mm + ')';
-            else if (i === 1) label = 'Ngày mai (' + dd + '/' + mm + ')';
-            else label = dayNames[d.getDay()] + ' (' + dd + '/' + mm + ')';
-
-            dates.push({ dateStr: dateStr, label: label, isToday: (i === 0) });
-        }
-
-        var baseSlots = [
-            { code: '08:00 - 10:00', displayLabel: '08:00 - 10:00', period: 'MORNING', periodText: 'Sáng', startHour: 8, startMin: 0, endHour: 10, endMin: 0 },
-            { code: '10:00 - 12:00', displayLabel: '10:00 - 12:00', period: 'MORNING', periodText: 'Sáng', startHour: 10, startMin: 0, endHour: 12, endMin: 0 },
-            { code: '13:00 - 15:00', displayLabel: '13:00 - 15:00', period: 'AFTERNOON', periodText: 'Chiều', startHour: 13, startMin: 0, endHour: 15, endMin: 0 },
-            { code: '15:00 - 17:00', displayLabel: '15:00 - 17:00', period: 'AFTERNOON', periodText: 'Chiều', startHour: 15, startMin: 0, endHour: 17, endMin: 0 },
-            { code: '17:00 - 19:00', displayLabel: '17:00 - 19:00', period: 'EVENING', periodText: 'Tối', startHour: 17, startMin: 0, endHour: 19, endMin: 0 },
-            { code: '19:00 - 21:00', displayLabel: '19:00 - 21:00', period: 'EVENING', periodText: 'Tối', startHour: 19, startMin: 0, endHour: 21, endMin: 0 }
-        ];
-
-        var selectedDate = (inputDeliveryDate && inputDeliveryDate.value) ? inputDeliveryDate.value : dates[0].dateStr;
-        var selectedSlotCode = (inputDeliverySlot && inputDeliverySlot.value) ? inputDeliverySlot.value : '';
-
-        function renderDateTabs() {
-            dateTabsContainer.innerHTML = '';
-            dates.forEach(function(d) {
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                var isSelected = (d.dateStr === selectedDate);
-                btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ' +
-                    (isSelected
-                        ? 'border-2 border-[#00652c] bg-emerald-50 text-[#00652c] font-bold shadow-xs'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300');
-                btn.textContent = d.label;
-                btn.addEventListener('click', function() {
-                    selectedDate = d.dateStr;
-                    if (inputDeliveryDate) inputDeliveryDate.value = selectedDate;
-                    renderDateTabs();
-                    evaluateAndRenderSlots();
-                });
-                dateTabsContainer.appendChild(btn);
-            });
-        }
-
-        function evaluateAndRenderSlots() {
-            var now = new Date();
-            var isCurrentDateToday = (selectedDate === dates[0].dateStr);
-            var currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-            var computedSlots = baseSlots.map(function(s) {
-                var isPassed = isCurrentDateToday && (currentMinutes >= (s.startHour * 60 + s.startMin));
-                return {
-                    code: s.code,
-                    displayLabel: s.displayLabel,
-                    period: s.period,
-                    periodText: s.periodText,
-                    available: !isPassed,
-                    statusBadge: isPassed ? 'Quá giờ' : null
-                };
-            });
-
-            // Nếu slot đang chọn không còn khả dụng trên ngày này, tự chọn slot đầu tiên khả dụng (nếu có)
-            var currentValid = computedSlots.some(function(s) {
-                return s.code === selectedSlotCode && s.available;
-            });
-
-            if (!currentValid) {
-                var firstAvail = computedSlots.find(function(s) { return s.available; });
-                if (firstAvail) {
-                    selectedSlotCode = firstAvail.code;
-                } else {
-                    selectedSlotCode = '';
-                }
-                if (inputDeliverySlot) inputDeliverySlot.value = selectedSlotCode;
-            }
-
-            renderSlots(computedSlots);
-        }
-
-        function renderSlots(slots) {
-            slotsGridContainer.innerHTML = '';
-
-            slots.forEach(function(slot) {
-                var isSelected = (slot.code === selectedSlotCode && slot.available);
-                var card = document.createElement('div');
-
-                var periodIcon = 'wb_sunny';
-                if (slot.period === 'EVENING') {
-                    periodIcon = 'bedtime';
-                }
-
-                if (!slot.available) {
-                    card.className = 'p-3 rounded-xl border border-gray-100 bg-gray-50/70 opacity-60 cursor-not-allowed flex items-center justify-between gap-2 text-xs select-none';
-                    card.innerHTML = 
-                        '<div class="flex items-center gap-2.5 min-w-0">' +
-                        '  <span class="material-symbols-outlined text-gray-300 text-[20px] shrink-0">' + periodIcon + '</span>' +
-                        '  <div class="truncate leading-tight">' +
-                        '    <span class="font-medium text-gray-600 block">' + slot.displayLabel + '</span>' +
-                        '    <span class="text-[11px] text-gray-400">' + slot.periodText + '</span>' +
-                        '  </div>' +
-                        '</div>' +
-                        '<span class="px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 bg-gray-100 text-gray-400 border border-gray-200/60">' +
-                        (slot.statusBadge || 'Quá giờ') +
-                        '</span>';
-                } else {
-                    card.className = 'p-3 rounded-xl border cursor-pointer transition select-none flex items-center justify-between gap-2 text-xs ' +
-                        (isSelected
-                            ? 'border-2 border-[#00652c] bg-emerald-50/60 shadow-xs'
-                            : 'border-gray-200 hover:border-gray-300 bg-white');
-
-                    card.innerHTML = 
-                        '<div class="flex items-center gap-2.5 min-w-0">' +
-                        '  <span class="material-symbols-outlined ' + (isSelected ? 'text-[#00652c]' : 'text-gray-400') + ' text-[20px] shrink-0">' +
-                        (isSelected ? 'check_circle' : periodIcon) +
-                        '  </span>' +
-                        '  <div class="truncate leading-tight">' +
-                        '    <span class="font-bold ' + (isSelected ? 'text-[#00652c]' : 'text-gray-900') + ' block">' + slot.displayLabel + '</span>' +
-                        '    <span class="text-[11px] ' + (isSelected ? 'text-emerald-700' : 'text-gray-500') + '">' + slot.periodText + '</span>' +
-                        '  </div>' +
-                        '</div>';
-
-                    card.addEventListener('click', function() {
-                        selectedSlotCode = slot.code;
-                        if (inputDeliverySlot) inputDeliverySlot.value = selectedSlotCode;
-                        evaluateAndRenderSlots();
-                    });
-                }
-                slotsGridContainer.appendChild(card);
-            });
-        }
-
-        renderDateTabs();
-        if (inputDeliveryDate) inputDeliveryDate.value = selectedDate;
-        evaluateAndRenderSlots();
-    })();
-
     const paymentLabels = document.querySelectorAll('.payment-method-pill');
+    const cardNotice = document.getElementById('card-payment-notice');
+    const vnpayNotice = document.getElementById('vnpay-payment-notice');
     const submitBtn = document.getElementById('submit-order-btn');
 
     paymentLabels.forEach(label => {
@@ -1104,7 +990,13 @@
             const radio = this.querySelector('input[type="radio"]');
             if (radio) {
                 radio.checked = true;
-                if (radio.value === 'VNPAY') {
+                cardNotice?.classList.add('hidden');
+                vnpayNotice?.classList.add('hidden');
+                if (radio.value === 'CARD') {
+                    if (cardNotice) cardNotice.classList.remove('hidden');
+                    if (submitBtn) submitBtn.textContent = 'Đặt hàng (chờ thanh toán)';
+                } else if (radio.value === 'VNPAY') {
+                    vnpayNotice?.classList.remove('hidden');
                     if (submitBtn) submitBtn.textContent = 'Thanh toán qua VNPAY';
                 } else {
                     if (submitBtn) submitBtn.textContent = 'Đặt hàng';
@@ -1113,22 +1005,11 @@
         });
     });
 
-    if (paymentForm) {
-        paymentForm.addEventListener('submit', function(e) {
-            var slotInput = document.getElementById('checkout-delivery-slot');
-            if (!slotInput || !slotInput.value || slotInput.value.trim() === '') {
-                e.preventDefault();
-                alert('Vui lòng chọn khung giờ nhận hàng khả dụng (hoặc chuyển sang ngày khác nếu hôm nay đã quá giờ)!');
-                var slotSection = document.getElementById('delivery-slots-grid');
-                if (slotSection) {
-                    slotSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                return false;
-            }
-        });
-    }
-
-    if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'VNPAY') {
+    if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'CARD') {
+        cardNotice?.classList.remove('hidden');
+        if (submitBtn) submitBtn.textContent = 'Đặt hàng (chờ thanh toán)';
+    } else if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'VNPAY') {
+        vnpayNotice?.classList.remove('hidden');
         if (submitBtn) submitBtn.textContent = 'Thanh toán qua VNPAY';
     }
 

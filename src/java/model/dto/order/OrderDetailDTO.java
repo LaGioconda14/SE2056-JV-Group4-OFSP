@@ -23,6 +23,8 @@ public class OrderDetailDTO implements Serializable {
     private BigDecimal totalGoodsAmount = BigDecimal.ZERO;
     private BigDecimal totalShippingFee = BigDecimal.ZERO;
     private BigDecimal platformDiscount = BigDecimal.ZERO;
+    private int loyaltyPointsUsed = 0;                          // FE-14: điểm thưởng đã dùng
+    private BigDecimal loyaltyDiscount = BigDecimal.ZERO;       // FE-14: số tiền giảm từ điểm
     private BigDecimal finalAmount = BigDecimal.ZERO;
     private String paymentStatus = PaymentStatus.PENDING.name();
     private String paymentMethod = PaymentMethod.COD.name();
@@ -90,6 +92,22 @@ public class OrderDetailDTO implements Serializable {
 
     public void setPlatformDiscount(BigDecimal platformDiscount) {
         this.platformDiscount = platformDiscount != null ? platformDiscount : BigDecimal.ZERO;
+    }
+
+    public int getLoyaltyPointsUsed() {
+        return loyaltyPointsUsed;
+    }
+
+    public void setLoyaltyPointsUsed(int loyaltyPointsUsed) {
+        this.loyaltyPointsUsed = loyaltyPointsUsed;
+    }
+
+    public BigDecimal getLoyaltyDiscount() {
+        return loyaltyDiscount;
+    }
+
+    public void setLoyaltyDiscount(BigDecimal loyaltyDiscount) {
+        this.loyaltyDiscount = loyaltyDiscount == null ? BigDecimal.ZERO : loyaltyDiscount;
     }
 
     public BigDecimal getFinalAmount() {

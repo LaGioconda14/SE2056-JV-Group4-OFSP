@@ -7,8 +7,8 @@ import model.entity.cart.CartItem;
 import model.entity.promotion.Coupon;
 import model.entity.user.CustomerAddress;
 import model.dto.order.OrderDetailDTO;
-import model.dto.order.SubOrderDTO;
 import model.entity.order.ShippingAddress;
+import model.dto.order.SubOrderDTO;
 
 public interface IOrderService {
 
@@ -20,9 +20,6 @@ public interface IOrderService {
 
     OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes);
-
-    OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
-            Map<Long, String> shopCouponCodes, String customerProvince);
 
     long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
@@ -36,9 +33,11 @@ public interface IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
 
+    /** Đặt hàng có dùng điểm thưởng (FE-14). loyaltyPoints = 0 nghĩa là không dùng điểm. */
     long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
+            int loyaltyPoints, boolean saveAddress) throws Exception;
 
     long placeBuyNowOrder(long customerId, long variantId, int quantity, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
@@ -48,9 +47,11 @@ public interface IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
 
+    /** Mua ngay có dùng điểm thưởng (FE-14). */
     long placeBuyNowOrder(long customerId, long variantId, int quantity, ShippingAddress address,
-            String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
+            String deliverySlot, String paymentMethod, String couponCode,
+            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
+            int loyaltyPoints, boolean saveAddress) throws Exception;
 
     OrderDetailDTO getOrderDetails(long orderId);
 
@@ -63,6 +64,7 @@ public interface IOrderService {
     List<Coupon> getAvailableCoupons(BigDecimal orderAmount);
 
     List<Coupon> getAvailableShopCoupons(long shopId);
+
 
     List<SubOrderDTO> getSubOrdersByCustomerId(long customerId);
 

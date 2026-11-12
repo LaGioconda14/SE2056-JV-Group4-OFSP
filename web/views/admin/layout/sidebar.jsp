@@ -69,6 +69,23 @@
                 </a>
             </li>
         </ul>
+
+        <!-- 3. LOYALTY (FE-14) -->
+        <div class="nav-section-title" data-i18n="nav_sec_loyalty">THÀNH VIÊN & ĐIỂM THƯỞNG</div>
+        <ul class="sidebar-nav">
+            <li>
+                <a href="${pageContext.request.contextPath}/admin/loyalty" class="sidebar-nav-link ${param.activePage == 'loyalty' ? 'active' : ''}">
+                    <i class="bi bi-stars"></i>
+                    <span data-i18n="nav_loyalty">Luật Điểm Thưởng</span>
+                </a>
+            </li>
+            <li>
+                <a href="${pageContext.request.contextPath}/admin/membership-tiers" class="sidebar-nav-link ${param.activePage == 'membership-tiers' ? 'active' : ''}">
+                    <i class="bi bi-award"></i>
+                    <span data-i18n="nav_membership_tiers">Hạng Thành Viên</span>
+                </a>
+            </li>
+        </ul>
     </div>
 
     <div class="sidebar-footer">

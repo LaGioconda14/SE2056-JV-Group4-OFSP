@@ -27,9 +27,9 @@ import model.entity.user.CustomerAddress;
 import model.dto.order.DeliveryDTO;
 import model.dto.order.OrderDetailDTO;
 import model.dto.order.OrderItemDetailDTO;
-import model.dto.order.SubOrderDTO;
 import model.dto.product.ProductVariantDetailDTO;
 import model.entity.order.ShippingAddress;
+import model.dto.order.SubOrderDTO;
 import util.DBContext;
 
 public class OrderDAO extends DBContext {
@@ -37,6 +37,7 @@ public class OrderDAO extends DBContext {
     private static final Logger LOGGER = Logger.getLogger(OrderDAO.class.getName());
     private final CouponDAO couponDAO = new CouponDAO();
     private final PromotionDAO promotionDAO = new PromotionDAO();
+    private final LoyaltyDAO loyaltyDAO = new LoyaltyDAO();
     private static volatile Boolean HAS_ORDER_ITEM_PROMOTION_COLS = null;
 
     private boolean checkHasOrderItemPromotionCols(Connection conn) {
@@ -56,7 +57,7 @@ public class OrderDAO extends DBContext {
         return HAS_ORDER_ITEM_PROMOTION_COLS;
     }
 
-    // 1. Láº¤Y CÃC CART ITEMS ÄÆ¯á»¢C CHá»ŒN Cá»¦A KHÃCH HÃ€NG
+    // 1. LẤY CÁC CART ITEMS ĐƯỢC CHỌN CỦA KHÁCH HÀNG
     public List<CartItem> getSelectedCartItems(long customerId, List<Long> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
             return Collections.emptyList();
@@ -88,7 +89,7 @@ public class OrderDAO extends DBContext {
         Connection conn = getConnection();
         if (conn == null) {
             LOGGER.severe("Cannot establish DB connection in getSelectedCartItems");
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i sáº£n pháº©m thanh toÃ¡n. Vui lÃ²ng thá»­ láº¡i!");
+            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -99,18 +100,35 @@ public class OrderDAO extends DBContext {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProductVariantDetailDTO v = mapCheckoutVariant(rs);
+                    ProductVariantDetailDTO v = new ProductVariantDetailDTO();
+                    v.setProductId(rs.getLong("product_id"));
+                    v.setProductName(rs.getString("product_name"));
+                    v.setOrigin(rs.getString("origin"));
+                    v.setProductActive(rs.getBoolean("product_active"));
+                    v.setShopId(rs.getLong("shop_id"));
+                    v.setShopName(rs.getString("shop_name"));
+                    v.setShopStatus(rs.getString("shop_status"));
+                    v.setImage(rs.getString("thumbnail_url"));
+                    v.setVariantId(rs.getLong("variant_id"));
+                    v.setSku(rs.getString("sku"));
+                    v.setVariantName(rs.getString("variant_name"));
+                    v.setUnit(rs.getString("unit"));
+                    v.setWeightKg(rs.getBigDecimal("weight_kg"));
+                    v.setPrice(rs.getBigDecimal("price"));
+                    v.setStockQuantity(rs.getInt("stock_quantity"));
+                    v.setActive(rs.getBoolean("variant_active"));
 
                     CartItem item = new CartItem();
                     item.setCartItemID(rs.getLong("cart_item_id"));
                     item.setVariant(v);
                     item.setQuantity(rs.getInt("quantity"));
+
                     items.add(item);
                 }
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting selected cart items for customer " + customerId, ex);
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i sáº£n pháº©m thanh toÃ¡n. Vui lÃ²ng thá»­ láº¡i!", ex);
+            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!", ex);
         }
         return items;
     }
@@ -139,7 +157,23 @@ public class OrderDAO extends DBContext {
                     return null;
                 }
 
-                ProductVariantDetailDTO variant = mapCheckoutVariant(rs);
+                ProductVariantDetailDTO variant = new ProductVariantDetailDTO();
+                variant.setProductId(rs.getLong("product_id"));
+                variant.setProductName(rs.getString("product_name"));
+                variant.setOrigin(rs.getString("origin"));
+                variant.setProductActive(rs.getBoolean("product_active"));
+                variant.setShopId(rs.getLong("shop_id"));
+                variant.setShopName(rs.getString("shop_name"));
+                variant.setShopStatus(rs.getString("shop_status"));
+                variant.setImage(rs.getString("thumbnail_url"));
+                variant.setVariantId(rs.getLong("variant_id"));
+                variant.setSku(rs.getString("sku"));
+                variant.setVariantName(rs.getString("variant_name"));
+                variant.setUnit(rs.getString("unit"));
+                variant.setWeightKg(rs.getBigDecimal("weight_kg"));
+                variant.setPrice(rs.getBigDecimal("price"));
+                variant.setStockQuantity(rs.getInt("stock_quantity"));
+                variant.setActive(rs.getBoolean("variant_active"));
                 return new CartItem(0, variant, quantity);
             }
         } catch (SQLException ex) {
@@ -148,28 +182,7 @@ public class OrderDAO extends DBContext {
         }
     }
 
-    private ProductVariantDetailDTO mapCheckoutVariant(ResultSet rs) throws SQLException {
-        ProductVariantDetailDTO v = new ProductVariantDetailDTO();
-        v.setVariantId(rs.getLong("variant_id"));
-        v.setProductId(rs.getLong("product_id"));
-        v.setProductName(rs.getString("product_name"));
-        v.setOrigin(rs.getString("origin"));
-        v.setProductActive(rs.getBoolean("product_active"));
-        v.setShopId(rs.getLong("shop_id"));
-        v.setShopName(rs.getString("shop_name"));
-        v.setShopStatus(rs.getString("shop_status"));
-        v.setImage(rs.getString("thumbnail_url"));
-        v.setSku(rs.getString("sku"));
-        v.setVariantName(rs.getString("variant_name"));
-        v.setUnit(rs.getString("unit"));
-        v.setWeightKg(rs.getBigDecimal("weight_kg"));
-        v.setPrice(rs.getBigDecimal("price"));
-        v.setStockQuantity(rs.getInt("stock_quantity"));
-        v.setActive(rs.getBoolean("variant_active"));
-        return v;
-    }
-
-    // 2. Láº¤Y Äá»ŠA CHá»ˆ Máº¶C Äá»ŠNH HOáº¶C Äá»ŠA CHá»ˆ Gáº¦N NHáº¤T Cá»¦A KHÃCH HÃ€NG
+    // 2. LẤY ĐỊA CHỈ MẶC ĐỊNH HOẶC ĐỊA CHỈ GẦN NHẤT CỦA KHÁCH HÀNG
     public CustomerAddress getDefaultAddress(long customerId) {
         String sql = "SELECT TOP 1 address_id, user_id, recipient_name, recipient_phone, "
                 + "street_address, ward, district, city, is_default "
@@ -212,7 +225,7 @@ public class OrderDAO extends DBContext {
         List<CustomerAddress> addresses = new ArrayList<>();
         Connection conn = getConnection();
         if (conn == null) {
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i danh sÃ¡ch Ä‘á»‹a chá»‰. Vui lÃ²ng thá»­ láº¡i!");
+            throw new IllegalStateException("Không thể tải danh sách địa chỉ. Vui lòng thử lại!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -225,7 +238,7 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting addresses for customer " + customerId, ex);
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i danh sÃ¡ch Ä‘á»‹a chá»‰. Vui lÃ²ng thá»­ láº¡i!", ex);
+            throw new IllegalStateException("Không thể tải danh sách địa chỉ. Vui lòng thử lại!", ex);
         }
         return addresses;
     }
@@ -236,7 +249,7 @@ public class OrderDAO extends DBContext {
                 + "FROM customer_addresses WHERE address_id = ? AND user_id = ?";
         Connection conn = getConnection();
         if (conn == null) {
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i Ä‘á»‹a chá»‰ giao hÃ ng. Vui lÃ²ng thá»­ láº¡i!");
+            throw new IllegalStateException("Không thể tải địa chỉ giao hàng. Vui lòng thử lại!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -247,7 +260,7 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting customer address " + addressId, ex);
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i Ä‘á»‹a chá»‰ giao hÃ ng. Vui lÃ²ng thá»­ láº¡i!", ex);
+            throw new IllegalStateException("Không thể tải địa chỉ giao hàng. Vui lòng thử lại!", ex);
         }
     }
 
@@ -267,7 +280,7 @@ public class OrderDAO extends DBContext {
         return address;
     }
 
-    // 3. Táº O ÄÆ N HÃ€NG TOÃ€N DIá»†N (TRANSACTION AN TOÃ€N)
+    // 3. TẠO ĐƠN HÀNG TOÀN DIỆN (TRANSACTION AN TOÀN)
     public long createOrder(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
         return createOrderInternal(order, address, cartItemIdsToDelete, paymentMethod,
@@ -319,7 +332,7 @@ public class OrderDAO extends DBContext {
 
         Connection conn = getConnection();
         if (conn == null) {
-            throw new Exception("KhÃ´ng thá»ƒ káº¿t ná»‘i Ä‘áº¿n cÆ¡ sá»Ÿ dá»¯ liá»‡u!");
+            throw new Exception("Không thể kết nối đến cơ sở dữ liệu!");
         }
         boolean hasPromoCols = checkHasOrderItemPromotionCols(conn);
         String insertOrderItemSql = hasPromoCols
@@ -334,7 +347,7 @@ public class OrderDAO extends DBContext {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
-            conn.setAutoCommit(false); // Báº®T Äáº¦U TRANSACTION
+            conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
 
             if (consumeCart) {
                 lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
@@ -379,6 +392,17 @@ public class OrderDAO extends DBContext {
                     .add(order.getTotalShippingFee())
                     .subtract(totalDiscounts)
                     .max(BigDecimal.ZERO));
+
+            // FE-14: dung diem thuong. Khoa tai khoan, kiem tra so du va tran % ngay trong transaction nay;
+            // so tien giam duoc tru vao final_amount (nen cong thanh toan chi thu phan con lai).
+            if (order.getLoyaltyPointsUsed() > 0) {
+                model.RedeemPlan loyaltyPlan = loyaltyDAO.lockAndPlanRedeem(conn, order.getCustomerId(),
+                        order.getLoyaltyPointsUsed(), order.getFinalAmount());
+                order.setLoyaltyDiscount(loyaltyPlan.getDiscount());
+                order.setFinalAmount(order.getFinalAmount().subtract(loyaltyPlan.getDiscount()).max(BigDecimal.ZERO));
+            } else {
+                order.setLoyaltyDiscount(BigDecimal.ZERO);
+            }
 
             long orderId;
             String orderCode = "ORD-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 9000 + 1000);
@@ -460,7 +484,7 @@ public class OrderDAO extends DBContext {
                     }
                 }
 
-                // D. INSERT Tá»ªNG ORDER_ITEM
+                // D. INSERT TỪNG ORDER_ITEM
                 for (OrderItemDetailDTO item : sub.getItems()) {
                     try (PreparedStatement ps = conn.prepareStatement(insertOrderItemSql)) {
                         ps.setLong(1, subOrderId);
@@ -496,7 +520,7 @@ public class OrderDAO extends DBContext {
                         }
                     }
 
-                    // E. TRá»ª Tá»’N KHO NGUYÃŠN Tá»¬
+                    // E. TRỪ TỒN KHO NGUYÊN TỬ
                     if (item.getVariantId() != null) {
                         try (PreparedStatement ps = conn.prepareStatement(deductStockSql)) {
                             ps.setInt(1, item.getQuantity());
@@ -506,16 +530,16 @@ public class OrderDAO extends DBContext {
 
                             int updated = ps.executeUpdate();
                             if (updated == 0) {
-                                throw new SQLException("Sáº£n pháº©m '" + item.getProductNameSnapshot()
-                                        + "' vá»«a háº¿t hÃ ng, Ä‘á»•i giÃ¡ hoáº·c cá»­a hÃ ng Ä‘Ã£ ngá»«ng hoáº¡t Ä‘á»™ng. "
-                                        + "Vui lÃ²ng quay láº¡i giá» hÃ ng Ä‘á»ƒ kiá»ƒm tra!");
+                                throw new SQLException("Sản phẩm '" + item.getProductNameSnapshot()
+                                        + "' vừa hết hàng, đổi giá hoặc cửa hàng đã ngừng hoạt động. "
+                                        + "Vui lòng quay lại giỏ hàng để kiểm tra!");
                             }
                         }
                     }
                 }
             }
 
-            // F. XÃ“A CÃC Sáº¢N PHáº¨M ÄÃƒ MUA KHá»ŽI GIá»Ž HÃ€NG
+            // F. XÓA CÁC SẢN PHẨM ĐÃ MUA KHỎI GIỎ HÀNG
             if (consumeCart && cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
                 try (PreparedStatement ps = conn.prepareStatement(deleteCartItemsSql)) {
                     for (Long itemId : cartItemIdsToDelete) {
@@ -526,13 +550,13 @@ public class OrderDAO extends DBContext {
                     int[] deletedRows = ps.executeBatch();
                     for (int deleted : deletedRows) {
                         if (deleted == 0) {
-                            throw new SQLException("CÃ³ sáº£n pháº©m khÃ´ng cÃ²n thuá»™c giá» hÃ ng cá»§a báº¡n!");
+                            throw new SQLException("Có sản phẩm không còn thuộc giỏ hàng của bạn!");
                         }
                     }
                 }
             }
 
-            // Chá»‰ tÄƒng used_count náº¿u má»i bÆ°á»›c táº¡o Ä‘Æ¡n, trá»« kho vÃ  xÃ³a giá» Ä‘á»u thÃ nh cÃ´ng.
+            // Chỉ tăng used_count nếu mọi bước tạo đơn, trừ kho và xóa giỏ đều thành công.
             if (order.getCouponId() != null) {
                 couponDAO.incrementUsage(conn, order.getCouponId());
                 couponDAO.recordUsage(conn, order.getCouponId(), orderId, order.getCustomerId(), order.getPlatformDiscount());
@@ -544,7 +568,7 @@ public class OrderDAO extends DBContext {
                 }
             }
 
-            // Ghi nháº­n phÆ°Æ¡ng thá»©c thanh toÃ¡n trong cÃ¹ng transaction.
+            // Ghi nhận phương thức thanh toán trong cùng transaction.
             try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
                 ps.setLong(1, orderId);
                 ps.setString(2, paymentMethod);
@@ -555,12 +579,18 @@ public class OrderDAO extends DBContext {
                 ps.executeUpdate();
             }
 
-            conn.commit(); // THÃ€NH CÃ”NG -> COMMIT!
+            // FE-14: tru diem, ghi lich su diem va luu diem da dung vao don (cung transaction -> loi la hoan tac het).
+            if (order.getLoyaltyPointsUsed() > 0) {
+                loyaltyDAO.commitRedeem(conn, order.getCustomerId(), orderId,
+                        order.getLoyaltyPointsUsed(), order.getLoyaltyDiscount());
+            }
+
+            conn.commit(); // THÀNH CÔNG -> COMMIT!
             return orderId;
 
         } catch (Exception ex) {
             try {
-                conn.rollback(); // Lá»–I -> HOÃ€N TÃC TOÃ€N Bá»˜!
+                conn.rollback(); // LỖI -> HOÀN TÁC TOÀN BỘ!
             } catch (SQLException rEx) {
                 LOGGER.log(Level.SEVERE, "Rollback failed", rEx);
             }
@@ -594,7 +624,7 @@ public class OrderDAO extends DBContext {
     private void lockAndValidateCartItems(Connection conn, OrderDetailDTO order,
             List<Long> cartItemIds) throws SQLException {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
-            throw new SQLException("KhÃ´ng cÃ³ sáº£n pháº©m nÃ o Ä‘Æ°á»£c chá»n Ä‘á»ƒ Ä‘áº·t hÃ ng!");
+            throw new SQLException("Không có sản phẩm nào được chọn để đặt hàng!");
         }
 
         StringBuilder placeholders = new StringBuilder();
@@ -634,7 +664,7 @@ public class OrderDAO extends DBContext {
         }
 
         if (rowCount != cartItemIds.size() || !actualQuantities.equals(expectedQuantities)) {
-            throw new SQLException("Giá» hÃ ng vá»«a thay Ä‘á»•i. Vui lÃ²ng quay láº¡i giá» hÃ ng vÃ  kiá»ƒm tra láº¡i!");
+            throw new SQLException("Giỏ hàng vừa thay đổi. Vui lòng quay lại giỏ hàng và kiểm tra lại!");
         }
     }
 
@@ -650,27 +680,27 @@ public class OrderDAO extends DBContext {
 
     private void validateCouponForOrder(Coupon coupon, BigDecimal eligibleAmount) throws SQLException {
         if (coupon == null) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ khÃ´ng cÃ²n tá»“n táº¡i!");
+            throw new SQLException("Mã giảm giá không còn tồn tại!");
         }
         if (!coupon.isActive()) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ hiá»‡n khÃ´ng hoáº¡t Ä‘á»™ng!");
+            throw new SQLException("Mã giảm giá hiện không hoạt động!");
         }
 
         java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
         if (coupon.getStartDate() == null || now.before(coupon.getStartDate())) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ chÆ°a Ä‘áº¿n thá»i gian sá»­ dá»¥ng!");
+            throw new SQLException("Mã giảm giá chưa đến thời gian sử dụng!");
         }
         if (coupon.getEndDate() == null || now.after(coupon.getEndDate())) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ Ä‘Ã£ háº¿t háº¡n!");
+            throw new SQLException("Mã giảm giá đã hết hạn!");
         }
         if (coupon.getUsedCount() >= coupon.getUsageLimit()) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ Ä‘Ã£ háº¿t lÆ°á»£t sá»­ dá»¥ng!");
+            throw new SQLException("Mã giảm giá đã hết lượt sử dụng!");
         }
 
         BigDecimal minimum = coupon.getMinOrderValue() != null
                 ? coupon.getMinOrderValue() : BigDecimal.ZERO;
         if (eligibleAmount.compareTo(minimum) < 0) {
-            throw new SQLException("ÄÆ¡n hÃ ng khÃ´ng cÃ²n Ä‘á»§ Ä‘iá»u kiá»‡n giÃ¡ trá»‹ tá»‘i thiá»ƒu cá»§a mÃ£ giáº£m giÃ¡!");
+            throw new SQLException("Đơn hàng không còn đủ điều kiện giá trị tối thiểu của mã giảm giá!");
         }
     }
 
@@ -686,7 +716,7 @@ public class OrderDAO extends DBContext {
         } else if ("FIXED_AMOUNT".equals(type)) {
             discount = coupon.getDiscountValue();
         } else {
-            throw new SQLException("Loáº¡i mÃ£ giáº£m giÃ¡ khÃ´ng há»£p lá»‡!");
+            throw new SQLException("Loại mã giảm giá không hợp lệ!");
         }
 
         if (coupon.getMaxDiscountAmount() != null
@@ -697,11 +727,11 @@ public class OrderDAO extends DBContext {
                 .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
-    // 4. Láº¤Y CHI TIáº¾T ÄÆ N HÃ€NG THEO ID
+    // 4. LẤY CHI TIẾT ĐƠN HÀNG THEO ID
     public OrderDetailDTO getOrderById(long orderId) {
-        String sqlOrder = "SELECT o.order_id, o.order_code, o.customer_id, o.coupon_id, o.total_goods_amount, "
+        String sqlOrder = "SELECT o.order_id, o.customer_id, o.coupon_id, o.total_goods_amount, "
                 + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, o.payment_method, "
-                + "o.order_status, o.created_at, o.updated_at, "
+                + "o.created_at, o.updated_at, "
                 + "sa.recipient_name, sa.recipient_phone, sa.street_address, sa.ward, sa.district, sa.city "
                 + "FROM orders o "
                 + "LEFT JOIN order_shipping_addresses sa ON o.order_id = sa.order_id "
@@ -715,11 +745,9 @@ public class OrderDAO extends DBContext {
                 + "WHERE so.order_id = ?";
 
         String sqlItems = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
-                + "COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
                 + "oi.product_name_snapshot, oi.variant_name_snapshot, oi.sku_snapshot, "
                 + "oi.unit, oi.unit_price, oi.quantity, oi.total_price "
                 + "FROM order_items oi "
-                + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
                 + "WHERE oi.sub_order_id = ?";
 
         Connection conn = getConnection();
@@ -733,7 +761,6 @@ public class OrderDAO extends DBContext {
                     if (rs.next()) {
                         order = new OrderDetailDTO();
                         order.setOrderId(rs.getLong("order_id"));
-                        order.setOrderCode(rs.getString("order_code"));
                         order.setCustomerId(rs.getLong("customer_id"));
                         int cId = rs.getInt("coupon_id");
                         order.setCouponId(rs.wasNull() ? null : cId);
@@ -743,7 +770,6 @@ public class OrderDAO extends DBContext {
                         order.setFinalAmount(rs.getBigDecimal("final_amount"));
                         order.setPaymentStatus(rs.getString("payment_status"));
                         order.setPaymentMethod(rs.getString("payment_method"));
-                        order.setOrderStatus(rs.getString("order_status"));
                         order.setCreatedAt(rs.getTimestamp("created_at"));
                         order.setUpdatedAt(rs.getTimestamp("updated_at"));
 
@@ -761,7 +787,7 @@ public class OrderDAO extends DBContext {
             }
 
             if (order != null) {
-                // Láº¥y sub_orders
+                // Lấy sub_orders
                 try (PreparedStatement psSub = conn.prepareStatement(sqlSub)) {
                     psSub.setLong(1, orderId);
                     try (ResultSet rsSub = psSub.executeQuery()) {
@@ -780,7 +806,7 @@ public class OrderDAO extends DBContext {
                             sub.setStatus(rsSub.getString("status"));
                             sub.setCreatedAt(rsSub.getTimestamp("created_at"));
 
-                            // Láº¥y order_items cá»§a tá»«ng sub_order
+                            // Lấy order_items của từng sub_order
                             try (PreparedStatement psItem = conn.prepareStatement(sqlItems)) {
                                 psItem.setLong(1, sub.getSubOrderId());
                                 try (ResultSet rsItem = psItem.executeQuery()) {
@@ -790,7 +816,6 @@ public class OrderDAO extends DBContext {
                                         item.setSubOrderId(sub.getSubOrderId());
                                         long vId = rsItem.getLong("variant_id");
                                         item.setVariantId(rsItem.wasNull() ? null : vId);
-                                        item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
                                         item.setProductNameSnapshot(rsItem.getString("product_name_snapshot"));
                                         item.setVariantNameSnapshot(rsItem.getString("variant_name_snapshot"));
                                         item.setSkuSnapshot(rsItem.getString("sku_snapshot"));
@@ -823,7 +848,6 @@ public class OrderDAO extends DBContext {
                    + "       COALESCE(so.created_at, o.created_at) AS created_at, so.updated_at, "
                    + "       o.payment_method, o.payment_status, o.platform_discount, "
                    + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city, "
-                   + "       d.tracking_number, d.delivery_status, d.failure_reason, "
                    + "       drv.full_name AS driver_name, drv.phone AS driver_phone "
                    + "FROM sub_orders so "
                    + "JOIN orders o ON so.order_id = o.order_id "
@@ -870,14 +894,12 @@ public class OrderDAO extends DBContext {
                     so.setUpdatedAt(rs.getTimestamp("updated_at"));
                     so.setPaymentMethod(rs.getString("payment_method"));
                     so.setPaymentStatus(rs.getString("payment_status"));
-
-                    DeliveryDTO delivery = new DeliveryDTO();
-                    delivery.setTrackingNumber(rs.getString("tracking_number"));
-                    delivery.setDeliveryStatus(rs.getString("delivery_status"));
-                    delivery.setFailureReason(rs.getString("failure_reason"));
-                    delivery.setDriverName(rs.getString("driver_name"));
-                    delivery.setDriverPhone(rs.getString("driver_phone"));
-                    so.setDelivery(delivery);
+                    if (rs.getString("driver_name") != null) {
+                        DeliveryDTO delivery = new DeliveryDTO();
+                        delivery.setDriverName(rs.getString("driver_name"));
+                        delivery.setDriverPhone(rs.getString("driver_phone"));
+                        so.setDelivery(delivery);
+                    }
 
                     if (rs.getString("recipient_name") != null) {
                         ShippingAddress addr = new ShippingAddress(
@@ -897,15 +919,13 @@ public class OrderDAO extends DBContext {
             }
 
             // Tải chi tiết sản phẩm cho từng subOrder
-            String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
-                           + "       COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
-                           + "       oi.product_name_snapshot, oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
+            String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
+                           + "       oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
                            + "       oi.total_price, "
                            + "       (SELECT TOP 1 pi.image_url FROM product_images pi "
-                           + "        JOIN product_variants pv2 ON pi.product_id = pv2.product_id "
-                           + "        WHERE pv2.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
+                           + "        JOIN product_variants pv ON pi.product_id = pv.product_id "
+                           + "        WHERE pv.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
                            + "FROM order_items oi "
-                           + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
                            + "WHERE oi.sub_order_id = ?";
 
             try (PreparedStatement psItem = conn.prepareStatement(itemSql)) {
@@ -914,18 +934,22 @@ public class OrderDAO extends DBContext {
                     try (ResultSet rsItem = psItem.executeQuery()) {
                         List<OrderItemDetailDTO> items = new ArrayList<>();
                         while (rsItem.next()) {
+                            String prodImg = rsItem.getString("product_image");
+                            if (prodImg == null || prodImg.trim().isEmpty()) {
+                                prodImg = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=150&h=150&fit=crop";
+                            }
                             OrderItemDetailDTO item = new OrderItemDetailDTO();
                             item.setOrderItemId(rsItem.getLong("order_item_id"));
                             item.setSubOrderId(rsItem.getLong("sub_order_id"));
-                            item.setVariantId(rsItem.getObject("variant_id") != null ? rsItem.getLong("variant_id") : null);
-                            item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
+                            long itemVariantId = rsItem.getLong("variant_id");
+                            item.setVariantId(rsItem.wasNull() ? null : itemVariantId);
                             item.setProductNameSnapshot(rsItem.getString("product_name_snapshot"));
                             item.setVariantNameSnapshot(rsItem.getString("variant_name_snapshot"));
                             item.setUnit(rsItem.getString("unit"));
                             item.setUnitPrice(rsItem.getBigDecimal("unit_price"));
                             item.setQuantity(rsItem.getInt("quantity"));
                             item.setTotalPrice(rsItem.getBigDecimal("total_price"));
-                            item.setImageUrl(rsItem.getString("product_image"));
+                            item.setImageUrl(prodImg);
                             items.add(item);
                         }
                         so.setItems(items);
@@ -961,7 +985,7 @@ public class OrderDAO extends DBContext {
             String status = null;
             Integer couponId = null;
 
-            // 1. Thử tìm theo SubOrder trước
+            // 1. Thử tìm theo SubOrderDTO trước
             try (PreparedStatement psSub = conn.prepareStatement(findSubSql)) {
                 psSub.setString(1, orderIdentifier);
                 psSub.setString(2, orderIdentifier);
@@ -978,7 +1002,7 @@ public class OrderDAO extends DBContext {
                 }
             }
 
-            // 2. Nếu không tìm thấy SubOrder, thử tìm theo Parent Order
+            // 2. Nếu không tìm thấy SubOrderDTO, thử tìm theo Parent Order
             if (matchedSubOrderId == -1) {
                 try (PreparedStatement psOrd = conn.prepareStatement(findOrdSql)) {
                     psOrd.setString(1, orderIdentifier);
@@ -1011,7 +1035,7 @@ public class OrderDAO extends DBContext {
             String reasonToSave = (cancelReason != null && !cancelReason.trim().isEmpty()) ? cancelReason.trim() : "Người mua hủy đơn trực tiếp";
 
             if (matchedSubOrderId != -1) {
-                // Hủy cụ thể 1 SubOrder
+                // Hủy cụ thể 1 SubOrderDTO
                 String restoreStockSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, "
                                        + "       pv.updated_at = CURRENT_TIMESTAMP "
                                        + "FROM product_variants pv "
@@ -1106,14 +1130,6 @@ public class OrderDAO extends DBContext {
             }
 
             conn.commit();
-            try {
-                NotificationDAO notiDAO = new NotificationDAO();
-                if (matchedSubOrderId != -1) {
-                    notiDAO.notifyShopSubOrderCancelled(matchedSubOrderId, cancelReason);
-                } else if (matchedOrderId != -1) {
-                    notiDAO.notifyShopsOrderCancelled(matchedOrderId, cancelReason);
-                }
-            } catch (Exception ignored) {}
             return true;
         } catch (Exception ex) {
             try {
