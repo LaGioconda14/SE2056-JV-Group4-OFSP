@@ -4,19 +4,8 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Kho & Cảnh báo tồn - Kênh Người Bán | FreshFruit Market</title>
-
-        <!-- Google Fonts & FontAwesome -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-        <!-- Tailwind CSS CDN -->
-        <script src="https://cdn.tailwindcss.com"></script>
-
+        <jsp:include page="/views/shop/layout/head.jsp" />
         <style>
             .variant-card {
                 margin-bottom: 1.25rem;
@@ -32,82 +21,24 @@
             }
         </style>
     </head>
-    <body class="min-h-screen flex bg-[#f8fafc] text-slate-800 font-['Plus_Jakarta_Sans',sans-serif]">
+    <body class="bg-[#f8fafc] text-[#0f172a]">
 
-        <!-- Sidebar -->
-        <aside class="w-64 shrink-0 bg-white border-r border-slate-200 h-screen sticky top-0 flex flex-col justify-between z-30 overflow-y-auto shadow-xs">
-            <div>
-                <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-100 shadow-2xs mx-3 mt-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-emerald-500 shadow-xs">
-                            <c:choose>
-                                <c:when test="${not empty shopLogo}"><img src="${shopLogo}" alt="Shop Avatar" class="w-full h-full object-cover"></c:when>
-                                <c:otherwise><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" alt="Default Avatar" class="w-full h-full object-cover"></c:otherwise>
-                            </c:choose>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-extrabold text-slate-900 leading-tight">${not empty sessionScope.shopName ? sessionScope.shopName : 'HTX Trái Cây Miền Tây'}</h4>
-                            <p class="text-[10px] font-bold text-emerald-700 tracking-wider mt-0.5">SELLER CENTER</p>
-                        </div>
-                    </div>
-                    <span class="px-2 py-0.5 text-[10px] font-black text-emerald-800 bg-emerald-100 rounded-md tracking-wider">PRO</span>
-                </div>
+        <jsp:include page="/views/shop/layout/sidebar.jsp">
+            <jsp:param name="active" value="inventory" />
+        </jsp:include>
+        <jsp:include page="/views/shop/layout/header.jsp">
+            <jsp:param name="searchAction" value="/shop/inventory/batches" />
+        </jsp:include>
 
-                <nav class="space-y-1.5 px-3 mt-4">
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 font-extrabold">TỔNG QUAN</div>
-                    <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-chart-pie text-slate-400 text-sm w-4 text-center"></i><span>Tổng quan Shop</span></span></a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">SẢN PHẨM & KHO</div>
-                    <a href="${pageContext.request.contextPath}/shop/products" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-seedling text-slate-400 text-sm w-4 text-center"></i><span>Tất cả sản phẩm</span></span></a>
-                    <a href="${pageContext.request.contextPath}/shop/inventory" class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-800 font-bold text-xs transition-all shadow-2xs"><span class="flex items-center gap-3"><i class="fa-solid fa-warehouse text-emerald-600 text-sm w-4 text-center"></i><span>Kho & Cảnh báo tồn</span></span><span class="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold rounded-full">${not empty lowStockCount ? lowStockCount : 0}</span></a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">ĐƠN HÀNG</div>
-                    <a href="${pageContext.request.contextPath}/shop/orders" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-receipt text-slate-400 text-sm w-4 text-center"></i><span>Đơn hàng con</span></span><span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-bold rounded-full">8</span></a>
-                    <a href="${pageContext.request.contextPath}/shop/shipping" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-truck-ramp-box text-slate-400 text-sm w-4 text-center"></i><span>Đóng gói & Vận đơn</span></span></a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">TIẾP THỊ & KHÁCH</div>
-                    <a href="${pageContext.request.contextPath}/shop/coupons" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-tags text-slate-400 text-sm w-4 text-center"></i><span>Mã giảm giá Shop</span></span></a>
-                    <a href="${pageContext.request.contextPath}/shop/reviews" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-star-half-stroke text-slate-400 text-sm w-4 text-center"></i><span>Đánh giá từ khách</span></span></a>
-
-                    <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">HỆ THỐNG</div>
-                    <a href="${pageContext.request.contextPath}/shop/finance" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-wallet text-slate-400 text-sm w-4 text-center"></i><span>Doanh thu & Rút tiền</span></span></a>
-                    <a href="${pageContext.request.contextPath}/shop/settings" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 font-semibold text-xs transition-all"><span class="flex items-center gap-3"><i class="fa-solid fa-sliders text-slate-400 text-sm w-4 text-center"></i><span>Cài đặt Shop</span></span></a>
-                </nav>
-            </div>
-
-            <div class="p-3 border-t border-slate-100 space-y-1">
-                <a href="${pageContext.request.contextPath}/home" class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-600 hover:text-emerald-700 font-semibold text-xs transition-all"><i class="fa-solid fa-store text-xs w-4 text-center"></i><span>Xem trang mua sắm</span></a>
-                <a href="${pageContext.request.contextPath}/logout" class="flex items-center gap-3 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs transition-all"><i class="fa-solid fa-power-off text-xs w-4 text-center"></i><span>Đăng xuất</span></a>
-            </div>
-        </aside>
-
-        <!-- Content Area -->
-        <div class="flex-1 min-w-0 flex flex-col">
-            <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
-                <div class="relative w-96"></div>
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-200"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Đang nhận đơn</span></div>
-                    <button class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all" type="button"><i class="fa-regular fa-comment-dots text-sm"></i></button>
-                    <button class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 relative transition-all" type="button"><i class="fa-regular fa-bell text-sm"></i><span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">5</span></button>
-                    <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
-                        <div class="text-right hidden sm:block"><span class="text-xs font-black text-slate-900 block leading-tight">${not empty sessionScope.user.fullName ? sessionScope.user.fullName : sessionScope.userfullname}</span><span class="text-[10px] text-slate-400 font-medium block leading-tight">${sessionScope.email}</span></div>
-                        <div class="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm overflow-hidden">
-                            <c:choose>
-                                <c:when test="${not empty sessionScope.user.avatarUrl}"><img src="${sessionScope.user.avatarUrl}" alt="Avatar" class="w-full h-full object-cover"></c:when>
-                                <c:otherwise><span class="text-xs font-extrabold">THA</span></c:otherwise>
-                            </c:choose>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <main class="p-6 flex-1">
-                <div class="max-w-7xl mx-auto space-y-6">
+        <main class="shop-main-wrapper">
+            <div class="shop-content-container">
                     <!-- Thông báo Flash message từ Servlet -->
                     <c:if test="${not empty inventoryRestockMessage}">
                         <div class="px-4 py-3 rounded-xl text-sm font-semibold ${inventoryRestockSuccess ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
                             <c:out value="${inventoryRestockMessage}" />
                         </div>
+                        <c:remove var="inventoryRestockMessage" scope="session" />
+                        <c:remove var="inventoryRestockSuccess" scope="session" />
                     </c:if>
                     <c:if test="${not empty inventoryAdjustMessage}">
                         <div class="px-4 py-3 rounded-xl text-sm font-semibold ${inventoryAdjustSuccess ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
@@ -308,18 +239,18 @@
                                                             </button>
 
                                                             <c:if test="${batch.currentQuantity > 0}">
-    <button type="button"
-            data-batch-id="${batch.batchId}"
-            data-variant-id="${batch.variantId != null ? batch.variantId : variantId}"
-            data-product-name="<c:out value='${firstBatch.productName}'/>"
-            data-sku="${firstBatch.sku}"
-            data-batch-code="${batch.batchCode}"
-            data-current-qty="${batch.currentQuantity}"
-            onclick="openDisposeModal(this)"
-            class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs" title="Hủy toàn bộ lô hàng ngay lập tức">
-        <i class="fa-solid fa-ban text-[10px]"></i> Hủy lô
-    </button>
-</c:if>
+                                                                <button type="button"
+                                                                        data-batch-id="${batch.batchId}"
+                                                                        data-variant-id="${batch.variantId != null ? batch.variantId : variantId}"
+                                                                        data-product-name="<c:out value='${firstBatch.productName}'/>"
+                                                                        data-sku="${firstBatch.sku}"
+                                                                        data-batch-code="${batch.batchCode}"
+                                                                        data-current-qty="${batch.currentQuantity}"
+                                                                        onclick="openDisposeModal(this)"
+                                                                        class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs" title="Hủy toàn bộ lô hàng ngay lập tức">
+                                                                    <i class="fa-solid fa-ban text-[10px]"></i> Hủy lô
+                                                                </button>
+                                                            </c:if>
 
                                                             <!-- 3. Nút Lịch sử -->
                                                             <c:url var="historyUrl" value="/shop/inventory/history">
@@ -349,9 +280,8 @@
                             </div>
                         </c:if>
                     </section>
-                </div>
-            </main>
-        </div>
+            </div>
+        </main>
 
         <!-- ==================== MODALS CHỨC NĂNG ==================== -->
         <!-- 1. Modal Nhập Kho Lô Mới -->
@@ -608,15 +538,15 @@
 
             // Hàm mở Modal Hủy lô
             function openDisposeModal(btn) {
-    if (btn && btn.dataset) {
-        document.getElementById('disposeVariantId').value = btn.dataset.variantId || '';
-        document.getElementById('disposeBatchId').value = btn.dataset.batchId || '';
-        document.getElementById('disposeProductName').value = (btn.dataset.productName || '') + ' (' + (btn.dataset.sku || '') + ')';
-        document.getElementById('disposeBatchCode').value = btn.dataset.batchCode || '';
-        document.getElementById('disposeCurrentQty').value = (btn.dataset.currentQty || '0') + ' đơn vị';
-    }
-    openModal('modalDispose');
-}
+                if (btn && btn.dataset) {
+                    document.getElementById('disposeVariantId').value = btn.dataset.variantId || '';
+                    document.getElementById('disposeBatchId').value = btn.dataset.batchId || '';
+                    document.getElementById('disposeProductName').value = (btn.dataset.productName || '') + ' (' + (btn.dataset.sku || '') + ')';
+                    document.getElementById('disposeBatchCode').value = btn.dataset.batchCode || '';
+                    document.getElementById('disposeCurrentQty').value = (btn.dataset.currentQty || '0') + ' đơn vị';
+                }
+                openModal('modalDispose');
+            }
 
             // Kiểm tra an toàn trước khi submit hủy lô
             function validateDisposeForm() {

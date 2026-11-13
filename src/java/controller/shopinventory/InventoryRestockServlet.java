@@ -62,13 +62,13 @@ public class InventoryRestockServlet extends HttpServlet {
         }
 
         // Điều hướng quay trở lại trang quản lý kho
-        response.sendRedirect(request.getContextPath() + "/shop/inventory");
+        response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Chặn truy cập GET trực tiếp vào URL action này, đẩy về trang dashboard kho
-        response.sendRedirect(request.getContextPath() + "/shop/inventory");
+        response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
     }
 }

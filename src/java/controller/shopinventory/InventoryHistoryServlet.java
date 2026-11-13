@@ -87,7 +87,7 @@ public class InventoryHistoryServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/shop/inventory");
+            response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
         }
     }
 

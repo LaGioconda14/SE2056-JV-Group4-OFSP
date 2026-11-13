@@ -1,19 +1,13 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
-
 package controller.shop;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import model.entity.product.Category;
 import model.dto.product.ProductDetailDTO;
@@ -21,45 +15,10 @@ import model.entity.user.User;
 import service.IProductService;
 import service.impl.ProductServiceImpl;
 
-/**
- *
- * @author ADMIN
- */
 @WebServlet(name="ShopEditProductServlet", urlPatterns={"/shop/product/edit"})
 public class ShopEditProductServlet extends HttpServlet {
     private final IProductService productService = new ProductServiceImpl();
-    /** 
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code> methods.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet ShopEditProductServlet</title>");  
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet ShopEditProductServlet at " + request.getContextPath () + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    } 
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /** 
-     * Handles the HTTP <code>GET</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
@@ -81,64 +40,76 @@ public class ShopEditProductServlet extends HttpServlet {
         }
 
         try {
-            // 1. Bắt linh hoạt mọi loại tên tham số truyền lên từ URL
+            // Bắt linh hoạt cả productId và id trên URL
             String idStr = request.getParameter("productId");
+            if (idStr == null || idStr.trim().isEmpty()) {
+                idStr = request.getParameter("id");
+            }
+
             if (idStr != null && !idStr.trim().isEmpty()) {
                 long productId = Long.parseLong(idStr.trim());
                 ProductDetailDTO product = productService.getShopProductForEdit(productId, shopId);
                 if (product == null) {
+                    session.setAttribute("errorMessage", "Không tìm thấy sản phẩm hoặc bạn không có quyền chỉnh sửa!");
                     response.sendRedirect(request.getContextPath() + "/shop/products");
                     return;
                 }
                 request.setAttribute("product", product);
+
+                // Nạp danh sách ảnh phụ nếu DTO có lưu danh sách images
+                if (product.getImages() != null) {
+                    List<String> subImages = new ArrayList<>();
+                    for (String img : product.getImages()) {
+                        if (img != null && !img.equals(product.getImage())) {
+                            subImages.add(img);
+                        }
+                    }
+                    if (subImages.size() > 0) request.setAttribute("detailImage1", subImages.get(0));
+                    if (subImages.size() > 1) request.setAttribute("detailImage2", subImages.get(1));
+                    if (subImages.size() > 2) request.setAttribute("detailImage3", subImages.get(2));
+                    if (subImages.size() > 3) request.setAttribute("detailImage4", subImages.get(3));
+                }
+            } else {
+                response.sendRedirect(request.getContextPath() + "/shop/products");
+                return;
             }
 
-            // 2. Lấy dữ liệu hỗ trợ cho dropdown / datalist
-            List<Category> categories = productService.getAllCategories();
-            request.setAttribute("categories", categories);
-            
-            List<String> certifications = productService.getAllCertifications();
-            request.setAttribute("certifications", certifications);
-            
-            List<String> storageTemps = productService.getAllStorageTemps();
-            request.setAttribute("storageTemps", storageTemps);
-            
-            List<String> units = productService.getAllUnits();
-            request.setAttribute("units", units);
-            
+            loadDropdownData(request);
+
         } catch (Exception e) {
             e.printStackTrace();
+            session.setAttribute("errorMessage", "Lỗi tải thông tin sản phẩm: " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/shop/products");
+            return;
         }
 
-        // 3. Forward đúng sang trang chỉnh sửa JSP
         request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
     } 
 
-    /** 
-     * Handles the HTTP <code>POST</code> method.
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
+
         Long shopId = (Long) session.getAttribute("shopId");
         if (shopId == null) {
             response.sendRedirect(request.getContextPath() + "/shop/products");
             return;
         }
 
+        long productId = 0;
         try {
-            // 2. Lấy tất cả các tham số từ form gửi lên
             String productIdStr = request.getParameter("productId");
+            productId = Long.parseLong(productIdStr.trim());
+
             String name = request.getParameter("name");
             String categoryIdStr = request.getParameter("categoryId");
             String origin = request.getParameter("origin");
@@ -148,49 +119,68 @@ public class ShopEditProductServlet extends HttpServlet {
             String isActiveStr = request.getParameter("isActive");
             String coverImageUrl = request.getParameter("coverImageUrl");
 
-            // 3. Ép kiểu dữ liệu an toàn
-            long productId = Long.parseLong(productIdStr);
-            int categoryId = (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) ? Integer.parseInt(categoryIdStr) : 0;
+            // Lấy thêm 4 ảnh phụ từ form
+            String detailImage1 = request.getParameter("detailImage1");
+            String detailImage2 = request.getParameter("detailImage2");
+            String detailImage3 = request.getParameter("detailImage3");
+            String detailImage4 = request.getParameter("detailImage4");
+
+            int categoryId = (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) ? Integer.parseInt(categoryIdStr.trim()) : 0;
             boolean isActive = "true".equalsIgnoreCase(isActiveStr) || "on".equalsIgnoreCase(isActiveStr);
 
-            // 4. Gọi Service thực hiện cập nhật
-            boolean success = productService.updateFullProduct(shopId,
-                productId, name, categoryId, origin, storageTemp, certification,
-                description, isActive, coverImageUrl
+            // Gọi Service cập nhật thông tin chính
+            boolean success = productService.updateFullProduct(
+                shopId, productId, name, categoryId, origin, storageTemp,
+                certification, description, isActive, coverImageUrl
             );
 
             if (success) {
-                // Cập nhật thành công -> Chuyển hướng về danh sách sản phẩm kèm thông báo
-                response.sendRedirect(request.getContextPath() + "/shop/products?message=updated_success");
+                // Sử dụng session successMessage để flash-message.jsp hiển thị đồng bộ
+                session.setAttribute("successMessage", "Cập nhật thông tin nông sản thành công!");
+                response.sendRedirect(request.getContextPath() + "/shop/products");
             } else {
-                // Cập nhật thất bại -> Đẩy lại lỗi và giữ nguyên form
-                request.setAttribute("errorMessage", "Cập nhật thông tin nông sản thất bại. Vui lòng kiểm tra lại dữ liệu!");
-                
-                // Load lại dữ liệu để form không bị rỗng khi render lại
-                ProductDetailDTO product = productService.getShopProductForEdit(productId, shopId);
-                request.setAttribute("product", product);
-                request.setAttribute("categories", productService.getAllCategories());
-                request.setAttribute("certifications", productService.getAllCertifications());
-                request.setAttribute("storageTemps", productService.getAllStorageTemps());
-                request.setAttribute("units", productService.getAllUnits());
-                
-                request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+                session.setAttribute("errorMessage", "Cập nhật thông tin nông sản thất bại. Vui lòng kiểm tra lại dữ liệu!");
+                reloadFormOnFailure(request, response, productId, shopId, detailImage1, detailImage2, detailImage3, detailImage4);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
-            request.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
-            request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+            session.setAttribute("errorMessage", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
+            reloadFormOnFailure(request, response, productId, shopId,
+                request.getParameter("detailImage1"),
+                request.getParameter("detailImage2"),
+                request.getParameter("detailImage3"),
+                request.getParameter("detailImage4")
+            );
         }
     }
 
-    /** 
-     * Returns a short description of the servlet.
-     * @return a String containing servlet description
-     */
+    private void loadDropdownData(HttpServletRequest request) {
+        List<Category> categories = productService.getAllCategories();
+        request.setAttribute("categories", categories);
+        request.setAttribute("certifications", productService.getAllCertifications());
+        request.setAttribute("storageTemps", productService.getAllStorageTemps());
+        request.setAttribute("units", productService.getAllUnits());
+    }
+
+    private void reloadFormOnFailure(HttpServletRequest request, HttpServletResponse response,
+                                     long productId, Long shopId,
+                                     String img1, String img2, String img3, String img4)
+            throws ServletException, IOException {
+        if (productId > 0) {
+            ProductDetailDTO product = productService.getShopProductForEdit(productId, shopId);
+            request.setAttribute("product", product);
+        }
+        request.setAttribute("detailImage1", img1);
+        request.setAttribute("detailImage2", img2);
+        request.setAttribute("detailImage3", img3);
+        request.setAttribute("detailImage4", img4);
+        loadDropdownData(request);
+        request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+    }
+
     @Override
     public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
+        return "ShopEditProductServlet";
+    }
 }

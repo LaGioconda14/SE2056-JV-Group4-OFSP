@@ -11,6 +11,7 @@ nbproject/private/
 # Build and distribution directories
 build/
 dist/
+target/
 
 # Local database scripts (keep local)
 database.sql
