@@ -82,7 +82,6 @@ public class PlaceOrderServlet extends HttpServlet {
         }
 
         String addressSelection = request.getParameter("addressSelection");
-        String deliveryDate = request.getParameter("deliveryDate");
         String deliverySlot = request.getParameter("deliverySlot");
         String paymentMethod = request.getParameter("paymentMethod");
         String couponCode = request.getParameter("couponCode");
@@ -154,16 +153,23 @@ public class PlaceOrderServlet extends HttpServlet {
             return;
         }
 
+        // FE-14: so diem thuong khach da ap dung o buoc thanh toan (luu trong session).
+        int loyaltyPoints = 0;
+        Object savedLoyalty = session.getAttribute("checkoutLoyaltyPoints");
+        if (savedLoyalty instanceof Integer) {
+            loyaltyPoints = (Integer) savedLoyalty;
+        }
+
         try {
             long orderId;
             if (buyNow) {
                 orderId = orderService.placeBuyNowOrder((long) user.getId(), buyNowVariantId,
-                        buyNowQuantity, shippingAddress, deliveryDate, deliverySlot, paymentMethod, couponCode,
-                        shopCouponCodes, shopNotes, "new".equals(addressSelection) && saveAddress);
+                        buyNowQuantity, shippingAddress, deliverySlot, paymentMethod, couponCode,
+                        shopCouponCodes, shopNotes, loyaltyPoints, "new".equals(addressSelection) && saveAddress);
             } else {
                 orderId = orderService.placeOrder((long) user.getId(), cartItemIds, shippingAddress,
-                        deliveryDate, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes,
-                        "new".equals(addressSelection) && saveAddress);
+                        deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes,
+                        loyaltyPoints, "new".equals(addressSelection) && saveAddress);
             }
 
             // Dọn dẹp session sau khi đặt hàng thành công
@@ -174,20 +180,12 @@ public class PlaceOrderServlet extends HttpServlet {
             session.removeAttribute("checkoutCouponCode");
             session.removeAttribute("checkoutShopCoupons");
             session.removeAttribute("checkoutFormDraft");
+            session.removeAttribute("checkoutLoyaltyPoints");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
             // Gửi thông báo đặt hàng thành công
             try {
                 INotificationService notiService = new NotificationServiceImpl();
                 notiService.notifyOrderPlaced(user.getId(), orderId, String.valueOf(orderId), 0);
-                notiService.notifyShopsNewOrder(orderId);
-                notiService.checkAndNotifyLowStock(orderId);
-                if (user.getEmail() != null && !user.getEmail().isBlank()) {
-                    String subject = "Xác nhận đặt hàng thành công #" + orderId + " - Gốc Vườn";
-                    String html = "<p>Xin chào <strong>" + user.getFullName() + "</strong>,</p>"
-                            + "<p>Đơn hàng <strong>#" + orderId + "</strong> của bạn đã được tiếp nhận thành công trên sàn Gốc Vườn.</p>"
-                            + "<p>Nhà vườn đang chuẩn bị đóng gói hoa quả tươi để chuyển tới bạn sớm nhất!</p>";
-                    util.EmailUtil.sendNotificationEmailAsync(user.getEmail(), subject, html);
-                }
             } catch (Exception ignored) {}
 
             if (PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)) {

@@ -2,13 +2,11 @@ package service.impl;
 
 import dao.CouponDAO;
 import dao.OrderDAO;
-import dao.ShopDAO;
 import enums.DeliverySlot;
 import enums.PaymentMethod;
 import enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.Normalizer;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,49 +16,33 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import model.entity.cart.CartItem;
 import model.entity.promotion.Coupon;
 import model.entity.user.CustomerAddress;
 import model.dto.order.OrderDetailDTO;
 import model.dto.order.OrderItemDetailDTO;
-import model.dto.order.SubOrderDTO;
 import model.entity.order.ShippingAddress;
+import model.dto.order.SubOrderDTO;
 import service.IOrderService;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 public class OrderServiceImpl implements IOrderService {
 
     private final OrderDAO orderDAO;
     private final CouponDAO couponDAO;
-    private final ShopDAO shopDAO;
-    private static final BigDecimal SAME_PROVINCE_SHIPPING_FEE = new BigDecimal("14000");
-    private static final BigDecimal DIFFERENT_PROVINCE_SHIPPING_FEE = new BigDecimal("30000");
-    private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
 
     public OrderServiceImpl() {
         this.orderDAO = new OrderDAO();
         this.couponDAO = new CouponDAO();
-        this.shopDAO = new ShopDAO();
     }
 
     public OrderServiceImpl(OrderDAO orderDAO) {
         this.orderDAO = orderDAO;
         this.couponDAO = new CouponDAO();
-        this.shopDAO = new ShopDAO();
     }
 
     public OrderServiceImpl(OrderDAO orderDAO, CouponDAO couponDAO) {
         this.orderDAO = orderDAO;
         this.couponDAO = couponDAO;
-        this.shopDAO = new ShopDAO();
-    }
-
-    public OrderServiceImpl(OrderDAO orderDAO, CouponDAO couponDAO, ShopDAO shopDAO) {
-        this.orderDAO = orderDAO;
-        this.couponDAO = couponDAO;
-        this.shopDAO = shopDAO;
     }
 
     @Override
@@ -133,12 +115,6 @@ public class OrderServiceImpl implements IOrderService {
     @Override
     public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes) {
-        return buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes, null);
-    }
-
-    @Override
-    public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
-            Map<Long, String> shopCouponCodes, String customerProvince) {
         OrderDetailDTO order = new OrderDetailDTO();
         order.setCustomerId(customerId);
 
@@ -157,8 +133,6 @@ public class OrderServiceImpl implements IOrderService {
         BigDecimal totalShipping = BigDecimal.ZERO;
         BigDecimal totalShopDiscount = BigDecimal.ZERO;
         List<SubOrderDTO> subOrders = new ArrayList<>();
-        Map<Long, String> shopProvinces = customerProvince == null || customerProvince.isBlank()
-                ? Collections.emptyMap() : shopDAO.getShopProvinces(itemsByShop.keySet());
 
         for (Map.Entry<Long, List<CartItem>> entry : itemsByShop.entrySet()) {
             long shopId = entry.getKey();
@@ -196,8 +170,7 @@ public class OrderServiceImpl implements IOrderService {
             sub.setItems(orderItems);
             sub.setShopSubtotal(shopSubtotal);
 
-            BigDecimal shopShippingFee = calculateShippingFee(
-                    shopProvinces.get(shopId), customerProvince);
+            BigDecimal shopShippingFee = BigDecimal.ZERO;
             sub.setShopShippingFee(shopShippingFee);
 
             BigDecimal shopDiscount = BigDecimal.ZERO;
@@ -238,32 +211,6 @@ public class OrderServiceImpl implements IOrderService {
         order.setPlatformDiscount(discount);
         order.setFinalAmount(totalGoods.subtract(totalShopDiscount).add(totalShipping).subtract(discount).max(BigDecimal.ZERO));
         return order;
-    }
-
-    private BigDecimal calculateShippingFee(String shopProvince, String customerProvince) {
-        if (customerProvince == null || customerProvince.isBlank()) {
-            return BigDecimal.ZERO;
-        }
-        String normalizedShopProvince = normalizeProvince(shopProvince);
-        String normalizedCustomerProvince = normalizeProvince(customerProvince);
-        if (!normalizedShopProvince.isEmpty()
-                && normalizedShopProvince.equals(normalizedCustomerProvince)) {
-            return SAME_PROVINCE_SHIPPING_FEE;
-        }
-        return DIFFERENT_PROVINCE_SHIPPING_FEE;
-    }
-
-    private String normalizeProvince(String value) {
-        if (value == null) {
-            return "";
-        }
-        String normalized = DIACRITICS.matcher(
-                Normalizer.normalize(value, Normalizer.Form.NFD)).replaceAll("")
-                .toLowerCase(Locale.ROOT)
-                .replace('đ', 'd')
-                .replaceAll("\\b(thanh pho|tinh|tp)\\.?\\s*", "")
-                .replaceAll("[^a-z0-9]", "");
-        return normalized;
     }
 
     private void validateShopCoupon(Coupon coupon, long shopId, BigDecimal eligibleAmount) {
@@ -356,17 +303,19 @@ public class OrderServiceImpl implements IOrderService {
             String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
-        return placeOrder(customerId, cartItemIds, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
+        return placeOrder(customerId, cartItemIds, address, deliverySlot, paymentMethod, couponCode,
+                shopCouponCodes, shopNotes, 0, saveAddress);
     }
 
     @Override
     public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
+            String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
-            boolean saveAddress) throws Exception {
+            int loyaltyPoints, boolean saveAddress) throws Exception {
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
-        OrderDetailDTO order = prepareOrder(customerId, selectedItems, address, deliveryDate, deliverySlot,
+        OrderDetailDTO order = prepareOrder(customerId, selectedItems, address, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
+        order.setLoyaltyPointsUsed(Math.max(0, loyaltyPoints)); // FE-14: kiểm tra và trừ điểm trong transaction của DAO
         return orderDAO.createOrder(order, address, cartItemIds,
                 order.getPaymentMethod(), saveAddress);
     }
@@ -375,7 +324,7 @@ public class OrderServiceImpl implements IOrderService {
     public long placeBuyNowOrder(long customerId, long variantId, int quantity,
             ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception {
-        return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
+        return placeBuyNowOrder(customerId, variantId, quantity, address, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
     }
 
     @Override
@@ -383,22 +332,24 @@ public class OrderServiceImpl implements IOrderService {
             ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
-        return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
+        return placeBuyNowOrder(customerId, variantId, quantity, address, deliverySlot, paymentMethod, couponCode,
+                shopCouponCodes, shopNotes, 0, saveAddress);
     }
 
     @Override
     public long placeBuyNowOrder(long customerId, long variantId, int quantity,
-            ShippingAddress address, String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
+            ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
-            boolean saveAddress) throws Exception {
+            int loyaltyPoints, boolean saveAddress) throws Exception {
         CartItem item = getBuyNowItemForCheckout(variantId, quantity);
-        OrderDetailDTO order = prepareOrder(customerId, List.of(item), address, deliveryDate, deliverySlot,
+        OrderDetailDTO order = prepareOrder(customerId, List.of(item), address, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
+        order.setLoyaltyPointsUsed(Math.max(0, loyaltyPoints)); // FE-14
         return orderDAO.createBuyNowOrder(order, address, order.getPaymentMethod(), saveAddress);
     }
 
     private OrderDetailDTO prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
-            String deliveryDateStr, String deliverySlot, String paymentMethod, String couponCode,
+            String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes) {
         if (address == null || address.getRecipientName() == null
                 || address.getRecipientName().trim().isEmpty()) {
@@ -420,6 +371,11 @@ public class OrderServiceImpl implements IOrderService {
                     "Vui lòng nhập đầy đủ phường/xã và tỉnh/thành phố!");
         }
 
+        DeliverySlot selectedSlot = DeliverySlot.from(deliverySlot);
+        if (selectedSlot == null) {
+            throw new IllegalArgumentException("Khung giờ giao hàng không hợp lệ!");
+        }
+
         PaymentMethod selectedPayment = PaymentMethod.from(paymentMethod);
         if (selectedPayment != PaymentMethod.COD && selectedPayment != PaymentMethod.CARD
                 && selectedPayment != PaymentMethod.VNPAY) {
@@ -434,45 +390,10 @@ public class OrderServiceImpl implements IOrderService {
         address.setDistrict(address.getDistrict() != null ? address.getDistrict().trim() : "");
         address.setCity(address.getCity().trim());
 
-        OrderDetailDTO order = buildDraftOrder(customerId, selectedItems, couponCode,
-                shopCouponCodes, address.getCity());
-
-        // Chuẩn hóa ngày giao
-        LocalDate selectedDate;
-        try {
-            if (deliveryDateStr != null && !deliveryDateStr.trim().isEmpty()) {
-                selectedDate = LocalDate.parse(deliveryDateStr.trim());
-            } else {
-                selectedDate = LocalDate.now();
-            }
-        } catch (Exception ex) {
-            selectedDate = LocalDate.now();
-        }
-        String formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-
-        // Chuẩn hóa khung giờ giao hàng
-        String slotText = "08:00 - 10:00";
-        if (deliverySlot != null && !deliverySlot.trim().isEmpty()) {
-            String trimmed = deliverySlot.trim();
-            if ("MORNING".equalsIgnoreCase(trimmed) || "M1".equalsIgnoreCase(trimmed)) {
-                slotText = "08:00 - 10:00";
-            } else if ("M2".equalsIgnoreCase(trimmed)) {
-                slotText = "10:00 - 12:00";
-            } else if ("AFTERNOON".equalsIgnoreCase(trimmed) || "A1".equalsIgnoreCase(trimmed)) {
-                slotText = "13:00 - 15:00";
-            } else if ("A2".equalsIgnoreCase(trimmed)) {
-                slotText = "15:00 - 17:00";
-            } else if ("EVENING".equalsIgnoreCase(trimmed) || "E1".equalsIgnoreCase(trimmed)) {
-                slotText = "17:00 - 19:00";
-            } else if ("E2".equalsIgnoreCase(trimmed)) {
-                slotText = "19:00 - 21:00";
-            } else {
-                slotText = trimmed;
-            }
-        }
-
-        String slotLabel = slotText + " (" + formattedDate + ")";
-
+        OrderDetailDTO order = buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes);
+        String slotLabel = selectedSlot == DeliverySlot.MORNING ? "Giao buổi sáng (08:00 - 12:00)"
+                : selectedSlot == DeliverySlot.AFTERNOON ? "Giao buổi chiều (13:00 - 17:00)"
+                : selectedSlot == DeliverySlot.EVENING ? "Giao buổi tối (18:00 - 21:00)" : selectedSlot.name();
         for (SubOrderDTO sub : order.getSubOrders()) {
             String note = shopNotes != null ? shopNotes.get(sub.getShopId()) : null;
             if (note != null && !note.trim().isEmpty()) {
@@ -524,6 +445,12 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
-        return orderDAO.cancelOrderByCustomer(customerId, orderIdentifier, cancelReason);
+        boolean ok = orderDAO.cancelOrderByCustomer(customerId, orderIdentifier, cancelReason);
+        if (ok) {
+            loyaltyService.syncOrders(customerId); // FE-14: hoàn lại điểm thưởng đã dùng cho đơn vừa hủy
+        }
+        return ok;
     }
+
+    private final service.ILoyaltyService loyaltyService = new LoyaltyServiceImpl();
 }

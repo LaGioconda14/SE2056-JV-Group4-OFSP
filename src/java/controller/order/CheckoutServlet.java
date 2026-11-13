@@ -27,6 +27,7 @@ import enums.PaymentMethod;
 import model.entity.cart.CartItem;
 import model.entity.promotion.Coupon;
 import model.entity.user.CustomerAddress;
+import model.LoyaltyQuote;
 import model.dto.order.OrderDetailDTO;
 import model.entity.user.User;
 import service.IAddressLookupService;
@@ -34,6 +35,8 @@ import service.ICustomerAddressService;
 import service.IOrderService;
 import service.impl.AddressLookupServiceImpl;
 import service.impl.CustomerAddressServiceImpl;
+import service.ILoyaltyService;
+import service.impl.LoyaltyServiceImpl;
 import service.impl.OrderServiceImpl;
 
 @WebServlet(name = "CheckoutServlet", urlPatterns = {"/checkout"})
@@ -44,6 +47,7 @@ public class CheckoutServlet extends HttpServlet {
     private transient IOrderService orderService;
     private final IAddressLookupService addressLookupService = new AddressLookupServiceImpl();
     private final ICustomerAddressService customerAddressService = new CustomerAddressServiceImpl();
+    private final ILoyaltyService loyaltyService = new LoyaltyServiceImpl();
 
     public CheckoutServlet() {
         this(new OrderServiceImpl());
@@ -86,7 +90,7 @@ public class CheckoutServlet extends HttpServlet {
             return;
         }
         if (!List.of("selectProvince", "selectAddress", "createAddress", "applyCoupon", "removeCoupon",
-                "applyShopCoupon", "removeShopCoupon").contains(action)) {
+                "applyShopCoupon", "removeShopCoupon", "applyLoyalty", "removeLoyalty").contains(action)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
@@ -179,6 +183,21 @@ public class CheckoutServlet extends HttpServlet {
                 request.setAttribute("checkoutError", ex.getMessage());
             }
         }
+        // FE-14: khach ap dung / go bo diem thuong
+        if ("applyLoyalty".equals(action)) {
+            String rawPoints = request.getParameter("loyaltyPoints");
+            try {
+                int points = Integer.parseInt(rawPoints == null ? "" : rawPoints.trim());
+                if (points <= 0 || points > 100_000_000) {
+                    throw new NumberFormatException();
+                }
+                session.setAttribute("checkoutLoyaltyPoints", points);
+            } catch (NumberFormatException ex) {
+                request.setAttribute("checkoutError", "Số điểm muốn dùng không hợp lệ!");
+            }
+        } else if ("removeLoyalty".equals(action)) {
+            session.removeAttribute("checkoutLoyaltyPoints");
+        }
         request.setAttribute("checkoutActionHandled", true);
         processCheckout(request, response);
     }
@@ -201,13 +220,13 @@ public class CheckoutServlet extends HttpServlet {
             if (!Boolean.TRUE.equals(request.getAttribute("checkoutActionHandled"))) {
                 draft(session, user.getId()).remove("openAddressModal");
             }
-            Map<String, String> formDraft = draft(session, user.getId());
-            String customerProvince = resolveCheckoutProvince(user.getId(), formDraft);
             Map<Long, List<CartItem>> itemsByShop = groupItemsByShop(selectedItems);
             DraftResult draft = buildDraftWithVoucherFallback(user.getId(), selectedItems,
-                    selection.couponCode(), selection.shopCouponCodes(), customerProvince, request, session);
+                    selection.couponCode(), selection.shopCouponCodes(), request, session);
+            applyLoyalty(request, session, user.getId(), draft.order());
             setViewAttributes(request, user.getId(), selection, selectedItems,
                     itemsByShop, draft);
+            Map<String, String> formDraft = draft(session, user.getId());
             request.setAttribute("formDraft", formDraft);
             String selected = formDraft.get("addressSelection");
             if (selected != null && selected.startsWith("saved:")) {
@@ -467,12 +486,11 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private DraftResult buildDraftWithVoucherFallback(long customerId, List<CartItem> items,
-            String couponCode, Map<Long, String> shopCoupons, String customerProvince,
-            HttpServletRequest request,
+            String couponCode, Map<Long, String> shopCoupons, HttpServletRequest request,
             HttpSession session) {
         try {
             return new DraftResult(orderService.buildDraftOrder(customerId, items,
-                    couponCode, shopCoupons, customerProvince), couponCode, shopCoupons);
+                    couponCode, shopCoupons), couponCode, shopCoupons);
         } catch (IllegalArgumentException initialError) {
             request.setAttribute("checkoutError", initialError.getMessage());
         }
@@ -481,7 +499,7 @@ public class CheckoutServlet extends HttpServlet {
         if (validPlatformCoupon != null) {
             try {
                 orderService.buildDraftOrder(customerId, items, validPlatformCoupon,
-                        Collections.emptyMap(), customerProvince);
+                        Collections.emptyMap());
             } catch (IllegalArgumentException platformCouponError) {
                 // Chỉ gỡ mã sàn khi chính mã này không tạo được bản nháp độc lập.
                 validPlatformCoupon = null;
@@ -494,8 +512,7 @@ public class CheckoutServlet extends HttpServlet {
             Map<Long, String> candidate = new LinkedHashMap<>(validShopCoupons);
             candidate.put(entry.getKey(), entry.getValue());
             try {
-                orderService.buildDraftOrder(customerId, items, validPlatformCoupon,
-                        candidate, customerProvince);
+                orderService.buildDraftOrder(customerId, items, validPlatformCoupon, candidate);
                 validShopCoupons.put(entry.getKey(), entry.getValue());
             } catch (IllegalArgumentException invalidShopCoupon) {
                 // Mỗi mã shop được thử riêng để mã hợp lệ của các shop khác không bị xóa theo.
@@ -503,7 +520,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         OrderDetailDTO draft = orderService.buildDraftOrder(customerId, items,
-                validPlatformCoupon, validShopCoupons, customerProvince);
+                validPlatformCoupon, validShopCoupons);
         if (validShopCoupons.isEmpty()) {
             session.removeAttribute("checkoutShopCoupons");
         } else {
@@ -512,35 +529,23 @@ public class CheckoutServlet extends HttpServlet {
         return new DraftResult(draft, validPlatformCoupon, validShopCoupons);
     }
 
-    private String resolveCheckoutProvince(long customerId, Map<String, String> formDraft) {
-        String selection = formDraft.get("addressSelection");
-        if (selection != null && selection.startsWith("saved:")) {
-            try {
-                long addressId = parsePositiveId(selection.substring("saved:".length()),
-                        "Địa chỉ không hợp lệ!");
-                CustomerAddress selectedAddress = orderService.getCustomerAddress(customerId, addressId);
-                return selectedAddress != null ? selectedAddress.getCity() : null;
-            } catch (IllegalArgumentException ex) {
-                return null;
+    /** FE-14: tinh diem thuong dang dung vao don nhap va chuan bi du lieu cho khung "Dung diem". */
+    private void applyLoyalty(HttpServletRequest request, HttpSession session, long customerId, OrderDetailDTO order) {
+        try {
+            LoyaltyQuote quote = loyaltyService.quote(customerId, order.getFinalAmount());
+            request.setAttribute("loyaltyQuote", quote);
+            Object saved = session.getAttribute("checkoutLoyaltyPoints");
+            if (saved instanceof Integer) {
+                try {
+                    loyaltyService.applyToDraft(order, customerId, (Integer) saved);
+                } catch (IllegalArgumentException ex) {
+                    session.removeAttribute("checkoutLoyaltyPoints");
+                    request.setAttribute("checkoutError", ex.getMessage());
+                }
             }
+        } catch (RuntimeException ex) {
+            LOGGER.log(Level.WARNING, "Loyalty unavailable at checkout", ex);
         }
-        if ("new".equals(selection)) {
-            String provinceCode = formDraft.get("provinceCode");
-            if (provinceCode != null) {
-                return provinces().stream()
-                        .filter(option -> option.getCode().equals(provinceCode))
-                        .map(AddressOption::getName)
-                        .findFirst()
-                        .orElse(null);
-            }
-            return null;
-        }
-        CustomerAddress defaultAddress = orderService.getDefaultCustomerAddress(customerId);
-        if (defaultAddress != null) {
-            return defaultAddress.getCity();
-        }
-        List<CustomerAddress> addresses = orderService.getCustomerAddresses(customerId);
-        return addresses.isEmpty() ? null : addresses.get(0).getCity();
     }
 
     private void setViewAttributes(HttpServletRequest request, long customerId, CheckoutSelection selection,
@@ -605,7 +610,7 @@ public class CheckoutServlet extends HttpServlet {
 
     private void saveDraft(HttpServletRequest request, Map<String, String> draft) {
         for (String key : List.of("addressSelection", "recipientName", "recipientPhone", "streetAddress",
-                "provinceCode", "wardCode", "paymentMethod", "deliveryDate", "deliverySlot")) {
+                "provinceCode", "wardCode", "paymentMethod", "deliverySlot")) {
             String value = request.getParameter(key);
             if (value != null) {
                 int maxLength = "addressSelection".equals(key) ? 32 : 255;

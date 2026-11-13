@@ -26,6 +26,10 @@ public class OrderItem implements Serializable {
     public OrderItem() {
     }
 
+    public OrderItem(long aLong, long aLong0, String string, String string0, String string1, double aDouble, int aInt, double aDouble0, String prodImg) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
     public long getOrderItemId() {
         return orderItemId;
     }

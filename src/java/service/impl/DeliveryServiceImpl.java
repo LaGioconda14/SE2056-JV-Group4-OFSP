@@ -9,6 +9,7 @@ import service.IDeliveryService;
 public class DeliveryServiceImpl implements IDeliveryService {
 
     private final DeliveryDAO deliveryDAO = new DeliveryDAO();
+    private final service.ILoyaltyService loyaltyService = new LoyaltyServiceImpl();
 
     @Override
     public List<Delivery> getDeliveriesByDriver(long driverId, String statusFilter, String keyword) {
@@ -27,7 +28,11 @@ public class DeliveryServiceImpl implements IDeliveryService {
 
     @Override
     public boolean completeDelivery(long deliveryId, long driverId, String proofImageUrl) {
-        return deliveryDAO.completeDelivery(deliveryId, driverId, proofImageUrl);
+        boolean ok = deliveryDAO.completeDelivery(deliveryId, driverId, proofImageUrl);
+        if (ok) {
+            loyaltyService.syncOrders(null); // FE-14: cộng điểm cho đơn vừa hoàn tất
+        }
+        return ok;
     }
 
     @Override

@@ -7,6 +7,7 @@ import enums.CartItemAvailability;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import model.entity.product.ProductVariant;
 
 public class CartItem {
     private long cartItemId;
@@ -27,6 +28,10 @@ public class CartItem {
         this.cartItemId = cartItemId;
         this.variant = variant;
         this.quantity = quantity;
+    }
+
+    public CartItem(int i, ProductVariant variant, int quantity) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     /**
@@ -155,5 +160,9 @@ public class CartItem {
     public boolean isUnitPriceReduced() {
         return variant != null && variant.getPrice() != null
                 && getDisplayUnitPrice().compareTo(variant.getPrice()) < 0;
+    }
+
+    public void setVariant(ProductVariant v) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

@@ -108,7 +108,7 @@
                         </div>
                     </div>
                     <div class="pt-3 border-t border-gray-100 mt-3 text-center">
-                        <a href="${pageContext.request.contextPath}/profile#notifications" onclick="const p = document.getElementById('header-noti-popover'); if (p) p.classList.add('hidden'); if (window.location.pathname.includes('/profile')) { if (typeof activateTab === 'function') { activateTab('#nav-notifications', 'nav-notifications-tab'); } }" class="text-xs text-[#00652c] font-semibold hover:underline">Xem tất cả thông báo</a>
+                        <a href="${pageContext.request.contextPath}/notifications" class="text-xs text-[#00652c] font-semibold hover:underline">Xem tất cả thông báo</a>
                     </div>
                 </div>
             </div>
@@ -170,6 +170,9 @@
                             </c:if>
                             <a href="<c:out value='${profileUrl}'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <span class="material-symbols-outlined text-[18px]">person</span> Hồ sơ cá nhân
+                            </a>
+                            <a href="${pageContext.request.contextPath}/loyalty" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">workspace_premium</span> Điểm thưởng &amp; hạng
                             </a>
                             <a href="<c:out value='${changePasswordUrl}'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <span class="material-symbols-outlined text-[18px]">key</span> Đổi mật khẩu
@@ -334,6 +337,68 @@
         if (e.key === 'Escape') {
             const popover = document.getElementById('header-noti-popover');
             if (popover) popover.classList.add('hidden');
+        }
+    });
+
+    // Intercept Add to Cart form submissions for smooth instant notification & badge update
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form && form.action && form.action.includes('/cart/add')) {
+            const submitter = e.submitter;
+            if (submitter && submitter.value === 'buyNow') {
+                return; // allow normal Buy Now submission to /checkout
+            }
+            e.preventDefault();
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+            for (const [key, value] of formData.entries()) {
+                params.append(key, value);
+            }
+            params.append('ajax', 'true');
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                body: params,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (res.status === 401) {
+                    return res.json().then(data => {
+                        window.location.href = data.redirect || (window.contextPath + '/login');
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (submitBtn) submitBtn.disabled = false;
+                if (!data) return;
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
+                }
+                if (data.success) {
+                    if (data.cartSize !== undefined) {
+                        const badges = document.querySelectorAll('#nav-cart-badge, #cartBadge');
+                        badges.forEach(b => b.textContent = data.cartSize > 99 ? '99+' : data.cartSize);
+                        const notiCartCount = document.getElementById('noti-cart-count');
+                        if (notiCartCount) notiCartCount.textContent = data.cartSize;
+                    }
+                    window.showToast(data.message || 'Đã thêm sản phẩm vào giỏ hàng thành công!', 'success');
+                    addHeaderNotification('Thêm giỏ hàng', data.message || 'Đã thêm sản phẩm vào giỏ hàng!');
+                } else {
+                    window.showToast(data.message || 'Không thể thêm vào giỏ hàng!', 'error');
+                }
+            })
+            .catch(err => {
+                if (submitBtn) submitBtn.disabled = false;
+                form.submit(); // fallback
+            });
         }
     });
 </script>
