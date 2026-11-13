@@ -12,11 +12,27 @@ import model.entity.user.User;
 import service.IOrderService;
 import service.impl.OrderServiceImpl;
 
+/**
+ * Servlet hiển thị trang xác nhận đơn hàng sau khi đặt hàng thành công.
+ * Endpoint: /order/confirmation
+ */
 @WebServlet(name = "OrderConfirmationServlet", urlPatterns = {"/order/confirmation"})
 public class OrderConfirmationServlet extends HttpServlet {
 
     private final IOrderService orderService = new OrderServiceImpl();
 
+    /**
+     * Xử lý yêu cầu HTTP GET hiển thị trang xác nhận đơn hàng:
+     * - Kiểm tra người dùng đã đăng nhập.
+     * - Lấy orderId từ tham số request và nạp thông tin đơn hàng từ database.
+     * - Kiểm tra đơn hàng có đúng của khách hàng hiện tại hay không.
+     * - Chuyển tiếp (forward) dữ liệu sang giao diện order-confirmation.jsp.
+     *
+     * @param request  yêu cầu HTTP chứa orderId
+     * @param response phản hồi HTTP
+     * @throws ServletException nếu xảy ra lỗi servlet
+     * @throws IOException      nếu xảy ra lỗi vào/ra dữ liệu
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

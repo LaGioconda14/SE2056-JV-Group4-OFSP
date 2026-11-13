@@ -13,20 +13,39 @@ import java.util.logging.Logger;
 import model.entity.order.Order;
 import util.DBContext;
 
+/**
+ * DAO xử lý truy vấn và cập nhật dữ liệu thanh toán cổng VNPAY trong cơ sở dữ liệu.
+ */
 public class VnpayPaymentDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(VnpayPaymentDAO.class.getName());
 
+    /**
+     * Enum định nghĩa các kết quả có thể xảy ra khi xử lý callback từ VNPAY.
+     */
     public enum CallbackResult {
+        /** Giao dịch thanh toán thành công và cập nhật trạng thái đơn thành công */
         SUCCESS,
+        /** Đơn hàng đã được xác nhận thanh toán trước đó (idempotent callback) */
         ALREADY_CONFIRMED,
+        /** Không tìm thấy mã đơn hàng trong hệ thống */
         ORDER_NOT_FOUND,
+        /** Đơn hàng không sử dụng phương thức thanh toán VNPAY */
         INVALID_ORDER,
+        /** Số tiền thanh toán không khớp với số tiền của đơn hàng */
         INVALID_AMOUNT,
+        /** Thanh toán không thành công (người dùng hủy hoặc lỗi ngân hàng) */
         PAYMENT_FAILED,
+        /** Xảy ra lỗi kết nối cơ sở dữ liệu hoặc ngoại lệ hệ thống */
         PROCESSING_ERROR
     }
 
+    /**
+     * Lấy thông tin cơ bản của đơn hàng phục vụ kiểm tra thanh toán VNPAY.
+     *
+     * @param orderId ID đơn hàng
+     * @return Order chứa order_id, order_code, customer_id, final_amount, payment_status, payment_method; hoặc null nếu không tìm thấy
+     */
     public Order getVnpayOrder(long orderId) {
         String sql = "SELECT order_id, order_code, customer_id, final_amount, payment_status, payment_method "
                 + "FROM orders WHERE order_id = ?";
@@ -56,6 +75,18 @@ public class VnpayPaymentDAO extends DBContext {
         }
     }
 
+    /**
+     * Xử lý callback/IPN từ VNPAY trong một transaction:
+     * - Khóa dòng đơn hàng với (UPDLOCK, HOLDLOCK) để tránh race condition khi cả Return và IPN cùng gửi đến.
+     * - Kiểm tra tính hợp lệ của phương thức thanh toán, số tiền thanh toán (paidAmount so với final_amount).
+     * - Đảm bảo tính Idempotency: nếu đơn đã PAID thì không ghi đè lại.
+     * - Cập nhật trạng thái payment_status trong bảng orders và bảng payments.
+     *
+     * @param orderId    ID đơn hàng
+     * @param paidAmount số tiền thực tế khách đã trả qua VNPAY
+     * @param successful true nếu mã phản hồi VNPAY là thành công ("00")
+     * @return CallbackResult phản ánh kết quả xử lý
+     */
     public CallbackResult processCallback(long orderId, BigDecimal paidAmount, boolean successful) {
         String selectSql = "SELECT final_amount, payment_status, payment_method "
                 + "FROM orders WITH (UPDLOCK, HOLDLOCK) WHERE order_id = ?";

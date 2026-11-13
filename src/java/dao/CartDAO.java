@@ -21,10 +21,23 @@ import model.dto.cart.CartMutationResult;
 import model.dto.product.ProductVariantDetailDTO;
 import util.DBContext;
 
+/**
+ * DAO tương tác với bảng carts và cart_items:
+ * - Quản lý giỏ hàng của khách hàng (tạo giỏ, thêm/sửa/xóa sản phẩm).
+ * - Tự động đối soát và điều chỉnh số lượng giỏ hàng theo tồn kho thực tế.
+ * - Hỗ trợ đổi phân loại (variant) và gợi ý các phân loại thay thế khi hết hàng.
+ * - Sử dụng các cơ chế khóa bi quan (UPDLOCK, HOLDLOCK) trong transaction để chống xung đột đồng thời.
+ */
 public class CartDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(CartDAO.class.getName());
 
+    /**
+     * Tìm giỏ hàng của khách hàng hoặc tự động tạo mới nếu chưa có.
+     *
+     * @param customerId ID khách hàng
+     * @return đối tượng Cart chứa cartId và customerId
+     */
     public Cart findOrCreateCartByCustomerId(long customerId) {
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
@@ -41,6 +54,12 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Đếm tổng số dòng sản phẩm trong giỏ hàng của khách hàng.
+     *
+     * @param customerId ID khách hàng
+     * @return số lượng mục sản phẩm
+     */
     public int countItemsByCustomerId(long customerId) {
         String sql = "SELECT COUNT(ci.cart_item_id) AS item_count "
                 + "FROM carts c LEFT JOIN cart_items ci ON ci.cart_id = c.cart_id "
@@ -56,6 +75,16 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Nạp toàn bộ các mục trong giỏ hàng, đồng thời đối soát tồn kho (reconcile):
+     * - Tự động giảm số lượng trong database nếu số lượng trong giỏ vượt quá tồn kho.
+     * - Đánh giá trạng thái khả dụng (AVAILABLE, VARIANT_UNAVAILABLE, SOLD_OUT, NOT_FOUND).
+     * - Gắn danh sách các phân loại thay thế của cùng sản phẩm để người dùng dễ chọn đổi.
+     * - Sắp xếp theo mức độ khả dụng (sản phẩm còn hàng lên trên).
+     *
+     * @param cartId ID giỏ hàng
+     * @return danh sách CartItem đã đối soát
+     */
     public List<CartItem> loadAndReconcileItems(long cartId) {
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
@@ -81,6 +110,17 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Thêm sản phẩm (biến thể) vào giỏ hàng:
+     * - Nếu biến thể đã tồn tại trong giỏ thì tăng số lượng.
+     * - Nếu chưa có thì chèn thêm dòng mới vào cart_items.
+     * - Kiểm tra tồn kho trước khi thêm.
+     *
+     * @param customerId ID khách hàng
+     * @param variantId  ID biến thể sản phẩm
+     * @param quantity   số lượng muốn thêm
+     * @return CartMutationResult chứa thông tin item vừa thêm/sửa và tổng số lượng mục trong giỏ
+     */
     public CartMutationResult addCartItem(long customerId, long variantId, int quantity) {
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
@@ -113,6 +153,13 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Cập nhật số lượng của một mục sản phẩm trong giỏ hàng.
+     *
+     * @param customerId ID khách hàng
+     * @param cartItemId ID mục giỏ hàng
+     * @param quantity   số lượng mới
+     */
     public void updateCartItemQuantity(long customerId, long cartItemId, int quantity) {
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
@@ -136,6 +183,12 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Xóa một mục sản phẩm khỏi giỏ hàng của khách hàng.
+     *
+     * @param customerId ID khách hàng
+     * @param cartItemId ID mục giỏ hàng
+     */
     public void deleteCartItem(long customerId, long cartItemId) {
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
@@ -154,6 +207,16 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Đổi sang biến thể mới cho một mục sản phẩm trong giỏ:
+     * - Kiểm tra cả biến thể cũ và mới cùng thuộc một sản phẩm.
+     * - Nếu biến thể mới đã có trong giỏ: gộp số lượng (chặn không vượt quá tồn kho mới) và xóa dòng cũ.
+     * - Nếu biến thể mới chưa có: cập nhật variant_id và số lượng trên dòng hiện tại.
+     *
+     * @param customerId   ID khách hàng
+     * @param cartItemId   ID mục giỏ hàng cần đổi
+     * @param newVariantId ID biến thể mới
+     */
     public void changeCartItemVariant(long customerId, long cartItemId, long newVariantId) {
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
@@ -204,6 +267,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Tìm giỏ hàng hiện có của khách hoặc tạo mới bằng INSERT trong transaction (sử dụng HOLDLOCK tránh race condition).
+     */
     private Cart findOrCreateCart(Connection conn, long customerId) throws SQLException {
         // HOLDLOCK bảo đảm hai request đồng thời không cùng tạo cart cho một khách hàng.
         String selectSql = "SELECT cart_id FROM carts WITH (UPDLOCK, HOLDLOCK) WHERE customer_id = ?";
@@ -231,6 +297,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Xác thực giỏ hàng tồn tại và thuộc về đúng khách hàng, khóa dòng để thao tác an toàn.
+     */
     private long requireOwnedCart(Connection conn, long customerId) throws SQLException {
         // Mutation khóa cart theo owner để item không thể bị sửa qua customer khác.
         String sql = "SELECT cart_id FROM carts WITH (UPDLOCK, HOLDLOCK) WHERE customer_id = ?";
@@ -245,6 +314,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Nạp toàn bộ danh sách item trong giỏ cùng thông tin biến thể, sản phẩm, cửa hàng và khóa UPDLOCK, HOLDLOCK.
+     */
     private List<CartItem> loadItemsForReconciliation(Connection conn, long cartId) throws SQLException {
         String sql = "SELECT ci.cart_item_id, ci.quantity, "
                 + "pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
@@ -274,6 +346,9 @@ public class CartDAO extends DBContext {
         return items;
     }
 
+    /**
+     * Ánh xạ dòng dữ liệu ResultSet sang đối tượng CartItem kèm thông tin biến thể và shop.
+     */
     private CartItem mapCartItem(ResultSet rs) throws SQLException {
         CartItem item = new CartItem(rs.getLong("cart_item_id"), mapVariant(rs), rs.getInt("quantity"));
         item.setPreviousQuantity(item.getQuantity());
@@ -283,6 +358,9 @@ public class CartDAO extends DBContext {
         return item;
     }
 
+    /**
+     * Xác định trạng thái khả dụng của sản phẩm (hết hàng, ngừng bán, còn hàng) và tự động điều chỉnh số lượng nếu vượt quá tồn kho.
+     */
     private void determineAvailability(CartItem item, ResultSet rs) throws SQLException {
         ProductVariantDetailDTO variant = item.getVariant();
         boolean productAvailable = variant.isProductActive()
@@ -302,6 +380,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Gắn danh sách các biến thể thay thế (cùng sản phẩm nhưng khác variantId) vào từng CartItem.
+     */
     private void attachAlternativeVariants(Connection conn, List<CartItem> items) throws SQLException {
         List<Long> productIds = items.stream()
                 .filter(item -> item.getAvailability() != CartItemAvailability.NOT_FOUND)
@@ -323,6 +404,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Lấy danh sách các biến thể còn khả dụng theo danh sách productId.
+     */
     private Map<Long, List<ProductVariantDetailDTO>> findVariantsByProductIds(Connection conn,
             Collection<Long> productIds) throws SQLException {
         String placeholders = productIds.stream().map(id -> "?").collect(Collectors.joining(","));
@@ -351,6 +435,9 @@ public class CartDAO extends DBContext {
         return result;
     }
 
+    /**
+     * Tìm biến thể đang hoạt động và shop đang hoạt động (có khóa UPDLOCK).
+     */
     private ProductVariantDetailDTO findAvailableVariant(Connection conn, long variantId) throws SQLException {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -367,6 +454,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Tìm thông tin biến thể không phân biệt trạng thái khả dụng.
+     */
     private ProductVariantDetailDTO findVariantIncludingUnavailable(Connection conn, long variantId) throws SQLException {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -381,18 +471,27 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Tìm mục giỏ hàng theo cartItemId.
+     */
     private CartItem findItemById(Connection conn, long cartId, long cartItemId) throws SQLException {
         return findSingleItem(conn,
                 "SELECT cart_item_id, variant_id, quantity FROM cart_items WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE cart_id = ? AND cart_item_id = ?", cartId, cartItemId);
     }
 
+    /**
+     * Tìm mục giỏ hàng theo variantId.
+     */
     private CartItem findItemByVariantId(Connection conn, long cartId, long variantId) throws SQLException {
         return findSingleItem(conn,
                 "SELECT cart_item_id, variant_id, quantity FROM cart_items WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE cart_id = ? AND variant_id = ?", cartId, variantId);
     }
 
+    /**
+     * Thực hiện truy vấn một dòng duy nhất trong cart_items.
+     */
     private CartItem findSingleItem(Connection conn, String sql, long cartId, long id) throws SQLException {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, cartId);
@@ -412,6 +511,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Chèn một dòng sản phẩm mới vào bảng cart_items.
+     */
     private long insertItem(Connection conn, long cartId, long variantId, int quantity) throws SQLException {
         String sql = "INSERT INTO cart_items (cart_id, variant_id, quantity) VALUES (?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -430,6 +532,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Đếm tổng số lượng dòng sản phẩm theo cartId.
+     */
     private int countItemsByCartId(Connection conn, long cartId) throws SQLException {
         String sql = "SELECT COUNT(*) AS item_count FROM cart_items WHERE cart_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -443,6 +548,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Cập nhật số lượng của một dòng cart_item.
+     */
     private boolean updateQuantityByCart(Connection conn, long cartId, long cartItemId,
             int quantity) throws SQLException {
         String sql = "UPDATE cart_items SET quantity = ?, updated_at = GETDATE() "
@@ -455,6 +563,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Xóa một dòng cart_item thuộc đúng cartId.
+     */
     private boolean deleteItemByCart(Connection conn, long cartId, long cartItemId) throws SQLException {
         String sql = "DELETE FROM cart_items WHERE cart_id = ? AND cart_item_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -464,6 +575,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Cập nhật phân loại mới và số lượng mới cho cart_item.
+     */
     private void updateVariant(Connection conn, long cartId, long cartItemId,
             long variantId, int quantity) throws SQLException {
         String sql = "UPDATE cart_items SET variant_id = ?, quantity = ?, updated_at = GETDATE() "
@@ -479,6 +593,9 @@ public class CartDAO extends DBContext {
         }
     }
 
+    /**
+     * Kiểm tra số lượng yêu cầu so với tồn kho của biến thể.
+     */
     private void validateStock(ProductVariantDetailDTO variant, long quantity) {
         if (variant == null) {
             throw new IllegalArgumentException("Sản phẩm hiện không khả dụng!");
@@ -515,6 +632,9 @@ public class CartDAO extends DBContext {
                 "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!", cause);
     }
 
+    /**
+     * Ánh xạ thông tin biến thể sản phẩm từ ResultSet sang ProductVariantDetailDTO.
+     */
     private ProductVariantDetailDTO mapVariant(ResultSet rs) throws SQLException {
         ProductVariantDetailDTO variant = new ProductVariantDetailDTO();
         variant.setVariantId(rs.getLong("variant_id"));

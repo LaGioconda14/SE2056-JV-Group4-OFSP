@@ -32,6 +32,15 @@ import model.dto.product.ProductVariantDetailDTO;
 import model.entity.order.ShippingAddress;
 import util.DBContext;
 
+/**
+ * DAO xử lý truy vấn và thao tác cơ sở dữ liệu cho toàn bộ quy trình đặt hàng:
+ * - Lấy thông tin các item checkout từ giỏ hàng hoặc luồng "Mua ngay".
+ * - Quản lý sổ địa chỉ giao hàng của khách hàng (customer_addresses).
+ * - Tạo đơn hàng cha (orders), địa chỉ giao (order_shipping_addresses), các đơn con theo shop (sub_orders),
+ *   các dòng sản phẩm (order_items) kèm thông tin khuyến mãi snapshot, và thanh toán (payments) trong cùng transaction.
+ * - Trừ tồn kho đồng thời (concurrency safe với stock_quantity >= quantity).
+ * - Khách hàng tra cứu lịch sử đơn hàng và thực hiện hủy đơn (kèm hoàn tồn kho và hoàn lượt voucher).
+ */
 public class OrderDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(OrderDAO.class.getName());
@@ -39,6 +48,10 @@ public class OrderDAO extends DBContext {
     private final PromotionDAO promotionDAO = new PromotionDAO();
     private static volatile Boolean HAS_ORDER_ITEM_PROMOTION_COLS = null;
 
+    /**
+     * Kiểm tra cơ sở dữ liệu có các cột promotion trong bảng order_items hay không
+     * (để tương thích ngược với các phiên bản DB migration khác nhau).
+     */
     private boolean checkHasOrderItemPromotionCols(Connection conn) {
         if (HAS_ORDER_ITEM_PROMOTION_COLS != null) {
             return HAS_ORDER_ITEM_PROMOTION_COLS;
@@ -56,7 +69,14 @@ public class OrderDAO extends DBContext {
         return HAS_ORDER_ITEM_PROMOTION_COLS;
     }
 
-    // 1. Láº¤Y CÃC CART ITEMS ÄÆ¯á»¢C CHá»ŒN Cá»¦A KHÃCH HÃ€NG
+    /**
+     * Lấy danh sách các sản phẩm trong giỏ hàng được khách hàng chọn để checkout.
+     * Kèm theo thông tin chi tiết biến thể, sản phẩm, cửa hàng và ảnh đại diện.
+     *
+     * @param customerId  ID khách hàng
+     * @param cartItemIds danh sách ID các dòng giỏ hàng
+     * @return danh sách CartItem
+     */
     public List<CartItem> getSelectedCartItems(long customerId, List<Long> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
             return Collections.emptyList();
@@ -88,7 +108,7 @@ public class OrderDAO extends DBContext {
         Connection conn = getConnection();
         if (conn == null) {
             LOGGER.severe("Cannot establish DB connection in getSelectedCartItems");
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i sáº£n pháº©m thanh toÃ¡n. Vui lÃ²ng thá»­ láº¡i!");
+            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -110,11 +130,18 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting selected cart items for customer " + customerId, ex);
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i sáº£n pháº©m thanh toÃ¡n. Vui lÃ²ng thá»­ láº¡i!", ex);
+            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!", ex);
         }
         return items;
     }
 
+    /**
+     * Lấy thông tin biến thể sản phẩm cho chức năng "Mua ngay" (không cần có trong giỏ hàng).
+     *
+     * @param variantId ID biến thể
+     * @param quantity  số lượng mua
+     * @return CartItem đại diện hoặc null nếu không tìm thấy
+     */
     public CartItem getBuyNowItem(long variantId, int quantity) {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -169,7 +196,12 @@ public class OrderDAO extends DBContext {
         return v;
     }
 
-    // 2. Láº¤Y Äá»ŠA CHá»ˆ Máº¶C Äá»ŠNH HOáº¶C Äá»ŠA CHá»ˆ Gáº¦N NHáº¤T Cá»¦A KHÃCH HÃ€NG
+    /**
+     * Lấy địa chỉ mặc định (hoặc địa chỉ cập nhật gần nhất) của khách hàng.
+     *
+     * @param customerId ID khách hàng
+     * @return CustomerAddress hoặc null nếu khách chưa lưu địa chỉ nào
+     */
     public CustomerAddress getDefaultAddress(long customerId) {
         String sql = "SELECT TOP 1 address_id, user_id, recipient_name, recipient_phone, "
                 + "street_address, ward, district, city, is_default "
@@ -203,6 +235,12 @@ public class OrderDAO extends DBContext {
         return null;
     }
 
+    /**
+     * Lấy danh sách toàn bộ các địa chỉ đã lưu trong sổ địa chỉ của khách hàng.
+     *
+     * @param customerId ID khách hàng
+     * @return danh sách CustomerAddress
+     */
     public List<CustomerAddress> getCustomerAddresses(long customerId) {
         String sql = "SELECT address_id, user_id, recipient_name, recipient_phone, "
                 + "street_address, ward, district, city, is_default, created_at, updated_at "
@@ -212,7 +250,7 @@ public class OrderDAO extends DBContext {
         List<CustomerAddress> addresses = new ArrayList<>();
         Connection conn = getConnection();
         if (conn == null) {
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i danh sÃ¡ch Ä‘á»‹a chá»‰. Vui lÃ²ng thá»­ láº¡i!");
+            throw new IllegalStateException("Không thể tải danh sách địa chỉ. Vui lòng thử lại!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -225,18 +263,25 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting addresses for customer " + customerId, ex);
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i danh sÃ¡ch Ä‘á»‹a chá»‰. Vui lÃ²ng thá»­ láº¡i!", ex);
+            throw new IllegalStateException("Không thể tải danh sách địa chỉ. Vui lòng thử lại!", ex);
         }
         return addresses;
     }
 
+    /**
+     * Lấy thông tin chi tiết một địa chỉ theo customerId và addressId.
+     *
+     * @param customerId ID khách hàng
+     * @param addressId  ID địa chỉ
+     * @return CustomerAddress tương ứng hoặc null nếu không tồn tại
+     */
     public CustomerAddress getCustomerAddressById(long customerId, long addressId) {
         String sql = "SELECT address_id, user_id, recipient_name, recipient_phone, "
                 + "street_address, ward, district, city, is_default, created_at, updated_at "
                 + "FROM customer_addresses WHERE address_id = ? AND user_id = ?";
         Connection conn = getConnection();
         if (conn == null) {
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i Ä‘á»‹a chá»‰ giao hÃ ng. Vui lÃ²ng thá»­ láº¡i!");
+            throw new IllegalStateException("Không thể tải địa chỉ giao hàng. Vui lòng thử lại!");
         }
 
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -247,7 +292,7 @@ public class OrderDAO extends DBContext {
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error getting customer address " + addressId, ex);
-            throw new IllegalStateException("KhÃ´ng thá»ƒ táº£i Ä‘á»‹a chá»‰ giao hÃ ng. Vui lÃ²ng thá»­ láº¡i!", ex);
+            throw new IllegalStateException("Không thể tải địa chỉ giao hàng. Vui lòng thử lại!", ex);
         }
     }
 
@@ -267,19 +312,53 @@ public class OrderDAO extends DBContext {
         return address;
     }
 
-    // 3. Táº O ÄÆ N HÃ€NG TOÃ€N DIá»†N (TRANSACTION AN TOÃ€N)
+    /**
+     * Tạo đơn hàng hoàn chỉnh từ giỏ hàng (xóa các item đã mua khỏi giỏ trong transaction).
+     *
+     * @param order                 thông tin đơn hàng
+     * @param address               địa chỉ nhận hàng
+     * @param cartItemIdsToDelete   danh sách ID các mục giỏ hàng cần xóa sau khi đặt
+     * @param paymentMethod         phương thức thanh toán
+     * @param saveCustomerAddress   cờ lưu địa chỉ mới vào sổ địa chỉ
+     * @return orderId vừa tạo
+     * @throws Exception nếu xảy ra lỗi trong transaction
+     */
     public long createOrder(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
         return createOrderInternal(order, address, cartItemIdsToDelete, paymentMethod,
                 saveCustomerAddress, true);
     }
 
+    /**
+     * Tạo đơn hàng từ luồng "Mua ngay" (không can thiệp vào giỏ hàng).
+     *
+     * @param order                 thông tin đơn hàng
+     * @param address               địa chỉ nhận hàng
+     * @param paymentMethod         phương thức thanh toán
+     * @param saveCustomerAddress   cờ lưu địa chỉ mới
+     * @return orderId vừa tạo
+     * @throws Exception nếu xảy ra lỗi trong transaction
+     */
     public long createBuyNowOrder(OrderDetailDTO order, ShippingAddress address,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
         return createOrderInternal(order, address, Collections.emptyList(), paymentMethod,
                 saveCustomerAddress, false);
     }
 
+    /**
+     * Hàm nội bộ xử lý toàn bộ logic tạo đơn hàng trong một transaction an toàn:
+     * 1. Khóa bi quan và kiểm tra lại tồn kho, giá, trạng thái của các cart item / variant.
+     * 2. Kiểm tra lại tính hợp lệ của mã giảm giá (voucher sàn & shop) và tăng lượt used_count.
+     * 3. Chèn bản ghi đơn hàng chính (orders).
+     * 4. Chèn địa chỉ giao hàng của đơn (order_shipping_addresses).
+     * 5. Lặp qua từng Shop để tạo đơn con (sub_orders):
+     *    - Tính hoa hồng sàn (commission_rate, commission_amount).
+     *    - Chèn từng sản phẩm vào order_items kèm snapshot giá, tên, promotion.
+     *    - Trừ tồn kho sản phẩm (stock_quantity = stock_quantity - ? với điều kiện stock_quantity >= ?).
+     * 6. Nếu là đặt từ giỏ hàng, xóa các item tương ứng khỏi cart_items.
+     * 7. Chèn bản ghi thanh toán (payments).
+     * 8. Lưu địa chỉ vào sổ địa chỉ khách hàng nếu được yêu cầu.
+     */
     private long createOrderInternal(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress, boolean consumeCart) throws Exception {
         String insertOrderSql = "INSERT INTO orders (order_code, customer_id, coupon_id, total_goods_amount, "
@@ -319,7 +398,7 @@ public class OrderDAO extends DBContext {
 
         Connection conn = getConnection();
         if (conn == null) {
-            throw new Exception("KhÃ´ng thá»ƒ káº¿t ná»‘i Ä‘áº¿n cÆ¡ sá»Ÿ dá»¯ liá»‡u!");
+            throw new Exception("Không thể kết nối đến cơ sở dữ liệu!");
         }
         boolean hasPromoCols = checkHasOrderItemPromotionCols(conn);
         String insertOrderItemSql = hasPromoCols
@@ -636,10 +715,13 @@ public class OrderDAO extends DBContext {
         }
 
         if (rowCount != cartItemIds.size() || !actualQuantities.equals(expectedQuantities)) {
-            throw new SQLException("Giá» hÃ ng vá»«a thay Ä‘á»•i. Vui lÃ²ng quay láº¡i giá» hÃ ng vÃ  kiá»ƒm tra láº¡i!");
+            throw new SQLException("Giỏ hàng vừa thay đổi. Vui lòng quay lại giỏ hàng và kiểm tra lại!");
         }
     }
 
+    /**
+     * Xác thực voucher của Shop trước khi lưu đơn hàng.
+     */
     private void validateCouponForShop(Coupon coupon, long shopId, BigDecimal eligibleAmount) throws SQLException {
         if (coupon == null) {
             throw new SQLException("Mã giảm giá của cửa hàng không còn tồn tại!");
@@ -650,32 +732,38 @@ public class OrderDAO extends DBContext {
         validateCouponForOrder(coupon, eligibleAmount);
     }
 
+    /**
+     * Xác thực điều kiện voucher toàn sàn hoặc shop: kiểm tra kích hoạt, hạn dùng, lượt dùng và giá trị tối thiểu.
+     */
     private void validateCouponForOrder(Coupon coupon, BigDecimal eligibleAmount) throws SQLException {
         if (coupon == null) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ khÃ´ng cÃ²n tá»“n táº¡i!");
+            throw new SQLException("Mã giảm giá không còn tồn tại!");
         }
         if (!coupon.isActive()) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ hiá»‡n khÃ´ng hoáº¡t Ä‘á»™ng!");
+            throw new SQLException("Mã giảm giá hiện không hoạt động!");
         }
 
         java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
         if (coupon.getStartDate() == null || now.before(coupon.getStartDate())) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ chÆ°a Ä‘áº¿n thá»i gian sá»­ dá»¥ng!");
+            throw new SQLException("Mã giảm giá chưa đến thời gian sử dụng!");
         }
         if (coupon.getEndDate() == null || now.after(coupon.getEndDate())) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ Ä‘Ã£ háº¿t háº¡n!");
+            throw new SQLException("Mã giảm giá đã hết hạn!");
         }
         if (coupon.getUsedCount() >= coupon.getUsageLimit()) {
-            throw new SQLException("MÃ£ giáº£m giÃ¡ Ä‘Ã£ háº¿t lÆ°á»£t sá»­ dá»¥ng!");
+            throw new SQLException("Mã giảm giá đã hết lượt sử dụng!");
         }
 
         BigDecimal minimum = coupon.getMinOrderValue() != null
                 ? coupon.getMinOrderValue() : BigDecimal.ZERO;
         if (eligibleAmount.compareTo(minimum) < 0) {
-            throw new SQLException("ÄÆ¡n hÃ ng khÃ´ng cÃ²n Ä‘á»§ Ä‘iá»u kiá»‡n giÃ¡ trá»‹ tá»‘i thiá»ƒu cá»§a mÃ£ giáº£m giÃ¡!");
+            throw new SQLException("Đơn hàng không còn đủ điều kiện giá trị tối thiểu của mã giảm giá!");
         }
     }
 
+    /**
+     * Tính toán số tiền được giảm giá của coupon trong transaction tạo đơn.
+     */
     private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount,
             BigDecimal shippingFee)
             throws SQLException {
@@ -708,7 +796,13 @@ public class OrderDAO extends DBContext {
                 .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
-    // 4. Láº¤Y CHI TIáº¾T ÄÆ N HÃ€NG THEO ID
+    /**
+     * Lấy chi tiết đơn hàng hoàn chỉnh theo orderId (kèm thông tin địa chỉ giao hàng,
+     * danh sách đơn hàng con sub_orders và từng dòng sản phẩm order_items).
+     *
+     * @param orderId ID đơn hàng
+     * @return OrderDetailDTO chi tiết hoặc null nếu không tìm thấy
+     */
     public OrderDetailDTO getOrderById(long orderId) {
         String sqlOrder = "SELECT o.order_id, o.order_code, o.customer_id, o.coupon_id, o.total_goods_amount, "
                 + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, o.payment_method, "
@@ -825,6 +919,13 @@ public class OrderDAO extends DBContext {
         return null;
     }
 
+    /**
+     * Lấy danh sách các đơn hàng con (sub_orders) của khách hàng để hiển thị trên giao diện lịch sử đơn hàng.
+     * Bao gồm thông tin shop, sản phẩm, địa chỉ giao hàng và thông tin tài xế/vận chuyển.
+     *
+     * @param customerId ID khách hàng
+     * @return danh sách SubOrderDTO
+     */
     public List<SubOrderDTO> getSubOrdersByCustomerId(long customerId) {
         List<SubOrderDTO> list = new ArrayList<>();
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, o.order_code, o.customer_id, "
@@ -949,6 +1050,20 @@ public class OrderDAO extends DBContext {
         return list;
     }
 
+    /**
+     * Xử lý yêu cầu hủy đơn hàng từ khách hàng trong một transaction an toàn:
+     * - Tìm kiếm đơn hàng theo sub_order_code hoặc order_code.
+     * - Kiểm tra tính hợp lệ về trạng thái: không thể hủy nếu đơn đã hoàn thành, đang vận chuyển, hoặc đã hủy trước đó.
+     * - Hoàn lại số lượng tồn kho (restock) cho các biến thể trong đơn.
+     * - Giảm lượt used_count của coupon nếu đơn có áp dụng voucher.
+     * - Cập nhật trạng thái CANCELLED cho đơn hàng và ghi nhận lý do hủy (cancelReason).
+     *
+     * @param customerId      ID khách hàng thực hiện hủy
+     * @param orderIdentifier mã đơn hàng (orderCode hoặc subOrderCode)
+     * @param cancelReason    lý do hủy do khách nhập
+     * @return true nếu hủy thành công
+     * @throws Exception nếu xảy ra lỗi nghiệp vụ hoặc SQL
+     */
     public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
         String findSubSql = "SELECT so.sub_order_id, so.order_id, so.status AS sub_status, o.customer_id, o.coupon_id "
                           + "FROM sub_orders so "

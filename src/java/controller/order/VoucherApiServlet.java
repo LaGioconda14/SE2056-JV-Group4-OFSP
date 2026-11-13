@@ -16,12 +16,28 @@ import jakarta.servlet.http.HttpSession;
 import model.entity.user.User;
 import model.dto.promotion.VoucherCheckResult;
 
+/**
+ * API Servlet kiểm tra tính hợp lệ và tính số tiền giảm của mã voucher (AJAX).
+ * Endpoint: /voucher/validate
+ */
 @WebServlet(name = "VoucherApiServlet", urlPatterns = {"/voucher/validate"})
 public class VoucherApiServlet extends HttpServlet {
 
     private final VoucherDAO voucherDAO = new VoucherDAO();
     private final Gson gson = new Gson();
 
+    /**
+     * Xử lý yêu cầu HTTP POST để kiểm tra voucher:
+     * - Yêu cầu người dùng phải đăng nhập.
+     * - Đọc shopId, subtotal, mã voucher code và danh sách items.
+     * - Gọi voucherDAO.validate để kiểm tra hạn dùng, điều kiện áp dụng và số tiền giảm giá.
+     * - Trả về dữ liệu kết quả dưới định dạng JSON.
+     *
+     * @param request  yêu cầu HTTP chứa thông tin voucher và đơn hàng
+     * @param response phản hồi HTTP trả về kết quả JSON
+     * @throws ServletException nếu xảy ra lỗi servlet
+     * @throws IOException      nếu xảy ra lỗi vào/ra dữ liệu
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

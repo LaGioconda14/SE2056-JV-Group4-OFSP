@@ -19,11 +19,24 @@ import enums.SubOrderStatus;
 import enums.OrderStatus;
 import util.DBContext;
 
+/**
+ * DAO xử lý các thao tác hoàn tất đơn hàng (Fulfillment) cho người bán (Shop):
+ * - Tra cứu chi tiết đơn hàng con (sub_order) kèm thông tin giao hàng, tài xế và sản phẩm.
+ * - Cập nhật trạng thái đơn con và tự động đồng bộ trạng thái đơn cha (orders).
+ * - Hủy đơn con và hoàn trả tồn kho sản phẩm.
+ * - Xử lý nhập lại kho đối với đơn giao thất bại hoặc trả hàng.
+ */
 public class OrderFulfillmentDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(OrderFulfillmentDAO.class.getName());
     private final PromotionDAO promotionDAO = new PromotionDAO();
 
+    /**
+     * Lấy thông tin chi tiết một đơn con theo subOrderCode.
+     *
+     * @param subOrderCode mã đơn con
+     * @return SubOrderDetailDTO hoặc null nếu không tìm thấy
+     */
     public SubOrderDetailDTO getSubOrderDetails(String subOrderCode) {
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
@@ -114,6 +127,12 @@ public class OrderFulfillmentDAO extends DBContext {
         return null;
     }
 
+    /**
+     * Lấy danh sách sản phẩm trong một đơn con theo subOrderId.
+     *
+     * @param subOrderId ID đơn con
+     * @return danh sách OrderItemFulfillmentDTO
+     */
     public List<OrderItemFulfillmentDTO> getOrderItemsBySubOrderId(long subOrderId) {
         Connection conn = getConnection();
         if (conn == null) {
@@ -169,6 +188,15 @@ public class OrderFulfillmentDAO extends DBContext {
         return list;
     }
 
+    /**
+     * Cập nhật trạng thái đơn hàng con và tự động đồng bộ trạng thái đơn hàng cha (orders):
+     * - Khi đơn con chuyển sang SHIPPING -> đơn cha cập nhật thành SHIPPING.
+     * - Khi tất cả các đơn con của đơn cha đều DELIVERED (hoặc CANCELLED/REFUNDED) -> đơn cha cập nhật thành COMPLETED.
+     *
+     * @param subOrderCode mã đơn con
+     * @param newStatus    trạng thái mới
+     * @return true nếu cập nhật thành công
+     */
     public boolean updateSubOrderStatus(String subOrderCode, SubOrderStatus newStatus) {
         if (newStatus == null)
             return false;
@@ -215,6 +243,14 @@ public class OrderFulfillmentDAO extends DBContext {
         }
     }
 
+    /**
+     * Lấy danh sách các đơn con thuộc một shop kèm thông tin người nhận và sản phẩm, hỗ trợ lọc trạng thái và tìm kiếm.
+     *
+     * @param shopId  ID cửa hàng
+     * @param status  trạng thái lọc
+     * @param keyword từ khóa tìm kiếm (mã đơn, tên/sđt người nhận)
+     * @return danh sách SubOrderDTO
+     */
     public List<SubOrderDTO> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
         List<SubOrderDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
@@ -298,6 +334,13 @@ public class OrderFulfillmentDAO extends DBContext {
         return list;
     }
 
+    /**
+     * Đếm tổng số đơn hàng con của shop theo trạng thái.
+     *
+     * @param shopId ID cửa hàng
+     * @param status trạng thái lọc (null để đếm tất cả)
+     * @return số lượng đơn
+     */
     public int countSubOrdersByShop(long shopId, SubOrderStatus status) {
         boolean isAll = (status == null);
 
@@ -326,6 +369,16 @@ public class OrderFulfillmentDAO extends DBContext {
         }
         return 0;
     }
+    /**
+     * Hủy đơn hàng con và tự động hoàn trả số lượng vào tồn kho của biến thể:
+     * - Cập nhật trạng thái CANCELLED, lưu lý do hủy và người hủy.
+     * - Hoàn lại stock_quantity = stock_quantity + quantity cho từng sản phẩm trong đơn.
+     *
+     * @param subOrderCode mã đơn con
+     * @param cancelReason lý do hủy
+     * @param cancelledBy  ID tài khoản thực hiện hủy
+     * @return true nếu hủy thành công
+     */
     public boolean cancelSubOrderWithRestock(String subOrderCode, String cancelReason, Long cancelledBy) {
         Connection conn = getConnection();
         if (conn == null) return false;
@@ -459,6 +512,16 @@ public class OrderFulfillmentDAO extends DBContext {
         return true;
     }
 
+    /**
+     * Xử lý hoàn kho đối với đơn giao hàng thất bại hoặc khách trả hàng (trạng thái RETURNED):
+     * - Hoàn lại tồn kho cho từng sản phẩm trong sub_order.
+     * - Cập nhật trạng thái sub_order thành RETURNED kèm ghi chú.
+     *
+     * @param subOrderCode mã đơn con
+     * @param note         ghi chú khi hoàn kho
+     * @param processedBy  ID tài khoản người xử lý
+     * @return true nếu xử lý hoàn kho thành công
+     */
     public boolean processReturnedOrderRestock(String subOrderCode, String note, Long processedBy) {
         Connection conn = getConnection();
         if (conn == null) return false;

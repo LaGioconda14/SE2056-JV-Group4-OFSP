@@ -16,12 +16,28 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import util.VnpayConfig;
 
+/**
+ * Servlet tạo yêu cầu thanh toán trực tuyến qua cổng VNPAY.
+ * Endpoint: /payment/vnpay/create
+ */
 @WebServlet(name = "VnpayCreatePaymentServlet", urlPatterns = {"/payment/vnpay/create"})
 public class VnpayCreatePaymentServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(VnpayCreatePaymentServlet.class.getName());
     private final VnpayPaymentService paymentService = new VnpayPaymentService();
 
+    /**
+     * Xử lý yêu cầu HTTP GET để khởi tạo giao dịch thanh toán VNPAY:
+     * - Kiểm tra người dùng đã đăng nhập.
+     * - Lấy orderId từ tham số và xác thực đơn hàng thuộc quyền sở hữu của người dùng.
+     * - Kiểm tra đơn hàng có chọn phương thức thanh toán VNPAY và chưa thanh toán (PAID) hay không.
+     * - Kiểm tra thông tin cấu hình cổng VNPAY (TMN Code, Hash Secret).
+     * - Tạo URL thanh toán VNPAY và chuyển hướng trình duyệt của khách hàng tới cổng thanh toán.
+     *
+     * @param request  yêu cầu HTTP chứa orderId
+     * @param response phản hồi HTTP thực hiện redirect
+     * @throws IOException nếu xảy ra lỗi vào/ra dữ liệu
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         HttpSession session = request.getSession(false);

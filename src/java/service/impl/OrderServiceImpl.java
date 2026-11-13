@@ -30,6 +30,14 @@ import service.IOrderService;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Triển khai nghiệp vụ đơn hàng (IOrderService):
+ * - Chuẩn bị và kiểm tra sản phẩm thanh toán.
+ * - Tách đơn hàng theo từng Shop (Sub-orders).
+ * - Tính toán phí vận chuyển (cùng tỉnh 14.000đ, khác tỉnh 30.000đ).
+ * - Xác thực và áp dụng mã giảm giá (voucher shop và voucher sàn: phần trăm, cố định, freeship).
+ * - Tạo đơn hàng vào cơ sở dữ liệu và trừ tồn kho.
+ */
 public class OrderServiceImpl implements IOrderService {
 
     private final OrderDAO orderDAO;
@@ -39,30 +47,46 @@ public class OrderServiceImpl implements IOrderService {
     private static final BigDecimal DIFFERENT_PROVINCE_SHIPPING_FEE = new BigDecimal("30000");
     private static final Pattern DIACRITICS = Pattern.compile("\\p{M}+");
 
+    /**
+     * Khởi tạo mặc định với các DAO cần thiết.
+     */
     public OrderServiceImpl() {
         this.orderDAO = new OrderDAO();
         this.couponDAO = new CouponDAO();
         this.shopDAO = new ShopDAO();
     }
 
+    /**
+     * Khởi tạo với OrderDAO tùy chỉnh (hỗ trợ kiểm thử).
+     */
     public OrderServiceImpl(OrderDAO orderDAO) {
         this.orderDAO = orderDAO;
         this.couponDAO = new CouponDAO();
         this.shopDAO = new ShopDAO();
     }
 
+    /**
+     * Khởi tạo với OrderDAO và CouponDAO tùy chỉnh (hỗ trợ kiểm thử).
+     */
     public OrderServiceImpl(OrderDAO orderDAO, CouponDAO couponDAO) {
         this.orderDAO = orderDAO;
         this.couponDAO = couponDAO;
         this.shopDAO = new ShopDAO();
     }
 
+    /**
+     * Khởi tạo với đầy đủ các DAO tùy chỉnh (hỗ trợ kiểm thử).
+     */
     public OrderServiceImpl(OrderDAO orderDAO, CouponDAO couponDAO, ShopDAO shopDAO) {
         this.orderDAO = orderDAO;
         this.couponDAO = couponDAO;
         this.shopDAO = shopDAO;
     }
 
+    /**
+     * Lấy danh sách sản phẩm từ giỏ hàng theo danh sách ID được chọn,
+     * đối soát tồn kho, tính lại giá khuyến mãi và kiểm tra tính khả dụng.
+     */
     @Override
     public List<CartItem> getSelectedItemsForCheckout(long customerId, List<Long> cartItemIds) {
         if (cartItemIds == null || cartItemIds.isEmpty()) {
@@ -87,6 +111,9 @@ public class OrderServiceImpl implements IOrderService {
         return selected;
     }
 
+    /**
+     * Lấy thông tin biến thể sản phẩm cho luồng "Mua ngay" (không cần có trong giỏ hàng).
+     */
     @Override
     public CartItem getBuyNowItemForCheckout(long variantId, int quantity) {
         if (variantId <= 0 || quantity <= 0) {
@@ -101,6 +128,10 @@ public class OrderServiceImpl implements IOrderService {
         return item;
     }
 
+    /**
+     * Kiểm tra tính khả dụng của danh sách sản phẩm: biến thể còn hoạt động, shop còn hoạt động,
+     * số lượng hợp lệ và kho còn đủ hàng.
+     */
     private void validateCheckoutItems(List<CartItem> items) {
         for (CartItem item : items) {
             if (item.getVariant() == null || !item.getVariant().isActive()
@@ -125,17 +156,31 @@ public class OrderServiceImpl implements IOrderService {
 
     }
 
+    /**
+     * Tạo đơn hàng nháp (Draft Order) cơ bản với mã giảm giá toàn sàn.
+     */
     @Override
     public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode) {
         return buildDraftOrder(customerId, selectedItems, couponCode, Collections.emptyMap());
     }
 
+    /**
+     * Tạo đơn hàng nháp có áp dụng mã voucher riêng của từng shop.
+     */
     @Override
     public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes) {
         return buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes, null);
     }
 
+    /**
+     * Tạo đơn hàng nháp đầy đủ:
+     * - Phân nhóm sản phẩm theo từng Shop (tạo các đơn con SubOrder).
+     * - Tính phí ship cho từng shop dựa trên tỉnh/thành của shop và người mua (cùng tỉnh 14k, khác tỉnh 30k).
+     * - Áp dụng voucher riêng của từng Shop nếu có.
+     * - Áp dụng voucher toàn sàn trên tổng tiền hàng.
+     * - Tính tổng tiền cuối cùng (FinalAmount) sau khi trừ mọi khoản giảm giá và cộng phí ship.
+     */
     @Override
     public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes, String customerProvince) {
@@ -240,6 +285,11 @@ public class OrderServiceImpl implements IOrderService {
         return order;
     }
 
+    /**
+     * Tính phí giao hàng dựa vào địa giới hành chính của shop và khách hàng:
+     * - Cùng tỉnh/thành: 14.000 VNĐ
+     * - Khác tỉnh/thành: 30.000 VNĐ
+     */
     private BigDecimal calculateShippingFee(String shopProvince, String customerProvince) {
         if (customerProvince == null || customerProvince.isBlank()) {
             return BigDecimal.ZERO;
@@ -253,6 +303,9 @@ public class OrderServiceImpl implements IOrderService {
         return DIFFERENT_PROVINCE_SHIPPING_FEE;
     }
 
+    /**
+     * Chuẩn hóa tên tỉnh/thành phố để so sánh: bỏ dấu tiếng Việt, chuyển chữ thường, loại bỏ tiền tố như "tỉnh", "thành phố".
+     */
     private String normalizeProvince(String value) {
         if (value == null) {
             return "";
@@ -266,6 +319,9 @@ public class OrderServiceImpl implements IOrderService {
         return normalized;
     }
 
+    /**
+     * Kiểm tra tính hợp lệ của mã giảm giá shop: tồn tại, đúng shop phát hành và thỏa điều kiện đơn hàng.
+     */
     private void validateShopCoupon(Coupon coupon, long shopId, BigDecimal eligibleAmount) {
         if (coupon == null) {
             throw new IllegalArgumentException("Mã giảm giá của shop không tồn tại!");
@@ -276,6 +332,9 @@ public class OrderServiceImpl implements IOrderService {
         validateCoupon(coupon, eligibleAmount);
     }
 
+    /**
+     * Kiểm tra tính hợp lệ của mã giảm giá sàn: không thuộc shop nào và thỏa điều kiện tối thiểu.
+     */
     private void validatePlatformCoupon(Coupon coupon, BigDecimal eligibleAmount) {
         if (coupon == null) {
             throw new IllegalArgumentException("Mã giảm giá không tồn tại!");
@@ -286,6 +345,9 @@ public class OrderServiceImpl implements IOrderService {
         validateCoupon(coupon, eligibleAmount);
     }
 
+    /**
+     * Xác thực điều kiện chung của mã giảm giá: đang hoạt động, trong thời hạn, chưa hết lượt dùng và đạt giá trị tối thiểu.
+     */
     private void validateCoupon(Coupon coupon, BigDecimal eligibleAmount) {
         if (coupon == null) {
             throw new IllegalArgumentException("Mã giảm giá không tồn tại!");
@@ -314,6 +376,12 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
+    /**
+     * Tính số tiền được giảm từ mã giảm giá theo loại:
+     * - PERCENTAGE: Giảm theo % giá trị đơn, có chặn mức tối đa (maxDiscountAmount).
+     * - FIXED_AMOUNT: Giảm một số tiền cố định.
+     * - FREESHIP: Giảm tiền ship (tối đa bằng phí ship thực tế).
+     */
     private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount,
             BigDecimal shippingFee) {
         BigDecimal discount;
@@ -345,6 +413,9 @@ public class OrderServiceImpl implements IOrderService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Đặt hàng từ giỏ hàng (phiên bản cơ bản không áp voucher shop).
+     */
     @Override
     public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
@@ -352,6 +423,9 @@ public class OrderServiceImpl implements IOrderService {
         return placeOrder(customerId, cartItemIds, address, deliverySlot, paymentMethod, couponCode, Collections.emptyMap(), saveAddress);
     }
 
+    /**
+     * Đặt hàng từ giỏ hàng kèm theo mã voucher của từng shop.
+     */
     @Override
     public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
@@ -360,6 +434,9 @@ public class OrderServiceImpl implements IOrderService {
         return placeOrder(customerId, cartItemIds, address, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
     }
 
+    /**
+     * Đặt hàng từ giỏ hàng kèm theo voucher shop và ghi chú cho từng shop.
+     */
     @Override
     public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliverySlot, String paymentMethod, String couponCode,
@@ -368,6 +445,9 @@ public class OrderServiceImpl implements IOrderService {
         return placeOrder(customerId, cartItemIds, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
     }
 
+    /**
+     * Đặt hàng từ giỏ hàng đầy đủ các trường: chuẩn bị đơn hàng, kiểm tra địa chỉ, tạo bản ghi Order và trừ tồn kho.
+     */
     @Override
     public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
@@ -380,6 +460,9 @@ public class OrderServiceImpl implements IOrderService {
                 order.getPaymentMethod(), saveAddress);
     }
 
+    /**
+     * Đặt đơn "Mua ngay" cho 1 biến thể sản phẩm (phiên bản cơ bản).
+     */
     @Override
     public long placeBuyNowOrder(long customerId, long variantId, int quantity,
             ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
@@ -387,6 +470,9 @@ public class OrderServiceImpl implements IOrderService {
         return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
     }
 
+    /**
+     * Đặt đơn "Mua ngay" kèm ghi chú lời nhắn riêng cho shop.
+     */
     @Override
     public long placeBuyNowOrder(long customerId, long variantId, int quantity,
             ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
@@ -395,6 +481,9 @@ public class OrderServiceImpl implements IOrderService {
         return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
     }
 
+    /**
+     * Đặt đơn "Mua ngay" đầy đủ: kiểm tra thông tin, tạo đơn và cập nhật tồn kho mà không xóa giỏ hàng.
+     */
     @Override
     public long placeBuyNowOrder(long customerId, long variantId, int quantity,
             ShippingAddress address, String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
@@ -406,6 +495,13 @@ public class OrderServiceImpl implements IOrderService {
         return orderDAO.createBuyNowOrder(order, address, order.getPaymentMethod(), saveAddress);
     }
 
+    /**
+     * Chuẩn hóa và xác thực dữ liệu trước khi lưu đơn hàng:
+     * - Kiểm tra thông tin địa chỉ giao hàng (tên, số điện thoại hợp lệ theo format VN, địa chỉ cụ thể, phường/xã, tỉnh/thành).
+     * - Xác thực phương thức thanh toán (COD, CARD, VNPAY).
+     * - Chuẩn hóa ngày giao hàng và khung giờ giao hàng (MORNING, AFTERNOON, EVENING...).
+     * - Gắn lời nhắn vào thông tin giao hàng của từng sub-order.
+     */
     private OrderDetailDTO prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
             String deliveryDateStr, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes) {
@@ -496,41 +592,65 @@ public class OrderServiceImpl implements IOrderService {
         return order;
     }
 
+    /**
+     * Lấy thông tin chi tiết một đơn hàng theo orderId.
+     */
     @Override
     public OrderDetailDTO getOrderDetails(long orderId) {
         return orderDAO.getOrderById(orderId);
     }
 
+    /**
+     * Lấy địa chỉ giao hàng mặc định của khách hàng.
+     */
     @Override
     public CustomerAddress getDefaultCustomerAddress(long customerId) {
         return orderDAO.getDefaultAddress(customerId);
     }
 
+    /**
+     * Lấy toàn bộ danh sách địa chỉ đã lưu của khách hàng.
+     */
     @Override
     public List<CustomerAddress> getCustomerAddresses(long customerId) {
         return orderDAO.getCustomerAddresses(customerId);
     }
 
+    /**
+     * Lấy thông tin một địa chỉ theo customerId và addressId.
+     */
     @Override
     public CustomerAddress getCustomerAddress(long customerId, long addressId) {
         return orderDAO.getCustomerAddressById(customerId, addressId);
     }
 
+    /**
+     * Lấy danh sách các voucher toàn sàn đang khả dụng cho mức tiền hàng.
+     */
     @Override
     public List<Coupon> getAvailableCoupons(BigDecimal orderAmount) {
         return couponDAO.findAvailableForAmount(orderAmount);
     }
 
+    /**
+     * Lấy danh sách các voucher khả dụng của một cửa hàng.
+     */
     @Override
     public List<Coupon> getAvailableShopCoupons(long shopId) {
         return couponDAO.findAvailableForShop(shopId);
     }
 
+    /**
+     * Lấy danh sách các đơn hàng con (sub-orders) của khách hàng để hiển thị lịch sử đặt hàng.
+     */
     @Override
     public List<SubOrderDTO> getSubOrdersByCustomerId(long customerId) {
         return orderDAO.getSubOrdersByCustomerId(customerId);
     }
 
+    /**
+     * Khách hàng gửi yêu cầu hủy đơn hàng: hoàn trả lại tồn kho nếu đơn đang ở trạng thái cho phép hủy.
+     */
     @Override
     public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
         return orderDAO.cancelOrderByCustomer(customerId, orderIdentifier, cancelReason);
