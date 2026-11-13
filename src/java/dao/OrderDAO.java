@@ -352,7 +352,8 @@ public class OrderDAO extends DBContext {
                     Coupon sc = couponDAO.findByIdForUpdate(conn, sub.getShopCouponId());
                     couponDAO.assertPerUserLimit(conn, sub.getShopCouponId(), order.getCustomerId());
                     validateCouponForShop(sc, sub.getShopId(), sub.getShopSubtotal());
-                    BigDecimal sDiscount = calculateCouponDiscount(sc, sub.getShopSubtotal());
+                    BigDecimal sDiscount = calculateCouponDiscount(
+                            sc, sub.getShopSubtotal(), sub.getShopShippingFee());
                     sub.setShopDiscount(sDiscount);
                     sub.setShopTotal(sub.getShopSubtotal().add(sub.getShopShippingFee()).subtract(sDiscount).max(BigDecimal.ZERO));
                     totalShopDiscounts = totalShopDiscounts.add(sDiscount);
@@ -368,7 +369,8 @@ public class OrderDAO extends DBContext {
                 Coupon coupon = couponDAO.findByIdForUpdate(conn, order.getCouponId());
                 couponDAO.assertPerUserLimit(conn, order.getCouponId(), order.getCustomerId());
                 validateCouponForOrder(coupon, order.getTotalGoodsAmount());
-                BigDecimal discount = calculateCouponDiscount(coupon, order.getTotalGoodsAmount());
+                BigDecimal discount = calculateCouponDiscount(
+                        coupon, order.getTotalGoodsAmount(), order.getTotalShippingFee());
                 order.setPlatformDiscount(discount);
             } else {
                 order.setPlatformDiscount(BigDecimal.ZERO);
@@ -674,26 +676,35 @@ public class OrderDAO extends DBContext {
         }
     }
 
-    private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount)
+    private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount,
+            BigDecimal shippingFee)
             throws SQLException {
         BigDecimal discount;
         String type = coupon.getDiscountType() == null
                 ? "" : coupon.getDiscountType().trim().toUpperCase(java.util.Locale.ROOT);
+        BigDecimal value = coupon.getDiscountValue() != null
+                ? coupon.getDiscountValue() : BigDecimal.ZERO;
 
         if ("PERCENTAGE".equals(type)) {
-            discount = eligibleAmount.multiply(coupon.getDiscountValue())
+            discount = eligibleAmount.multiply(value)
                     .divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
         } else if ("FIXED_AMOUNT".equals(type)) {
-            discount = coupon.getDiscountValue();
+            discount = value;
+        } else if ("FREESHIP".equals(type)) {
+            BigDecimal actualShipping = shippingFee != null ? shippingFee : BigDecimal.ZERO;
+            discount = value.min(actualShipping);
         } else {
-            throw new SQLException("Loáº¡i mÃ£ giáº£m giÃ¡ khÃ´ng há»£p lá»‡!");
+            throw new SQLException("Loại mã giảm giá không hợp lệ!");
         }
 
         if (coupon.getMaxDiscountAmount() != null
                 && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
             discount = coupon.getMaxDiscountAmount();
         }
-        return discount.min(eligibleAmount).max(BigDecimal.ZERO)
+        BigDecimal discountLimit = "FREESHIP".equals(type)
+                ? (shippingFee != null ? shippingFee : BigDecimal.ZERO)
+                : eligibleAmount;
+        return discount.min(discountLimit).max(BigDecimal.ZERO)
                 .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 

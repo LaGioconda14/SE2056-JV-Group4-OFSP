@@ -206,7 +206,7 @@ public class OrderServiceImpl implements IOrderService {
                 if (sCode != null && !sCode.trim().isEmpty()) {
                     Coupon sc = couponDAO.findByCode(sCode.trim());
                     validateShopCoupon(sc, shopId, shopSubtotal);
-                    shopDiscount = calculateCouponDiscount(sc, shopSubtotal);
+                    shopDiscount = calculateCouponDiscount(sc, shopSubtotal, shopShippingFee);
                     sub.setShopCouponId(sc.getCouponId());
                     sub.setShopCouponCode(sc.getCode());
                 }
@@ -231,7 +231,7 @@ public class OrderServiceImpl implements IOrderService {
             Coupon coupon = couponDAO.findByCode(couponCode.trim());
             validatePlatformCoupon(coupon, totalGoods);
             couponId = coupon.getCouponId();
-            discount = calculateCouponDiscount(coupon, totalGoods);
+            discount = calculateCouponDiscount(coupon, totalGoods, totalShipping);
         }
 
         order.setCouponId(couponId);
@@ -314,16 +314,22 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
-    private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount) {
+    private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount,
+            BigDecimal shippingFee) {
         BigDecimal discount;
         String type = coupon.getDiscountType() == null
                 ? "" : coupon.getDiscountType().trim().toUpperCase(Locale.ROOT);
+        BigDecimal value = coupon.getDiscountValue() != null
+                ? coupon.getDiscountValue() : BigDecimal.ZERO;
 
         if ("PERCENTAGE".equals(type)) {
-            discount = eligibleAmount.multiply(coupon.getDiscountValue())
+            discount = eligibleAmount.multiply(value)
                     .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         } else if ("FIXED_AMOUNT".equals(type)) {
-            discount = coupon.getDiscountValue();
+            discount = value;
+        } else if ("FREESHIP".equals(type)) {
+            BigDecimal actualShipping = shippingFee != null ? shippingFee : BigDecimal.ZERO;
+            discount = value.min(actualShipping);
         } else {
             throw new IllegalArgumentException("Loại mã giảm giá không hợp lệ!");
         }
@@ -332,7 +338,10 @@ public class OrderServiceImpl implements IOrderService {
                 && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
             discount = coupon.getMaxDiscountAmount();
         }
-        return discount.min(eligibleAmount).max(BigDecimal.ZERO)
+        BigDecimal discountLimit = "FREESHIP".equals(type)
+                ? (shippingFee != null ? shippingFee : BigDecimal.ZERO)
+                : eligibleAmount;
+        return discount.min(discountLimit).max(BigDecimal.ZERO)
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
