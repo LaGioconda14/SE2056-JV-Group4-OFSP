@@ -12,12 +12,26 @@ import jakarta.servlet.http.HttpServletResponse;
 import service.VnpayPaymentService;
 import util.VnpayUtil;
 
+/**
+ * Servlet tiếp nhận thông báo thanh toán tức thời từ server VNPAY (Instant Payment Notification - IPN).
+ * Endpoint: /payment/vnpay/ipn
+ */
 @WebServlet(name = "VnpayIpnServlet", urlPatterns = {"/payment/vnpay/ipn"})
 public class VnpayIpnServlet extends HttpServlet {
 
     private final VnpayPaymentService paymentService = new VnpayPaymentService();
     private final Gson gson = new Gson();
 
+    /**
+     * Xử lý webhook ngầm do máy chủ VNPAY gọi đến để xác nhận giao dịch:
+     * - Kiểm tra tính hợp lệ của chữ ký checksum (mã 97 nếu sai).
+     * - Xử lý cập nhật trạng thái đơn hàng trong DB thông qua paymentService.
+     * - Trả về JSON theo đúng định dạng tài liệu chuẩn của VNPAY (RspCode: 00, 01, 02, 04, 97...).
+     *
+     * @param request  yêu cầu HTTP GET chứa tham số giao dịch VNPAY
+     * @param response phản hồi HTTP JSON về cho máy chủ VNPAY
+     * @throws IOException nếu xảy ra lỗi vào/ra dữ liệu
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json");
