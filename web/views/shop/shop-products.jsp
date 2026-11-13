@@ -18,7 +18,7 @@
 
         <!-- Header chung của nhóm -->
         <jsp:include page="/views/shop/layout/header.jsp">
-            <jsp:param name="searchAction" value="${ctx}/shop/products" />
+            <jsp:param name="searchAction" value="/shop/products" />
         </jsp:include>
 
         <main class="shop-main-wrapper">
