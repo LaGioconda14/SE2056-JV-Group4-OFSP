@@ -185,7 +185,11 @@ public class OrderDAO extends DBContext {
         v.setShopId(rs.getLong("shop_id"));
         v.setShopName(rs.getString("shop_name"));
         v.setShopStatus(rs.getString("shop_status"));
-        v.setImage(rs.getString("thumbnail_url"));
+        String thumb = rs.getString("thumbnail_url");
+        if (thumb == null || thumb.trim().isEmpty()) {
+            thumb = ProductDAO.getDefaultFruitImage(v.getProductName());
+        }
+        v.setImage(thumb);
         v.setSku(rs.getString("sku"));
         v.setVariantName(rs.getString("variant_name"));
         v.setUnit(rs.getString("unit"));
@@ -1037,7 +1041,11 @@ public class OrderDAO extends DBContext {
                             item.setUnitPrice(rsItem.getBigDecimal("unit_price"));
                             item.setQuantity(rsItem.getInt("quantity"));
                             item.setTotalPrice(rsItem.getBigDecimal("total_price"));
-                            item.setImageUrl(rsItem.getString("product_image"));
+                            String oImg = rsItem.getString("product_image");
+                            if (oImg == null || oImg.trim().isEmpty()) {
+                                oImg = ProductDAO.getDefaultFruitImage(item.getProductNameSnapshot());
+                            }
+                            item.setImageUrl(oImg);
                             items.add(item);
                         }
                         so.setItems(items);

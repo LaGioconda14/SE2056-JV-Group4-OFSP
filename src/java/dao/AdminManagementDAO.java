@@ -2023,24 +2023,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     // Image matching fruit name or DB thumbnail
                     String img = rs.getString("thumbnail_url");
                     if (img == null || img.trim().isEmpty()) {
-                        String lower = pName.toLowerCase();
-                        if (lower.contains("dâu")) {
-                            img = "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=200&h=200&fit=crop";
-                        } else if (lower.contains("sầu")) {
-                            img = "https://images.unsplash.com/photo-1587334274328-64186a80aeee?w=200&h=200&fit=crop";
-                        } else if (lower.contains("xoài")) {
-                            img = "https://images.unsplash.com/photo-1553279768-865429fa0078?w=200&h=200&fit=crop";
-                        } else if (lower.contains("bưởi")) {
-                            img = "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=200&h=200&fit=crop";
-                        } else if (lower.contains("mận")) {
-                            img = "https://images.unsplash.com/photo-1528825871115-3581a5387919?w=200&h=200&fit=crop";
-                        } else if (lower.contains("lê") || lower.contains("táo")) {
-                            img = "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&h=200&fit=crop";
-                        } else if (lower.contains("thanh long")) {
-                            img = "https://images.unsplash.com/photo-1527325678964-54921661f888?w=200&h=200&fit=crop";
-                        } else {
-                            img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=200&h=200&fit=crop";
-                        }
+                        img = ProductDAO.getDefaultFruitImage(pName);
                     }
                     item.put("thumbnailUrl", img);
 

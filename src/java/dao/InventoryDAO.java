@@ -184,7 +184,7 @@ public class InventoryDAO extends DBContext {
 
                         String img = rs.getString("image_url");
                         if (img == null || img.trim().isEmpty()) {
-                            img = "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=120&h=120&fit=crop";
+                            img = ProductDAO.getDefaultFruitImage(item.getProductName());
                         }
                         item.setImage(img);
 
@@ -525,7 +525,11 @@ public class InventoryDAO extends DBContext {
                     batch.setSku(rs.getString("sku"));
                     batch.setVariantName(rs.getString("variant_name"));
                     batch.setProductName(rs.getString("product_name") + " (" + rs.getString("variant_name") + ")");
-                    batch.setImageUrl(rs.getString("image_url"));
+                    String batchImg = rs.getString("image_url");
+                    if (batchImg == null || batchImg.trim().isEmpty()) {
+                        batchImg = ProductDAO.getDefaultFruitImage(rs.getString("product_name"));
+                    }
+                    batch.setImageUrl(batchImg);
 
                     list.add(batch);
                 }
