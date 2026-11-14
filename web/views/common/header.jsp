@@ -41,7 +41,7 @@
                     </linearGradient>
                 </defs>
             </svg>
-            <div class="flex flex-col">
+            <div class="flex flex-col" style="font-family: 'Plus Jakarta Sans', sans-serif;">
                 <span class="text-2xl font-extrabold text-[#00652c] tracking-tight leading-none">Gốc Vườn</span>
                 <span class="text-[9px] font-bold tracking-widest text-[#00652c]/80 uppercase mt-0.5">NÔNG SẢN TẬN VƯỜN</span>
             </div>
@@ -198,11 +198,15 @@
     </div>
 
     <!-- Category Navigation Bar (Tông sáng đồng bộ Cart) -->
+    <c:set var="reqUri" value="${not empty requestScope['jakarta.servlet.forward.request_uri'] ? requestScope['jakarta.servlet.forward.request_uri'] : pageContext.request.requestURI}" />
+    <c:set var="ctxPath" value="${pageContext.request.contextPath}" />
+    <c:set var="isHomeActive" value="${reqUri.endsWith('/home') or reqUri.endsWith('/home.jsp') or reqUri eq ctxPath or reqUri eq ctxPath.concat('/')}" />
+    <c:set var="isProductsActive" value="${fn:contains(reqUri, '/products') or fn:contains(reqUri, '/product-list')}" />
     <div class="bg-white border-t border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
         <div class="max-w-[1360px] mx-auto px-4 lg:px-8 h-11 flex items-center justify-between">
             <nav class="flex items-center gap-5 lg:gap-6 text-sm h-full">
-                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
-                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
+                <a class="transition-colors flex items-center h-full border-b-2 ${isHomeActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
+                <a class="transition-colors flex items-center h-full border-b-2 ${isProductsActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
 
                 <%-- 1. TRÁI CÂY NỘI ĐỊA (Dropdown danh mục con quả nội địa) --%>
                 <div class="relative group h-full flex items-center">
