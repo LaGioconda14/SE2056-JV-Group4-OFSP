@@ -125,7 +125,7 @@
                 </div>
 
                 <div class="w-full md:w-56">
-                    <select name="riskLevel" class="filter-select-box !py-2 text-xs" onchange="this.form.submit()">
+                    <select name="riskLevel" class="filter-select-box inventory-filter-select text-xs" onchange="this.form.submit()">
                         <option value="">Mức độ rủi ro: Tất cả</option>
                         <option value="critical" ${param.riskLevel == 'critical' ? 'selected' : ''}>Nguy cấp (&lt;= 5)</option>
                         <option value="warning" ${param.riskLevel == 'warning' ? 'selected' : ''}>Cảnh báo vàng</option>
@@ -134,7 +134,7 @@
                 </div>
 
                 <div class="w-full md:w-60">
-                    <select name="sortBy" class="filter-select-box !py-2 text-xs" onchange="this.form.submit()">
+                    <select name="sortBy" class="filter-select-box inventory-filter-select text-xs" onchange="this.form.submit()">
                         <option value="stock_asc" ${sortBy == 'stock_asc' ? 'selected' : ''}>Sắp xếp: Tồn kho ít nhất trước ⇅</option>
                         <option value="stock_desc" ${sortBy == 'stock_desc' ? 'selected' : ''}>Sắp xếp: Tồn kho nhiều nhất trước</option>
                         <option value="freshness_desc" ${sortBy == 'freshness_desc' ? 'selected' : ''}>Sắp xếp: Độ tươi cao nhất trước</option>

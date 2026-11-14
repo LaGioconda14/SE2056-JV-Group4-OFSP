@@ -80,6 +80,11 @@
     color: #ffffff;
 }
 
+.inventory-filter-select {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
 /* Table styles */
 .inventory-table {
     width: 100%;

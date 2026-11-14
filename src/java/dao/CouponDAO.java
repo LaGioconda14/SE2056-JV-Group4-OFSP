@@ -45,7 +45,8 @@ public class CouponDAO extends DBContext {
         String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
                 + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
                 + "is_active, created_at FROM coupons "
-                + "WHERE is_active = 1 AND shop_id IS NULL AND GETDATE() BETWEEN start_date AND end_date "
+                + "WHERE is_active = 1 AND shop_id IS NULL AND discount_type IN ('PERCENTAGE', 'FIXED_AMOUNT') "
+                + "AND GETDATE() BETWEEN start_date AND end_date "
                 + "AND used_count < usage_limit AND min_order_value <= ? "
                 + "ORDER BY min_order_value, discount_value DESC";
         List<Coupon> coupons = new ArrayList<>();
@@ -70,7 +71,8 @@ public class CouponDAO extends DBContext {
         String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
                 + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
                 + "is_active, created_at FROM coupons "
-                + "WHERE is_active = 1 AND shop_id = ? AND GETDATE() BETWEEN start_date AND end_date "
+                + "WHERE is_active = 1 AND shop_id = ? AND discount_type IN ('PERCENTAGE', 'FIXED_AMOUNT') "
+                + "AND GETDATE() BETWEEN start_date AND end_date "
                 + "AND used_count < usage_limit "
                 + "ORDER BY min_order_value, discount_value DESC";
         List<Coupon> coupons = new ArrayList<>();

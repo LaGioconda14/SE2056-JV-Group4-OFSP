@@ -7,7 +7,7 @@
     <div class="mk-picker-head">
         <div class="relative flex-1 min-w-[160px]">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <input type="text" id="pickerSearch" class="mk-input !pl-8 !py-1.5 !text-xs" placeholder="Tìm sản phẩm...">
+            <input type="text" id="pickerSearch" class="mk-input mk-picker-search-input" placeholder="Tìm sản phẩm...">
         </div>
         <button type="button" id="pickerAll" class="text-xs font-bold text-emerald-700 hover:underline">Chọn tất cả</button>
         <button type="button" id="pickerNone" class="text-xs font-bold text-slate-500 hover:underline">Bỏ chọn</button>

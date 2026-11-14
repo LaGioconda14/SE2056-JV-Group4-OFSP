@@ -506,10 +506,10 @@ public class VoucherDAO extends DBContext {
                     if (maxDisc != null && maxDisc.signum() > 0 && discount.compareTo(maxDisc) > 0) {
                         discount = maxDisc;
                     }
-                } else if ("FREESHIP".equals(type)) {
-                    discount = value;   // trần giảm phí ship; checkout tự min với phí ship thực tế
-                } else {
+                } else if ("FIXED_AMOUNT".equals(type)) {
                     discount = value.min(eligible);
+                } else {
+                    return VoucherCheckResult.fail("Loại voucher này không còn được hỗ trợ.");
                 }
                 discount = discount.min(subtotal);
 

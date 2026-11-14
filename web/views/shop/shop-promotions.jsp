@@ -69,7 +69,7 @@
                 <form method="get" action="${ctx}/shop/promotions" class="relative w-full lg:w-72">
                     <input type="hidden" name="tab" value="${tab}">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" name="q" value="<c:out value='${q}'/>" class="mk-input !pl-9" placeholder="Tìm theo tên chương trình...">
+                    <input type="text" name="q" value="<c:out value='${q}'/>" class="mk-input mk-search-input" placeholder="Tìm theo tên chương trình...">
                 </form>
             </div>
 

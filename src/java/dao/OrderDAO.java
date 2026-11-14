@@ -782,9 +782,6 @@ public class OrderDAO extends DBContext {
                     .divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
         } else if ("FIXED_AMOUNT".equals(type)) {
             discount = value;
-        } else if ("FREESHIP".equals(type)) {
-            BigDecimal actualShipping = shippingFee != null ? shippingFee : BigDecimal.ZERO;
-            discount = value.min(actualShipping);
         } else {
             throw new SQLException("Loại mã giảm giá không hợp lệ!");
         }
@@ -793,10 +790,7 @@ public class OrderDAO extends DBContext {
                 && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
             discount = coupon.getMaxDiscountAmount();
         }
-        BigDecimal discountLimit = "FREESHIP".equals(type)
-                ? (shippingFee != null ? shippingFee : BigDecimal.ZERO)
-                : eligibleAmount;
-        return discount.min(discountLimit).max(BigDecimal.ZERO)
+        return discount.min(eligibleAmount).max(BigDecimal.ZERO)
                 .setScale(2, java.math.RoundingMode.HALF_UP);
     }
 

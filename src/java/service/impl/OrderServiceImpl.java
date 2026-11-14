@@ -35,7 +35,7 @@ import java.time.format.DateTimeFormatter;
  * - Chuẩn bị và kiểm tra sản phẩm thanh toán.
  * - Tách đơn hàng theo từng Shop (Sub-orders).
  * - Tính toán phí vận chuyển (cùng tỉnh 14.000đ, khác tỉnh 30.000đ).
- * - Xác thực và áp dụng mã giảm giá (voucher shop và voucher sàn: phần trăm, cố định, freeship).
+ * - Xác thực và áp dụng mã giảm giá (voucher shop và voucher sàn: phần trăm hoặc số tiền cố định).
  * - Tạo đơn hàng vào cơ sở dữ liệu và trừ tồn kho.
  */
 public class OrderServiceImpl implements IOrderService {
@@ -380,7 +380,6 @@ public class OrderServiceImpl implements IOrderService {
      * Tính số tiền được giảm từ mã giảm giá theo loại:
      * - PERCENTAGE: Giảm theo % giá trị đơn, có chặn mức tối đa (maxDiscountAmount).
      * - FIXED_AMOUNT: Giảm một số tiền cố định.
-     * - FREESHIP: Giảm tiền ship (tối đa bằng phí ship thực tế).
      */
     private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount,
             BigDecimal shippingFee) {
@@ -395,9 +394,6 @@ public class OrderServiceImpl implements IOrderService {
                     .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         } else if ("FIXED_AMOUNT".equals(type)) {
             discount = value;
-        } else if ("FREESHIP".equals(type)) {
-            BigDecimal actualShipping = shippingFee != null ? shippingFee : BigDecimal.ZERO;
-            discount = value.min(actualShipping);
         } else {
             throw new IllegalArgumentException("Loại mã giảm giá không hợp lệ!");
         }
@@ -406,10 +402,7 @@ public class OrderServiceImpl implements IOrderService {
                 && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
             discount = coupon.getMaxDiscountAmount();
         }
-        BigDecimal discountLimit = "FREESHIP".equals(type)
-                ? (shippingFee != null ? shippingFee : BigDecimal.ZERO)
-                : eligibleAmount;
-        return discount.min(discountLimit).max(BigDecimal.ZERO)
+        return discount.min(eligibleAmount).max(BigDecimal.ZERO)
                 .setScale(2, RoundingMode.HALF_UP);
     }
 

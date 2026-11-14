@@ -58,7 +58,7 @@
                         </span>
                     </div>
                     <p class="text-muted mt-1 mb-0 fs-7">
-                        Thiết lập các chương trình trợ giá toàn sàn, mã miễn phí vận chuyển chuỗi lạnh (Freeship Xtra) và voucher mùa vụ kích cầu tiêu thụ trái cây tươi, chuẩn OCOP.
+                        Thiết lập voucher giảm theo phần trăm hoặc số tiền cố định để kích cầu tiêu thụ trái cây tươi toàn sàn.
                     </p>
                 </div>
                 <div class="page-action-tools gap-2">
@@ -106,18 +106,18 @@
                     </div>
                 </div>
 
-                <!-- Card 3: Freeship Xtra Lạnh -->
+                <!-- Card 3: Voucher giảm trực tiếp -->
                 <div class="stat-card-kpi">
                     <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">FREESHIP XTRA LẠNH</span>
-                        <div class="kpi-icon-box" style="background: #eff6ff; color: #2563eb;">
-                            <i class="bi bi-truck"></i>
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">VOUCHER GIẢM TRỰC TIẾP</span>
+                        <div class="kpi-icon-box" style="background: #fef3c7; color: #d97706;">
+                            <i class="bi bi-cash-coin"></i>
                         </div>
                     </div>
-                    <div class="kpi-main-val">3 Chiến Dịch</div>
+                    <div class="kpi-main-val">Giảm % / Giảm tiền</div>
                     <div class="kpi-sub-text text-muted mt-2">
-                        <i class="bi bi-snow2 text-primary"></i>
-                        Giảm nhiệt độ SLA ship ...
+                        <i class="bi bi-tags text-warning"></i>
+                        Áp dụng trực tiếp trên tiền hàng
                     </div>
                 </div>
 
@@ -285,11 +285,8 @@
                 <div class="d-flex align-items-center gap-2">
                     <select class="custom-filter-select" id="voucherTypeFilter" onchange="filterVouchersList()">
                         <option value="all">Loại: Tất cả loại voucher</option>
-                        <option value="freeship">Freeship Xtra Lạnh</option>
                         <option value="discount">Giảm giá % đơn hàng</option>
-                        <option value="flash">Flash Sale Giờ Vàng</option>
-                        <option value="welcome">Khách hàng mới</option>
-                        <option value="season">Mùa vụ đặc sản</option>
+                        <option value="fixed">Giảm số tiền cố định</option>
                     </select>
                     <select class="custom-filter-select" id="voucherSponsorFilter" onchange="filterVouchersList()">
                         <option value="all">Nguồn: Tất cả nguồn ngân sách</option>
@@ -445,11 +442,8 @@
                     <div class="col-md-6">
                         <label class="form-label fs-7 fw-bold">Loại Chương Trình:</label>
                         <select class="form-select form-select-sm">
-                            <option>Freeship Xtra (Chuỗi Lạnh)</option>
                             <option>Giảm Giá % Giá Trị Đơn Hàng</option>
-                            <option>Flash Sale Giờ Vàng</option>
-                            <option>Mã Chào Bạn Mới (Evergreen)</option>
-                            <option>Lễ Hội Nông Sản Mùa Vụ OCOP</option>
+                            <option>Giảm Số Tiền Cố Định</option>
                         </select>
                     </div>
                     <div class="col-md-12">
