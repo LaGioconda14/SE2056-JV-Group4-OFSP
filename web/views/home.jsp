@@ -38,100 +38,14 @@
                         <a href="#featured" class="hero-btn-primary">
                             Mua Ngay <i class="fa-solid fa-arrow-right"></i>
                         </a>
-                        <a href="#categories" class="hero-btn-secondary">
-                            Khám Phá Danh Mục
+                        <a href="${pageContext.request.contextPath}/products" class="hero-btn-secondary">
+                            Khám Phá Cửa Hàng
                         </a>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="categories" class="max-w-7xl mx-auto px-4 py-8">
-            <div class="flex justify-between items-end mb-6">
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-emerald-600"></i> Khám Phá Danh Mục Nông Sản
-                    </h2>
-                    <p class="text-xs sm:text-sm text-gray-500 mt-1">Tuyển tập hoa quả tươi ngon, chuẩn sạch VietGAP & GlobalGAP theo nhu cầu dinh dưỡng</p>
-                </div>
-                <a href="${pageContext.request.contextPath}/products" class="text-xs sm:text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 transition group">
-                    Xem Tất Cả <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                </a>
-            </div>
-
-            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-sm">
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
-                    <c:forEach var="cat" items="${categories}">
-                        <c:set var="nameLower" value="${fn:toLowerCase(cat.categoryName)}" />
-                        
-                        <c:set var="realImg" value="https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=200&h=200&fit=crop" />
-                        
-                        <c:choose>
-                            <c:when test="${fn:contains(nameLower, 'táo envy')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'táo') or fn:contains(nameLower, 'lê') or fn:contains(nameLower, 'ổi')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1570913149827-d2ac84ab3f9a?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'nho')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'xoài') or fn:contains(nameLower, 'chuối')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1553279768-865429fa0078?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'dâu') or fn:contains(nameLower, 'mọng')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'dưa hấu') or fn:contains(nameLower, 'dưa lưới') or fn:contains(nameLower, 'giải nhiệt')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'thanh long')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'bưởi') or fn:contains(nameLower, 'cam') or fn:contains(nameLower, 'quýt')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'kiwi')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1585059895050-66e5b5a21670?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'mận')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1596363505789-4e6139223594?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'hộp quà') or fn:contains(nameLower, 'quà tặng')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'nhập khẩu')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'việt nam')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1528825871115-3581a5387919?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'thùng') or fn:contains(nameLower, 'nguyên kiện')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1595855759920-86582396756a?w=200&h=200&fit=crop" />
-                            </c:when>
-                            <c:when test="${fn:contains(nameLower, 'cắt sẵn') or fn:contains(nameLower, 'eat-clean') or fn:contains(nameLower, 'văn phòng')}">
-                                <c:set var="realImg" value="https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=200&h=200&fit=crop" />
-                            </c:when>
-                        </c:choose>
-
-                        <a href="${pageContext.request.contextPath}/products?category=${cat.slug}" 
-                           class="group flex flex-col items-center justify-center p-4 rounded-2xl bg-gray-50/70 hover:bg-emerald-50/60 border border-gray-100 hover:border-emerald-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-md text-center">
-                            
-                            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-3 bg-white border-2 border-gray-100 group-hover:border-emerald-500 shadow-xs group-hover:scale-105 transition-all duration-300 overflow-hidden">
-                                <img src="${not empty cat.imageUrl ? pageContext.request.contextPath.concat('/').concat(cat.imageUrl) : realImg}" 
-                                     alt="${cat.categoryName}" 
-                                     data-fallback="${realImg}" 
-                                     class="category-card-img w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                            </div>
-
-                            <h3 class="font-bold text-xs sm:text-sm text-gray-800 group-hover:text-emerald-600 transition line-clamp-2 leading-snug">
-                                ${cat.categoryName}
-                            </h3>
-                        </a>
-                    </c:forEach>
-                </div>
-            </div>
-        </section>
 
         <section id="featured" class="max-w-7xl mx-auto px-4 py-8">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">

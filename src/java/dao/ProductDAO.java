@@ -26,6 +26,77 @@ import util.DBContext;
 public class ProductDAO extends DBContext {
     private static final Logger LOGGER = Logger.getLogger(ProductDAO.class.getName());
 
+    public static String getDefaultFruitImage(String productName) {
+        if (productName == null) {
+            return "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=800&fit=crop";
+        }
+        String lower = productName.toLowerCase();
+        if (lower.contains("bạch tuyết")) {
+            return "https://upload.wikimedia.org/wikipedia/commons/3/3d/Pineberry_Florida_Pearl.jpg";
+        }
+        if (lower.contains("dâu")) {
+            return "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=800&fit=crop";
+        }
+        if (lower.contains("hồng")) {
+            return "https://upload.wikimedia.org/wikipedia/commons/5/57/Gotgam.jpg";
+        }
+        if (lower.contains("sầu") || lower.contains("ri6")) {
+            return "https://upload.wikimedia.org/wikipedia/commons/5/51/4SeasonsDurians22102009-02_%284034657521%29.jpg";
+        }
+        if (lower.contains("xoài")) {
+            return "https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&fit=crop";
+        }
+        if (lower.contains("bưởi")) {
+            return "https://upload.wikimedia.org/wikipedia/commons/1/1e/B%C6%B0%E1%BB%9Fi.jpg";
+        }
+        if (lower.contains("cam") || lower.contains("quýt")) {
+            return "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=800&fit=crop";
+        }
+        if (lower.contains("mận")) {
+            return "https://images.unsplash.com/photo-1596363505729-4190a9506133?w=800&fit=crop";
+        }
+        if (lower.contains("lê")) {
+            return "https://images.unsplash.com/photo-1514756331096-242fdeb70d4a?w=800&fit=crop";
+        }
+        if (lower.contains("thanh long")) {
+            return "https://images.unsplash.com/photo-1527325678964-54921661f888?w=800&fit=crop";
+        }
+        if (lower.contains("dưa hấu")) {
+            return "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&fit=crop";
+        }
+        if (lower.contains("dưa") || lower.contains("dưa lưới")) {
+            return "https://images.unsplash.com/photo-1571575173700-afb9492e6a50?w=800&fit=crop";
+        }
+        if (lower.contains("táo") || lower.contains("envy")) {
+            return "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&fit=crop";
+        }
+        if (lower.contains("bơ")) {
+            return "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=800&fit=crop";
+        }
+        if (lower.contains("mẫu đơn")) {
+            return "https://images.unsplash.com/photo-1599819177626-b50f9dd21c9b?w=800&fit=crop";
+        }
+        if (lower.contains("nho")) {
+            return "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=800&fit=crop";
+        }
+        if (lower.contains("kiwi")) {
+            return "https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=800&fit=crop";
+        }
+        if (lower.contains("cherry")) {
+            return "https://images.unsplash.com/photo-1528825871115-3581a5387919?w=800&fit=crop";
+        }
+        if (lower.contains("chuối")) {
+            return "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=800&fit=crop";
+        }
+        if (lower.contains("măng cụt")) {
+            return "https://upload.wikimedia.org/wikipedia/commons/9/93/Mangosteens_-_whole_and_opened.jpg";
+        }
+        if (lower.contains("giỏ") || lower.contains("quà")) {
+            return "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=800&fit=crop";
+        }
+        return "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=800&fit=crop";
+    }
+
     public double[] getProductRatingStats(long productId) {
         String sql = "SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) AS avg_rating, "
                 + "       COUNT(r.review_id) AS reviews_count "
@@ -97,7 +168,7 @@ public class ProductDAO extends DBContext {
                 + "    COALESCE(pv.stock_quantity, 0) AS stock_quantity, "
                 + "    COALESCE(pv.low_stock_threshold, 10) AS low_stock_threshold, "
                 + "    COALESCE(pv.unit, 'kg') AS unit, "
-                + "    COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
+                + "    pi.image_url AS image_url, "
                 + "    COALESCE(pv.is_active, 1) AS is_active, "
                 + "    p.name AS product_name, "
                 + "    p.origin, "
@@ -128,7 +199,7 @@ public class ProductDAO extends DBContext {
 
                     String img = rs.getString("image_url");
                     if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1543528176-61b239494933?w=800&auto=format&fit=crop&q=80";
+                        img = getDefaultFruitImage(rs.getString("product_name"));
                     }
                     v.setImage(img);
 
@@ -220,7 +291,7 @@ public class ProductDAO extends DBContext {
 
                     String cover = rs.getString("cover_image");
                     if (cover == null || cover.isEmpty()) {
-                        cover = "https://images.unsplash.com/photo-1543528176-61b239494933?w=800&auto=format&fit=crop&q=80";
+                        cover = getDefaultFruitImage(v.getProductName());
                     }
                     v.setImage(cover);
 
@@ -581,7 +652,7 @@ public class ProductDAO extends DBContext {
 
                     String img = rs.getString("image_url");
                     if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=100&h=100&fit=crop";
+                        img = getDefaultFruitImage(rs.getString("product_name"));
                     }
                     v.setImage(img);
 
@@ -979,7 +1050,7 @@ public class ProductDAO extends DBContext {
                 + "pv.price, pv.original_price, pv.stock_quantity, pv.is_active, "
                 + "p.name AS product_name, p.category_id, p.origin, p.storage_temp, "
                 + "p.certification, p.description, "
-                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url "
+                + "pi.image_url AS image_url "
                 + "FROM product_variants pv "
                 + "JOIN products p ON pv.product_id = p.product_id "
                 + "LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
@@ -1009,7 +1080,11 @@ public class ProductDAO extends DBContext {
                     pv.setStorageTemp(rs.getString("storage_temp"));
                     pv.setCertification(rs.getString("certification"));
                     pv.setDescription(rs.getString("description"));
-                    pv.setImage(rs.getString("image_url")); // Map đúng vào trường ảnh qua LEFT JOIN
+                    String vImg = rs.getString("image_url");
+                    if (vImg == null || vImg.trim().isEmpty()) {
+                        vImg = getDefaultFruitImage(pv.getProductName());
+                    }
+                    pv.setImage(vImg);
                 }
             }
         } catch (Exception e) {
@@ -1142,7 +1217,7 @@ public class ProductDAO extends DBContext {
 
                 String image = rs.getString("image_url");
                 if (image == null || image.isEmpty()) {
-                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf";
+                    image = getDefaultFruitImage(name);
                 }
 
                 BigDecimal price = rs.getBigDecimal("price");
@@ -1292,7 +1367,7 @@ public class ProductDAO extends DBContext {
 
                 String image = rs.getString("image_url");
                 if (image == null || image.isEmpty()) {
-                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                    image = getDefaultFruitImage(name);
                 }
 
                 BigDecimal price = rs.getBigDecimal("price");
@@ -1361,7 +1436,7 @@ public class ProductDAO extends DBContext {
 
                     String image = rs.getString("image_url");
                     if (image == null || image.isEmpty()) {
-                        image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                        image = getDefaultFruitImage(name);
                     }
 
                     BigDecimal price = rs.getBigDecimal("price");
@@ -1426,7 +1501,7 @@ public class ProductDAO extends DBContext {
                     // Lấy ảnh chuẩn
                     String img = rs.getString("image_url");
                     if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                        img = getDefaultFruitImage(p.getName());
                     }
                     p.setImage(img);
 
@@ -1487,18 +1562,6 @@ public class ProductDAO extends DBContext {
                     }
                     if (!imgs.contains(img)) {
                         imgs.add(0, img);
-                    }
-                    if (imgs.size() < 4) {
-                        String[] complementaries = {
-                            "https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=700&fit=crop", // Quả bổ đôi tươi giòn
-                            "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=700&fit=crop", // Thu hoạch thùng gỗ
-                            "https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=700&fit=crop"  // Đóng hộp carton quà tặng
-                        };
-                        for (String comp : complementaries) {
-                            if (imgs.size() < 4 && !imgs.contains(comp)) {
-                                imgs.add(comp);
-                            }
-                        }
                     }
                     p.setImages(imgs);
                     util.PromotionPricing.applyToProductDetail(p); // khuyến mãi cho sản phẩm + từng phân loại
@@ -1663,7 +1726,7 @@ public class ProductDAO extends DBContext {
 
                     String img = rs.getString("image_url");
                     if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                        img = getDefaultFruitImage(p.getName());
                     }
                     p.setImage(img);
 
@@ -1954,7 +2017,7 @@ public class ProductDAO extends DBContext {
 
         String img = rs.getString("image_url");
         if (img == null || img.trim().isEmpty()) {
-            img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+            img = getDefaultFruitImage(p.getName());
         }
         p.setImage(img);
 
@@ -2116,7 +2179,7 @@ public class ProductDAO extends DBContext {
         List<ProductCardDTO> products = new ArrayList<>();
         String sql = "SELECT p.product_id, p.name, p.origin, p.certification, "
                 + "p.storage_temp, p.description, c.category_name, p.is_active, "
-                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url, "
+                + "pi.image_url AS image_url, "
                 + "COALESCE(stats.min_price, 0) AS min_price, "
                 + "COALESCE(stats.max_price, 0) AS max_price, "
                 + "COALESCE(stats.total_stock, 0) AS total_stock, "
@@ -2152,7 +2215,11 @@ public class ProductDAO extends DBContext {
                     product.setStorageTemp(rs.getString("storage_temp"));
                     product.setDescription(rs.getString("description"));
                     product.setCategoryName(rs.getString("category_name"));
-                    product.setImage(rs.getString("image_url"));
+                    String pImg = rs.getString("image_url");
+                    if (pImg == null || pImg.trim().isEmpty()) {
+                        pImg = getDefaultFruitImage(product.getName());
+                    }
+                    product.setImage(pImg);
                     product.setPrice(rs.getBigDecimal("min_price"));
                     product.setOldPrice(rs.getBigDecimal("max_price"));
                     product.setStockQuantity(rs.getInt("total_stock"));
@@ -2250,7 +2317,7 @@ public class ProductDAO extends DBContext {
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, pv.original_price, "
                 + "pv.stock_quantity, pv.low_stock_threshold, pv.is_active, p.name AS product_name, p.origin, "
                 + "p.storage_temp, p.certification, p.description, c.category_name, "
-                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url "
+                + "pi.image_url AS image_url "
                 + "FROM product_variants pv JOIN products p ON pv.product_id = p.product_id "
                 + "LEFT JOIN categories c ON p.category_id = c.category_id "
                 + "LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
@@ -2279,7 +2346,11 @@ public class ProductDAO extends DBContext {
                 variant.setCertification(rs.getString("certification"));
                 variant.setDescription(rs.getString("description"));
                 variant.setCategoryName(rs.getString("category_name"));
-                variant.setImage(rs.getString("image_url"));
+                String vImg = rs.getString("image_url");
+                if (vImg == null || vImg.trim().isEmpty()) {
+                    vImg = getDefaultFruitImage(variant.getProductName());
+                }
+                variant.setImage(vImg);
                 return variant;
             }
         } catch (Exception e) {
@@ -2330,7 +2401,7 @@ public class ProductDAO extends DBContext {
                 String categoryName = rs.getString("category_name");
                 String image = rs.getString("image_url");
                 if (image == null || image.isEmpty()) {
-                    image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf"; // Fallback image.
+                    image = getDefaultFruitImage(name);
                 }
 
                 BigDecimal price = rs.getBigDecimal("price");
@@ -2481,7 +2552,7 @@ public class ProductDAO extends DBContext {
 
                     String image = rs.getString("image_url");
                     if (image == null || image.trim().isEmpty()) {
-                        image = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                        image = getDefaultFruitImage(product.getName());
                     }
                     product.setImage(image);
 
@@ -2594,7 +2665,7 @@ public class ProductDAO extends DBContext {
     public ProductDetailDTO getShopProductForEdit(long productId, long shopId) {
         String sql = "SELECT p.product_id, p.name, p.category_id, p.origin, p.storage_temp, "
                 + "p.certification, p.description, p.is_active, "
-                + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1543528176-61b239494933?w=800') AS image_url "
+                + "pi.image_url AS image_url "
                 + "FROM products p LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 "
                 + "WHERE p.product_id = ? AND p.shop_id = ?";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -2611,7 +2682,11 @@ public class ProductDAO extends DBContext {
                 product.setCertification(rs.getString("certification"));
                 product.setDescription(rs.getString("description"));
                 product.setActive(rs.getBoolean("is_active"));
-                product.setImage(rs.getString("image_url"));
+                String editImg = rs.getString("image_url");
+                if (editImg == null || editImg.trim().isEmpty()) {
+                    editImg = getDefaultFruitImage(product.getName());
+                }
+                product.setImage(editImg);
                 return product;
             }
         } catch (Exception e) {
@@ -2836,7 +2911,7 @@ public class ProductDAO extends DBContext {
                     // Ảnh đại diện
                     String img = rs.getString("image_url");
                     if (img == null || img.trim().isEmpty()) {
-                        img = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop";
+                        img = getDefaultFruitImage(p.getName());
                     }
                     p.setImage(img);
 

@@ -200,7 +200,11 @@ public class ShopDashboardDAO extends DBContext {
                     m.put("qty", rs.getInt("qty"));
                     m.put("revenue", rs.getBigDecimal("revenue").doubleValue());
                     m.put("orders", rs.getInt("orders"));
-                    m.put("image", rs.getString("image"));
+                    String bImage = rs.getString("image");
+                    if (bImage == null || bImage.trim().isEmpty()) {
+                        bImage = ProductDAO.getDefaultFruitImage(rs.getString("name"));
+                    }
+                    m.put("image", bImage);
                     list.add(m);
                 }
             }

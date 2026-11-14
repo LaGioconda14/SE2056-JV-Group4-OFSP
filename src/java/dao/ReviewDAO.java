@@ -255,7 +255,11 @@ public class ReviewDAO extends DBContext {
                         r.setProductId(rs.getLong("product_id"));
                         r.setProductName(rs.getString("product_name_snapshot"));
                         r.setVariantName(rs.getString("variant_name_snapshot"));
-                        r.setProductImage(rs.getString("product_image"));
+                        String rImg = rs.getString("product_image");
+                        if (rImg == null || rImg.trim().isEmpty()) {
+                            rImg = ProductDAO.getDefaultFruitImage(r.getProductName());
+                        }
+                        r.setProductImage(rImg);
                         r.setRating(rs.getInt("rating"));
                         r.setComment(rs.getString("comment"));
                         r.setReplyComment(rs.getString("reply_comment"));
@@ -310,7 +314,11 @@ public class ReviewDAO extends DBContext {
                         r.setProductId(rs.getLong("product_id"));
                         r.setProductName(rs.getString("product_name_snapshot"));
                         r.setVariantName(rs.getString("variant_name_snapshot"));
-                        r.setProductImage(rs.getString("product_image"));
+                        String rImg = rs.getString("product_image");
+                        if (rImg == null || rImg.trim().isEmpty()) {
+                            rImg = ProductDAO.getDefaultFruitImage(r.getProductName());
+                        }
+                        r.setProductImage(rImg);
                         r.setRating(rs.getInt("rating"));
                         r.setComment(rs.getString("comment"));
                         r.setReplyComment(rs.getString("reply_comment"));

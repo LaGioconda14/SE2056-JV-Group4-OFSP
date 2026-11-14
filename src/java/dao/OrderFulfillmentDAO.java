@@ -179,7 +179,11 @@ public class OrderFulfillmentDAO extends DBContext {
                     item.setOrigin(rs.getString("origin"));
                     item.setCertification(rs.getString("certification"));
                     item.setStorageTemp(rs.getString("storage_temp"));
-                    item.setImageUrl(rs.getString("image_url"));
+                    String fImg = rs.getString("image_url");
+                    if (fImg == null || fImg.trim().isEmpty()) {
+                        fImg = ProductDAO.getDefaultFruitImage(item.getProductNameSnapshot());
+                    }
+                    item.setImageUrl(fImg);
 
                     list.add(item);
                 }

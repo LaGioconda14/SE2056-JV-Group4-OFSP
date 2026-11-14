@@ -161,7 +161,7 @@ public class WishlistDAO extends DBContext {
                     }
                     String image = rs.getString("image_url");
                     if (image == null || image.isEmpty()) {
-                        image = DEFAULT_IMAGE;
+                        image = ProductDAO.getDefaultFruitImage(rs.getString("name"));
                     }
                     BigDecimal price = rs.getBigDecimal("price");
                     if (price == null) {

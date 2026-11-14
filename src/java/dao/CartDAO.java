@@ -354,7 +354,11 @@ public class CartDAO extends DBContext {
         item.setPreviousQuantity(item.getQuantity());
         item.getVariant().setShopName(rs.getString("shop_name"));
         item.getVariant().setShopStatus(rs.getString("shop_status"));
-        item.getVariant().setImage(rs.getString("thumbnail_url"));
+        String thumb = rs.getString("thumbnail_url");
+        if (thumb == null || thumb.trim().isEmpty()) {
+            thumb = ProductDAO.getDefaultFruitImage(item.getVariant().getProductName());
+        }
+        item.getVariant().setImage(thumb);
         return item;
     }
 

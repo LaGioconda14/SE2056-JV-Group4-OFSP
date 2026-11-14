@@ -410,7 +410,11 @@ public class DeliveryDAO extends DBContext {
                     it.setQuantity(rs.getInt("quantity"));
                     it.setTotalPrice(rs.getBigDecimal("total_price"));
                     it.setStorageTemp(rs.getString("storage_temp"));
-                    it.setImageUrl(rs.getString("image_url"));
+                    String dImg = rs.getString("image_url");
+                    if (dImg == null || dImg.trim().isEmpty()) {
+                        dImg = ProductDAO.getDefaultFruitImage(it.getProductNameSnapshot());
+                    }
+                    it.setImageUrl(dImg);
                     items.add(it);
                 }
                 del.setItems(items);
