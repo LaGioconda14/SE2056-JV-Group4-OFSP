@@ -270,7 +270,7 @@
                                                         </div>
                                                     </div>
                                                 </c:forEach>
-                                            </c:when>
+                                            </c:when>   
                                             <c:otherwise>
                                                 <!-- Khi sản phẩm chỉ có 1 phân loại tiêu chuẩn -->
                                                 <div class="variant-card rounded-2xl border-2 p-3.5 text-left relative selected">

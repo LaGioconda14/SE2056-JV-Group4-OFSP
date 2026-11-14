@@ -37,25 +37,16 @@
 
     <jsp:include page="/views/common/header.jsp" />
 
-    <!-- 3. SUB-NAV BAR -->
-    <nav class="bg-white border-b border-gray-100 hidden md:block">
-        <div class="max-w-7xl mx-auto px-4 flex items-center justify-between text-xs font-semibold text-gray-600">
-            <div class="flex items-center space-x-6 py-2.5">
-                <a href="${pageContext.request.contextPath}/home" class="hover:text-emerald-700 transition">Trang Chủ</a>
-                <a href="${pageContext.request.contextPath}/store" class="text-emerald-700 font-bold flex items-center gap-1.5 transition">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Gian Hàng Shop
-                </a>
-                <a href="#shop-products" class="hover:text-emerald-700 transition">Danh Mục Nông Sản</a>
-                <a href="#reviews" class="hover:text-emerald-700 transition">Đánh Giá Khách Hàng</a>
-                <a href="#footer" class="hover:text-emerald-700 transition">Liên Hệ</a>
-            </div>
-            <div>
-                <span class="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200/80 px-3 py-1 rounded-full text-[11px] font-bold">
-                    <i class="fa-solid fa-bolt text-amber-500"></i> Ưu Đãi Mùa Vụ - Giảm Đến 25%
-                </span>
-            </div>
-        </div>
-    </nav>
+    <!-- Breadcrumb điều hướng gian hàng -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 w-full">
+        <nav class="flex items-center gap-2 text-xs text-slate-500">
+            <a href="${pageContext.request.contextPath}/home" class="hover:text-emerald-700 transition">Trang chủ</a>
+            <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+            <a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-700 transition">Cửa hàng</a>
+            <i class="fa-solid fa-chevron-right text-[9px] text-slate-400"></i>
+            <span class="text-slate-900 font-bold"><c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng nông sản'}"/></span>
+        </nav>
+    </div>
 
     <!-- 4. SHOP HERO COVER & PROFILE CARD -->
     <section class="relative">

@@ -10,14 +10,34 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=<%= System.currentTimeMillis() %>">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#00652c',
+                            dark: '#005323',
+                            light: '#059669',
+                            surface: '#f4f7f4'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-
-<script src="https://cdn.tailwindcss.com"></script>
+<body class="bg-[#f8fafc] text-slate-800 antialiased font-sans">
 
 <jsp:include page="/views/common/header.jsp" />
 
-<div class="container py-4">
+<div class="profile-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 w-full">
     <%@include file="components/profile/breadcrumb-hero.jsp"%>
 
     <div class="row g-4">
@@ -38,6 +58,9 @@
 </div>
 
 <%@include file="components/profile/modals.jsp"%>
+
+<!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
+<jsp:include page="/views/common/site-footer.jsp" />
 
 <script>
     window.contextPath = '${pageContext.request.contextPath}';

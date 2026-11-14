@@ -116,6 +116,24 @@ public class ProductServlet extends HttpServlet {
 
         // 9. Lấy dữ liệu danh mục kèm số lượng & thống kê
         List<Category> listCategories = productService.getAllCategoriesWithCount();
+        List<Category> parentCategories = new ArrayList<>();
+        List<Category> subCategories = new ArrayList<>();
+        if (listCategories != null) {
+            for (Category c : listCategories) {
+                if (c.getParentId() == null || c.getParentId() <= 0) {
+                    parentCategories.add(c);
+                } else {
+                    subCategories.add(c);
+                }
+            }
+            // Sắp xếp danh mục con: ưu tiên danh mục có sản phẩm, sau đó theo số lượng giảm dần
+            subCategories.sort((a, b) -> {
+                if (a.getProductCount() != b.getProductCount()) {
+                    return Integer.compare(b.getProductCount(), a.getProductCount());
+                }
+                return Integer.compare(a.getDisplayOrder(), b.getDisplayOrder());
+            });
+        }
         Map<String, Integer> listOrigins = productService.getOriginsWithCount();
         int inStockCount = productService.countInStockProducts();
         BigDecimal[] dbMinMax = productService.getMinMaxProductPrices();
@@ -141,6 +159,8 @@ public class ProductServlet extends HttpServlet {
 
         request.setAttribute("listCategories", listCategories);
         request.setAttribute("categories", listCategories); // Tương thích ngược
+        request.setAttribute("parentCategories", parentCategories);
+        request.setAttribute("subCategories", subCategories);
         request.setAttribute("listOrigins", listOrigins);
         request.setAttribute("inStockCount", inStockCount);
         request.setAttribute("dbMinPrice", dbMinMax[0]);
