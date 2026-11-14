@@ -23,7 +23,7 @@ public class CouponDAO extends DBContext {
         }
 
         String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
-                + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
+                + "max_discount_amount, usage_limit, used_count, applies_to, start_date, end_date, "
                 + "is_active, created_at FROM coupons WHERE UPPER(code) = ?";
         Connection conn = getConnection();
         if (conn == null) {
@@ -43,7 +43,7 @@ public class CouponDAO extends DBContext {
 
     public List<Coupon> findAvailableForAmount(java.math.BigDecimal orderAmount) {
         String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
-                + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
+                + "max_discount_amount, usage_limit, used_count, applies_to, start_date, end_date, "
                 + "is_active, created_at FROM coupons "
                 + "WHERE is_active = 1 AND shop_id IS NULL AND discount_type IN ('PERCENTAGE', 'FIXED_AMOUNT') "
                 + "AND GETDATE() BETWEEN start_date AND end_date "
@@ -69,7 +69,7 @@ public class CouponDAO extends DBContext {
 
     public List<Coupon> findAvailableForShop(long shopId) {
         String sql = "SELECT coupon_id, shop_id, code, discount_type, discount_value, min_order_value, "
-                + "max_discount_amount, usage_limit, used_count, start_date, end_date, "
+                + "max_discount_amount, usage_limit, used_count, applies_to, start_date, end_date, "
                 + "is_active, created_at FROM coupons "
                 + "WHERE is_active = 1 AND shop_id = ? AND discount_type IN ('PERCENTAGE', 'FIXED_AMOUNT') "
                 + "AND GETDATE() BETWEEN start_date AND end_date "
@@ -117,6 +117,31 @@ public class CouponDAO extends DBContext {
             if (ps.executeUpdate() != 1) {
                 throw new SQLException("Mã giảm giá đã hết hạn hoặc hết lượt sử dụng!");
             }
+        }
+    }
+
+    public List<Long> getApplicableProductIds(Connection conn, int couponId) throws SQLException {
+        List<Long> productIds = new ArrayList<>();
+        String sql = "SELECT product_id FROM coupon_products WHERE coupon_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, couponId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) productIds.add(rs.getLong("product_id"));
+            }
+        }
+        return productIds;
+    }
+
+    public List<Long> getApplicableProductIds(int couponId) {
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new IllegalStateException("Không thể tải sản phẩm áp dụng voucher.");
+        }
+        try (conn) {
+            return getApplicableProductIds(conn, couponId);
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error loading coupon products", ex);
+            throw new IllegalStateException("Không thể tải sản phẩm áp dụng voucher.", ex);
         }
     }
 
@@ -173,6 +198,11 @@ public class CouponDAO extends DBContext {
         coupon.setMaxDiscountAmount(rs.getBigDecimal("max_discount_amount"));
         coupon.setUsageLimit(rs.getInt("usage_limit"));
         coupon.setUsedCount(rs.getInt("used_count"));
+        try {
+            coupon.setAppliesTo(rs.getString("applies_to"));
+        } catch (SQLException ignored) {
+            coupon.setAppliesTo("ALL");
+        }
         coupon.setStartDate(rs.getTimestamp("start_date"));
         coupon.setEndDate(rs.getTimestamp("end_date"));
         coupon.setActive(rs.getBoolean("is_active"));

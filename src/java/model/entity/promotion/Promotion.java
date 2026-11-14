@@ -59,6 +59,7 @@ public class Promotion implements Serializable {
     private String status;
     private int productCount;
     private List<Long> productIds = new ArrayList<>();
+    private List<Long> variantIds = new ArrayList<>();
     private List<String> productNames = new ArrayList<>();
 
     public long getPromotionId() { return promotionId; }
@@ -132,6 +133,9 @@ public class Promotion implements Serializable {
 
     public List<Long> getProductIds() { return productIds; }
     public void setProductIds(List<Long> productIds) { this.productIds = productIds; }
+
+    public List<Long> getVariantIds() { return variantIds; }
+    public void setVariantIds(List<Long> variantIds) { this.variantIds = variantIds; }
 
     public List<String> getProductNames() { return productNames; }
     public void setProductNames(List<String> productNames) { this.productNames = productNames; }

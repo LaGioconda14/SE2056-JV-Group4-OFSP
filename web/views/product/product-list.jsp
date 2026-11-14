@@ -89,14 +89,16 @@
                         </a>
                     </div>
 
-                    <!-- 1. DANH MỤC SẢN PHẨM (Hiển thị các danh mục rõ ràng, không bị thanh cuộn đè số) -->
+                    <!-- 1. DANH MỤC CHA -->
                     <div>
-                        <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3.5">
-                            Danh Mục Sản Phẩm
-                        </h4>
+                        <div class="flex items-center justify-between mb-3.5">
+                            <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                                Danh Mục Cha
+                            </h4>
+                            <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Chính</span>
+                        </div>
                         <div class="space-y-2.5 text-xs">
-                            <c:forEach var="cat" items="${listCategories}">
-                                <%-- Chỉ hiển thị các danh mục cha chính để sidebar gọn gàng, thoáng mát --%>
+                            <c:forEach var="cat" items="${not empty parentCategories ? parentCategories : listCategories}">
                                 <c:if test="${empty cat.parentId}">
                                     <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
                                         <div class="flex items-center gap-2.5 min-w-0 pr-2">
@@ -107,7 +109,7 @@
                                                 ${cat.categoryName}
                                             </span>
                                         </div>
-                                        <span class="text-xs font-bold text-slate-400 font-mono shrink-0 px-2 py-0.5 rounded-full bg-slate-50 group-hover:bg-emerald-50 group-hover:text-emerald-700 transition">
+                                        <span class="text-xs font-bold ${cat.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full group-hover:bg-emerald-50 group-hover:text-emerald-700 transition">
                                             ${cat.productCount}
                                         </span>
                                     </label>
@@ -229,32 +231,51 @@
                         </div>
                     </div>
 
-                    <!-- 5. VÙNG TRỒNG / XUẤT XỨ -->
+                    <!-- 5. DANH MỤC CON (Thay thế bộ lọc vùng trồng / xuất xứ theo yêu cầu) -->
                     <div class="border-t border-slate-100 pt-5">
-                        <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3.5">
-                            Vùng Trồng / Xuất Xứ
-                        </h4>
-                        <div class="space-y-2.5 text-xs">
+                        <div class="flex items-center justify-between mb-3.5">
+                            <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                                Danh Mục Con
+                            </h4>
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Tiểu mục</span>
+                        </div>
+                        <div class="space-y-2.5 text-xs max-h-72 overflow-y-auto pr-1">
                             <c:choose>
-                                <c:when test="${not empty listOrigins}">
-                                    <c:forEach var="entry" items="${listOrigins}">
+                                <c:when test="${not empty subCategories}">
+                                    <c:forEach var="sub" items="${subCategories}">
                                         <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
                                             <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                                                <input type="checkbox" name="origin" value="${entry.key}" 
-                                                       ${selectedOriginsList != null and selectedOriginsList.contains(entry.key) ? 'checked' : ''} 
+                                                <input type="checkbox" name="category" value="${sub.categoryId}" 
+                                                       ${selectedCategoriesList != null and (selectedCategoriesList.contains(String.valueOf(sub.categoryId)) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
                                                        class="custom-checkbox">
-                                                <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition truncate">
-                                                    ${entry.key}
+                                                <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${sub.categoryName}">
+                                                    ${sub.categoryName}
                                                 </span>
                                             </div>
-                                            <span class="text-xs font-bold text-slate-400 font-mono shrink-0 px-2 py-0.5 rounded-full bg-slate-50">
-                                                ${entry.value}
+                                            <span class="text-xs font-bold ${sub.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full group-hover:bg-emerald-100 transition">
+                                                ${sub.productCount}
                                             </span>
                                         </label>
                                     </c:forEach>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="text-slate-400 text-xs italic">Đang cập nhật vùng trồng</span>
+                                    <c:forEach var="sub" items="${listCategories}">
+                                        <c:if test="${not empty sub.parentId}">
+                                            <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
+                                                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                                                    <input type="checkbox" name="category" value="${sub.categoryId}" 
+                                                           ${selectedCategoriesList != null and (selectedCategoriesList.contains(String.valueOf(sub.categoryId)) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
+                                                           class="custom-checkbox">
+                                                    <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${sub.categoryName}">
+                                                        ${sub.categoryName}
+                                                    </span>
+                                                </div>
+                                                <span class="text-xs font-bold ${sub.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full">
+                                                    ${sub.productCount}
+                                                </span>
+                                            </label>
+                                        </c:if>
+                                    </c:forEach>
                                 </c:otherwise>
                             </c:choose>
                         </div>

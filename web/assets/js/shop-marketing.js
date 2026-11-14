@@ -72,8 +72,17 @@
     var search = $('#pickerSearch');
     var counter = $('#pickerCount');
 
+    function variants(item) { return $all('input[name="variantIds"]', item); }
+    function syncItem(item) {
+      var children = variants(item), parent = $('[data-product-toggle]', item);
+      if (!parent || !children.length) return;
+      var checked = children.filter(function (input) { return input.checked; }).length;
+      parent.checked = checked === children.length;
+      parent.indeterminate = checked > 0 && checked < children.length;
+    }
     function count() {
-      var n = items.filter(function (i) { return $('input', i).checked; }).length;
+      var n = $all('input[name="productIds"]:checked', picker).length
+        + $all('input[name="variantIds"]:checked', picker).length;
       if (counter) counter.textContent = n;
     }
     function norm(s) {
@@ -89,14 +98,33 @@
     }
     var all = $('#pickerAll'), none = $('#pickerNone');
     if (all) all.addEventListener('click', function () {
-      items.forEach(function (i) { if (!i.classList.contains('hidden-item')) $('input', i).checked = true; });
+      items.forEach(function (i) {
+        if (i.classList.contains('hidden-item')) return;
+        var children = variants(i);
+        if (children.length) children.forEach(function (input) { input.checked = true; });
+        else { var target = $('input[name="productIds"]', i); if (target) target.checked = true; }
+        syncItem(i);
+      });
       count();
     });
     if (none) none.addEventListener('click', function () {
-      items.forEach(function (i) { $('input', i).checked = false; });
+      items.forEach(function (i) {
+        $all('input', i).forEach(function (input) { input.checked = false; input.indeterminate = false; });
+      });
       count();
     });
-    items.forEach(function (i) { $('input', i).addEventListener('change', count); });
+    items.forEach(function (i) {
+      var parent = $('[data-product-toggle]', i);
+      if (parent) parent.addEventListener('change', function () {
+        variants(i).forEach(function (input) { input.checked = parent.checked; });
+        parent.indeterminate = false;
+        count();
+      });
+      variants(i).forEach(function (input) { input.addEventListener('change', function () { syncItem(i); count(); }); });
+      var productTarget = $('input[name="productIds"]', i);
+      if (productTarget) productTarget.addEventListener('change', count);
+      syncItem(i);
+    });
     count();
   }
 

@@ -493,8 +493,9 @@ public class OrderDAO extends DBContext {
                     Coupon sc = couponDAO.findByIdForUpdate(conn, sub.getShopCouponId());
                     couponDAO.assertPerUserLimit(conn, sub.getShopCouponId(), order.getCustomerId());
                     validateCouponForShop(sc, sub.getShopId(), sub.getShopSubtotal());
+                    BigDecimal eligible = getCouponEligibleAmount(conn, sc, sub.getItems(), sub.getShopSubtotal());
                     BigDecimal sDiscount = calculateCouponDiscount(
-                            sc, sub.getShopSubtotal(), sub.getShopShippingFee());
+                            sc, eligible, sub.getShopShippingFee());
                     sub.setShopDiscount(sDiscount);
                     sub.setShopTotal(sub.getShopSubtotal().add(sub.getShopShippingFee()).subtract(sDiscount).max(BigDecimal.ZERO));
                     totalShopDiscounts = totalShopDiscounts.add(sDiscount);
@@ -510,8 +511,12 @@ public class OrderDAO extends DBContext {
                 Coupon coupon = couponDAO.findByIdForUpdate(conn, order.getCouponId());
                 couponDAO.assertPerUserLimit(conn, order.getCouponId(), order.getCustomerId());
                 validateCouponForOrder(coupon, order.getTotalGoodsAmount());
+                List<OrderItemDetailDTO> allItems = new ArrayList<>();
+                for (SubOrderDTO sub : order.getSubOrders()) allItems.addAll(sub.getItems());
+                BigDecimal eligible = getCouponEligibleAmount(
+                        conn, coupon, allItems, order.getTotalGoodsAmount());
                 BigDecimal discount = calculateCouponDiscount(
-                        coupon, order.getTotalGoodsAmount(), order.getTotalShippingFee());
+                        coupon, eligible, order.getTotalShippingFee());
                 order.setPlatformDiscount(discount);
             } else {
                 order.setPlatformDiscount(BigDecimal.ZERO);
@@ -860,6 +865,22 @@ public class OrderDAO extends DBContext {
         }
         return discount.min(eligibleAmount).max(BigDecimal.ZERO)
                 .setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getCouponEligibleAmount(Connection conn, Coupon coupon,
+            List<OrderItemDetailDTO> items, BigDecimal fullSubtotal) throws SQLException {
+        if (!"PRODUCTS".equalsIgnoreCase(coupon.getAppliesTo())) return fullSubtotal;
+        List<Long> productIds = couponDAO.getApplicableProductIds(conn, coupon.getCouponId());
+        BigDecimal eligible = BigDecimal.ZERO;
+        for (OrderItemDetailDTO item : items) {
+            if (item.getProductId() != null && productIds.contains(item.getProductId())) {
+                eligible = eligible.add(item.getTotalPrice());
+            }
+        }
+        if (eligible.signum() <= 0) {
+            throw new SQLException("Đơn hàng không có sản phẩm thuộc diện áp dụng voucher!");
+        }
+        return eligible;
     }
 
     /**

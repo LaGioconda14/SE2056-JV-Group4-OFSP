@@ -220,6 +220,7 @@ public class OrderServiceImpl implements IOrderService {
             for (CartItem cartItem : shopItems) {
                 OrderItemDetailDTO orderItem = new OrderItemDetailDTO();
                 orderItem.setVariantId(cartItem.getVariant().getVariantId());
+                orderItem.setProductId(cartItem.getVariant().getProductId());
                 orderItem.setProductNameSnapshot(cartItem.getVariant().getProductName());
                 orderItem.setVariantNameSnapshot(cartItem.getVariant().getVariantName());
                 orderItem.setSkuSnapshot(cartItem.getVariant().getSku());
@@ -251,7 +252,8 @@ public class OrderServiceImpl implements IOrderService {
                 if (sCode != null && !sCode.trim().isEmpty()) {
                     Coupon sc = couponDAO.findByCode(sCode.trim());
                     validateShopCoupon(sc, shopId, shopSubtotal);
-                    shopDiscount = calculateCouponDiscount(sc, shopSubtotal, shopShippingFee);
+                    shopDiscount = calculateCouponDiscount(sc,
+                            getCouponEligibleAmount(sc, orderItems, shopSubtotal), shopShippingFee);
                     sub.setShopCouponId(sc.getCouponId());
                     sub.setShopCouponCode(sc.getCode());
                 }
@@ -276,7 +278,10 @@ public class OrderServiceImpl implements IOrderService {
             Coupon coupon = couponDAO.findByCode(couponCode.trim());
             validatePlatformCoupon(coupon, totalGoods);
             couponId = coupon.getCouponId();
-            discount = calculateCouponDiscount(coupon, totalGoods, totalShipping);
+            List<OrderItemDetailDTO> allItems = new ArrayList<>();
+            for (SubOrderDTO sub : subOrders) allItems.addAll(sub.getItems());
+            discount = calculateCouponDiscount(coupon,
+                    getCouponEligibleAmount(coupon, allItems, totalGoods), totalShipping);
         }
 
         order.setCouponId(couponId);
@@ -404,6 +409,22 @@ public class OrderServiceImpl implements IOrderService {
         }
         return discount.min(eligibleAmount).max(BigDecimal.ZERO)
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getCouponEligibleAmount(Coupon coupon, List<OrderItemDetailDTO> items,
+            BigDecimal fullSubtotal) {
+        if (!"PRODUCTS".equalsIgnoreCase(coupon.getAppliesTo())) return fullSubtotal;
+        List<Long> productIds = couponDAO.getApplicableProductIds(coupon.getCouponId());
+        BigDecimal eligible = BigDecimal.ZERO;
+        for (OrderItemDetailDTO item : items) {
+            if (item.getProductId() != null && productIds.contains(item.getProductId())) {
+                eligible = eligible.add(item.getTotalPrice());
+            }
+        }
+        if (eligible.signum() <= 0) {
+            throw new IllegalArgumentException("Giỏ hàng không có sản phẩm nào thuộc diện áp dụng voucher.");
+        }
+        return eligible;
     }
 
     /**
