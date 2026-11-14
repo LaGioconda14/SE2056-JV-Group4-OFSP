@@ -65,7 +65,7 @@
         <jsp:include page="/views/common/header.jsp" />
 
         <!-- Thanh Điều Hướng (Breadcrumb) -->
-        <div class="max-w-[1360px] mx-auto px-4 lg:px-8 pt-5 pb-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-2">
             <nav class="flex text-xs text-gray-500 gap-2 items-center flex-wrap">
                 <a href="${pageContext.request.contextPath}/home" class="hover:text-[#00652c] transition flex items-center gap-1">
                     <i class="fa-solid fa-house text-[11px]"></i> Trang chủ
@@ -84,7 +84,7 @@
         </div>
 
         <!-- Khung Nội Dung Chi Tiết Sản Phẩm -->
-        <main class="max-w-[1360px] mx-auto px-4 lg:px-8 py-4">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
             <!-- Toast Thông Báo Hệ Thống -->
             <c:if test="${not empty successMessage}">

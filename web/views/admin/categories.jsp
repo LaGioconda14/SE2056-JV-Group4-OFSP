@@ -150,8 +150,6 @@
                                 <tr>
                                     <th>HÌNH ẢNH & TÊN DANH MỤC</th>
                                     <th>CẤP BẬC / TRỰC THUỘC</th>
-                                    <th>BẢO QUẢN LẠNH</th>
-                                    <th>TAKE RATE</th>
                                     <th>SKU LIÊN KẾT</th>
                                     <th>HIỂN THỊ</th>
                                     <th class="text-end">THAO TÁC</th>
@@ -162,16 +160,9 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <c:choose>
-                                                    <c:when test="${not empty c.imageUrl}">
-                                                        <img src="${c.imageUrl}" alt="${c.categoryName}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid #86efac; flex-shrink: 0;" onerror="this.style.display='none'">
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <div class="user-summary-icon-box bg-green-subtle" style="width: 36px; height: 36px; font-size: 0.9rem; flex-shrink: 0;">
-                                                            <i class="bi ${not empty c.iconClass ? c.iconClass : 'bi-tag'} text-success"></i>
-                                                        </div>
-                                                    </c:otherwise>
-                                                </c:choose>
+                                                <div class="user-summary-icon-box bg-green-subtle" style="width: 36px; height: 36px; font-size: 0.9rem; flex-shrink: 0;">
+                                                    <i class="bi ${not empty c.iconClass ? c.iconClass : 'bi-tag'} text-success"></i>
+                                                </div>
                                                 <div>
                                                     <strong class="text-dark" style="font-size: 0.82rem;">${c.categoryName}</strong>
                                                     <div class="text-muted" style="font-size: 0.68rem;">/${c.slug}</div>
@@ -191,16 +182,6 @@
                                                     </span>
                                                 </c:otherwise>
                                             </c:choose>
-                                        </td>
-                                        <td>
-                                            <span class="cert-pill-green" style="font-size: 0.65rem;">
-                                                ${c.tempRange}
-                                            </span>
-                                            <div class="text-muted" style="font-size: 0.65rem;">${c.recommendedStorage}</div>
-                                        </td>
-                                        <td>
-                                            <div><strong class="text-success" style="font-size: 0.8rem;"><c:out value="${not empty c.takeRate ? c.takeRate : '8.0%'}"/></strong></div>
-                                            <div class="text-muted" style="font-size: 0.65rem;">Tiêu chuẩn sàn</div>
                                         </td>
                                         <td>
                                             <div><strong class="text-dark">${c.activeSkus}</strong></div>
@@ -224,9 +205,7 @@
                                                         data-slug="${c.slug}"
                                                         data-description="${fn:escapeXml(c.description)}"
                                                         data-parent-id="${empty c.parentId ? '0' : c.parentId}"
-                                                        data-display-order="${empty c.displayOrder ? '0' : c.displayOrder}"
                                                         data-icon-class="${empty c.iconClass ? 'bi-tag' : c.iconClass}"
-                                                        data-image-url="${c.imageUrl}"
                                                         data-is-active="${c.isActive ? '1' : '0'}"
                                                         onclick="openEditCategoryModal(this)">
                                                     <i class="bi bi-pencil-square"></i>
@@ -240,7 +219,7 @@
                                 </c:forEach>
                                 <c:if test="${empty categoriesList}">
                                     <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">Chưa có danh mục nào phù hợp điều kiện lọc.</td>
+                                        <td colspan="5" class="text-center text-muted py-4">Chưa có danh mục nào phù hợp điều kiện lọc.</td>
                                     </tr>
                                 </c:if>
                             </tbody>
@@ -321,28 +300,14 @@
                             <div class="form-text" style="font-size: 0.72rem;">Chọn danh mục cha để xây dựng phân cấp cây ngành hàng (Tree Hierarchy).</div>
                         </div>
 
-                        <!-- Thứ tự hiển thị -->
-                        <div class="col-md-3">
-                            <label class="form-label fw-semibold text-dark" style="font-size: 0.82rem;">Thứ tự hiển thị</label>
-                            <input type="number" name="displayOrder" id="modalCategoryOrder" class="form-control" value="0" min="0">
-                            <div class="form-text" style="font-size: 0.72rem;">Số nhỏ hơn hiển thị trước.</div>
-                        </div>
-
                         <!-- Icon Bootstrap Class -->
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <label class="form-label fw-semibold text-dark" style="font-size: 0.82rem;">Icon Class</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light" id="iconPreviewBox"><i class="bi bi-tag" id="iconPreview"></i></span>
                                 <input type="text" name="iconClass" id="modalCategoryIcon" class="form-control" value="bi-tag" placeholder="bi-basket-fill" oninput="updateIconPreview(this.value)">
                             </div>
                             <div class="form-text" style="font-size: 0.72rem;">Tên class Bootstrap Icon.</div>
-                        </div>
-
-                        <!-- URL hình ảnh đại diện -->
-                        <div class="col-md-12">
-                            <label class="form-label fw-semibold text-dark" style="font-size: 0.82rem;">URL hình ảnh minh họa (Showcase Mega Menu)</label>
-                            <input type="url" name="imageUrl" id="modalCategoryImageUrl" class="form-control" placeholder="https://images.unsplash.com/photo-...">
-                            <div class="form-text" style="font-size: 0.72rem;">Đường dẫn ảnh định dạng tròn hiển thị ở cụm Showcase ngoài sàn.</div>
                         </div>
 
                         <!-- Mô tả ngành hàng -->

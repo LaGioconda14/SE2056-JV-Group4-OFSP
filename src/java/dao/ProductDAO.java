@@ -827,12 +827,12 @@ public class ProductDAO extends DBContext {
 
     public List<Category> getAllCategories() {
         List<Category> list = new ArrayList<>();
-        String sql = "SELECT c.category_id, c.category_name, c.slug, c.image_url, c.icon_class, "
+        String sql = "SELECT c.category_id, c.category_name, c.slug, c.icon_class, "
                 + "       COUNT(p.product_id) AS product_count "
                 + "FROM categories c "
                 + "LEFT JOIN products p ON c.category_id = p.category_id AND p.is_active = 1 "
                 + "WHERE c.is_active = 1 "
-                + "GROUP BY c.category_id, c.category_name, c.slug, c.image_url, c.icon_class "
+                + "GROUP BY c.category_id, c.category_name, c.slug, c.icon_class "
                 + "ORDER BY product_count DESC, c.category_name ASC";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -841,7 +841,6 @@ public class ProductDAO extends DBContext {
                 cat.setCategoryName(rs.getString("category_name"));
                 cat.setSlug(rs.getString("slug"));
                 cat.setProductCount(rs.getInt("product_count"));
-                cat.setImageUrl(rs.getString("image_url"));
                 cat.setIconClass(rs.getString("icon_class"));
 
                 list.add(cat);
@@ -1274,12 +1273,12 @@ public class ProductDAO extends DBContext {
 
     public List<Category> getHierarchyCategories() {
         List<Category> list = new ArrayList<>();
-        String queryParents = "SELECT category_id, category_name, slug, description, image_url, icon_class, display_order "
+        String queryParents = "SELECT category_id, category_name, slug, description, icon_class "
                 + "FROM categories WHERE parent_id IS NULL AND is_active = 1 "
-                + "ORDER BY display_order ASC, category_id ASC";
-        String querySubs = "SELECT category_id, parent_id, category_name, slug, description, image_url, icon_class, display_order "
+                + "ORDER BY category_id ASC";
+        String querySubs = "SELECT category_id, parent_id, category_name, slug, description, icon_class "
                 + "FROM categories WHERE parent_id IS NOT NULL AND is_active = 1 "
-                + "ORDER BY display_order ASC, category_id ASC";
+                + "ORDER BY category_id ASC";
 
         try (Connection conn = getConnection()) {
             if (conn != null) {
@@ -1290,9 +1289,7 @@ public class ProductDAO extends DBContext {
                         c.setCategoryName(rs.getString("category_name"));
                         c.setSlug(rs.getString("slug"));
                         c.setDescription(rs.getString("description"));
-                        c.setImageUrl(rs.getString("image_url"));
                         c.setIconClass(rs.getString("icon_class"));
-                        c.setDisplayOrder(rs.getInt("display_order"));
                         c.setIsActive(true);
                         list.add(c);
                     }
@@ -1307,9 +1304,7 @@ public class ProductDAO extends DBContext {
                         sub.setCategoryName(rs.getString("category_name"));
                         sub.setSlug(rs.getString("slug"));
                         sub.setDescription(rs.getString("description"));
-                        sub.setImageUrl(rs.getString("image_url"));
                         sub.setIconClass(rs.getString("icon_class"));
-                        sub.setDisplayOrder(rs.getInt("display_order"));
                         sub.setIsActive(true);
 
                         for (Category parent : list) {

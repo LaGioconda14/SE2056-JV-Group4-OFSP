@@ -1,6 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <footer id="about" class="w-full mt-10 border-t border-[#00652c]/10 bg-[#f2f7f2] text-[#3f493f]">
-    <div id="contact" class="max-w-[1360px] mx-auto px-4 lg:px-8">
+    <div id="contact" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 py-10">
             <div class="max-w-md">
                 <div class="flex items-center gap-3 mb-4">

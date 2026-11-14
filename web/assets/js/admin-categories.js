@@ -37,7 +37,6 @@ function openAddCategoryModal(defaultParentId) {
     document.getElementById('categoryModalIcon').className = 'bi bi-folder-plus fs-5';
     document.getElementById('btnSaveCategory').innerHTML = '<i class="bi bi-check-circle me-1"></i> Lưu Danh Mục';
     document.getElementById('modalCategoryIsActive').checked = true;
-    document.getElementById('modalCategoryOrder').value = 0;
     document.getElementById('modalCategoryIcon').value = 'bi-tag';
     updateIconPreview('bi-tag');
 
@@ -65,9 +64,7 @@ function openEditCategoryModal(btn) {
     document.getElementById('modalCategorySlug').value = d.slug || '';
     document.getElementById('modalCategoryDesc').value = d.description || '';
     document.getElementById('modalCategoryParent').value = d.parentId || '0';
-    document.getElementById('modalCategoryOrder').value = d.displayOrder || 0;
     document.getElementById('modalCategoryIcon').value = d.iconClass || 'bi-tag';
-    document.getElementById('modalCategoryImageUrl').value = d.imageUrl || '';
     document.getElementById('modalCategoryIsActive').checked = (d.isActive === '1' || d.isActive === 'true');
     updateIconPreview(d.iconClass || 'bi-tag');
 

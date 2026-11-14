@@ -89,17 +89,17 @@
                         </a>
                     </div>
 
-                    <!-- 1. DANH MỤC CHA -->
+                    <!-- 1. NHÓM NÔNG SẢN (DANH MỤC CHÍNH) -->
                     <div>
                         <div class="flex items-center justify-between mb-3.5">
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                                Danh Mục Cha
+                                Nhóm Nông Sản
                             </h4>
                             <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Chính</span>
                         </div>
                         <div class="space-y-2.5 text-xs">
                             <c:forEach var="cat" items="${not empty parentCategories ? parentCategories : listCategories}">
-                                <c:if test="${empty cat.parentId}">
+                                <c:if test="${empty cat.parentId or cat.parentId le 0}">
                                     <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
                                         <div class="flex items-center gap-2.5 min-w-0 pr-2">
                                             <input type="checkbox" name="category" value="${cat.categoryId}" 
@@ -231,11 +231,11 @@
                         </div>
                     </div>
 
-                    <!-- 5. DANH MỤC CON (Thay thế bộ lọc vùng trồng / xuất xứ theo yêu cầu) -->
+                    <!-- 5. LOẠI NÔNG SẢN CHI TIẾT (TIỂU MỤC) -->
                     <div class="border-t border-slate-100 pt-5">
                         <div class="flex items-center justify-between mb-3.5">
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                                Danh Mục Con
+                                Loại Nông Sản Chi Tiết
                             </h4>
                             <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Tiểu mục</span>
                         </div>

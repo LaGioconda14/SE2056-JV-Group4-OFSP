@@ -13,9 +13,7 @@ public class Category implements Serializable {
     private String categoryName;
     private String slug;
     private String description;
-    private String imageUrl;
     private String iconClass;
-    private int displayOrder;
     private boolean isActive;
     private List<Category> subCategories = new ArrayList<>();
 
@@ -25,15 +23,13 @@ public class Category implements Serializable {
 
     // Parameterized Constructor
     public Category(int categoryId, Integer parentId, String categoryName, String slug, 
-                    String description, String imageUrl, String iconClass, int displayOrder, boolean isActive) {
+                    String description, String iconClass, boolean isActive) {
         this.categoryId = categoryId;
         this.parentId = parentId;
         this.categoryName = categoryName;
         this.slug = slug;
         this.description = description;
-        this.imageUrl = imageUrl;
         this.iconClass = iconClass;
-        this.displayOrder = displayOrder;
         this.isActive = isActive;
     }
 
@@ -78,28 +74,12 @@ public class Category implements Serializable {
         this.description = description;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
     public String getIconClass() {
         return iconClass;
     }
 
     public void setIconClass(String iconClass) {
         this.iconClass = iconClass;
-    }
-
-    public int getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public void setDisplayOrder(int displayOrder) {
-        this.displayOrder = displayOrder;
     }
 
     public boolean isIsActive() {

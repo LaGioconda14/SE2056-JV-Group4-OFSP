@@ -131,7 +131,7 @@ public class ProductServlet extends HttpServlet {
                 if (a.getProductCount() != b.getProductCount()) {
                     return Integer.compare(b.getProductCount(), a.getProductCount());
                 }
-                return Integer.compare(a.getDisplayOrder(), b.getDisplayOrder());
+                return Integer.compare(a.getCategoryId(), b.getCategoryId());
             });
         }
         Map<String, Integer> listOrigins = productService.getOriginsWithCount();

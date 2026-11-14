@@ -941,34 +941,11 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("categoryName", rs.getString("category_name"));
                     item.put("slug", rs.getString("slug"));
                     item.put("description", rs.getString("description"));
-                    item.put("imageUrl", null);
                     item.put("iconClass", rs.getString("icon_class"));
                     item.put("activeSkus", rs.getInt("active_skus"));
-                    item.put("displayOrder", 0);
                     item.put("isActive", rs.getBoolean("is_active"));
                     item.put("takeRate", "8.0%");
 
-                    // Cold Storage details by category group
-                    int pid = rs.getInt("parent_id");
-                    if (id == 5 || pid == 5) {
-                        item.put("tempRange", "1°C – 3°C");
-                        item.put("recommendedStorage", "Kho lạnh ngoại nhập Hub A");
-                    } else if (id == 6 || pid == 6) {
-                        item.put("tempRange", "10°C – 14°C");
-                        item.put("recommendedStorage", "Kho thoáng mát Vùng 3");
-                    } else if (id == 7 || pid == 7) {
-                        item.put("tempRange", "0°C – 2°C");
-                        item.put("recommendedStorage", "Hầm lạnh sơ chế Eat-Clean");
-                    } else if (id == 8 || pid == 8) {
-                        item.put("tempRange", "4°C – 8°C");
-                        item.put("recommendedStorage", "Kho đóng gói nguyên kiện Hub C");
-                    } else if (id == 9 || pid == 9) {
-                        item.put("tempRange", "8°C – 12°C");
-                        item.put("recommendedStorage", "Kho trữ mát mùa hè");
-                    } else {
-                        item.put("tempRange", "2°C – 5°C");
-                        item.put("recommendedStorage", "Kho lạnh tiêu chuẩn");
-                    }
                     list.add(item);
                 }
             }
@@ -994,7 +971,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                 item.put("categoryName", rs.getString("category_name"));
                 item.put("slug", rs.getString("slug"));
                 item.put("description", rs.getString("description"));
-                item.put("imageUrl", null);
+
                 item.put("iconClass", rs.getString("icon_class"));
                 item.put("isActive", rs.getBoolean("is_active"));
 
@@ -1066,9 +1043,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     map.put("categoryName", rs.getString("category_name"));
                     map.put("slug", rs.getString("slug"));
                     map.put("description", rs.getString("description"));
-                    map.put("imageUrl", null);
                     map.put("iconClass", rs.getString("icon_class"));
-                    map.put("displayOrder", 0);
                     map.put("isActive", rs.getBoolean("is_active"));
                     map.put("totalProducts", rs.getInt("total_products"));
                     map.put("childCategoriesCount", rs.getInt("child_categories_count"));
@@ -1081,7 +1056,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         return null;
     }
 
-    public boolean addCategory(String name, String slug, String description, Integer parentId, String iconClass, String imageUrl, int displayOrder, boolean isActive) {
+    public boolean addCategory(String name, String slug, String description, Integer parentId, String iconClass, boolean isActive) {
         if (slug == null || slug.trim().isEmpty()) {
             slug = toSlug(name);
         } else {
@@ -1108,7 +1083,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         }
     }
 
-    public boolean updateCategory(int categoryId, String name, String slug, String description, Integer parentId, String iconClass, String imageUrl, int displayOrder, boolean isActive) {
+    public boolean updateCategory(int categoryId, String name, String slug, String description, Integer parentId, String iconClass, boolean isActive) {
         if (slug == null || slug.trim().isEmpty()) {
             slug = toSlug(name);
         } else {
