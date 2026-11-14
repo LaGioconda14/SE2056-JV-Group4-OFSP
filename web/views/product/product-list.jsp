@@ -222,16 +222,7 @@
                                     <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition">Còn Hàng</span>
                                 </div>
                                 <span class="text-xs font-bold text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-50">
-                                    ${inStockCount > 0 ? inStockCount : totalProducts}
-                                </span>
-                            </label>
-                            <label class="flex items-center justify-between cursor-pointer group select-none">
-                                <div class="flex items-center gap-2.5">
-                                    <input type="checkbox" name="seasonal" value="pre_order" class="custom-checkbox">
-                                    <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition">Hàng Đặt Trước</span>
-                                </div>
-                                <span class="text-xs font-bold text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-50">
-                                    3
+                                    ${not empty inStockCount ? inStockCount : 0}
                                 </span>
                             </label>
                         </div>
@@ -262,20 +253,7 @@
                                     </c:forEach>
                                 </c:when>
                                 <c:otherwise>
-                                    <label class="flex items-center justify-between cursor-pointer group select-none">
-                                        <div class="flex items-center gap-2.5">
-                                            <input type="checkbox" name="origin" value="Đà Lạt" class="custom-checkbox">
-                                            <span class="font-medium text-slate-700">Đà Lạt - Lâm Đồng</span>
-                                        </div>
-                                        <span class="text-xs font-bold text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-50">3</span>
-                                    </label>
-                                    <label class="flex items-center justify-between cursor-pointer group select-none">
-                                        <div class="flex items-center gap-2.5">
-                                            <input type="checkbox" name="origin" value="Tiền Giang" class="custom-checkbox">
-                                            <span class="font-medium text-slate-700">Miền Tây Nam Bộ</span>
-                                        </div>
-                                        <span class="text-xs font-bold text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-50">3</span>
-                                    </label>
+                                    <span class="text-slate-400 text-xs italic">Đang cập nhật vùng trồng</span>
                                 </c:otherwise>
                             </c:choose>
                         </div>
@@ -398,25 +376,11 @@
                                         <div class="flex flex-col min-w-0 pr-1">
                                             <div class="flex items-baseline gap-1.5 flex-wrap">
                                                 <span class="font-black text-slate-900 text-sm sm:text-base">
-                                                    <c:choose>
-                                                        <c:when test="${p.price >= 1000}">
-                                                            <fmt:formatNumber value="${p.price}" pattern="#,###" />₫
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            $<fmt:formatNumber value="${p.price}" pattern="#,##0.00" />
-                                                        </c:otherwise>
-                                                    </c:choose>
+                                                    <fmt:formatNumber value="${p.price}" pattern="#,###" />₫
                                                 </span>
                                                 <c:if test="${p.oldPrice > p.price}">
                                                     <span class="text-[11px] text-slate-400 line-through">
-                                                        <c:choose>
-                                                            <c:when test="${p.oldPrice >= 1000}">
-                                                                <fmt:formatNumber value="${p.oldPrice}" pattern="#,###" />₫
-                                                            </c:when>
-                                                            <c:otherwise>
-                                                                $<fmt:formatNumber value="${p.oldPrice}" pattern="#,##0.00" />
-                                                            </c:otherwise>
-                                                        </c:choose>
+                                                        <fmt:formatNumber value="${p.oldPrice}" pattern="#,###" />₫
                                                     </span>
                                                 </c:if>
                                             </div>
@@ -515,74 +479,7 @@
     </main>
 
     <!-- FOOTER CHUẨN ĐỒNG BỘ THƯƠNG HIỆU GỐC VƯỜN -->
-    <footer class="bg-white border-t border-slate-200/90 pt-12 pb-8 text-slate-600 text-xs mt-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pb-10 border-b border-slate-100">
-                
-                <!-- Col 1: Brand Info -->
-                <div class="lg:col-span-2 space-y-3">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center p-1 border border-emerald-100">
-                            <svg viewBox="0 0 100 100" class="w-full h-full">
-                                <circle cx="50" cy="56" r="32" fill="#16a34a"/>
-                                <path d="M 28 45 Q 36 34 50 34" stroke="#ffffff" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                <circle cx="68" cy="46" r="5" fill="#ffffff"/>
-                                <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
-                            </svg>
-                        </div>
-                        <span class="text-xl font-black text-slate-900 tracking-tight">Gốc<span class="text-[#00652c]">Vườn</span></span>
-                    </div>
-                    <p class="text-slate-500 max-w-sm leading-relaxed text-xs">
-                        Hệ thống kết nối nông trại trái cây tươi sạch chuẩn VietGAP &amp; GlobalGAP trực tiếp tới gia đình bạn.
-                    </p>
-                    <div class="flex items-center gap-3 pt-1 text-slate-400">
-                        <span class="text-xs font-semibold text-slate-500"><i class="fa-solid fa-shield-halved text-emerald-600 mr-1"></i> Cam kết đổi trả 100% nếu trái cây không đạt độ tươi ngon.</span>
-                    </div>
-                </div>
-
-                <!-- Col 2: Quick Links -->
-                <div>
-                    <h4 class="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Danh Mục Mua Sắm</h4>
-                    <ul class="space-y-2 text-slate-500">
-                        <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-700 transition">Tất Cả Trái Cây</a></li>
-                        <c:forEach var="c" items="${listCategories}" end="3">
-                            <c:if test="${empty c.parentId}">
-                                <li><a href="${pageContext.request.contextPath}/products?category=${c.slug}" class="hover:text-emerald-700 transition">${c.categoryName}</a></li>
-                            </c:if>
-                        </c:forEach>
-                    </ul>
-                </div>
-
-                <!-- Col 3: Customer Service -->
-                <div>
-                    <h4 class="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Hỗ Trợ Khách Hàng</h4>
-                    <ul class="space-y-2 text-slate-500">
-                        <li><a href="#" class="hover:text-emerald-700 transition">Hướng Dẫn Mua Hàng</a></li>
-                        <li><a href="#" class="hover:text-emerald-700 transition">Chính Sách Giao Hàng Siêu Tốc</a></li>
-                        <li><a href="#" class="hover:text-emerald-700 transition">Chính Sách Đổi Trả 1-1</a></li>
-                        <li><a href="#" class="hover:text-emerald-700 transition">Điều Khoản Dịch Vụ</a></li>
-                    </ul>
-                </div>
-
-                <!-- Col 4: Contact & Payment -->
-                <div>
-                    <h4 class="font-extrabold text-slate-900 text-xs uppercase tracking-wider mb-3">Hotline &amp; Hỗ Trợ</h4>
-                    <ul class="space-y-2 text-slate-500 mb-4">
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-phone text-emerald-700"></i> <strong>1900 6868</strong> (8:00 - 21:00)</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-envelope text-emerald-700"></i> support@gocvuon.vn</li>
-                        <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-emerald-700"></i> Lâm Đồng &amp; TP.HCM</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-[11px]">
-                <p>&copy; 2026 Gốc Vườn Marketplace. Bảo lưu toàn bộ quyền.</p>
-                <div class="flex items-center gap-4">
-                    <span>100% Nông sản kiểm định chuẩn VietGAP</span>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <jsp:include page="/views/common/site-footer.jsp" />
 
 </body>
 </html>

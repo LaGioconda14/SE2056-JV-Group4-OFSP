@@ -145,12 +145,8 @@
             </div>
         </main>
 
-        <footer class="bg-gray-950 text-gray-400 border-t border-gray-800 mt-12">
-            <div class="max-w-7xl mx-auto px-4 py-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs">
-                <span class="text-base font-extrabold text-white">Gốc <span class="text-emerald-500">Vườn</span></span>
-                <p>&copy; 2026 Gốc Vườn Marketplace Inc. Bảo lưu mọi quyền.</p>
-            </div>
-        </footer>
+        <!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
+        <jsp:include page="/views/common/site-footer.jsp" />
 
         <%-- Ở trang này không cần nút nổi (đang ở trang wishlist rồi), chỉ nạp script --%>
         <jsp:include page="/views/common/wishlist-fab.jsp">

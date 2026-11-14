@@ -279,7 +279,7 @@
                             <label class="block text-xs font-bold text-slate-700 mb-1">Loại phương tiện <span class="text-rose-500">*</span></label>
                             <select name="vehicleType" id="createVehicleType" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-emerald-500 bg-white">
                                 <option value="Xe máy chuyên dụng FreshBox">Xe máy chuyên dụng FreshBox</option>
-                                <option value="Xe máy có thùng giữ nhiệt FreshFruit">Xe máy có thùng giữ nhiệt FreshFruit</option>
+                                <option value="Xe máy có thùng giữ nhiệt Gốc Vườn">Xe máy có thùng giữ nhiệt Gốc Vườn</option>
                                 <option value="Xe tải lạnh chuyên dụng 1.25 tấn">Xe tải lạnh chuyên dụng 1.25 tấn</option>
                                 <option value="Xe tải bảo ôn 2.5 tấn">Xe tải bảo ôn 2.5 tấn</option>
                                 <option value="Xe bán tải lạnh">Xe bán tải lạnh</option>

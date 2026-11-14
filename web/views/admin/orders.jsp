@@ -49,152 +49,127 @@
                 </div>
             </div>
 
-            <!-- 2. 4 Summary Metric Cards -->
+            <!-- 2. 4 Summary Metric Cards (Dữ liệu thực từ DB) -->
             <div class="shops-summary-grid">
-                <!-- Card 1: TỔNG ĐƠN HÔM NAY -->
+                <!-- Card 1: TỔNG ĐƠN TOÀN SÀN -->
                 <div class="user-summary-card">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">TỔNG ĐƠN HÔM NAY</span>
+                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">TỔNG ĐƠN HÀNG</span>
                             <div class="user-summary-icon-box bg-green-subtle">
                                 <i class="bi bi-bag-check-fill"></i>
                             </div>
                         </div>
                         <div class="user-summary-val">
-                            542 <span class="badge-kpi-growth" style="font-size: 0.68rem; vertical-align: middle;">+18%</span>
+                            <c:out value="${not empty orderStats.totalOrders ? orderStats.totalOrders : 0}"/> <span class="fs-6 fw-normal text-muted">đơn</span>
                         </div>
                     </div>
                     <div class="shop-kpi-sub-row">
-                        <span>Tổng giá trị hàng:</span>
-                        <strong class="text-dark">₫28,450,000</strong>
+                        <span>Tổng doanh thu sàn:</span>
+                        <strong class="text-dark"><c:out value="${not empty orderStats.totalGmvFormatted ? orderStats.totalGmvFormatted : '0 ₫'}"/></strong>
                     </div>
                 </div>
 
-                <!-- Card 2: GIAO HỎA TỐC (COLD-CHAIN) -->
+                <!-- Card 2: GIAO HỎA TỐC & CHUỖI LẠNH -->
                 <div class="user-summary-card">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">GIAO HỎA TỐC (COLD-CHAIN)</span>
+                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">ĐANG ĐI GIAO</span>
                             <div class="user-summary-icon-box" style="background: #e0f2fe; color: #0284c7;">
                                 <i class="bi bi-snow"></i>
                             </div>
                         </div>
                         <div class="user-summary-val">
-                            128 <span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.65rem; vertical-align: middle;">Chuyên dụng</span>
+                            <c:out value="${not empty orderStats.shippingOrders ? orderStats.shippingOrders : 0}"/> <span class="badge" style="background: #dcfce7; color: #15803d; font-size: 0.65rem; vertical-align: middle;">Chuỗi lạnh</span>
                         </div>
                     </div>
                     <div class="shop-kpi-sub-row">
-                        <span>Tỷ lệ đúng giờ:</span>
-                        <strong class="text-dark">97.4%</strong>
+                        <span>Chuyến xe vận hành:</span>
+                        <strong class="text-dark"><c:out value="${not empty orderStats.activeDeliveries ? orderStats.activeDeliveries : 0}"/> chuyến</strong>
                     </div>
                 </div>
 
-                <!-- Card 3: CẦN HỖ TRỢ / CHẬM TRỄ -->
+                <!-- Card 3: ĐANG XỬ LÝ -->
                 <div class="user-summary-card">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">CẦN HỖ TRỢ / CHẬM TRỄ</span>
-                            <div class="user-summary-icon-box" style="background: #fee2e2; color: #dc2626;">
-                                <i class="bi bi-broadcast"></i>
+                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">ĐANG XỬ LÝ / ĐÓNG GÓI</span>
+                            <div class="user-summary-icon-box" style="background: #fef3c7; color: #d97706;">
+                                <i class="bi bi-box-seam"></i>
                             </div>
                         </div>
-                        <div class="user-summary-val text-danger">
-                            06 <span class="badge" style="background: #fee2e2; color: #dc2626; font-size: 0.65rem; vertical-align: middle;">Ưu tiên xử lý</span>
+                        <div class="user-summary-val text-warning">
+                            <c:out value="${not empty orderStats.processingOrders ? orderStats.processingOrders : 0}"/> <span class="fs-6 fw-normal text-muted">đơn</span>
                         </div>
                     </div>
                     <div class="shop-kpi-sub-row">
-                        <span>Cảnh báo nhiệt độ & SLA:</span>
-                        <strong class="text-danger">Cần can thiệp</strong>
+                        <span>Kiện con các shop:</span>
+                        <strong class="text-dark"><c:out value="${not empty orderStats.totalSubOrders ? orderStats.totalSubOrders : 0}"/> kiện</strong>
                     </div>
                 </div>
 
-                <!-- Card 4: TỶ LỆ GIAO THÀNH CÔNG -->
+                <!-- Card 4: HOÀN TẤT GIAO HÀNG -->
                 <div class="user-summary-card">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">TỶ LỆ GIAO THÀNH CÔNG</span>
+                            <span class="user-summary-title text-uppercase" style="letter-spacing: 0.04em;">GIAO THÀNH CÔNG</span>
                             <div class="user-summary-icon-box bg-green-subtle">
                                 <i class="bi bi-check-circle-fill"></i>
                             </div>
                         </div>
-                        <div class="user-summary-val">
-                            96.8% <span class="text-muted fw-normal" style="font-size: 0.68rem;">Tháng 05</span>
+                        <div class="user-summary-val text-success">
+                            <c:out value="${not empty orderStats.completedOrders ? orderStats.completedOrders : 0}"/> <span class="fs-6 fw-normal text-muted">đơn</span>
                         </div>
                     </div>
                     <div class="shop-kpi-sub-row">
-                        <span>Đã hoàn tất:</span>
-                        <strong class="text-dark">3,720 / 3,842 đơn</strong>
+                        <span>Đã hủy / thất bại:</span>
+                        <strong class="text-danger"><c:out value="${not empty orderStats.cancelledOrders ? orderStats.cancelledOrders : 0}"/> đơn</strong>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. Segmented Navigation Tabs -->
+            <!-- 3. Segmented Navigation Tabs (Thực tế từ DB) -->
             <div class="users-rbac-tabs">
-                <a href="${pageContext.request.contextPath}/admin/orders?status=ALL" class="rbac-tab-item active">
+                <a href="${pageContext.request.contextPath}/admin/orders?status=ALL" class="rbac-tab-item ${selectedStatus == 'ALL' || empty selectedStatus ? 'active' : ''}">
                     <span>Tất cả đơn</span>
-                    <span class="rbac-badge">542</span>
+                    <span class="rbac-badge"><c:out value="${not empty orderStats.totalOrders ? orderStats.totalOrders : 0}"/></span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/orders?status=PROCESSING" class="rbac-tab-item">
+                <a href="${pageContext.request.contextPath}/admin/orders?status=PROCESSING" class="rbac-tab-item ${selectedStatus == 'PROCESSING' ? 'active' : ''}">
                     <span>Đang xử lý</span>
-                    <span class="rbac-badge">48</span>
+                    <span class="rbac-badge"><c:out value="${not empty orderStats.processingOrders ? orderStats.processingOrders : 0}"/></span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/orders?status=SHIPPING" class="rbac-tab-item">
+                <a href="${pageContext.request.contextPath}/admin/orders?status=SHIPPING" class="rbac-tab-item ${selectedStatus == 'SHIPPING' ? 'active' : ''}">
                     <span>Đang giao hàng</span>
-                    <span class="rbac-badge">128</span>
+                    <span class="rbac-badge"><c:out value="${not empty orderStats.shippingOrders ? orderStats.shippingOrders : 0}"/></span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/orders?status=COMPLETED" class="rbac-tab-item">
+                <a href="${pageContext.request.contextPath}/admin/orders?status=COMPLETED" class="rbac-tab-item ${selectedStatus == 'COMPLETED' ? 'active' : ''}">
                     <span>Đã giao thành công</span>
-                    <span class="rbac-badge" style="background: #dcfce7; color: #15803d;">342</span>
+                    <span class="rbac-badge" style="background: #dcfce7; color: #15803d;"><c:out value="${not empty orderStats.completedOrders ? orderStats.completedOrders : 0}"/></span>
                 </a>
-                <a href="${pageContext.request.contextPath}/admin/orders?status=CANCELLED" class="rbac-tab-item">
+                <a href="${pageContext.request.contextPath}/admin/orders?status=CANCELLED" class="rbac-tab-item ${selectedStatus == 'CANCELLED' ? 'active' : ''}">
                     <span>Đã hủy đơn</span>
+                    <span class="rbac-badge" style="background: #fee2e2; color: #dc2626;"><c:out value="${not empty orderStats.cancelledOrders ? orderStats.cancelledOrders : 0}"/></span>
                 </a>
             </div>
 
             <!-- 4. Filter Toolbar -->
-            <div class="users-filter-card">
+            <form method="GET" action="${pageContext.request.contextPath}/admin/orders" class="users-filter-card">
+                <input type="hidden" name="status" value="${selectedStatus}">
                 <div class="users-search-pill">
                     <i class="bi bi-search"></i>
-                    <input type="text" id="orderSearchInput" placeholder="Tìm theo Mã đơn (ORD-...), Shop bán, Khách hàng">
+                    <input type="text" name="search" id="orderSearchInput" value="<c:out value='${searchKeyword}'/>" placeholder="Tìm theo Mã đơn (ORD-...), Người nhận, Số điện thoại, Địa chỉ...">
                 </div>
 
                 <div class="users-dropdown-filters">
-                    <!-- Dropdown: ĐVVC -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-truck text-muted"></i>
-                            <span>Đối tác: Tất cả ĐVVC</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">Tất cả đơn vị vận chuyển</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">GrabExpress Hỏa Tốc (Xe bảo ôn)</a></li>
-                            <li><a class="dropdown-item" href="#">Ahamove Fresh (Thùng lạnh)</a></li>
-                            <li><a class="dropdown-item" href="#">ViettelPost Lạnh (Liên tỉnh)</a></li>
-                            <li><a class="dropdown-item" href="#">GHTK Tiêu chuẩn</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Dropdown: Nông sản -->
-                    <div class="dropdown">
-                        <button class="filter-select-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-apple text-muted"></i>
-                            <span>Nông sản...</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.78rem;">
-                            <li><a class="dropdown-item fw-bold" href="#">Tất cả chủng loại</a></li>
-                            <li><a class="dropdown-item" href="#">Trái cây tươi (Hàng dễ hỏng)</a></li>
-                            <li><a class="dropdown-item" href="#">Giỏ quà biếu cao cấp</a></li>
-                            <li><a class="dropdown-item" href="#">Trái cây sấy khô</a></li>
-                        </ul>
-                    </div>
-
-                    <button type="button" class="btn btn-sm btn-light border d-inline-flex align-items-center gap-1 text-muted" onclick="location.reload();" style="border-radius: 8px; font-size: 0.75rem; padding: 0.42rem 0.75rem;">
+                    <button type="submit" class="btn btn-sm btn-success px-3 py-1.5 rounded-3 fw-bold">
+                        <i class="bi bi-search me-1"></i> Tìm kiếm
+                    </button>
+                    <a href="${pageContext.request.contextPath}/admin/orders" class="btn btn-sm btn-light border d-inline-flex align-items-center gap-1 text-muted" style="border-radius: 8px; font-size: 0.75rem; padding: 0.42rem 0.75rem;">
                         <i class="bi bi-arrow-counterclockwise"></i>
                         <span>Đặt lại lọc</span>
-                    </button>
+                    </a>
                 </div>
-            </div>
+            </form>
 
             <!-- 5. Orders Table -->
             <div class="shops-table-container">
@@ -225,7 +200,7 @@
                                             <i class="bi bi-shop text-success"></i>
                                         </div>
                                         <div>
-                                            <strong class="text-dark" style="font-size: 0.8rem;">Gian Hàng Sàn</strong>
+                                            <strong class="text-dark" style="font-size: 0.8rem;"><c:out value="${not empty o.shopNames ? o.shopNames : 'Gian hàng sàn'}"/></strong>
                                             <div class="text-muted" style="font-size: 0.68rem;"><i class="bi bi-geo-alt"></i> ${o.city}</div>
                                         </div>
                                     </div>

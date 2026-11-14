@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
-        <title>Tất cả sản phẩm - Kênh Người Bán FreshFruit</title>
+        <title>Tất cả sản phẩm - Kênh Người Bán Gốc Vườn</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
     </head>
     <body class="bg-[#f8fafc] text-[#0f172a]">

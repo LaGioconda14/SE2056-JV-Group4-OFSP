@@ -1,7 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,27 +27,27 @@
             </div>
             
             <p class="hero-desc">
-                Fresh organic produce delivered right from local family orchards straight to your table.
+                Nông sản hữu cơ tươi sạch thu hoạch từ các nhà vườn chuẩn VietGAP &amp; GlobalGAP, giao thẳng đến gian bếp gia đình bạn.
             </p>
 
             <div class="pill-badge">
                 <i class="bi bi-shield-lock-fill text-warning"></i>
-                <span>Account Security & Recovery</span>
+                <span>Bảo mật &amp; Khôi phục tài khoản</span>
             </div>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-box">
                 <i class="bi bi-shield-check"></i>
-                <div class="metric-label">100% Certified Organic</div>
+                <div class="metric-label">100% Nông sản chuẩn sạch</div>
             </div>
             <div class="metric-box">
                 <i class="bi bi-truck"></i>
-                <div class="metric-label">Same-Day Dispatch</div>
+                <div class="metric-label">Chuỗi lạnh Fresh-Lock</div>
             </div>
             <div class="metric-box">
                 <i class="bi bi-heart-fill"></i>
-                <div class="metric-label">15,000+ Happy Homes</div>
+                <div class="metric-label">15.000+ Gia đình tin chọn</div>
             </div>
         </div>
     </div>
@@ -57,22 +57,22 @@
             <div class="top-status-bar">
                 <div class="secure-pill">
                     <span class="secure-dot"></span>
-                    <span>Recovery Portal</span>
+                    <span>Cổng khôi phục an toàn</span>
                 </div>
-                <a href="${pageContext.request.contextPath}/help" class="help-link">
-                    <span>Help Center</span>
-                    <i class="bi bi-box-arrow-up-right small"></i>
+                <a href="${pageContext.request.contextPath}/home" class="help-link">
+                    <span>Trang chủ</span>
+                    <i class="bi bi-house small"></i>
                 </a>
             </div>
 
             <div class="auth-nav-tabs">
-                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Sign In</a>
-                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Create Account</a>
-                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn active">Forgot Password</a>
+                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Đăng nhập</a>
+                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Đăng ký</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn active">Quên mật khẩu</a>
             </div>
 
-            <h1 class="form-title">Reset password</h1>
-            <p class="form-subtitle">Enter your registered email address to receive a 6-digit OTP verification code.</p>
+            <h1 class="form-title">Khôi phục mật khẩu</h1>
+            <p class="form-subtitle">Nhập địa chỉ email đã đăng ký để nhận mã OTP xác thực gồm 6 chữ số.</p>
 
             <c:if test="${not empty errorMessage}">
                 <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
@@ -92,7 +92,7 @@
 
             <form action="${pageContext.request.contextPath}/forgot-password" method="POST" id="forgotForm">
                 <div class="field-group mb-4">
-                    <label class="field-label" for="email">Registered Email Address *</label>
+                    <label class="field-label" for="email">Địa chỉ Email đã đăng ký *</label>
                     <div class="input-box-wrapper">
                         <i class="bi bi-envelope leading-icon"></i>
                         <input type="email" 
@@ -107,12 +107,12 @@
                     </div>
                     <div class="form-hint">
                         <i class="bi bi-info-circle"></i>
-                        <span>A 6-digit OTP code will be sent to this email and expires in 5 minutes.</span>
+                        <span>Mã xác thực OTP gồm 6 chữ số sẽ được gửi vào email và có hiệu lực trong 5 phút.</span>
                     </div>
                 </div>
 
                 <button type="submit" class="btn-submit-main">
-                    <span>Send Reset OTP</span>
+                    <span>Gửi mã xác thực OTP</span>
                     <i class="bi bi-arrow-right"></i>
                 </button>
             </form>
@@ -120,7 +120,7 @@
             <div class="text-center mt-4">
                 <a href="${pageContext.request.contextPath}/login" class="back-link">
                     <i class="bi bi-arrow-left"></i>
-                    <span>Back to Sign In</span>
+                    <span>Quay lại trang Đăng nhập</span>
                 </a>
             </div>
         </div>

@@ -573,10 +573,9 @@ public class OrderServiceImpl implements IOrderService {
 
         for (SubOrderDTO sub : order.getSubOrders()) {
             String note = shopNotes != null ? shopNotes.get(sub.getShopId()) : null;
+            sub.setDeliverySlot(slotLabel);
             if (note != null && !note.trim().isEmpty()) {
-                sub.setDeliverySlot(slotLabel + " • Lời nhắn: " + note.trim());
-            } else {
-                sub.setDeliverySlot(slotLabel);
+                sub.setNote(note.trim());
             }
         }
         order.setPaymentStatus(PaymentStatus.PENDING);

@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html lang="vi">
     <head>
-        <title>Kho & Cảnh báo tồn - Kênh Người Bán | FreshFruit Market</title>
+        <title>Kho & Cảnh báo tồn - Kênh Người Bán | Gốc Vườn Market</title>
         <jsp:include page="/views/shop/layout/head.jsp" />
         <style>
             .variant-card {

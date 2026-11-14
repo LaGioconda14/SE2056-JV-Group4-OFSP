@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <title>Shop Profile & Settings - FreshFruit</title>
+    <title>Hồ Sơ & Thiết Lập Shop - Gốc Vườn</title>
 
     <!-- Head chung: meta, font, Font Awesome, Tailwind, shop-layout.css/js -->
     <jsp:include page="/views/shop/layout/head.jsp" />
@@ -34,7 +34,7 @@
             <nav class="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <span>Kênh Người Bán</span>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-                <span class="text-slate-700">Shop Profile</span>
+                <span class="text-slate-700">Hồ Sơ Shop</span>
             </nav>
 
             <jsp:include page="/views/shop/components/common/flash-message.jsp" />
@@ -75,8 +75,8 @@
                                 </div>
                             </div>
                             <div class="flex flex-col mb-1">
-                                <h1 class="text-2xl font-bold">${not empty shop.shopName ? shop.shopName : 'Đà Lạt Organic'}</h1>
-                                <p class="text-sm text-slate-200"><i class="fa-solid fa-location-dot mr-1"></i> ${not empty shop.province ? shop.province : 'Hà Nội'}</p>
+                                <h1 class="text-2xl font-bold">${not empty shop.shopName ? shop.shopName : 'Gian hàng Nông sản'}</h1>
+                                <p class="text-sm text-slate-200"><i class="fa-solid fa-location-dot mr-1"></i> ${not empty shop.province ? shop.province : 'Chưa cập nhật tỉnh/thành'}</p>
                             </div>
                         </div>
                     </div>
@@ -86,12 +86,12 @@
                         <div class="flex flex-wrap items-center gap-3">
                             <div class="flex flex-col leading-tight">
                                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Trạng thái shop</span>
-                                <span id="statusText" class="font-bold text-sm text-emerald-600">Đang hoạt động (Open For Orders)</span>
+                                <span id="statusText" class="font-bold text-sm text-emerald-600">Đang hoạt động (Mở bán)</span>
                             </div>
                             <div class="inline-flex items-center bg-slate-100 rounded-xl p-1 gap-1 ${statusLocked ? 'opacity-50 pointer-events-none' : ''}">
-                                <button type="button" data-status="open" class="status-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Open</button>
-                                <button type="button" data-status="paused" class="status-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Pause</button>
-                                <button type="button" data-status="closed" class="status-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition"><span class="w-2 h-2 rounded-full bg-red-500"></span> Close</button>
+                                <button type="button" data-status="open" class="status-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Mở cửa</button>
+                                <button type="button" data-status="paused" class="status-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Tạm nghỉ</button>
+                                <button type="button" data-status="closed" class="status-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition"><span class="w-2 h-2 rounded-full bg-red-500"></span> Đóng cửa</button>
                             </div>
                             <c:if test="${statusLocked}">
                                 <span class="text-xs text-slate-500">Shop đang ở trạng thái <b>${shopStatus}</b>, liên hệ Admin để thay đổi.</span>
@@ -106,16 +106,16 @@
                 <!-- NAVIGATION TABS -->
                 <div class="mt-6 flex items-center gap-2 overflow-x-auto pb-1 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
                     <button type="button" class="tab-button px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 bg-emerald-600 text-white shadow-sm" id="tab-btn-profile" onclick="switchTab('profile')">
-                        <i class="fa-solid fa-store"></i> Shop Profile &amp; Bio
+                        <i class="fa-solid fa-store"></i> Hồ Sơ &amp; Giới Thiệu
                     </button>
                     <button type="button" class="tab-button px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-50" id="tab-btn-operations" onclick="switchTab('operations')">
-                        <i class="fa-solid fa-id-card"></i> Seller &amp; Identity
+                        <i class="fa-solid fa-id-card"></i> Chủ Shop &amp; Định Danh
                     </button>
                     <button type="button" class="tab-button px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-50" id="tab-btn-fulfillment" onclick="switchTab('fulfillment')">
-                        <i class="fa-solid fa-warehouse"></i> Address &amp; Hub
+                        <i class="fa-solid fa-warehouse"></i> Địa Chỉ &amp; Kho Hàng
                     </button>
                     <button type="button" class="tab-button px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:bg-slate-50" id="tab-btn-approval" onclick="switchTab('approval')">
-                        <i class="fa-solid fa-building-columns"></i> Bank &amp; Finance
+                        <i class="fa-solid fa-building-columns"></i> Ngân Hàng &amp; Tài Chính
                     </button>
                 </div>
 
@@ -123,24 +123,24 @@
                 <div class="tab-content active flex-col gap-6 mt-6" id="tab-profile">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                         <div class="lg:col-span-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-5">
-                            <h2 class="text-lg font-bold text-slate-900 border-b pb-3">Store Identity &amp; Editorial Bio</h2>
+                            <h2 class="text-lg font-bold text-slate-900 border-b pb-3">Thông Tin Thương Hiệu &amp; Giới Thiệu Gian Hàng</h2>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Registered Shop Name</label>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Tên Gian Hàng Đã Đăng Ký</label>
                                     <input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" type="text" name="shopName" value="<c:out value='${shop.shopName}'/>"/>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Business Type</label>
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Loại Hình Kinh Doanh</label>
                                     <input class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500" type="text" name="businessType" value="<c:out value='${shop.businessType}'/>"/>
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Shop Description</label>
+                                <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Mô Tả Gian Hàng</label>
                                 <textarea class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-emerald-500 resize-none" name="shopDescription" rows="4"><c:out value="${shop.shopDescription}"/></textarea>
                             </div>
                         </div>
                         <div class="lg:col-span-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col gap-5">
-                            <h3 class="text-base font-bold text-slate-900 border-b pb-3">Owner &amp; Principal</h3>
+                            <h3 class="text-base font-bold text-slate-900 border-b pb-3">Thông Tin Chủ Sở Hữu</h3>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Họ và tên</label>
                                 <input class="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-600" type="text" value="<c:out value='${sessionScope.user.fullName}'/>" readonly/>

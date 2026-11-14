@@ -39,18 +39,6 @@
             </c:choose>
         </button>
 
-        <button class="sidebar-nav-item" id="nav-vouchers-tab" data-bs-toggle="pill" data-bs-target="#nav-vouchers" type="button" role="tab">
-            <span><i class="bi bi-ticket-perforated-fill"></i> Kho voucher</span>
-            <c:choose>
-                <c:when test="${not empty vouchersCount and vouchersCount > 0}">
-                    <span class="badge bg-warning text-dark rounded-pill fw-bold badge-sidebar-sm">${vouchersCount} mã</span>
-                </c:when>
-                <c:otherwise>
-                    <i class="bi bi-chevron-right small"></i>
-                </c:otherwise>
-            </c:choose>
-        </button>
-
         <button class="sidebar-nav-item" id="nav-notifications-tab" data-bs-toggle="pill" data-bs-target="#nav-notifications" type="button" role="tab">
             <span><i class="bi bi-bell-fill"></i> Thông báo</span>
             <c:choose>

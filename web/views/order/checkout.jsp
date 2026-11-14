@@ -269,10 +269,9 @@
                                         <div>
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <span class="text-gray-700 font-semibold">Phương thức vận chuyển:</span>
-                                                <span class="font-bold text-gray-900">Nhanh (Giao trong ngày / 2h - 4h)</span>
-                                                <button type="button" class="text-blue-600 hover:underline text-[11px] font-semibold cursor-pointer">Thay Đổi</button>
+                                                <span class="font-bold text-gray-900">Giao hàng bảo quản chuỗi lạnh Fresh-Lock (2h - 4h)</span>
                                             </div>
-                                            <div class="text-[11px] text-gray-400 mt-0.5">Được đồng kiểm khi nhận hàng</div>
+                                            <div class="text-[11px] text-gray-400 mt-0.5">Được đồng kiểm độ tươi khi nhận hàng</div>
                                         </div>
                                         <div class="text-right shrink-0">
                                             <div class="text-[10px] text-gray-400">Phí vận chuyển</div>
@@ -640,6 +639,9 @@
         </c:otherwise>
     </c:choose>
 </main>
+
+<!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
+<jsp:include page="/views/common/site-footer.jsp" />
 
 <!-- ==================== JAVASCRIPT XỬ LÝ THANH TOÁN ==================== -->
 <script>

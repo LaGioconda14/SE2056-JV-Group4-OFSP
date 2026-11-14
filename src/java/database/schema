@@ -291,6 +291,7 @@ CREATE TABLE [dbo].[sub_orders] (
     [order_id]          BIGINT NOT NULL,
     [shop_id]           BIGINT NOT NULL,
     [delivery_slot]     NVARCHAR(100) NULL,
+    [note]              NVARCHAR(500) NULL,
     [shop_subtotal]     DECIMAL(18, 2) NOT NULL,
     [shop_shipping_fee] DECIMAL(18, 2) NOT NULL DEFAULT 0,
     [shop_discount]     DECIMAL(18, 2) NOT NULL DEFAULT 0,
@@ -561,3 +562,225 @@ ALTER TABLE product_batches DROP CONSTRAINT CHK_ProductBatches_Status;
 -- Thêm lại ràng buộc CHECK mới cho phép chấp nhận cả 'INACTIVE'
 ALTER TABLE product_batches ADD CONSTRAINT CHK_ProductBatches_Status 
 CHECK (status IN ('ACTIVE', 'EXPIRED', 'DEPLETED', 'INACTIVE'));
+GO
+
+-- ============================================================
+-- CẬP NHẬT SCHEMA BỔ SUNG (SHOP REQUESTS, PROMOTIONS, COUPON USAGES, WISHLISTS)
+-- ============================================================
+USE [OnlineFruitShop];
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'tax_code') IS NULL
+    ALTER TABLE dbo.shop_requests ADD tax_code VARCHAR(20) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'id_card_front_url') IS NULL
+    ALTER TABLE dbo.shop_requests ADD id_card_front_url VARCHAR(500) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'id_card_back_url') IS NULL
+    ALTER TABLE dbo.shop_requests ADD id_card_back_url VARCHAR(500) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'shop_description') IS NULL
+    ALTER TABLE dbo.shop_requests ADD shop_description NVARCHAR(MAX) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'shop_logo_url') IS NULL
+    ALTER TABLE dbo.shop_requests ADD shop_logo_url VARCHAR(500) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'shop_banner_url') IS NULL
+    ALTER TABLE dbo.shop_requests ADD shop_banner_url VARCHAR(500) NULL;
+GO
+
+
+IF COL_LENGTH(N'dbo.shop_requests', N'ward') IS NULL
+    ALTER TABLE dbo.shop_requests ADD ward NVARCHAR(100) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'street_address') IS NULL
+    ALTER TABLE dbo.shop_requests ADD street_address NVARCHAR(255) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'pickup_address') IS NULL
+    ALTER TABLE dbo.shop_requests ADD pickup_address NVARCHAR(500) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'return_address') IS NULL
+    ALTER TABLE dbo.shop_requests ADD return_address NVARCHAR(500) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'bank_name') IS NULL
+    ALTER TABLE dbo.shop_requests ADD bank_name VARCHAR(100) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'bank_account_number') IS NULL
+    ALTER TABLE dbo.shop_requests ADD bank_account_number VARCHAR(50) NULL;
+GO
+
+IF COL_LENGTH(N'dbo.shop_requests', N'bank_account_holder') IS NULL
+    ALTER TABLE dbo.shop_requests ADD bank_account_holder NVARCHAR(100) NULL;
+GO
+
+ALTER TABLE dbo.shop_requests
+    ALTER COLUMN produce_specialty NVARCHAR(200) NULL;
+GO
+
+ALTER TABLE dbo.shop_requests
+    ALTER COLUMN farm_address NVARCHAR(255) NULL;
+GO
+
+-- 1. Mỗi user tối đa một hồ sơ shop đang chờ duyệt.
+-- Nếu có hồ sơ trùng, index sẽ không tạo được.
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'UX_shop_requests_one_pending'
+      AND object_id = OBJECT_ID(N'dbo.shop_requests')
+)
+BEGIN
+    CREATE UNIQUE INDEX UX_shop_requests_one_pending
+        ON dbo.shop_requests(user_id)
+        WHERE status IN ('PENDING', 'PENDING_KYC');
+END
+GO
+
+
+-- 3. Liên kết promotion được áp dụng trên từng dòng đơn hàng.
+IF COL_LENGTH(N'dbo.order_items', N'promotion_id') IS NULL
+    ALTER TABLE dbo.order_items ADD promotion_id BIGINT NULL;
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_order_items_promotion'
+      AND parent_object_id = OBJECT_ID(N'dbo.order_items')
+)
+BEGIN
+    ALTER TABLE dbo.order_items
+        ADD CONSTRAINT FK_order_items_promotion
+        FOREIGN KEY (promotion_id) REFERENCES dbo.promotions(promotion_id);
+END
+GO
+
+
+-- 4. Liên kết lịch sử dùng voucher với đơn hàng.
+-- Khi xóa đơn hàng, giữ lịch sử voucher và đặt order_id thành NULL.
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = N'FK_coupon_usages_order'
+      AND parent_object_id = OBJECT_ID(N'dbo.coupon_usages')
+)
+BEGIN
+    ALTER TABLE dbo.coupon_usages
+        ADD CONSTRAINT FK_coupon_usages_order
+        FOREIGN KEY (order_id) REFERENCES dbo.orders(order_id)
+        ON DELETE SET NULL;
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_coupon_usages_coupon'
+      AND object_id = OBJECT_ID(N'dbo.coupon_usages')
+)
+BEGIN
+    CREATE INDEX IX_coupon_usages_coupon
+        ON dbo.coupon_usages(coupon_id, used_at DESC);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_coupon_usages_customer'
+      AND object_id = OBJECT_ID(N'dbo.coupon_usages')
+)
+BEGIN
+    CREATE INDEX IX_coupon_usages_customer
+        ON dbo.coupon_usages(customer_id, coupon_id);
+END
+GO
+
+
+-- 5. Giới hạn các loại promotion code đang hỗ trợ.
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = N'CK_promotions_type'
+      AND parent_object_id = OBJECT_ID(N'dbo.promotions')
+)
+BEGIN
+    ALTER TABLE dbo.promotions
+        ADD CONSTRAINT CK_promotions_type
+        CHECK (promotion_type IN (
+            'FIXED_PRICE',
+            'BUY_X_GET_Y',
+            'VOLUME',
+            'TIME_WINDOW',
+            'PERCENTAGE',
+            'FIXED_AMOUNT'
+        ));
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_promotions_shop'
+      AND object_id = OBJECT_ID(N'dbo.promotions')
+)
+BEGIN
+    CREATE INDEX IX_promotions_shop
+        ON dbo.promotions(shop_id, start_date, end_date);
+END
+GO
+
+
+-- 6. Index tra cứu sản phẩm thuộc promotion.
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_promo_products_product'
+      AND object_id = OBJECT_ID(N'dbo.promotion_products')
+)
+BEGIN
+    CREATE INDEX IX_promo_products_product
+        ON dbo.promotion_products(product_id);
+END
+GO
+
+
+-- 7. Index danh sách wishlist theo user.
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = N'IX_wishlists_user'
+      AND object_id = OBJECT_ID(N'dbo.wishlists')
+)
+BEGIN
+    CREATE INDEX IX_wishlists_user
+        ON dbo.wishlists(user_id, created_at DESC);
+END
+GO
+
+
+-- 8. Đồng bộ số lượt dùng voucher với lịch sử sử dụng.
+UPDATE c
+SET c.used_count = (
+    SELECT COUNT(*)
+    FROM dbo.coupon_usages AS u
+    WHERE u.coupon_id = c.coupon_id
+)
+FROM dbo.coupons AS c;
+GO
+
+-- 9. Thêm cột note (lời nhắn từ khách hàng cho từng shop) vào sub_orders
+IF COL_LENGTH(N'dbo.sub_orders', N'note') IS NULL
+    ALTER TABLE dbo.sub_orders ADD note NVARCHAR(500) NULL;
+GO
+

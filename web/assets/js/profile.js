@@ -410,8 +410,6 @@ document.addEventListener('DOMContentLoaded', function() {
             activateTab('#nav-security', 'nav-security-tab');
         } else if (hash === '#orders' || hash === '#nav-orders' || tabParam === 'orders') {
             activateTab('#nav-orders', 'nav-orders-tab');
-        } else if (hash === '#vouchers' || hash === '#nav-vouchers' || tabParam === 'vouchers') {
-            activateTab('#nav-vouchers', 'nav-vouchers-tab');
         } else if (hash === '#notifications' || hash === '#nav-notifications' || tabParam === 'notifications') {
             activateTab('#nav-notifications', 'nav-notifications-tab');
         } else if (hash === '#address' || hash === '#nav-address' || tabParam === 'address') {
@@ -780,6 +778,7 @@ function showOrderTracking(orderId) {
     const createdAt = getAttr('data-created-at');
     const recipientAddress = getAttr('data-recipient-address', 'Địa chỉ giao hàng');
     const deliverySlot = getAttr('data-delivery-slot');
+    const orderNote = getAttr('data-note');
     const paymentMethod = getAttr('data-payment-method', 'COD').toUpperCase();
 
     setText('trackModalOrderCode', '#' + orderId);
@@ -787,16 +786,35 @@ function showOrderTracking(orderId) {
     setText('trackRecipientName', getAttr('data-recipient-name', 'Người nhận'));
     setText('trackRecipientPhone', getAttr('data-recipient-phone', '0903 *** ***'));
     setText('trackRecipientAddress', recipientAddress);
-    function formatDeliverySlotNote(raw) {
-        if (!raw || !raw.trim()) return 'Giao hàng chuỗi lạnh FreshCold tiêu chuẩn.';
-        const s = raw.trim();
-        const upper = s.toUpperCase();
-        if (upper === 'MORNING') return 'Giao buổi sáng (08:00 - 12:00)';
-        if (upper === 'AFTERNOON') return 'Giao buổi chiều (13:00 - 17:00)';
-        if (upper === 'EVENING') return 'Giao buổi tối (18:00 - 21:00)';
-        return s;
+    function formatDeliverySlotNote(rawSlot, rawNote) {
+        let noteText = (rawNote && rawNote.trim()) ? rawNote.trim() : '';
+        let slotText = '';
+        if (rawSlot && rawSlot.trim()) {
+            let s = rawSlot.trim();
+            if (s.includes('Lời nhắn:')) {
+                const idx = s.indexOf('Lời nhắn:');
+                if (!noteText) {
+                    noteText = s.substring(idx + 'Lời nhắn:'.length()).trim();
+                }
+                const before = s.substring(0, idx).replace(/[•\-\s]+$/, '').trim();
+                s = before;
+            }
+            const upper = s.toUpperCase();
+            if (upper === 'MORNING') slotText = 'Giao buổi sáng (08:00 - 12:00)';
+            else if (upper === 'AFTERNOON') slotText = 'Giao buổi chiều (13:00 - 17:00)';
+            else if (upper === 'EVENING') slotText = 'Giao buổi tối (18:00 - 21:00)';
+            else slotText = s;
+        }
+        if (slotText && noteText) {
+            return slotText + ' • Lời nhắn: ' + noteText;
+        } else if (slotText) {
+            return slotText;
+        } else if (noteText) {
+            return 'Lời nhắn: ' + noteText;
+        }
+        return 'Giao hàng chuỗi lạnh FreshCold tiêu chuẩn.';
     }
-    setText('trackNoteText', formatDeliverySlotNote(deliverySlot));
+    setText('trackNoteText', formatDeliverySlotNote(deliverySlot, orderNote));
 
     const finalAmount = getAttr('data-final-amount', getAttr('data-goods-amount', 0));
     setText('trackFinalTotal', formatVND(finalAmount));

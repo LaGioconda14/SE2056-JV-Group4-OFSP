@@ -265,6 +265,14 @@ public class Delivery {
         this.deliveryNote = deliveryNote;
     }
 
+    public String getNote() {
+        return deliveryNote;
+    }
+
+    public void setNote(String note) {
+        this.deliveryNote = note;
+    }
+
     public BigDecimal getShopTotal() {
         return shopTotal;
     }

@@ -36,9 +36,9 @@ function saveAllSettings() {
 
 /* ---------- TRẠNG THÁI SHOP ---------- */
 const STATUS_INFO = {
-  open:   { text: 'Đang hoạt động (Open For Orders)', cls: 'text-emerald-600' },
-  paused: { text: 'Tạm ngưng nhận đơn (Paused)',      cls: 'text-amber-600' },
-  closed: { text: 'Đã đóng cửa (Closed)',             cls: 'text-red-600' }
+  open:   { text: 'Đang hoạt động (Mở bán)', cls: 'text-emerald-600' },
+  paused: { text: 'Tạm ngưng nhận đơn (Tạm nghỉ)', cls: 'text-amber-600' },
+  closed: { text: 'Đã đóng cửa', cls: 'text-red-600' }
 };
 
 function setShopStatus(status) {

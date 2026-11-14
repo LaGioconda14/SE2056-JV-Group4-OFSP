@@ -80,7 +80,7 @@
                                             <article class="confirmed-product"><div class="snapshot-icon"><span class="material-symbols-outlined">nutrition</span></div><div><strong><c:out value="${item.productNameSnapshot}"/></strong><small><c:out value="${item.variantNameSnapshot}"/><c:if test="${not empty item.unit}"> · <c:out value="${item.unit}"/></c:if></small><span><fmt:formatNumber value="${item.unitPrice}" type="currency" currencyCode="VND" maxFractionDigits="0"/> × <c:out value="${item.quantity}"/></span></div><strong><fmt:formatNumber value="${item.totalPrice}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></article>
                                         </c:forEach>
                                     </div>
-                                    <div class="shop-totals"><span>Tiền hàng: <strong><fmt:formatNumber value="${subOrder.shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><span>Phí giao: <strong><fmt:formatNumber value="${subOrder.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><c:if test="${not empty subOrder.deliverySlot}"><span>Khung giờ: <strong><c:out value="${subOrder.deliverySlot}"/></strong></span></c:if></div>
+                                    <div class="shop-totals"><span>Tiền hàng: <strong><fmt:formatNumber value="${subOrder.shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><span>Phí giao: <strong><fmt:formatNumber value="${subOrder.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><c:if test="${not empty subOrder.deliverySlot}"><span>Khung giờ: <strong><c:out value="${subOrder.deliverySlot}"/></strong></span></c:if><c:if test="${not empty subOrder.note}"><span>Lời nhắn: <strong><c:out value="${subOrder.note}"/></strong></span></c:if></div>
                                 </div>
                             </c:forEach>
                         </section>
@@ -128,12 +128,17 @@
                         </section>
                     </aside>
                 </div>
-                <div class="confirmation-actions"><a class="secondary-button" href="<c:out value='${homeUrl}'/>"><span class="material-symbols-outlined">home</span> Về trang chủ</a><a class="primary-button" href="<c:out value='${productsUrl}'/>">Tiếp tục mua sắm <span class="material-symbols-outlined">arrow_forward</span></a></div>
+                <div class="confirmation-actions">
+                    <a class="secondary-button" href="<c:out value='${homeUrl}'/>"><span class="material-symbols-outlined">home</span> Về trang chủ</a>
+                    <a class="primary-button" href="${pageContext.request.contextPath}/profile#orders"><span class="material-symbols-outlined">receipt_long</span> Xem đơn hàng của tôi</a>
+                    <a class="secondary-button" href="<c:out value='${productsUrl}'/>">Tiếp tục mua sắm <span class="material-symbols-outlined">arrow_forward</span></a>
+                </div>
             </c:otherwise>
         </c:choose>
     </div>
 </main>
 
-<footer class="site-footer"><div class="shell footer-main"><div><strong class="footer-brand">Gốc Vườn</strong><p>Trái cây tươi hái tận vườn, giao hàng tận nơi.</p></div><nav><a href="<c:out value='${homeUrl}'/>">Trang Chủ</a><a href="<c:out value='${productsUrl}'/>">Cửa Hàng</a><a href="<c:out value='${homeUrl}'/>#about">Về Chúng Tôi</a><a href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a></nav><span class="hotline"><span class="material-symbols-outlined">call</span>1900 6868</span></div><div class="shell footer-bottom"><span>&copy; 2026 Gốc Vườn Marketplace. Đã đăng ký bản quyền.</span><span>Trái cây sạch cho mọi gia đình.</span></div></footer>
+<!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
+<jsp:include page="/views/common/site-footer.jsp" />
 </body>
 </html>

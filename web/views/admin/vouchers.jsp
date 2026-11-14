@@ -73,66 +73,63 @@
 
             <!-- 4 KPI Summary Cards -->
             <div class="kpi-grid-4 mb-3">
-                <!-- Card 1: Ngân sách tháng 10 -->
+                <!-- Card 1: Tổng trợ giá đã chi -->
                 <div class="stat-card-kpi">
                     <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">NGÂN SÁCH THÁNG 10</span>
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">TỔNG TRỢ GIÁ ĐÃ GIẢI NGÂN</span>
                         <div class="kpi-icon-box" style="background: #f0fdf4; color: #16a34a;">
                             <i class="bi bi-credit-card-2-front"></i>
                         </div>
                     </div>
-                    <div class="kpi-main-val">₫50,000,000</div>
+                    <div class="kpi-main-val"><c:out value="${not empty voucherStats.totalDiscountGrantedFormatted ? voucherStats.totalDiscountGrantedFormatted : '0 ₫'}"/></div>
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                        <span class="text-muted fs-8">Đã giải ngân: ₫32,460,000</span>
-                        <span class="badge bg-success-subtle text-success px-1 py-0 fs-8 fw-bold">64.8%</span>
-                    </div>
-                    <div class="progress mt-1" style="height: 5px;">
-                        <div class="progress-bar bg-success" style="width: 64.8%;"></div>
+                        <span class="text-muted fs-8">Trợ giá thực tế trên đơn hàng</span>
+                        <span class="badge bg-success-subtle text-success px-1 py-0 fs-8 fw-bold">Đã áp dụng</span>
                     </div>
                 </div>
 
-                <!-- Card 2: GMV kích cầu Voucher -->
+                <!-- Card 2: Lượt dùng toàn sàn -->
                 <div class="stat-card-kpi">
                     <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">GMV KÍCH CẦU VOUCHER</span>
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">LƯỢT SỬ DỤNG VOUCHER</span>
                         <div class="kpi-icon-box" style="background: #f0fdf4; color: #16a34a;">
                             <i class="bi bi-graph-up-arrow"></i>
                         </div>
                     </div>
-                    <div class="kpi-main-val">₫148,920,000</div>
+                    <div class="kpi-main-val"><c:out value="${not empty voucherStats.totalUsed ? voucherStats.totalUsed : 0}"/> lượt</div>
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                        <span class="kpi-sub-text text-success"><i class="bi bi-check-circle-fill"></i> Hiệu suất ROI: 4.6x</span>
-                        <span class="badge bg-success-subtle text-success px-1 py-0 fs-8 fw-bold">+18.2% MoM</span>
+                        <span class="kpi-sub-text text-success"><i class="bi bi-check-circle-fill"></i> Kích cầu tiêu dùng</span>
+                        <span class="badge bg-success-subtle text-success px-1 py-0 fs-8 fw-bold">Toàn sàn</span>
                     </div>
                 </div>
 
-                <!-- Card 3: Voucher giảm trực tiếp -->
+                <!-- Card 3: Phân loại Voucher -->
                 <div class="stat-card-kpi">
                     <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">VOUCHER GIẢM TRỰC TIẾP</span>
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">PHÂN BỔ NGUỒN VOUCHER</span>
                         <div class="kpi-icon-box" style="background: #fef3c7; color: #d97706;">
                             <i class="bi bi-cash-coin"></i>
                         </div>
                     </div>
-                    <div class="kpi-main-val">Giảm % / Giảm tiền</div>
+                    <div class="kpi-main-val"><c:out value="${not empty voucherStats.platformCount ? voucherStats.platformCount : 0}"/> Sàn · <c:out value="${not empty voucherStats.shopCount ? voucherStats.shopCount : 0}"/> Shop</div>
                     <div class="kpi-sub-text text-muted mt-2">
                         <i class="bi bi-tags text-warning"></i>
-                        Áp dụng trực tiếp trên tiền hàng
+                        Voucher cấp sàn & voucher nhà vườn
                     </div>
                 </div>
 
-                <!-- Card 4: Lượt dùng toàn sàn -->
+                <!-- Card 4: Tổng số chương trình -->
                 <div class="stat-card-kpi">
                     <div class="d-flex justify-content-between align-items-start">
-                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">LƯỢT DÙNG TOÀN SÀN</span>
+                        <span class="kpi-label text-uppercase fw-bold text-muted fs-8">TỔNG MÃ KHUYẾN MÃI</span>
                         <div class="kpi-icon-box" style="background: #fff7ed; color: #ea580c;">
                             <i class="bi bi-ticket-perforated"></i>
                         </div>
                     </div>
-                    <div class="kpi-main-val">4,820 Lượt</div>
+                    <div class="kpi-main-val"><c:out value="${not empty voucherStats.totalVouchers ? voucherStats.totalVouchers : 0}"/> mã</div>
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                        <span class="text-muted fs-8">Tỷ lệ chuyển đổi:</span>
-                        <span class="badge bg-success-subtle text-success px-1 py-0 fs-8 fw-bold">+24.5% CR</span>
+                        <span class="text-muted fs-8">Đang kích hoạt: <strong class="text-success"><c:out value="${not empty voucherStats.activeCount ? voucherStats.activeCount : 0}"/></strong></span>
+                        <span class="badge bg-success-subtle text-success px-1 py-0 fs-8 fw-bold">Khả dụng</span>
                     </div>
                 </div>
             </div>

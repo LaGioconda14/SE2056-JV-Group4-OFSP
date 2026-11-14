@@ -42,7 +42,7 @@
                     <c:forEach items="${orders}" var="order">
                         <c:set var="statusUpper" value="${not empty order.status ? order.status.toUpperCase() : ''}" />
                         <c:set var="displayOrderId" value="${not empty order.subOrderCode ? order.subOrderCode : order.subOrderId}" />
-                        <c:set var="fallbackNote" value="${not empty order.deliverySlot ? 'Khung giờ giao: '.concat(order.deliverySlot) : 'Đơn hàng nông sản chuỗi lạnh FreshFruit'}" />
+                        <c:set var="fallbackNote" value="${not empty order.deliverySlot ? 'Khung giờ giao: '.concat(order.deliverySlot) : 'Đơn hàng nông sản chuỗi lạnh Gốc Vườn'}" />
                         <c:set var="mainProductName" value="${not empty order.items ? order.items[0].productNameSnapshot : fallbackNote}" />
                         <c:if test="${not empty order.items and order.items.size() > 1}">
                             <c:set var="mainProductName" value="${mainProductName.concat(' (+').concat(order.items.size() - 1).concat(' sản phẩm khác)')}" />
@@ -61,6 +61,7 @@
                              data-cancel-reason="${order.cancelReason != null ? order.cancelReason : ''}"
                              data-failure-reason="${order.delivery != null and order.delivery.failureReason != null ? order.delivery.failureReason : ''}"
                              data-delivery-slot="${order.deliverySlot != null ? order.deliverySlot : ''}"
+                             data-note="${order.note != null ? order.note : ''}"
                              data-recipient-name="${order.shippingAddress != null ? order.shippingAddress.recipientName : user.fullName}"
                              data-recipient-phone="${order.shippingAddress != null ? order.shippingAddress.recipientPhone : user.phone}"
                              data-recipient-address="${order.shippingAddress != null ? order.shippingAddress.fullAddress : 'Địa chỉ nhận hàng'}"

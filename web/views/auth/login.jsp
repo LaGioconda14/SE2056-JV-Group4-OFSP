@@ -1,7 +1,7 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,22 +27,22 @@
             </div>
             
             <p class="hero-desc">
-                Fresh organic produce delivered right from local family orchards straight to your table.
+                Nông sản hữu cơ tươi sạch thu hoạch từ các nhà vườn chuẩn VietGAP &amp; GlobalGAP, giao thẳng đến gian bếp gia đình bạn.
             </p>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-box">
                 <i class="bi bi-shield-check"></i>
-                <div class="metric-label">100% Certified Organic</div>
+                <div class="metric-label">100% Nông sản chuẩn sạch</div>
             </div>
             <div class="metric-box">
                 <i class="bi bi-truck"></i>
-                <div class="metric-label">Same-Day Dispatch</div>
+                <div class="metric-label">Chuỗi lạnh Fresh-Lock</div>
             </div>
             <div class="metric-box">
                 <i class="bi bi-heart-fill"></i>
-                <div class="metric-label">15,000+ Happy Homes</div>
+                <div class="metric-label">15.000+ Gia đình tin chọn</div>
             </div>
         </div>
     </div>
@@ -52,22 +52,22 @@
             <div class="top-status-bar">
                 <div class="secure-pill">
                     <span class="secure-dot"></span>
-                    <span>Secure Portal</span>
+                    <span>Cổng bảo mật SSL</span>
                 </div>
-                <a href="${pageContext.request.contextPath}/help" class="help-link">
-                    <span>Help Center</span>
-                    <i class="bi bi-box-arrow-up-right small"></i>
+                <a href="${pageContext.request.contextPath}/home" class="help-link">
+                    <span>Trang chủ</span>
+                    <i class="bi bi-house small"></i>
                 </a>
             </div>
 
             <div class="auth-nav-tabs">
-                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn active">Sign In</a>
-                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Create Account</a>
-                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn">Forgot Password</a>
+                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn active">Đăng nhập</a>
+                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Đăng ký</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn">Quên mật khẩu</a>
             </div>
 
-            <h1 class="form-title">Welcome back!</h1>
-            <p class="form-subtitle">Enter your account credentials to access fresh daily harvests.</p>
+            <h1 class="form-title">Chào mừng trở lại!</h1>
+            <p class="form-subtitle">Đăng nhập tài khoản để khám phá mùa vụ nông sản tươi ngon mỗi ngày.</p>
 
             <c:if test="${not empty errorMessage}">
                 <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center py-2 px-3 mb-3 small" role="alert">
@@ -92,11 +92,11 @@
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                 </svg>
-                <span>Continue with Google</span>
+                <span>Đăng nhập bằng Google</span>
             </a>
 
             <div class="or-divider">
-                <span>OR EMAIL</span>
+                <span>HOẶC DÙNG EMAIL / SỐ ĐIỆN THOẠI</span>
             </div>
 
             <form action="${pageContext.request.contextPath}/login" method="POST" id="loginForm">
@@ -117,7 +117,7 @@
                 </div>
 
                 <div class="field-group">
-                    <label class="field-label" for="password">Password</label>
+                    <label class="field-label" for="password">Mật khẩu</label>
                     <div class="input-box-wrapper">
                         <i class="bi bi-lock leading-icon"></i>
                         <input type="password" 
@@ -126,7 +126,7 @@
                                placeholder="••••••••••••••••" 
                                required 
                                autocomplete="current-password">
-                        <span class="trailing-action" onclick="togglePasswordVisibility('password', this)" title="Show/Hide password">
+                        <span class="trailing-action" onclick="togglePasswordVisibility('password', this)" title="Hiện/Ẩn mật khẩu">
                             <i class="bi bi-eye"></i>
                         </span>
                     </div>
@@ -139,9 +139,9 @@
                                id="remember" 
                                value="1" 
                                ${not empty rememberChecked ? 'checked' : ''}>
-                        <span>Remember email on this device</span>
+                        <span>Ghi nhớ đăng nhập trên thiết bị này</span>
                     </label>
-                    <a href="${pageContext.request.contextPath}/forgot-password" class="forgot-link">Forgot password?</a>
+                    <a href="${pageContext.request.contextPath}/forgot-password" class="forgot-link">Quên mật khẩu?</a>
                 </div>
 
                 <button type="submit" class="btn-submit-main">
@@ -151,8 +151,8 @@
             </form>
 
             <div class="auth-bottom-switch">
-                <span>Don't have an account?</span>
-                <a href="${pageContext.request.contextPath}/register">Create Account</a>
+                <span>Bạn chưa có tài khoản?</span>
+                <a href="${pageContext.request.contextPath}/register">Đăng ký ngay</a>
             </div>
         </div>
     </div>

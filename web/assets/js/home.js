@@ -1,5 +1,5 @@
 /**
- * FreshFruit Homepage Scripts
+ * Gốc Vườn Homepage Scripts
  * - Category Dropdown Menu Toggle
  * - Featured Products Tab Filter
  */
