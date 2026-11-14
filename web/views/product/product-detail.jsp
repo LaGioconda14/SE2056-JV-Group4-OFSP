@@ -279,7 +279,7 @@
                                                         </div>
                                                     </div>
                                                 </c:forEach>
-                                            </c:when>
+                                            </c:when>   
                                             <c:otherwise>
                                                 <!-- Khi sản phẩm chỉ có 1 phân loại chuẩn -->
                                                 <div onclick="selectPackagePreset(1, ${product.price}, '${product.unit}', this)" 

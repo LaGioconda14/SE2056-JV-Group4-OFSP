@@ -1591,19 +1591,16 @@ public class ProductDAO extends DBContext {
     }
 
     // 2. Lấy danh sách biến thể (variants) khớp chuẩn model ProductVariant
+        // 2. Lấy danh sách biến thể (variants) của sản phẩm - Đã tối ưu, loại bỏ các JOIN thừa
     public List<ProductVariantDetailDTO> getVariantsByProductId(long productId) {
         List<ProductVariantDetailDTO> list = new ArrayList<>();
-        String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, "
-                + "pv.weight_kg, pv.price, pv.original_price, pv.stock_quantity, pv.is_active, "
-                + "p.name AS product_name, p.origin, p.description, p.certification, p.storage_temp, "
-                + "c.category_name, pi.image_url "
-                + "FROM product_variants pv "
-                + "JOIN products p ON pv.product_id = p.product_id "
-                + "LEFT JOIN categories c ON p.category_id = c.category_id "
-                + "OUTER APPLY (SELECT TOP 1 image_url FROM product_images "
-                + "WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC) pi "
-                + "WHERE pv.product_id = ? AND pv.is_active = 1 "
-                + "ORDER BY pv.price ASC, pv.variant_id ASC";
+        
+        // Chỉ select trực tiếp từ bảng product_variants, không JOIN thừa thãi vào products, categories, product_images
+        String sql = "SELECT variant_id, product_id, sku, variant_name, unit, "
+                + "       weight_kg, price, original_price, stock_quantity, is_active "
+                + "FROM product_variants "
+                + "WHERE product_id = ? AND is_active = 1 "
+                + "ORDER BY price ASC, variant_id ASC";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -1614,20 +1611,14 @@ public class ProductDAO extends DBContext {
                     v.setVariantId(rs.getLong("variant_id"));
                     v.setProductId(rs.getLong("product_id"));
                     v.setSku(rs.getString("sku"));
-                    v.setProductName(rs.getString("product_name"));
                     v.setVariantName(rs.getString("variant_name"));
                     v.setPrice(rs.getBigDecimal("price"));
-                    v.setOriginalPrice(rs.getBigDecimal("original_price") != null ? rs.getBigDecimal("original_price") : rs.getBigDecimal("price"));
+                    v.setOriginalPrice(rs.getBigDecimal("original_price") != null 
+                            ? rs.getBigDecimal("original_price") : rs.getBigDecimal("price"));
                     v.setWeightKg(rs.getBigDecimal("weight_kg"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
                     v.setUnit(rs.getString("unit"));
-                    v.setImage(rs.getString("image_url"));
-                    v.setOrigin(rs.getString("origin"));
-                    v.setCategoryName(rs.getString("category_name"));
-                    v.setCertification(rs.getString("certification"));
                     v.setIsActive(rs.getBoolean("is_active"));
-                    v.setStorageTemp(rs.getString("storage_temp"));
-                    v.setDescription(rs.getString("description"));
 
                     list.add(v);
                 }
