@@ -260,17 +260,13 @@
                                     <!-- Grid Option Chips Thực Tế Từ DB -->
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="package-options-grid">
                                         <c:choose>
-                                            <c:when test="${not empty product.variants and fn:length(product.variants) > 1}">
+                                            <c:when test="${not empty product.variants}">
                                                 <c:forEach var="variant" items="${product.variants}" varStatus="vStatus">
                                                     <c:set var="isVarActive" value="${(not empty param.variantId and param.variantId == variant.variantId) or (empty param.variantId and vStatus.first)}" />
                                                     <div onclick="selectPackageVariant(${variant.variantId}, ${variant.price}, '${variant.unit}', ${variant.stockQuantity}, ${variant.originalPrice != null ? variant.originalPrice : variant.price}, this)" 
                                                          data-variant-id="${variant.variantId}"
+                                                         data-stock="${variant.stockQuantity}"
                                                          class="variant-card cursor-pointer rounded-2xl border-2 p-3.5 transition-all text-left relative ${isVarActive ? 'selected' : 'border-gray-200 hover:border-emerald-300 bg-white'}">
-                                                        <c:if test="${vStatus.index == 1}">
-                                                            <span class="variant-badge absolute -top-2.5 right-3 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
-                                                                BÁN CHẠY
-                                                            </span>
-                                                        </c:if>
                                                         <div class="font-extrabold text-sm mb-1">
                                                             <c:out value="${variant.variantName}"/>
                                                         </div>
@@ -281,31 +277,11 @@
                                                 </c:forEach>
                                             </c:when>
                                             <c:otherwise>
-                                                <!-- Khi sản phẩm chỉ có 1 phân loại chuẩn -->
-                                                <div onclick="selectPackagePreset(1, ${product.price}, '${product.unit}', this)" 
-                                                     class="variant-card cursor-pointer rounded-2xl border-2 p-3.5 transition-all text-left relative selected">
-                                                    <div class="font-extrabold text-sm mb-1">1 ${product.unit} (Tiêu chuẩn)</div>
+                                                <!-- Khi sản phẩm chỉ có 1 phân loại tiêu chuẩn -->
+                                                <div class="variant-card rounded-2xl border-2 p-3.5 text-left relative selected">
+                                                    <div class="font-extrabold text-sm mb-1">Quy cách tiêu chuẩn</div>
                                                     <div class="variant-subtext text-xs text-gray-500">
                                                         <fmt:formatNumber value="${product.price}" pattern="#,###"/>đ / ${product.unit}
-                                                    </div>
-                                                </div>
-
-                                                <div onclick="selectPackagePreset(3, ${product.price * 3}, '3 ${product.unit}', this)" 
-                                                     class="variant-card cursor-pointer rounded-2xl border-2 p-3.5 transition-all text-left relative border-gray-200 hover:border-emerald-300 bg-white">
-                                                    <span class="variant-badge absolute -top-2.5 right-3 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
-                                                        BÁN CHẠY
-                                                    </span>
-                                                    <div class="font-extrabold text-sm mb-1">Combo 3 ${product.unit}</div>
-                                                    <div class="variant-subtext text-xs text-gray-500">
-                                                        <fmt:formatNumber value="${product.price * 3}" pattern="#,###"/>đ (Số lượng x3)
-                                                    </div>
-                                                </div>
-
-                                                <div onclick="selectPackagePreset(5, ${product.price * 5}, '5 ${product.unit}', this)" 
-                                                     class="variant-card cursor-pointer rounded-2xl border-2 p-3.5 transition-all text-left relative border-gray-200 hover:border-emerald-300 bg-white">
-                                                    <div class="font-extrabold text-sm mb-1">Thùng 5 ${product.unit}</div>
-                                                    <div class="variant-subtext text-xs text-gray-500">
-                                                        <fmt:formatNumber value="${product.price * 5}" pattern="#,###"/>đ (Số lượng x5)
                                                     </div>
                                                 </div>
                                             </c:otherwise>
@@ -335,9 +311,9 @@
                                     </div>
 
                                     <!-- Nút Thêm Vào Giỏ Hàng -->
-                                    <button type="submit" name="action" value="addToCart" class="flex-1 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold py-3.5 px-5 rounded-2xl transition shadow-lg shadow-emerald-900/15 flex items-center justify-center gap-2 text-sm sm:text-base">
+                                    <button type="submit" id="btn-add-to-cart" name="action" value="addToCart" class="flex-1 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold py-3.5 px-5 rounded-2xl transition shadow-lg shadow-emerald-900/15 flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">
                                         <i class="fa-solid fa-cart-plus text-base"></i>
-                                        <span>Thêm Vào Giỏ Hàng</span>
+                                        <span id="btn-add-to-cart-text">Thêm Vào Giỏ Hàng</span>
                                         <span>•</span>
                                         <span id="cart-btn-total"><fmt:formatNumber value="${product.price}" pattern="#,###"/>đ</span>
                                     </button>
@@ -349,11 +325,11 @@
                                 </div>
 
                                 <!-- Hàng 2: Nút Mua Ngay -->
-                                <button type="submit" name="checkoutMode" value="buyNow"
+                                <button type="submit" id="btn-buy-now" name="checkoutMode" value="buyNow"
                                         formaction="${pageContext.request.contextPath}/checkout"
-                                        class="w-full bg-[#9a3412] hover:bg-[#7c2d12] text-white font-extrabold py-3.5 px-6 rounded-2xl transition shadow-md shadow-orange-900/20 flex items-center justify-center gap-2 text-sm tracking-wide">
+                                        class="w-full bg-[#9a3412] hover:bg-[#7c2d12] text-white font-extrabold py-3.5 px-6 rounded-2xl transition shadow-md shadow-orange-900/20 flex items-center justify-center gap-2 text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">
                                     <i class="fa-solid fa-bolt text-amber-300"></i>
-                                    Mua Ngay
+                                    <span id="btn-buy-now-text">Mua Ngay</span>
                                 </button>
                             </form>
 
@@ -573,9 +549,6 @@
                                 <button type="button" onclick="switchTab('description')" id="tab-btn-description" class="tab-btn active pb-4 text-xs sm:text-sm font-semibold transition-all">
                                     Mô Tả Sản Phẩm
                                 </button>
-                                <button type="button" onclick="switchTab('nutrition')" id="tab-btn-nutrition" class="tab-btn text-gray-500 hover:text-gray-800 pb-4 text-xs sm:text-sm font-medium transition-all">
-                                    Thông Tin Dinh Dưỡng
-                                </button>
                                 <button type="button" onclick="switchTab('origin')" id="tab-btn-origin" class="tab-btn text-gray-500 hover:text-gray-800 pb-4 text-xs sm:text-sm font-medium transition-all">
                                     Nguồn Gốc &amp; Nhà Vườn
                                 </button>
@@ -676,38 +649,7 @@
                                 </div>
                             </div>
 
-                            <!-- TAB 2: THÔNG TIN DINH DƯỠNG -->
-                            <div id="tab-content-nutrition" class="tab-pane hidden space-y-6">
-                                <h3 class="font-extrabold text-lg text-gray-900">Bảng Thành Phần Dinh Dưỡng Ước Tính (Trong 100g)</h3>
-                                <div class="max-w-xl border border-gray-200 rounded-2xl overflow-hidden text-xs sm:text-sm">
-                                    <div class="bg-gray-50 p-4 border-b font-extrabold text-base flex justify-between">
-                                        <span>Năng lượng (Calories)</span>
-                                        <span>52 kcal</span>
-                                    </div>
-                                    <div class="p-3 border-b flex justify-between">
-                                        <span class="text-gray-500">Chất béo (Total Fat)</span>
-                                        <span class="font-bold">0.2g (0% DV)</span>
-                                    </div>
-                                    <div class="p-3 border-b flex justify-between">
-                                        <span class="text-gray-500">Chất xơ tự nhiên (Dietary Fiber)</span>
-                                        <span class="font-bold">2.4g (10% DV)</span>
-                                    </div>
-                                    <div class="p-3 border-b flex justify-between">
-                                        <span class="text-gray-500">Đường tự nhiên</span>
-                                        <span class="font-bold">10.4g</span>
-                                    </div>
-                                    <div class="p-3 border-b flex justify-between">
-                                        <span class="text-gray-500">Vitamin C</span>
-                                        <span class="font-bold text-emerald-700">Tự nhiên</span>
-                                    </div>
-                                    <div class="p-3 flex justify-between">
-                                        <span class="text-gray-500">Khoáng chất thiết yếu</span>
-                                        <span class="font-bold">Kali, Magie, Canxi</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- TAB 3: NGUỒN GỐC & NÔNG TRẠI -->
+                            <!-- TAB 2: NGUỒN GỐC & NÔNG TRẠI -->
                             <div id="tab-content-origin" class="tab-pane hidden space-y-6 text-xs sm:text-sm text-gray-600 leading-relaxed">
                                 <h3 class="font-extrabold text-lg text-gray-900">Thông Tin Nguồn Gốc &amp; Nhà Vườn Cung Cấp</h3>
                                 <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-3">
@@ -751,7 +693,7 @@
                                             <div class="font-bold text-gray-800 text-sm mb-0.5">
                                                 ${product.reviewsCount} đánh giá từ người mua
                                             </div>
-                                            <div>99% khách hàng hài lòng về chất lượng và đóng gói</div>
+                                            <div>Đánh giá từ khách hàng đã mua và trải nghiệm thực tế</div>
                                         </div>
                                     </div>
 
@@ -983,64 +925,60 @@
             </div>
         </div>
 
-        <!-- Footer Chuẩn Đồng Bộ Website -->
-        <footer id="about" class="bg-gray-950 text-gray-300 pt-16 pb-8 border-t border-gray-800 mt-16">
-            <div class="max-w-[1360px] mx-auto px-4 lg:px-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
-                    <div class="lg:col-span-2">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center p-1 shadow">
-                                <svg viewBox="0 0 100 100" class="w-full h-full">
-                                    <circle cx="50" cy="56" r="32" fill="#16a34a"/>
-                                    <path d="M 28 45 Q 36 34 50 34" stroke="#ffffff" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                    <circle cx="68" cy="46" r="5" fill="#ffffff"/>
-                                    <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
-                                </svg>
-                            </div>
-                            <span class="text-xl font-extrabold text-white">Gốc<span class="text-emerald-500">Vườn</span> Marketplace</span>
-                        </div>
-                        <p class="text-xs sm:text-sm text-gray-400 mb-6 leading-relaxed max-w-sm">
-                            Hệ thống sàn phân phối nông sản và hoa quả tươi sạch hàng đầu. Mang thiên nhiên thuần khiết và nguồn dinh dưỡng chuẩn hữu cơ từ vườn thẳng đến bếp nhà bạn.
-                        </p>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Danh Mục Mua Sắm</h3>
-                        <ul class="space-y-2.5 text-xs text-gray-400">
-                            <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-400 transition">Trái Cây Hữu Cơ</a></li>
-                            <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-400 transition">Nông Sản Địa Phương</a></li>
-                            <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-400 transition">Hộp Quà Cao Cấp</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Hỗ Trợ Khách Hàng</h3>
-                        <ul class="space-y-2.5 text-xs text-gray-400">
-                            <li><a href="#" class="hover:text-emerald-400 transition">Trung Tâm Trợ Giúp</a></li>
-                            <li><a href="#" class="hover:text-emerald-400 transition">Chính Sách Đổi Trả 1-1 Trong 24h</a></li>
-                            <li><a href="#" class="hover:text-emerald-400 transition">Bảo Quản Chuỗi Lạnh Fresh-Lock</a></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Đăng Ký Nhận Bản Tin</h3>
-                        <form onsubmit="event.preventDefault(); alert('Cảm ơn bạn đã đăng ký nhận khuyến mãi từ Gốc Vườn!');" class="space-y-2">
-                            <input type="email" placeholder="Nhập email của bạn..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                            <button type="submit" class="w-full bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs py-2.5 rounded-xl transition shadow">Đăng Ký Nhận Ưu Đãi</button>
-                        </form>
-                    </div>
-                </div>
-                <div class="pt-8 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-4">
-                    <p>&copy; 2026 Gốc Vườn Marketplace. Bảo lưu mọi quyền.</p>
-                    <div class="flex items-center gap-4 text-gray-400">
-                        <span>Tiêu chuẩn VietGAP • GlobalGAP • An Toàn Thực Phẩm</span>
-                    </div>
-                </div>
-            </div>
-        </footer>
+        <!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
+        <jsp:include page="/views/common/site-footer.jsp" />
 
         <!-- JAVASCRIPT ĐIỀU KHIỂN CHI TIẾT SẢN PHẨM HOÀN TOÀN BẰNG TIẾNG VIỆT -->
         <script>
             let currentUnitPrice = Number("${not empty product.price ? product.price : 0}");
             const baseUnitPrice = currentUnitPrice;
             const currencyFormatter = new Intl.NumberFormat('vi-VN');
+            let currentStock = Number("${not empty product.variants ? product.variants[0].stockQuantity : (not empty product.stockQuantity ? product.stockQuantity : 0)}");
+
+            function updateStockAndButtons(stock, unit) {
+                currentStock = Number(stock);
+                const stockText = document.getElementById('detail-stock-text');
+                const addToCartBtn = document.getElementById('btn-add-to-cart');
+                const addToCartText = document.getElementById('btn-add-to-cart-text');
+                const buyNowBtn = document.getElementById('btn-buy-now');
+                const buyNowText = document.getElementById('btn-buy-now-text');
+                const qtyInput = document.getElementById('buy-quantity');
+
+                if (stockText) {
+                    if (currentStock > 0) {
+                        stockText.textContent = 'Còn hàng — Còn ' + currentStock + ' ' + (unit || '${product.unit}') + ' trong kho';
+                    } else {
+                        stockText.textContent = 'Tạm hết hàng';
+                    }
+                }
+
+                if (qtyInput) {
+                    qtyInput.max = currentStock > 0 ? currentStock : 1;
+                    if (currentStock <= 0) {
+                        qtyInput.value = 1;
+                        qtyInput.disabled = true;
+                    } else {
+                        qtyInput.disabled = false;
+                        let val = parseInt(qtyInput.value) || 1;
+                        if (val > currentStock) qtyInput.value = currentStock;
+                    }
+                }
+
+                const isOutOfStock = currentStock <= 0;
+                if (addToCartBtn) {
+                    addToCartBtn.disabled = isOutOfStock;
+                    if (addToCartText) {
+                        addToCartText.textContent = isOutOfStock ? 'Tạm Hết Hàng' : 'Thêm Vào Giỏ Hàng';
+                    }
+                }
+
+                if (buyNowBtn) {
+                    buyNowBtn.disabled = isOutOfStock;
+                    if (buyNowText) {
+                        buyNowText.textContent = isOutOfStock ? 'Tạm Hết Hàng' : 'Mua Ngay';
+                    }
+                }
+            }
 
             // 1. Chuyển ảnh lớn khi bấm vào ảnh thumbnail
             function changeMainImage(imgUrl, btn) {
@@ -1070,34 +1008,12 @@
                 currentUnitPrice = Number(price);
                 updatePriceDisplay(currentUnitPrice, unit, origPrice);
 
-                const stockText = document.getElementById('detail-stock-text');
-                if (stockText) {
-                    if (stock > 0) {
-                        stockText.textContent = 'Còn hàng — Còn ' + stock + ' ' + unit + ' trong kho';
-                    } else {
-                        stockText.textContent = 'Tạm hết hàng';
-                    }
-                }
+                updateStockAndButtons(stock, unit);
 
                 document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
                 if (cardEl) cardEl.classList.add('selected');
 
                 recalculateCartTotal();
-            }
-
-            // 3. Chọn phân loại quy cách mặc định
-            function selectPackagePreset(multiplier, price, unitLabel, cardEl) {
-                const qtyInput = document.getElementById('buy-quantity');
-                if (qtyInput) qtyInput.value = multiplier;
-
-                currentUnitPrice = baseUnitPrice;
-                updatePriceDisplay(price, unitLabel, price * 1.2);
-
-                document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
-                if (cardEl) cardEl.classList.add('selected');
-
-                const cartBtnTotal = document.getElementById('cart-btn-total');
-                if (cartBtnTotal) cartBtnTotal.textContent = currencyFormatter.format(price) + 'đ';
             }
 
             function updatePriceDisplay(price, unit, oldPrice) {
@@ -1122,12 +1038,13 @@
 
             // 4. Stepper tăng giảm số lượng
             function adjustQuantity(delta) {
+                if (currentStock <= 0) return;
                 const qtyInput = document.getElementById('buy-quantity');
                 if (!qtyInput) return;
                 let val = parseInt(qtyInput.value) || 1;
                 val += delta;
                 if (val < 1) val = 1;
-                if (val > 99) val = 99;
+                if (currentStock > 0 && val > currentStock) val = currentStock;
                 qtyInput.value = val;
                 recalculateCartTotal();
             }
@@ -1311,6 +1228,12 @@
                     if (targetCard) {
                         targetCard.click();
                     }
+                } else {
+                    const activeVariantCard = document.querySelector('.variant-card.selected');
+                    if (activeVariantCard && activeVariantCard.dataset.stock !== undefined) {
+                        currentStock = Number(activeVariantCard.dataset.stock);
+                    }
+                    updateStockAndButtons(currentStock, '${product.unit}');
                 }
                 recalculateCartTotal();
                 const toast = document.getElementById('product-toast');

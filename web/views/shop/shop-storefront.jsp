@@ -98,7 +98,7 @@
                         </div>
 
                         <p class="text-xs sm:text-sm text-gray-600 max-w-2xl leading-relaxed">
-                            ${not empty shop.description ? shop.description : 'Direct from highland volcanic soils. Grown at 1,050m altitude with pristine spring water and zero synthetic pesticides.'}
+                            ${not empty shop.description ? shop.description : 'Nông sản thu hái trực tiếp từ vườn, quy trình canh tác an toàn sinh học, tươi ngon tự nhiên.'}
                         </p>
 
                         <!-- Stats Row -->
@@ -108,16 +108,13 @@
                                 <span>${shop.rating != null && shop.rating > 0 ? shop.rating : '5.0'}</span>
                                 <span class="text-gray-400 font-normal">(${reviews != null ? reviews.size() : 0} đánh giá)</span>
                             </div>
-                            <span class="text-gray-300 hidden sm:inline">&bull;</span>
-                            <div class="flex items-center gap-1.5">
-                                <i class="fa-solid fa-users text-gray-400"></i>
-                                <span class="font-bold text-gray-900">8.4k</span> người theo dõi
-                            </div>
-                            <span class="text-gray-300 hidden sm:inline">&bull;</span>
-                            <div class="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                                <i class="fa-solid fa-bolt text-emerald-600"></i>
-                                <span>100% tỷ lệ phản hồi (&lt; 1 giờ)</span>
-                            </div>
+                            <c:if test="${not empty totalProductsCount}">
+                                <span class="text-gray-300 hidden sm:inline">&bull;</span>
+                                <div class="flex items-center gap-1.5">
+                                    <i class="fa-solid fa-apple-whole text-emerald-600"></i>
+                                    <span class="font-bold text-gray-900">${totalProductsCount}</span> sản phẩm
+                                </div>
+                            </c:if>
                         </div>
                     </div>
                 </div>

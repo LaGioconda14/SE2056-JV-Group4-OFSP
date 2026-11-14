@@ -148,12 +148,22 @@
                         <!-- Dropdown Menu -->
                         <div class="absolute right-0 mt-1 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 hidden group-hover:block z-50">
                             <c:choose>
+                                <c:when test="${currentUser.role eq 'ADMIN'}">
+                                    <a href="${pageContext.request.contextPath}/admin/dashboard" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 transition-colors">
+                                        <span class="material-symbols-outlined text-[18px] text-indigo-600">admin_panel_settings</span> Bảng Quản Trị Sàn
+                                    </a>
+                                </c:when>
                                 <c:when test="${currentUser.role eq 'SHOP_OWNER'}">
                                     <a href="${pageContext.request.contextPath}/shop/dashboard" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50 transition-colors">
                                         <span class="material-symbols-outlined text-[18px] text-emerald-600">sliders</span> Kênh Quản Lý Shop
                                     </a>
                                     <a href="${pageContext.request.contextPath}/store?id=${sessionScope.shopId != null ? sessionScope.shopId : 1}" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-amber-800 bg-amber-50/50 hover:bg-amber-50 transition-colors">
                                         <span class="material-symbols-outlined text-[18px] text-amber-600">store</span> Gian Hàng Của Tôi
+                                    </a>
+                                </c:when>
+                                <c:when test="${currentUser.role eq 'DRIVER'}">
+                                    <a href="${pageContext.request.contextPath}/shipper/deliveries" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-amber-700 bg-amber-50/50 hover:bg-amber-50 transition-colors">
+                                        <span class="material-symbols-outlined text-[18px]">local_shipping</span> Cổng Giao Vận (Shipper)
                                     </a>
                                 </c:when>
                                 <c:otherwise>
@@ -163,12 +173,6 @@
                                 </c:otherwise>
                             </c:choose>
                             <div class="h-px bg-gray-100 my-1"></div>
-                            <c:if test="${currentUser.role eq 'DRIVER'}">
-                                <a href="${pageContext.request.contextPath}/shipper/deliveries" class="flex items-center gap-2 px-4 py-2 text-xs font-bold text-amber-700 bg-amber-50/50 hover:bg-amber-50 transition-colors">
-                                    <span class="material-symbols-outlined text-[18px]">local_shipping</span> Cổng Giao Vận
-                                </a>
-                                <div class="h-px bg-gray-100 my-1"></div>
-                            </c:if>
                             <a href="<c:out value='${profileUrl}'/>" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                                 <span class="material-symbols-outlined text-[18px]">person</span> Hồ sơ cá nhân
                             </a>
@@ -344,21 +348,6 @@
 <!-- ==================== HEADER & NOTIFICATION SCRIPT ==================== -->
 <script>
     window.contextPath = '${pageContext.request.contextPath}';
-
-    function toggleHeaderNotification(e) {
-        if (e) e.stopPropagation();
-        const popover = document.getElementById('header-noti-popover');
-        if (popover) {
-            popover.classList.toggle('hidden');
-        }
-    }
-
-    function clearAllNotifications(e) {
-        if (e) e.stopPropagation();
-        const badge = document.getElementById('header-noti-badge');
-        if (badge) badge.classList.add('hidden');
-        localStorage.setItem('gocvuon_noti_read', 'true');
-    }
 
     window.showToast = function(message, type = 'success') {
         const container = document.getElementById('global-toast-container');

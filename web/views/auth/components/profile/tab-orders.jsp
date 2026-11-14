@@ -42,7 +42,7 @@
                     <c:forEach items="${orders}" var="order">
                         <c:set var="statusUpper" value="${not empty order.status ? order.status.toUpperCase() : ''}" />
                         <c:set var="displayOrderId" value="${not empty order.subOrderCode ? order.subOrderCode : order.subOrderId}" />
-                        <c:set var="fallbackNote" value="${not empty order.deliverySlot ? 'Khung giờ giao: '.concat(order.deliverySlot) : 'Đơn hàng nông sản chuỗi lạnh FreshFruit'}" />
+                        <c:set var="fallbackNote" value="${not empty order.deliverySlot ? 'Khung giờ giao: '.concat(order.deliverySlot) : 'Đơn hàng nông sản chuỗi lạnh Gốc Vườn'}" />
                         <c:set var="mainProductName" value="${not empty order.items ? order.items[0].productNameSnapshot : fallbackNote}" />
                         <c:if test="${not empty order.items and order.items.size() > 1}">
                             <c:set var="mainProductName" value="${mainProductName.concat(' (+').concat(order.items.size() - 1).concat(' sản phẩm khác)')}" />

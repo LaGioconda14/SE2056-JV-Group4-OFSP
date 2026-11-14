@@ -15,7 +15,13 @@ public class AdminOrderServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setAttribute("ordersList", dao.getOrdersList());
+        String status = request.getParameter("status");
+        String search = request.getParameter("search");
+
+        request.setAttribute("orderStats", dao.getOrderStats());
+        request.setAttribute("ordersList", dao.getOrdersList(status, search));
+        request.setAttribute("selectedStatus", status != null && !status.trim().isEmpty() ? status.trim() : "ALL");
+        request.setAttribute("searchKeyword", search != null ? search.trim() : "");
         request.getRequestDispatcher("/views/admin/orders.jsp").forward(request, response);
     }
 }

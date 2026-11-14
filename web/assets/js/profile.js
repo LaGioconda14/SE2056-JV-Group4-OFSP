@@ -410,8 +410,6 @@ document.addEventListener('DOMContentLoaded', function() {
             activateTab('#nav-security', 'nav-security-tab');
         } else if (hash === '#orders' || hash === '#nav-orders' || tabParam === 'orders') {
             activateTab('#nav-orders', 'nav-orders-tab');
-        } else if (hash === '#vouchers' || hash === '#nav-vouchers' || tabParam === 'vouchers') {
-            activateTab('#nav-vouchers', 'nav-vouchers-tab');
         } else if (hash === '#notifications' || hash === '#nav-notifications' || tabParam === 'notifications') {
             activateTab('#nav-notifications', 'nav-notifications-tab');
         } else if (hash === '#address' || hash === '#nav-address' || tabParam === 'address') {

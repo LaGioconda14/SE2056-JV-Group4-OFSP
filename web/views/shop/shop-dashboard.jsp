@@ -6,7 +6,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <title>Tổng quan Shop - Kênh Người Bán FreshFruit</title>
+    <title>Tổng quan Shop - Kênh Người Bán Gốc Vườn</title>
     <jsp:include page="/views/shop/layout/head.jsp" />
     <link rel="stylesheet" href="${ctx}/assets/css/shop-dashboard.css"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Ký Shop - FreshFruit</title>
+    <title>Đăng Ký Shop - Gốc Vườn</title>
     <!-- Giống Trang chủ: Tailwind + Font Awesome + Inter + home.css -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,7 +33,7 @@
         <!-- Tiêu đề -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-xs font-bold mb-3">
-                <i class="fa-solid fa-store"></i> Kênh Người Bán FreshFruit
+                <i class="fa-solid fa-store"></i> Kênh Người Bán Gốc Vườn
             </div>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
                 Đăng Ký Trở Thành <span class="text-emerald-600">Shop Owner</span>

@@ -29,7 +29,6 @@
             <div class="tab-content" id="profileTabContent">
                 <%@include file="components/profile/tab-info.jsp"%>
                 <%@include file="components/profile/tab-orders.jsp"%>
-                <%@include file="components/profile/tab-vouchers.jsp"%>
                 <%@include file="components/profile/tab-notifications.jsp"%>
                 <%@include file="components/profile/tab-address.jsp"%>
                 <%@include file="components/profile/tab-security.jsp"%>

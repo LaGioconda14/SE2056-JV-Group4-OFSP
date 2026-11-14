@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const priceDisplay = document.getElementById("priceDisplay");
     if (priceRange && priceDisplay) {
         priceRange.addEventListener("input", (e) => {
-            priceDisplay.textContent = `$${e.target.value}`;
+            priceDisplay.textContent = new Intl.NumberFormat('vi-VN').format(e.target.value) + 'đ';
         });
     }
 });
