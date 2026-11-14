@@ -50,7 +50,7 @@ public class ProductDAO extends DBContext {
             return "https://upload.wikimedia.org/wikipedia/commons/1/1e/B%C6%B0%E1%BB%9Fi.jpg";
         }
         if (lower.contains("cam") || lower.contains("quýt")) {
-            return "https://images.unsplash.com/photo-1557800636-894a64c1696f?w=800&fit=crop";
+            return "https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=800&fit=crop";
         }
         if (lower.contains("mận")) {
             return "https://images.unsplash.com/photo-1596363505729-4190a9506133?w=800&fit=crop";
@@ -61,11 +61,35 @@ public class ProductDAO extends DBContext {
         if (lower.contains("thanh long")) {
             return "https://images.unsplash.com/photo-1527325678964-54921661f888?w=800&fit=crop";
         }
-        if (lower.contains("dưa") || lower.contains("dưa lưới") || lower.contains("dưa hấu")) {
+        if (lower.contains("dưa hấu")) {
+            return "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&fit=crop";
+        }
+        if (lower.contains("dưa") || lower.contains("dưa lưới")) {
             return "https://images.unsplash.com/photo-1571575173700-afb9492e6a50?w=800&fit=crop";
         }
         if (lower.contains("táo") || lower.contains("envy")) {
             return "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&fit=crop";
+        }
+        if (lower.contains("bơ")) {
+            return "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=800&fit=crop";
+        }
+        if (lower.contains("mẫu đơn")) {
+            return "https://images.unsplash.com/photo-1599819177626-b50f9dd21c9b?w=800&fit=crop";
+        }
+        if (lower.contains("nho")) {
+            return "https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=800&fit=crop";
+        }
+        if (lower.contains("kiwi")) {
+            return "https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=800&fit=crop";
+        }
+        if (lower.contains("cherry")) {
+            return "https://images.unsplash.com/photo-1528825871115-3581a5387919?w=800&fit=crop";
+        }
+        if (lower.contains("chuối")) {
+            return "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=800&fit=crop";
+        }
+        if (lower.contains("măng cụt")) {
+            return "https://upload.wikimedia.org/wikipedia/commons/9/93/Mangosteens_-_whole_and_opened.jpg";
         }
         if (lower.contains("giỏ") || lower.contains("quà")) {
             return "https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=800&fit=crop";
