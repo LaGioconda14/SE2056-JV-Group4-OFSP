@@ -1351,22 +1351,13 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                         item.put("stubIcon", isShopVoucher ? "bi-shop" : "bi-flower1");
                         String maxDesc = maxDiscount != null && maxDiscount > 0 ? " (Tối đa " + CURRENCY_FORMAT.format(maxDiscount) + ")" : "";
                         item.put("discountFormatted", String.format("Giảm %.0f%%%s", val, maxDesc));
-                    } else if ("FREESHIP".equalsIgnoreCase(type)) {
-                        item.put("discountType", "freeship");
-                        item.put("stubVal", "SHIP");
-                        item.put("stubTag", "CHUỖI LẠNH");
-                        item.put("stubBg", "#e0f2fe");
-                        item.put("stubColor", "#0369a1");
-                        item.put("stubIcon", "bi-snow2");
-                        String maxDesc = maxDiscount != null && maxDiscount > 0 ? " (Tối đa " + CURRENCY_FORMAT.format(maxDiscount) + ")" : "";
-                        item.put("discountFormatted", "100% Phí Vận Chuyển Chuỗi Lạnh" + maxDesc);
                     } else {
-                        item.put("discountType", cid % 2 == 0 ? "flash" : "welcome");
+                        item.put("discountType", "fixed");
                         item.put("stubVal", String.format("%.0fK", val / 1000));
-                        item.put("stubTag", isShopVoucher ? "GIAN HÀNG" : (cid % 2 == 0 ? "GIỜ VÀNG" : "BẠN MỚI"));
-                        item.put("stubBg", isShopVoucher ? "#f1f5f9" : (cid % 2 == 0 ? "#ffedd5" : "#ede9fe"));
-                        item.put("stubColor", isShopVoucher ? "#334155" : (cid % 2 == 0 ? "#ea580c" : "#7c3aed"));
-                        item.put("stubIcon", isShopVoucher ? "bi-tags-fill" : (cid % 2 == 0 ? "bi-lightning-charge-fill" : "bi-person-check-fill"));
+                        item.put("stubTag", isShopVoucher ? "GIAN HÀNG" : "GIẢM TRỰC TIẾP");
+                        item.put("stubBg", isShopVoucher ? "#f1f5f9" : "#ffedd5");
+                        item.put("stubColor", isShopVoucher ? "#334155" : "#ea580c");
+                        item.put("stubIcon", isShopVoucher ? "bi-tags-fill" : "bi-cash-coin");
                         item.put("discountFormatted", "Giảm trực tiếp " + CURRENCY_FORMAT.format(val));
                     }
 

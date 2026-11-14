@@ -4,8 +4,7 @@ import java.util.Locale;
 
 public enum DiscountType {
     PERCENTAGE,
-    FIXED_AMOUNT,
-    FREESHIP;
+    FIXED_AMOUNT;
 
     public static DiscountType from(String value) {
         if (value == null || value.isBlank()) {

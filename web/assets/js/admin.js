@@ -409,7 +409,7 @@ const i18nDict = {
 
         // Subpage Vouchers
         "vouchers_page_title": "Platform Campaigns & Subsidized Vouchers",
-        "vouchers_page_desc": "Manage site-wide promotional discount codes, free shipping subsidies, and seasonal fruit festivals.",
+        "vouchers_page_desc": "Manage site-wide percentage and fixed-amount discount codes and seasonal fruit festivals.",
         "btn_create_voucher": "Create Platform Voucher",
         "th_voucher_code": "VOUCHER CODE",
         "th_voucher_type": "TYPE",
