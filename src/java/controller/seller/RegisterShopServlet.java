@@ -137,7 +137,6 @@ public class RegisterShopServlet extends HttpServlet {
             shopReq.setIdCardNumber(idCardNumber);
             shopReq.setTaxCode(taxCode);
             shopReq.setProvince(province);
-            shopReq.setDistrict("");
             shopReq.setWard(ward);
             shopReq.setStreetAddress(streetAddress);
             shopReq.setPickupAddress(pickupAddress);

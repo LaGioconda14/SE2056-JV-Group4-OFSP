@@ -126,13 +126,19 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     public List<Map<String, Object>> getShopsList(String statusFilter, String typeFilter, String certFilter, String searchKeyword) {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT sr.request_id, sr.user_id, sr.shop_name, sr.business_type, sr.province, sr.farm_address, ")
+        sql.append("SELECT sr.request_id, sr.user_id, sr.shop_name, sr.business_type, sr.province, ")
+           .append("       sr.street_address, sr.ward, sr.pickup_address, sr.return_address, ")
+           .append("       sr.tax_code, sr.id_card_front_url, sr.id_card_back_url, ")
+           .append("       sr.shop_description, sr.shop_logo_url AS request_shop_logo_url, ")
+           .append("       sr.shop_banner_url AS request_shop_banner_url, sr.bank_name, ")
+           .append("       sr.bank_account_number, sr.bank_account_holder, sr.farm_address, ")
            .append("       sr.id_card_number, sr.reason, sr.produce_specialty, sr.certification_name, ")
            .append("       sr.created_at, sr.reviewed_at, ")
            .append("       ").append(EFF_STATUS).append(" AS eff_status, ")
            .append("       u.full_name AS owner_name, u.email AS owner_email, u.phone AS owner_phone, u.birth_date AS owner_birth, ")
            .append("       rv.full_name AS reviewer_name, s.commission_rate, s.rating, ")
-           .append("       s.logo_url as shop_logo_url, s.banner_url as shop_banner_url, s.description as shop_description, s.address as shop_address, ")
+           .append("       s.logo_url AS existing_shop_logo_url, s.banner_url AS existing_shop_banner_url, ")
+           .append("       s.description AS existing_shop_description, s.address AS shop_address, ")
            .append("       sus.message AS suspend_message, sus.created_at AS suspended_at ")
            .append("FROM shop_requests sr ")
            .append("JOIN users u ON sr.user_id = u.user_id ")
@@ -195,24 +201,36 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("shopName", rs.getString("shop_name"));
                     item.put("businessType", rs.getString("business_type"));
                     item.put("province", rs.getString("province"));
-                    String farmAddr = rs.getString("farm_address");
-                    String shopAddr = rs.getString("shop_address");
-                    String addr = farmAddr != null ? farmAddr : (shopAddr != null ? shopAddr : "");
-                    item.put("district", "");
-                    item.put("ward", "");
-                    item.put("streetAddress", addr);
-                    item.put("pickupAddress", addr);
-                    item.put("returnAddress", addr);
+                    String streetAddr = rs.getString("street_address");
+                    if (streetAddr == null || streetAddr.trim().isEmpty()) {
+                        streetAddr = rs.getString("farm_address");
+                    }
+                    if (streetAddr == null || streetAddr.trim().isEmpty()) {
+                        streetAddr = rs.getString("shop_address");
+                    }
+                    item.put("streetAddress", streetAddr);
+                    item.put("ward", rs.getString("ward"));
+                    item.put("pickupAddress", rs.getString("pickup_address"));
+                    item.put("returnAddress", rs.getString("return_address"));
                     item.put("idCardNumber", rs.getString("id_card_number"));
-                    item.put("taxCode", "");
-                    item.put("idCardFrontUrl", "");
-                    item.put("idCardBackUrl", "");
-                    item.put("shopDescription", rs.getString("shop_description") != null ? rs.getString("shop_description") : rs.getString("produce_specialty"));
-                    item.put("shopLogoUrl", rs.getString("shop_logo_url"));
-                    item.put("shopBannerUrl", rs.getString("shop_banner_url"));
-                    item.put("bankName", "");
-                    item.put("bankAccountNumber", "");
-                    item.put("bankAccountHolder", "");
+                    item.put("taxCode", rs.getString("tax_code"));
+                    item.put("idCardFrontUrl", rs.getString("id_card_front_url"));
+                    item.put("idCardBackUrl", rs.getString("id_card_back_url"));
+                    String description = rs.getString("shop_description");
+                    if (description == null || description.trim().isEmpty()) {
+                        description = rs.getString("existing_shop_description");
+                    }
+                    if (description == null || description.trim().isEmpty()) {
+                        description = rs.getString("produce_specialty");
+                    }
+                    item.put("shopDescription", description);
+                    String logoUrl = rs.getString("request_shop_logo_url");
+                    item.put("shopLogoUrl", logoUrl != null ? logoUrl : rs.getString("existing_shop_logo_url"));
+                    String bannerUrl = rs.getString("request_shop_banner_url");
+                    item.put("shopBannerUrl", bannerUrl != null ? bannerUrl : rs.getString("existing_shop_banner_url"));
+                    item.put("bankName", rs.getString("bank_name"));
+                    item.put("bankAccountNumber", rs.getString("bank_account_number"));
+                    item.put("bankAccountHolder", rs.getString("bank_account_holder"));
                     item.put("ownerName", rs.getString("owner_name"));
                     item.put("ownerEmail", rs.getString("owner_email"));
                     item.put("ownerPhone", rs.getString("owner_phone"));
@@ -2749,9 +2767,10 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     String sqlInsertShop = "INSERT INTO [dbo].[shops] "
             + "(owner_id, shop_name, slug, description, business_type, logo_url, banner_url, phone, address, province, "
             + " certification_name, commission_rate, rating, total_sales_amount, total_orders_count, status, created_at, updated_at) "
-            + "SELECT sr.user_id, sr.shop_name, 'shop-' + CAST(sr.request_id AS VARCHAR(20)), COALESCE(sr.produce_specialty, 'Gian hàng nông sản'), "
-            + "       sr.business_type, NULL, NULL, u.phone, "
-            + "       sr.farm_address, sr.province, "
+            + "SELECT sr.user_id, sr.shop_name, 'shop-' + CAST(sr.request_id AS VARCHAR(20)), "
+            + "       COALESCE(NULLIF(sr.shop_description, ''), NULLIF(sr.produce_specialty, ''), 'Gian hàng nông sản'), "
+            + "       sr.business_type, sr.shop_logo_url, sr.shop_banner_url, u.phone, "
+            + "       COALESCE(NULLIF(sr.street_address, ''), NULLIF(sr.pickup_address, ''), sr.farm_address), sr.province, "
             + "       sr.certification_name, 8.0, 5.0, 0, 0, 'ACTIVE', GETDATE(), GETDATE() "
             + "FROM [dbo].[shop_requests] sr "
             + "JOIN [dbo].[users] u ON u.user_id = sr.user_id "
