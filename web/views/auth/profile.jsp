@@ -8,12 +8,15 @@
     <title>Hồ Sơ Cá Nhân & Cài Đặt Tài Khoản - Gốc Vườn</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=<%= System.currentTimeMillis() %>">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=2">
 </head>
 <body>
 
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com" defer></script>
 
 <jsp:include page="/views/common/header.jsp" />
 
@@ -29,6 +32,7 @@
             <div class="tab-content" id="profileTabContent">
                 <%@include file="components/profile/tab-info.jsp"%>
                 <%@include file="components/profile/tab-orders.jsp"%>
+                <%@include file="components/profile/tab-vouchers.jsp"%>
                 <%@include file="components/profile/tab-notifications.jsp"%>
                 <%@include file="components/profile/tab-address.jsp"%>
                 <%@include file="components/profile/tab-security.jsp"%>

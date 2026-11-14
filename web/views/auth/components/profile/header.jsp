@@ -64,7 +64,7 @@
                     <c:if test="${sessionScope.user.role == 'ADMIN' or sessionScope.user.role == 'STAFF'}">
                         <li>
                             <a class="dropdown-item small text-warning-emphasis fw-bold bg-warning-subtle py-2" href="${pageContext.request.contextPath}/shipper/deliveries">
-                                <i class="bi bi-truck me-2 text-warning"></i>Cổng Giao Vận (Demo Driver 9)
+                                <i class="bi bi-truck me-2 text-warning"></i>Cổng Giao Vận (Tài Xế)
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>

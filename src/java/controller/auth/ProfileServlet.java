@@ -37,6 +37,7 @@ public class ProfileServlet extends HttpServlet {
     private final ICustomerAddressService addressService = new CustomerAddressServiceImpl();
     private final IOrderService orderService = new OrderServiceImpl();
     private final INotificationService notificationService = new NotificationServiceImpl();
+    private final dao.CouponDAO couponDAO = new dao.CouponDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -103,6 +104,13 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("unreadNotificationsCount", 0);
         }
 
+        try {
+            List<model.entity.promotion.Coupon> vouchers = couponDAO.findAvailableForAmount(java.math.BigDecimal.ZERO);
+            request.setAttribute("vouchers", vouchers != null ? vouchers : Collections.emptyList());
+        } catch (Exception ex) {
+            request.setAttribute("vouchers", Collections.emptyList());
+        }
+
         if (session != null) {
             String successMsg = (String) session.getAttribute("successMessage");
             if (successMsg != null) {
@@ -160,6 +168,9 @@ public class ProfileServlet extends HttpServlet {
                 break;
             case "cancelOrder":
                 handleCancelOrder(request, response, session, sessionUser);
+                break;
+            case "confirmReceived":
+                handleConfirmReceivedOrder(request, response, session, sessionUser);
                 break;
             case "updateProfile":
             default:
@@ -444,6 +455,27 @@ public class ProfileServlet extends HttpServlet {
                 setSessionFlash(session, "successMessage", "Đã hủy đơn hàng #" + orderId.trim() + " thành công!");
             } else {
                 setSessionFlash(session, "errorMessage", "Không thể hủy đơn hàng. Vui lòng thử lại!");
+            }
+        } catch (Exception ex) {
+            setSessionFlash(session, "errorMessage", ex.getMessage());
+        }
+
+        response.sendRedirect(request.getContextPath() + "/profile#orders");
+    }
+
+    private void handleConfirmReceivedOrder(HttpServletRequest request, HttpServletResponse response,
+            HttpSession session, User sessionUser) throws IOException {
+        String orderId = request.getParameter("orderId");
+        try {
+            if (orderId == null || orderId.trim().isEmpty()) {
+                throw new IllegalArgumentException("Mã đơn hàng không hợp lệ!");
+            }
+
+            boolean ok = orderService.confirmReceivedByCustomer(sessionUser.getId(), orderId.trim());
+            if (ok) {
+                setSessionFlash(session, "successMessage", "Xác nhận đã nhận đơn hàng #" + orderId.trim() + " thành công!");
+            } else {
+                setSessionFlash(session, "errorMessage", "Không thể cập nhật đơn hàng. Vui lòng thử lại!");
             }
         } catch (Exception ex) {
             setSessionFlash(session, "errorMessage", ex.getMessage());

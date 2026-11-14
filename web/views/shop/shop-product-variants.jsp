@@ -138,9 +138,12 @@
                                                         <a href="${pageContext.request.contextPath}/shop/product/variant/edit?variantId=${variant.variantId}" class="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:text-emerald-700 hover:border-emerald-500 bg-white shadow-2xs transition" title="Sửa biến thể">
                                                             <i class="fa-solid fa-pen text-xs"></i>
                                                         </a>
-                                                        <a href="${pageContext.request.contextPath}/shop/product/variant/delete?variantId=${variant.variantId}" onclick="return confirm('Bạn có chắc muốn xóa biến thể này?');" class="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:text-rose-600 hover:border-rose-400 bg-white shadow-2xs transition" title="Xóa biến thể">
-                                                            <i class="fa-regular fa-trash-can text-xs"></i>
-                                                        </a>
+                                                        <form method="POST" action="${pageContext.request.contextPath}/shop/product/variant/delete" class="inline-block m-0" onsubmit="return confirm('Bạn có chắc muốn xóa / ẩn biến thể này?');">
+                                                            <input type="hidden" name="variantId" value="${variant.variantId}">
+                                                            <button type="submit" class="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:text-rose-600 hover:border-rose-400 bg-white shadow-2xs transition cursor-pointer" title="Xóa biến thể">
+                                                                <i class="fa-regular fa-trash-can text-xs"></i>
+                                                            </button>
+                                                        </form>
                                                     </div>
                                                 </td>
                                             </tr>

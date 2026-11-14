@@ -13,11 +13,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <!-- FontAwesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (Non-blocking) -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
     <script>
         tailwind.config = {
             theme: {
@@ -294,7 +295,7 @@
                     <div class="flex items-center gap-3 sm:gap-4 self-end sm:self-center">
                         <div class="flex items-center gap-2 text-xs">
                             <span class="text-slate-600 font-medium">Sắp xếp theo:</span>
-                            <select onchange="location.href='${pageContext.request.contextPath}/products?sortBy=' + this.value + '&keyword=${paramKeyword}&minPrice=${paramMinPrice}&maxPrice=${paramMaxPrice}&rating=${paramRating}&availability=${paramAvailability}';" 
+                            <select onchange="changeCatalogSort(this.value);" 
                                     class="bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 transition cursor-pointer">
                                 <option value="featured" ${paramSortBy eq 'featured' ? 'selected' : ''}>Nổi Bật Nhất</option>
                                 <option value="price_asc" ${paramSortBy eq 'price_asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>

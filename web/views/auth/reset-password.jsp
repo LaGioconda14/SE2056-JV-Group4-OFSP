@@ -27,27 +27,27 @@
             </div>
             
             <p class="hero-desc">
-                Fresh organic produce delivered right from local family orchards straight to your table.
+                Nông sản hữu cơ tươi sạch thu hoạch từ các nhà vườn chuẩn VietGAP &amp; GlobalGAP, giao thẳng đến gian bếp gia đình bạn.
             </p>
 
             <div class="pill-badge">
                 <i class="bi bi-shield-check text-warning"></i>
-                <span>Password Recovery Portal</span>
+                <span>Cổng Khôi Phục Mật Khẩu</span>
             </div>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-box">
                 <i class="bi bi-shield-check"></i>
-                <div class="metric-label">100% Certified Organic</div>
+                <div class="metric-label">100% Nông sản chuẩn sạch</div>
             </div>
             <div class="metric-box">
                 <i class="bi bi-truck"></i>
-                <div class="metric-label">Same-Day Dispatch</div>
+                <div class="metric-label">Chuỗi lạnh Fresh-Lock</div>
             </div>
             <div class="metric-box">
                 <i class="bi bi-heart-fill"></i>
-                <div class="metric-label">15,000+ Happy Homes</div>
+                <div class="metric-label">15.000+ Gia đình tin chọn</div>
             </div>
         </div>
     </div>
@@ -57,18 +57,18 @@
             <div class="top-status-bar">
                 <div class="secure-pill">
                     <span class="secure-dot"></span>
-                    <span>Reset Password</span>
+                    <span>Cổng bảo mật SSL</span>
                 </div>
-                <a href="${pageContext.request.contextPath}/help" class="help-link">
-                    <span>Help Center</span>
-                    <i class="bi bi-box-arrow-up-right small"></i>
+                <a href="${pageContext.request.contextPath}/home" class="help-link">
+                    <span>Trang chủ</span>
+                    <i class="bi bi-house small"></i>
                 </a>
             </div>
 
             <div class="auth-nav-tabs">
-                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Sign In</a>
-                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Create Account</a>
-                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn active">Reset Password</a>
+                <a href="${pageContext.request.contextPath}/login" class="auth-tab-btn">Đăng nhập</a>
+                <a href="${pageContext.request.contextPath}/register" class="auth-tab-btn">Đăng ký</a>
+                <a href="${pageContext.request.contextPath}/forgot-password" class="auth-tab-btn active">Đặt lại mật khẩu</a>
             </div>
 
             <h1 class="form-title">Đặt lại mật khẩu</h1>

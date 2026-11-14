@@ -647,4 +647,9 @@ public class OrderServiceImpl implements IOrderService {
     public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
         return orderDAO.cancelOrderByCustomer(customerId, orderIdentifier, cancelReason);
     }
+
+    @Override
+    public boolean confirmReceivedByCustomer(long customerId, String orderIdentifier) throws Exception {
+        return orderDAO.confirmReceivedByCustomer(customerId, orderIdentifier);
+    }
 }

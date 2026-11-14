@@ -124,25 +124,10 @@ public class DetailServlet extends HttpServlet {
                     }
                     request.setAttribute("shopJoinedTime", shopJoinedTime);
 
-                    // Lấy danh sách sản phẩm liên quan
+                    // Lấy danh sách sản phẩm liên quan (tối ưu truy vấn SQL TOP 4 theo categoryId)
                     try {
-                        List<ProductCardDTO> relatedProducts = null;
-                        if (product.getCategorySlug() != null && !product.getCategorySlug().trim().isEmpty()) {
-                            relatedProducts = productDAO.getProductsByCategorySlug(product.getCategorySlug());
-                        }
-                        if (relatedProducts == null || relatedProducts.isEmpty()) {
-                            relatedProducts = productDAO.getAllProducts();
-                        }
-                        if (relatedProducts != null) {
-                            List<ProductCardDTO> filteredRelated = new ArrayList<>();
-                            for (ProductCardDTO rp : relatedProducts) {
-                                if (rp.getId() != product.getId()) {
-                                    filteredRelated.add(rp);
-                                }
-                                if (filteredRelated.size() >= 4) break;
-                            }
-                            request.setAttribute("relatedProducts", filteredRelated);
-                        }
+                        List<ProductCardDTO> relatedProducts = productDAO.getRelatedProducts(product.getCategoryId(), product.getId(), 4);
+                        request.setAttribute("relatedProducts", relatedProducts);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

@@ -1,5 +1,6 @@
 <%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 
 <div class="tab-pane fade" id="nav-vouchers" role="tabpanel">
     <div class="profile-section-card">
@@ -19,7 +20,14 @@
                     <c:forEach items="${vouchers}" var="voucher">
                         <div class="col-md-6">
                             <div class="voucher-ticket">
-                                <span class="badge bg-success mb-2">${voucher.discountPercent}% OFF</span>
+                                <c:choose>
+                                    <c:when test="${voucher.discountType eq 'PERCENTAGE'}">
+                                        <span class="badge bg-success mb-2"><fmt:formatNumber value="${voucher.discountValue}" maxFractionDigits="0"/>% OFF</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="badge bg-success mb-2">GIẢM <fmt:formatNumber value="${voucher.discountValue}" pattern="#,###"/>₫</span>
+                                    </c:otherwise>
+                                </c:choose>
                                 <h5 class="fw-bold text-dark mb-1">Mã: ${voucher.code}</h5>
                                 <p class="text-muted small mb-0">${voucher.description}</p>
                             </div>

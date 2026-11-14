@@ -38,14 +38,14 @@
                     <p class="users-header-desc">Điều phối và giám sát luồng đơn hàng đa nhà vườn, đối tác vận chuyển hỏa tốc/chuỗi lạnh và tỷ lệ hoàn tất giao nhận.</p>
                 </div>
                 <div class="users-header-actions">
-                    <button type="button" class="btn-export-list" onclick="alert('Đang xuất báo cáo vận chuyển & SLA chuỗi lạnh (.Excel)...');">
-                        <i class="bi bi-download"></i>
-                        <span>Xuất báo cáo vận chuyển</span>
+                    <button type="button" class="btn-export-list" onclick="window.print()">
+                        <i class="bi bi-printer"></i>
+                        <span>In danh sách đơn</span>
                     </button>
-                    <button type="button" class="btn-add-admin" onclick="alert('Đang mở trang cài đặt kết nối đối tác giao vận & API...');">
-                        <i class="bi bi-truck"></i>
-                        <span>Cấu hình đối tác ship</span>
-                    </button>
+                    <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn-add-admin text-decoration-none">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Xem tổng quan tài chính</span>
+                    </a>
                 </div>
             </div>
 
@@ -265,65 +265,63 @@
 
             <!-- 6. Bottom Split Section -->
             <div class="bottom-split-grid">
-                <!-- Left (2/3): SLA Chuỗi Lạnh & Giao Vận Nông Sản -->
+                <!-- Left (2/3): Tình Trạng Điều Phối Vận Hành Thực Tế -->
                 <div class="sop-process-card">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
                                 <div class="kpi-icon-box bg-green-subtle">
-                                    <i class="bi bi-file-earmark-ruled-fill text-success"></i>
+                                    <i class="bi bi-truck text-success"></i>
                                 </div>
                                 <div>
-                                    <h3 class="role-matrix-title mb-0">Chỉ Số SLA Chuỗi Lạnh & Giao Vận Nông Sản</h3>
-                                    <div class="text-muted" style="font-size: 0.7rem;">Dữ liệu tổng hợp theo chu kỳ 24h trên toàn bộ 63 tỉnh thành</div>
+                                    <h3 class="role-matrix-title mb-0">Tình Trạng Điều Phối Đơn Hàng Sàn</h3>
+                                    <div class="text-muted" style="font-size: 0.7rem;">Cập nhật theo dữ liệu đơn hàng và vận chuyển thời gian thực từ cơ sở dữ liệu</div>
                                 </div>
                             </div>
-                            <span class="status-pill-green" style="font-size: 0.65rem;">● Thời gian thực</span>
+                            <span class="status-pill-green" style="font-size: 0.65rem;">● Dữ liệu thực tế</span>
                         </div>
 
-                        <!-- 3 SLA Metric Boxes -->
+                        <!-- 3 Real Metric Boxes -->
                         <div class="sop-steps-grid">
-                            <!-- Box 1 -->
+                            <!-- Box 1: Đang chuẩn bị -->
                             <div class="sop-step-box">
                                 <div>
-                                    <span class="user-summary-title">Lấy hàng đúng hẹn từ vườn</span>
+                                    <span class="user-summary-title">Đơn đang đóng gói / xử lý</span>
                                     <div class="d-flex align-items-baseline gap-2 mt-1">
-                                        <strong class="fs-4 text-dark">94.2%</strong>
-                                        <span class="text-success fw-bold" style="font-size: 0.72rem;"><i class="bi bi-arrow-up-short"></i>1.5%</span>
+                                        <strong class="fs-4 text-warning"><c:out value="${not empty orderStats.processingOrders ? orderStats.processingOrders : 0}"/></strong>
+                                        <span class="text-muted" style="font-size: 0.72rem;">đơn</span>
                                     </div>
                                 </div>
                                 <div class="mt-2 pt-2 border-top text-muted" style="font-size: 0.68rem; border-color: #e2e8f0 !important;">
-                                    Mục tiêu quốc gia > 92.0%
+                                    <a href="${pageContext.request.contextPath}/admin/orders?status=PROCESSING" class="text-decoration-none text-success fw-bold">Xem danh sách xử lý &rarr;</a>
                                 </div>
                             </div>
 
-                            <!-- Box 2 -->
+                            <!-- Box 2: Đang giao -->
                             <div class="sop-step-box">
                                 <div>
-                                    <span class="user-summary-title">Đạt chuẩn giữ nhiệt/đá gel</span>
+                                    <span class="user-summary-title">Đơn đang trên đường giao</span>
                                     <div class="d-flex align-items-baseline gap-2 mt-1">
-                                        <strong class="fs-4 text-dark">98.6%</strong>
-                                        <span class="text-success fw-bold" style="font-size: 0.72rem;"><i class="bi bi-arrow-up-short"></i>0.8%</span>
+                                        <strong class="fs-4 text-primary"><c:out value="${not empty orderStats.shippingOrders ? orderStats.shippingOrders : 0}"/></strong>
+                                        <span class="text-muted" style="font-size: 0.72rem;">đơn</span>
                                     </div>
                                 </div>
                                 <div class="mt-2 pt-2 border-top text-muted" style="font-size: 0.68rem; border-color: #e2e8f0 !important;">
-                                    Kiểm tra tự động bằng AI camera
+                                    <a href="${pageContext.request.contextPath}/admin/orders?status=SHIPPING" class="text-decoration-none text-primary fw-bold">Xem đơn đang giao &rarr;</a>
                                 </div>
                             </div>
 
-                            <!-- Box 3 -->
+                            <!-- Box 3: Giao thành công -->
                             <div class="sop-step-box">
                                 <div>
-                                    <span class="user-summary-title">Thời gian giao nội thành</span>
+                                    <span class="user-summary-title">Đã giao thành công</span>
                                     <div class="d-flex align-items-baseline gap-2 mt-1">
-                                        <strong class="fs-4 text-dark">42</strong> <span class="fs-6 fw-normal text-muted">phút</span>
-                                    </div>
-                                    <div class="progress mt-2" style="height: 4px; background: #e2e8f0;">
-                                        <div class="progress-bar" style="width: 70%; background: #3b82f6;"></div>
+                                        <strong class="fs-4 text-success"><c:out value="${not empty orderStats.completedOrders ? orderStats.completedOrders : 0}"/></strong>
+                                        <span class="text-muted" style="font-size: 0.72rem;">đơn</span>
                                     </div>
                                 </div>
                                 <div class="mt-2 pt-2 border-top text-muted" style="font-size: 0.68rem; border-color: #e2e8f0 !important;">
-                                    Nhanh hơn 12 phút so với tháng trước
+                                    <a href="${pageContext.request.contextPath}/admin/orders?status=COMPLETED" class="text-decoration-none text-success fw-bold">Xem đơn hoàn tất &rarr;</a>
                                 </div>
                             </div>
                         </div>
@@ -334,82 +332,58 @@
                         <div class="d-flex align-items-center gap-2">
                             <i class="bi bi-shield-check text-success fs-5"></i>
                             <div>
-                                <strong class="text-dark" style="font-size: 0.78rem;">Chính Sách Cam Kết Độ Tươi & Bồi Thường Nông Sản</strong>
-                                <div class="text-muted" style="font-size: 0.7rem;">Sàn Gốc Vườn tự động hoàn tiền 100% nếu trái cây dập hỏng do chậm giao > 90 phút.</div>
+                                <strong class="text-dark" style="font-size: 0.78rem;">Chính Sách Vận Hành Chuỗi Lạnh Sàn Gốc Vườn</strong>
+                                <div class="text-muted" style="font-size: 0.7rem;">Giám sát thời gian thực từ khâu thu hái, đóng gói đá gel tới bưu tá giao tận tay khách hàng.</div>
                             </div>
                         </div>
-                        <a href="javascript:void(0)" onclick="alert('Đang mở quy chế bảo quản chuỗi lạnh SLA...');" class="btn btn-sm btn-light border fw-bold text-dark px-3" style="font-size: 0.72rem; border-radius: 8px;">
-                            Xem quy chế SLA
+                        <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn btn-sm btn-light border fw-bold text-dark px-3" style="font-size: 0.72rem; border-radius: 8px;">
+                            Xem Báo Cáo
                         </a>
                     </div>
                 </div>
 
-                <!-- Right (1/3): Cảnh Báo Nóng Trái Cây Tươi -->
+                <!-- Right (1/3): Thống Kê Nhanh Vận Hành -->
                 <div class="quick-preview-card">
                     <div>
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-bell-fill text-danger fs-5"></i>
+                                <i class="bi bi-bar-chart-line-fill text-success fs-5"></i>
                                 <div>
-                                    <strong class="text-dark" style="font-size: 0.82rem;">Cảnh Báo Nóng Trái Cây Tươi</strong>
-                                    <div class="text-muted" style="font-size: 0.68rem;">Đơn hàng cần đẩy gấp trước 12:00 trưa</div>
+                                    <strong class="text-dark" style="font-size: 0.82rem;">Chỉ Số Khối Lượng Đơn</strong>
+                                    <div class="text-muted" style="font-size: 0.68rem;">Tổng quan tỷ lệ hoàn tất giao nhận</div>
                                 </div>
                             </div>
-                            <span class="badge" style="background: #fee2e2; color: #dc2626; font-size: 0.65rem;">3 đơn cấp bách</span>
+                            <span class="badge bg-light text-dark border" style="font-size: 0.65rem;">Toàn sàn</span>
                         </div>
 
-                        <!-- 3 Alerts -->
                         <div class="d-flex flex-column gap-2 mb-3">
-                            <!-- Alert 1 -->
-                            <div class="alert-item-card">
-                                <div>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <strong class="text-dark" style="font-size: 0.76rem;">ORD-98228</strong>
-                                        <span class="text-danger fw-bold" style="font-size: 0.68rem;">Chậm > 45 phút</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size: 0.68rem;">Giỏ quà biếu ngoại nhập • Shipper kẹt xe Ba Đình</div>
+                            <div class="p-2.5 rounded-3 border bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted" style="font-size: 0.72rem;">Tổng giá trị giao dịch (GMV)</span>
+                                    <strong class="text-success" style="font-size: 0.85rem;"><c:out value="${not empty orderStats.totalGmvFormatted ? orderStats.totalGmvFormatted : '0 ₫'}"/></strong>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-success fw-bold px-2 py-1" style="background: #15803d; border-color: #15803d; font-size: 0.68rem; border-radius: 6px; white-space: nowrap;" onclick="alert('Đã chuyển đơn sang tài xế dự phòng!');">
-                                    Tái điều phối
-                                </button>
                             </div>
-
-                            <!-- Alert 2 -->
-                            <div class="alert-item-card">
-                                <div>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <strong class="text-dark" style="font-size: 0.76rem;">ORD-98215</strong>
-                                        <span class="text-danger fw-bold" style="font-size: 0.68rem;">Nhiệt độ cảnh báo 28°C</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size: 0.68rem;">Dâu tây Mộc Châu • Yêu cầu shipper bổ sung đá gel</div>
+                            <div class="p-2.5 rounded-3 border bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted" style="font-size: 0.72rem;">Kiện hàng con các shop</span>
+                                    <strong class="text-dark" style="font-size: 0.82rem;"><c:out value="${not empty orderStats.totalSubOrders ? orderStats.totalSubOrders : 0}"/> kiện</strong>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-light border fw-bold px-2 py-1 text-primary" style="font-size: 0.68rem; border-radius: 6px; white-space: nowrap;" onclick="alert('Đang kết nối cuộc gọi tới Shipper...');">
-                                    Gọi Shipper
-                                </button>
                             </div>
-
-                            <!-- Alert 3 -->
-                            <div class="alert-item-card">
-                                <div>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <strong class="text-dark" style="font-size: 0.76rem;">ORD-98204</strong>
-                                        <span class="text-muted fw-bold" style="font-size: 0.68rem;">Sai định vị nhà vườn</span>
-                                    </div>
-                                    <div class="text-muted" style="font-size: 0.68rem;">Vườn Bơ Sáp DakLak • Tài xế không tìm thấy điểm lấy</div>
+                            <div class="p-2.5 rounded-3 border bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted" style="font-size: 0.72rem;">Đơn đã hủy</span>
+                                    <strong class="text-danger" style="font-size: 0.82rem;"><c:out value="${not empty orderStats.cancelledOrders ? orderStats.cancelledOrders : 0}"/> đơn</strong>
                                 </div>
-                                <button type="button" class="btn btn-sm btn-light border fw-bold px-2 py-1 text-primary" style="font-size: 0.68rem; border-radius: 6px; white-space: nowrap;" onclick="alert('Đã gửi SMS tọa độ Google Maps cho tài xế!');">
-                                    Gửi tọa độ
-                                </button>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex align-items-center justify-content-between pt-2 border-top" style="border-color: #f1f5f9 !important; font-size: 0.72rem;">
                         <span class="text-muted">
-                            <i class="bi bi-headset text-success"></i> Bộ phận trực giao nhận sàn: <strong>1900 8892</strong>
+                            <i class="bi bi-info-circle text-success me-1"></i> Trạng thái đồng bộ tự động
                         </span>
-                        <a href="javascript:void(0)" onclick="alert('Đang mở nhật ký can thiệp giao nhận...');" class="text-muted text-decoration-none">
-                            Lịch sử can thiệp
+                        <a href="${pageContext.request.contextPath}/admin/orders" class="text-success text-decoration-none fw-semibold">
+                            Làm mới dữ liệu &rarr;
                         </a>
                     </div>
                 </div>

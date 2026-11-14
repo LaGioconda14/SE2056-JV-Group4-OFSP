@@ -71,10 +71,18 @@ public class HomeServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         
         try {
-            // Gọi Service lấy dữ liệu an toàn
+            // Lấy danh sách sản phẩm hiển thị trên trang chủ
             request.setAttribute("listProduct", productService.getHomeProducts());
-            request.setAttribute("categories", productService.getAllCategories());
-            request.setAttribute("hierarchyCategories", productService.getHierarchyCategories());
+            
+            // Tận dụng dữ liệu categories đã nạp sẵn từ CartBadgeFilter / ServletContext, tránh query lặp
+            if (request.getAttribute("categories") == null) {
+                Object appCategories = getServletContext().getAttribute("appCategories");
+                request.setAttribute("categories", appCategories != null ? appCategories : productService.getAllCategories());
+            }
+            if (request.getAttribute("hierarchyCategories") == null) {
+                Object appHierarchy = getServletContext().getAttribute("appHierarchyCategories");
+                request.setAttribute("hierarchyCategories", appHierarchy != null ? appHierarchy : productService.getHierarchyCategories());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

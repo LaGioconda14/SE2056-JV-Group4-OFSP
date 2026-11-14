@@ -47,6 +47,16 @@ public class CartBadgeFilter implements Filter {
             return;
         }
 
+        // Bỏ qua các trang quản trị, gian hàng, shipper, api và xác thực (không cần nạp catalog badge)
+        if (path != null && (path.startsWith("/admin") || path.startsWith("/shop")
+                || path.startsWith("/shipper") || path.startsWith("/api")
+                || path.equals("/login") || path.equals("/register")
+                || path.equals("/forgot-password") || path.equals("/reset-password")
+                || path.equals("/change-password"))) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         // 1. Tự động nạp categories vào request
         if (httpRequest.getAttribute("categories") == null) {
             Object cachedCategories = httpRequest.getServletContext().getAttribute("appCategories");
@@ -79,33 +89,47 @@ public class CartBadgeFilter implements Filter {
             }
         }
 
-        // 3. Nạp cartSize và wishlistCount cho người dùng đăng nhập
+        // 3. Nạp cartSize và wishlistCount cho người dùng đăng nhập (ưu tiên đọc từ Session cache)
         HttpSession session = httpRequest.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
         if (user != null && user.isActive()) {
-            try {
-                int cartSize = cartService.getCartItemCount((long) user.getId());
-                session.setAttribute("cartSize", cartSize);
-                httpRequest.setAttribute("cartSize", cartSize);
-            } catch (RuntimeException ex) {
-                LOGGER.log(Level.WARNING, "Cannot load cart badge in CartBadgeFilter", ex);
-                if (session.getAttribute("cartSize") == null) {
-                    session.setAttribute("cartSize", 0);
+            Object cachedCartSize = (session != null) ? session.getAttribute("cartSize") : null;
+            if (cachedCartSize == null) {
+                try {
+                    int cartSize = cartService.getCartItemCount((long) user.getId());
+                    session.setAttribute("cartSize", cartSize);
+                    httpRequest.setAttribute("cartSize", cartSize);
+                } catch (RuntimeException ex) {
+                    LOGGER.log(Level.WARNING, "Cannot load cart badge in CartBadgeFilter", ex);
+                    if (session != null) {
+                        session.setAttribute("cartSize", 0);
+                    }
+                    httpRequest.setAttribute("cartSize", 0);
                 }
-                httpRequest.setAttribute("cartSize", 0);
+            } else {
+                httpRequest.setAttribute("cartSize", cachedCartSize);
             }
 
-            try {
-                int wlCount = wishlistService.count((long) user.getId());
-                session.setAttribute("wishlistCount", wlCount);
-                httpRequest.setAttribute("wishlistCount", wlCount);
-            } catch (Exception ex) {
-                httpRequest.setAttribute("wishlistCount", 0);
+            Object cachedWishlistCount = (session != null) ? session.getAttribute("wishlistCount") : null;
+            if (cachedWishlistCount == null) {
+                try {
+                    int wlCount = wishlistService.count((long) user.getId());
+                    session.setAttribute("wishlistCount", wlCount);
+                    httpRequest.setAttribute("wishlistCount", wlCount);
+                } catch (Exception ex) {
+                    if (session != null) {
+                        session.setAttribute("wishlistCount", 0);
+                    }
+                    httpRequest.setAttribute("wishlistCount", 0);
+                }
+            } else {
+                httpRequest.setAttribute("wishlistCount", cachedWishlistCount);
             }
         } else {
             if (session != null) {
                 session.removeAttribute("cartSize");
+                session.removeAttribute("wishlistCount");
             }
             httpRequest.setAttribute("cartSize", 0);
             httpRequest.setAttribute("wishlistCount", 0);

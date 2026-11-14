@@ -35,10 +35,10 @@
                     <p class="users-header-desc">Xét duyệt hồ sơ đối tác mở gian hàng, thẩm định chứng chỉ VietGAP/GlobalGAP và giám sát uy tín nhà vườn.</p>
                 </div>
                 <div class="users-header-actions">
-                    <button type="button" class="btn-export-list" onclick="alert('Đang tạo liên kết mời đối tác nhà vườn tham gia...');">
-                        <i class="bi bi-link-45deg"></i>
-                        <span>Mời Nhà vườn tham gia sàn</span>
-                    </button>
+                    <a href="${pageContext.request.contextPath}/register-shop" target="_blank" class="btn-export-list text-decoration-none">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Cổng đăng ký mở shop</span>
+                    </a>
                     <button type="button" class="btn-add-admin" ${shopStats.pendingKyc == 0 ? 'disabled style="opacity:.55;cursor:not-allowed;"' : ''}
                             onclick="approveAllPending(${shopStats.pendingKyc})">
                         <i class="bi bi-check2-all"></i>
@@ -217,8 +217,8 @@
                         <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Làm mới" onclick="location.reload();">
                             <i class="bi bi-arrow-clockwise"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Tải xuống danh sách" onclick="alert('Đang tải danh sách hồ sơ (.CSV)...');">
-                            <i class="bi bi-download"></i>
+                        <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="In danh sách" onclick="window.print();">
+                            <i class="bi bi-printer"></i>
                         </button>
                     </div>
                 </div>
@@ -391,8 +391,8 @@
                         <span class="text-muted" style="font-size: 0.72rem;">
                             <i class="bi bi-headset text-success"></i> Đội ngũ Thẩm định Nông sản: Trực tuyến 08:00 - 22:00 hàng ngày
                         </span>
-                        <a href="javascript:void(0)" onclick="alert('Đang mở sổ tay thẩm định VietGAP/GlobalGAP...');" class="text-success fw-bold text-decoration-none" style="font-size: 0.74rem;">
-                            Xem sổ tay hướng dẫn thẩm định VietGAP →
+                        <a href="${pageContext.request.contextPath}/admin/product-moderation" class="text-success fw-bold text-decoration-none" style="font-size: 0.74rem;">
+                            Xem quy chuẩn kiểm duyệt nông sản →
                         </a>
                     </div>
                 </div>

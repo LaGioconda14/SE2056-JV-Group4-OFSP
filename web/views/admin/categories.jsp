@@ -56,9 +56,9 @@
                     <p class="users-header-desc">Admin nắm toàn quyền CRUD danh mục cấp sàn. Shop chỉ được chọn danh mục có sẵn để đăng sản phẩm, không được tự tạo danh mục sàn.</p>
                 </div>
                 <div class="users-header-actions">
-                    <button type="button" class="btn-export-list" onclick="alert('Đang mở chế độ sắp xếp thứ tự danh mục hiển thị...');">
-                        <i class="bi bi-list-task"></i>
-                        <span>Sắp xếp hiển thị ngoài sàn</span>
+                    <button type="button" class="btn-export-list" onclick="window.print()">
+                        <i class="bi bi-printer"></i>
+                        <span>In danh mục</span>
                     </button>
                     <button type="button" class="btn-add-admin" onclick="openAddCategoryModal()">
                         <i class="bi bi-plus-circle-fill"></i>
@@ -139,8 +139,8 @@
                                 <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Làm mới" onclick="location.reload();">
                                     <i class="bi bi-arrow-clockwise"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="Tải xuống dữ liệu" onclick="alert('Đang tải danh sách danh mục (.CSV)...');">
-                                    <i class="bi bi-download"></i>
+                                <button type="button" class="btn btn-sm btn-light border p-1 px-2 text-muted" title="In danh sách" onclick="window.print();">
+                                    <i class="bi bi-printer"></i>
                                 </button>
                             </div>
                         </div>
@@ -199,7 +199,7 @@
                                             <div class="text-muted" style="font-size: 0.65rem;">${c.recommendedStorage}</div>
                                         </td>
                                         <td>
-                                            <div><strong class="text-success" style="font-size: 0.8rem;">7.5% – 8.0%</strong></div>
+                                            <div><strong class="text-success" style="font-size: 0.8rem;"><c:out value="${not empty c.takeRate ? c.takeRate : '8.0%'}"/></strong></div>
                                             <div class="text-muted" style="font-size: 0.65rem;">Tiêu chuẩn sàn</div>
                                         </td>
                                         <td>
@@ -265,9 +265,9 @@
                         </p>
                     </div>
                 </div>
-                <a href="javascript:void(0)" onclick="alert('Đang mở tài liệu hướng dẫn SEO danh mục sàn nông sản...');" class="btn-seo-doc">
-                    <i class="bi bi-journal-text text-success"></i>
-                    <span>Xem tài liệu hướng dẫn SEO danh mục</span>
+                <a href="${pageContext.request.contextPath}/products" target="_blank" class="btn-seo-doc">
+                    <i class="bi bi-box-arrow-up-right text-success"></i>
+                    <span>Xem hiển thị danh mục ngoài sàn</span>
                 </a>
             </div>
         </main>

@@ -1,59 +1,32 @@
 <%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-        <footer id="about" class="bg-gray-950 text-gray-300 pt-16 pb-8 border-t border-gray-800 mt-12">
-            <div id="contact" class="max-w-7xl mx-auto px-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
-                    <div class="lg:col-span-2">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center p-1 shadow">
-                                <svg viewBox="0 0 100 100" class="w-full h-full">
-                                    <circle cx="50" cy="56" r="32" fill="#16a34a"/>
-                                    <path d="M 28 45 Q 36 34 50 34" stroke="#ffffff" stroke-width="6" stroke-linecap="round" fill="none"/>
-                                    <circle cx="68" cy="46" r="5" fill="#ffffff"/>
-                                    <path d="M 52 26 C 58 16 68 14 74 18 C 74 24 64 32 52 26 Z" fill="#f97316"/>
-                                </svg>
-                            </div>
-                            <span class="text-xl font-extrabold text-white">Gốc <span class="text-emerald-500">Vườn</span></span>
-                        </div>
-                        <p class="text-xs sm:text-sm text-gray-400 mb-6 leading-relaxed max-w-sm">
-                            Hệ thống sàn phân phối hoa quả tươi sạch hàng đầu Việt Nam. Mang thiên nhiên thuần khiết và nguồn dinh dưỡng an toàn từ nông trại đến từng gia đình.
-                        </p>
-                    </div>
+<footer id="about" class="w-full mt-10 border-t border-[#00652c]/10 bg-[#f2f7f2] text-[#3f493f]">
+    <div id="contact" class="max-w-[1360px] mx-auto px-4 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 py-10">
+            <div class="max-w-md">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-[#00652c] text-white shrink-0">
+                        <span class="material-symbols-outlined text-[25px]" aria-hidden="true">eco</span>
+                    </span>
                     <div>
-                        <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Danh Mục Mua Sắm</h3>
-                        <ul class="space-y-2.5 text-xs text-gray-400">
-                            <c:forEach var="c" items="${categories}" end="4">
-                                <li><a href="${pageContext.request.contextPath}/products?category=${c.slug}" class="hover:text-emerald-400 transition">${c.categoryName}</a></li>
-                            </c:forEach>
-                            <c:if test="${empty categories}">
-                                <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-400 transition">Trái Cây Nội Địa</a></li>
-                                <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-400 transition">Trái Cây Nhập Khẩu</a></li>
-                                <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-400 transition">Hộp Quà &amp; Combo</a></li>
-                            </c:if>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Hỗ Trợ Khách Hàng</h3>
-                        <ul class="space-y-2.5 text-xs text-gray-400">
-                            <li><a href="${pageContext.request.contextPath}/home" class="hover:text-emerald-400 transition">Trang Chủ Gốc Vườn</a></li>
-                            <li><a href="${pageContext.request.contextPath}/products" class="hover:text-emerald-400 transition">Cửa Hàng Nông Sản</a></li>
-                            <li><span class="text-gray-400">Chính Sách Đổi Trả 1-1 Trong 24h</span></li>
-                            <li><span class="text-gray-400">Bảo Quản Chuỗi Lạnh Fresh-Lock</span></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white text-sm uppercase tracking-wider mb-4">Đăng Ký Nhận Bản Tin</h3>
-                        <form onsubmit="event.preventDefault(); alert('Đăng ký nhận bản tin thành công!');" class="space-y-2">
-                            <input type="email" placeholder="Nhập email của bạn..." class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" required>
-                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow">Đăng Ký Ngay</button>
-                        </form>
+                        <p class="text-xl font-bold tracking-tight text-[#00652c]">Gốc Vườn</p>
+                        <p class="text-[11px] font-semibold tracking-widest uppercase text-[#00652c]/70">Tươi ngon mỗi ngày</p>
                     </div>
                 </div>
-                <div class="pt-8 border-t border-gray-900 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 gap-4">
-                    <p>&copy; 2026 Gốc Vườn Marketplace Inc. Bảo lưu mọi quyền.</p>
-                    <div class="flex items-center gap-4 text-gray-400">
-                        <span>Tiêu chuẩn VietGAP • GlobalGAP • Chuỗi lạnh Fresh-Lock</span>
-                    </div>
+                <p class="text-sm leading-relaxed">Một chút tươi xanh cho bữa ăn, một chút ngọt lành cho ngày mới. Cảm ơn bạn đã chọn Gốc Vườn cho giỏ hàng của mình.</p>
+            </div>
+            <div class="flex flex-col items-start md:justify-self-end">
+                <div>
+                    <p class="text-xs font-bold tracking-widest uppercase text-[#00652c] mb-2">Đồng hành cùng bạn</p>
+                    <h2 class="text-lg font-semibold text-[#131b2e]">Cần hỗ trợ đơn hàng?</h2>
+                    <p class="text-sm leading-relaxed mt-1 max-w-xs">Liên hệ để được hỗ trợ về sản phẩm, giao nhận và đơn hàng của bạn.</p>
                 </div>
             </div>
-        </footer>
+        </div>
+        <div class="border-t border-[#00652c]/10 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <p>© 2026 Gốc Vườn Marketplace. Bảo lưu mọi quyền.</p>
+            <span class="inline-flex items-center gap-1.5 text-[#00652c]">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">favorite</span>Cảm ơn bạn đã mua sắm cùng Gốc Vườn
+            </span>
+        </div>
+    </div>
+</footer>

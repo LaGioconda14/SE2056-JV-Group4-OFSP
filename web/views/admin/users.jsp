@@ -12,10 +12,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css?v=16">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin.css?v=17">
     <meta name="context-path" content="${pageContext.request.contextPath}">
 </head>
 <body class="admin-body">
+<c:set var="currentAdminId" value="${not empty sessionScope.user ? sessionScope.user.userId : sessionScope.userId}" />
 
 <div class="admin-wrapper">
     <jsp:include page="layout/sidebar.jsp">
@@ -49,9 +50,9 @@
                     <p class="text-muted mb-0" style="font-size: 0.82rem;">Tra cứu danh bạ tài khoản đa vai trò, kiểm tra hồ sơ giao dịch và khóa/mở khóa tài khoản an toàn.</p>
                 </div>
                 <div class="users-header-actions">
-                    <button type="button" class="btn-export-list" onclick="alert('Đang xuất danh sách tài khoản & ma trận phân quyền (CSV/Excel)...');">
-                        <i class="bi bi-download"></i>
-                        <span>Xuất danh sách</span>
+                    <button type="button" class="btn-export-list" onclick="window.print()">
+                        <i class="bi bi-printer"></i>
+                        <span>In danh sách</span>
                     </button>
                     <button type="button" class="btn-add-admin" data-bs-toggle="modal" data-bs-target="#inviteUserModal">
                         <i class="bi bi-person-plus-fill"></i>
@@ -135,6 +136,7 @@
                     </thead>
                     <tbody id="usersTableBody">
                         <c:forEach items="${usersList}" var="u">
+                            <c:set var="isSelf" value="${not empty currentAdminId and u.userId == currentAdminId}" />
                             <tr>
                                 <td>
                                     <div class="user-cell-meta">
@@ -159,6 +161,11 @@
                                                     <c:when test="${u.roleName == 'CUSTOMER'}"><span class="role-pill-accountant ms-1">KHÁCH HÀNG</span></c:when>
                                                     <c:otherwise><span class="role-pill-accountant ms-1">${u.roleName}</span></c:otherwise>
                                                 </c:choose>
+                                                <c:if test="${isSelf}">
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1" style="font-size: 0.65rem; border-radius: 4px;" title="Tài khoản đang đăng nhập hiện tại">
+                                                        <i class="bi bi-person-fill"></i> Bạn
+                                                    </span>
+                                                </c:if>
                                             </div>
                                             <div class="user-meta-sub">${u.email} • ${u.phone} • ID: #${u.userId}</div>
                                         </div>
@@ -212,6 +219,13 @@
 
                                     <!-- Nút 2: Khóa / Mở khóa tài khoản (Soft Delete) -->
                                     <c:choose>
+                                        <c:when test="${isSelf}">
+                                            <button type="button" class="btn-action-lock me-1" disabled
+                                                    title="Bạn không thể tự khóa tài khoản của chính mình"
+                                                    style="cursor: not-allowed; pointer-events: auto;">
+                                                <i class="bi bi-slash-circle"></i> Khóa
+                                            </button>
+                                        </c:when>
                                         <c:when test="${u.status == 'BLOCKED'}">
                                             <button type="button" class="btn-action-unlock me-1" title="Mở khóa tài khoản (Khôi phục ACTIVE)" onclick="openToggleStatusModal('${u.userId}', '${fn:escapeXml(u.fullName)}', '${fn:escapeXml(u.email)}', 'ACTIVE', '${fn:escapeXml(u.decisionReason)}')">
                                                 <i class="bi bi-unlock-fill"></i> Mở khóa
@@ -570,7 +584,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="${pageContext.request.contextPath}/admin/users" method="POST" id="toggleStatusForm">
+            <form action="${pageContext.request.contextPath}/admin/users" method="POST" id="toggleStatusForm" data-current-user-id="${currentAdminId}">
                 <input type="hidden" name="action" value="changeStatus">
                 <input type="hidden" name="userId" id="toggleStatusUserId">
                 <input type="hidden" name="newStatus" id="toggleStatusNewStatus">
@@ -698,6 +712,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/js/admin.js?v=16"></script>
-<script src="${pageContext.request.contextPath}/assets/js/admin-users.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/admin-users.js?v=2"></script>
 </body>
 </html>

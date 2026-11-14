@@ -22,26 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 2. Wishlist Heart Toggle
-    const wishlistBtns = document.querySelectorAll(".btn-wishlist");
-    wishlistBtns.forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const icon = btn.querySelector("i");
-            if (icon) {
-                if (icon.classList.contains("fa-regular")) {
-                    icon.classList.remove("fa-regular");
-                    icon.classList.add("fa-solid", "text-rose-500");
-                } else {
-                    icon.classList.remove("fa-solid", "text-rose-500");
-                    icon.classList.add("fa-regular");
-                }
-            }
-        });
-    });
-
-    // 3. Price slider dynamic output (if range inputs present)
+    // 2. Price slider dynamic output (if range inputs present)
     const priceRange = document.getElementById("priceRange");
     const priceDisplay = document.getElementById("priceDisplay");
     if (priceRange && priceDisplay) {
@@ -116,3 +97,22 @@ function initViewSwitcher() {
         localStorage.setItem('ofsp_catalog_view', 'list');
     });
 }
+
+window.changeCatalogSort = function(sortVal) {
+    const form = document.getElementById('catalogFilterForm');
+    if (form) {
+        let sortInput = form.querySelector('input[name="sortBy"]');
+        if (!sortInput) {
+            sortInput = document.createElement('input');
+            sortInput.type = 'hidden';
+            sortInput.name = 'sortBy';
+            form.appendChild(sortInput);
+        }
+        sortInput.value = sortVal;
+        form.submit();
+    } else {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sortBy', sortVal);
+        window.location.href = url.toString();
+    }
+};

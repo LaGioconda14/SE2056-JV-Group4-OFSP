@@ -14,6 +14,8 @@
 <c:url var="changePasswordUrl" value="/change-password" />
 
 <!-- Material Symbols & Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <style>
@@ -52,10 +54,21 @@
             <div class="flex items-center gap-1 pr-3 text-gray-600 text-xs cursor-pointer shrink-0">
                 <select name="categoryId" class="bg-transparent border-0 outline-none text-gray-700 cursor-pointer text-sm font-medium pr-1">
                     <option value="">Tất cả danh mục</option>
-                    <option value="1">Trái Cây Nội Địa</option>
-                    <option value="2">Trái Cây Nhập Khẩu</option>
-                    <option value="3">Hộp Quà &amp; Combo</option>
-                    <option value="4">Trái Cây Sấy</option>
+                    <c:choose>
+                        <c:when test="${not empty categories}">
+                            <c:forEach var="c" items="${categories}">
+                                <c:if test="${empty c.parentId}">
+                                    <option value="${c.categoryId}" ${param.categoryId == c.categoryId ? 'selected' : ''}>${c.categoryName}</option>
+                                </c:if>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <option value="6" ${param.categoryId == '6' ? 'selected' : ''}>Trái Cây Nội Địa</option>
+                            <option value="5" ${param.categoryId == '5' ? 'selected' : ''}>Trái Cây Nhập Khẩu</option>
+                            <option value="7" ${param.categoryId == '7' ? 'selected' : ''}>Hộp Quà &amp; Combo</option>
+                            <option value="8" ${param.categoryId == '8' ? 'selected' : ''}>Trái Cây Chế Biến &amp; Sấy</option>
+                        </c:otherwise>
+                    </c:choose>
                 </select>
             </div>
             <div class="h-5 w-px bg-gray-300 mr-3"></div>
@@ -92,20 +105,9 @@
                         <button type="button" onclick="clearAllNotifications(event)" class="text-xs text-[#00652c] hover:underline font-semibold cursor-pointer">Đánh dấu đã đọc</button>
                     </div>
                     <div class="max-h-72 overflow-y-auto space-y-2.5" id="header-noti-list">
-                        <!-- Default notifications -->
-                        <div class="flex items-start gap-3 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-xs text-gray-700">
-                            <span class="material-symbols-outlined text-emerald-600 text-[18px] shrink-0 mt-0.5">shopping_bag</span>
-                            <div class="flex-1">
-                                <p class="font-bold text-gray-900">Giỏ hàng của bạn</p>
-                                <p class="text-gray-600 text-[11px] mt-0.5">Bạn đang có <strong class="text-[#00652c]" id="noti-cart-count">${cartSize}</strong> món trong giỏ hàng.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-3 p-2.5 rounded-xl bg-amber-50/70 border border-amber-100 text-xs text-gray-700">
-                            <span class="material-symbols-outlined text-amber-600 text-[18px] shrink-0 mt-0.5">confirmation_number</span>
-                            <div class="flex-1">
-                                <p class="font-bold text-gray-900">Mã giảm giá mới</p>
-                                <p class="text-gray-600 text-[11px] mt-0.5">Mã SAN10K (giảm 10.000₫) và mã Shop giảm đến 10% đã sẵn sàng.</p>
-                            </div>
+                        <div class="py-6 text-center text-gray-400">
+                            <span class="material-symbols-outlined text-[32px] text-gray-300 mb-1">notifications_off</span>
+                            <p class="text-xs">Chưa có thông báo mới nào</p>
                         </div>
                     </div>
                     <div class="pt-3 border-t border-gray-100 mt-3 text-center">

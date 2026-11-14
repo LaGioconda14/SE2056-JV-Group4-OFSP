@@ -1335,4 +1335,116 @@ public class OrderDAO extends DBContext {
             }
         }
     }
+
+    public boolean confirmReceivedByCustomer(long customerId, String orderIdentifier) throws Exception {
+        String findSubSql = "SELECT so.sub_order_id, so.order_id, so.status AS sub_status "
+                          + "FROM sub_orders so "
+                          + "JOIN orders o ON so.order_id = o.order_id "
+                          + "WHERE (so.sub_order_code = ? OR CAST(so.sub_order_id AS VARCHAR) = ?) AND o.customer_id = ?";
+
+        String findOrdSql = "SELECT order_id, order_code, order_status "
+                          + "FROM orders "
+                          + "WHERE (order_code = ? OR CAST(order_id AS VARCHAR) = ?) AND customer_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new SQLException("Không thể kết nối đến cơ sở dữ liệu!");
+        }
+
+        try {
+            conn.setAutoCommit(false);
+
+            long matchedSubOrderId = -1;
+            long matchedOrderId = -1;
+
+            try (PreparedStatement psSub = conn.prepareStatement(findSubSql)) {
+                psSub.setString(1, orderIdentifier);
+                psSub.setString(2, orderIdentifier);
+                psSub.setLong(3, customerId);
+                try (ResultSet rsSub = psSub.executeQuery()) {
+                    if (rsSub.next()) {
+                        matchedSubOrderId = rsSub.getLong("sub_order_id");
+                        matchedOrderId = rsSub.getLong("order_id");
+                    }
+                }
+            }
+
+            if (matchedSubOrderId == -1) {
+                try (PreparedStatement psOrd = conn.prepareStatement(findOrdSql)) {
+                    psOrd.setString(1, orderIdentifier);
+                    psOrd.setString(2, orderIdentifier);
+                    psOrd.setLong(3, customerId);
+                    try (ResultSet rsOrd = psOrd.executeQuery()) {
+                        if (rsOrd.next()) {
+                            matchedOrderId = rsOrd.getLong("order_id");
+                        }
+                    }
+                }
+            }
+
+            if (matchedSubOrderId == -1 && matchedOrderId == -1) {
+                conn.rollback();
+                return false;
+            }
+
+            if (matchedSubOrderId != -1) {
+                String updateSub = "UPDATE sub_orders SET status = '" + SubOrderStatus.DELIVERED.name() + "', updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
+                try (PreparedStatement psUp = conn.prepareStatement(updateSub)) {
+                    psUp.setLong(1, matchedSubOrderId);
+                    psUp.executeUpdate();
+                }
+
+                String updateDelivery = "UPDATE deliveries SET delivery_status = 'DELIVERED', delivered_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
+                try (PreparedStatement psDel = conn.prepareStatement(updateDelivery)) {
+                    psDel.setLong(1, matchedSubOrderId);
+                    psDel.executeUpdate();
+                }
+            } else {
+                String updateAllSubs = "UPDATE sub_orders SET status = '" + SubOrderStatus.DELIVERED.name() + "', updated_at = CURRENT_TIMESTAMP WHERE order_id = ? AND status <> '" + SubOrderStatus.CANCELLED.name() + "'";
+                try (PreparedStatement psUp = conn.prepareStatement(updateAllSubs)) {
+                    psUp.setLong(1, matchedOrderId);
+                    psUp.executeUpdate();
+                }
+
+                String updateDeliveries = "UPDATE d SET d.delivery_status = 'DELIVERED', d.delivered_at = CURRENT_TIMESTAMP FROM deliveries d JOIN sub_orders so ON d.sub_order_id = so.sub_order_id WHERE so.order_id = ?";
+                try (PreparedStatement psDel = conn.prepareStatement(updateDeliveries)) {
+                    psDel.setLong(1, matchedOrderId);
+                    psDel.executeUpdate();
+                }
+            }
+
+            String checkAndCompleteParent = "UPDATE o SET o.order_status = '" + OrderStatus.COMPLETED.name() + "', o.updated_at = CURRENT_TIMESTAMP "
+                + "FROM orders o WHERE o.order_id = ? "
+                + "AND NOT EXISTS (SELECT 1 FROM sub_orders so WHERE so.order_id = o.order_id AND so.status NOT IN ('" + SubOrderStatus.DELIVERED.name() + "', '" + SubOrderStatus.CANCELLED.name() + "'))";
+            try (PreparedStatement psSync = conn.prepareStatement(checkAndCompleteParent)) {
+                psSync.setLong(1, matchedOrderId);
+                psSync.executeUpdate();
+            }
+
+            String syncCodPayment = "UPDATE o SET o.payment_status = '" + PaymentStatus.PAID.name() + "' "
+                + "FROM orders o WHERE o.order_id = ? AND o.payment_method = 'COD' "
+                + "AND NOT EXISTS (SELECT 1 FROM sub_orders so WHERE so.order_id = o.order_id AND so.status NOT IN ('" + SubOrderStatus.DELIVERED.name() + "', '" + SubOrderStatus.CANCELLED.name() + "'))";
+            try (PreparedStatement psPay = conn.prepareStatement(syncCodPayment)) {
+                psPay.setLong(1, matchedOrderId);
+                psPay.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException rEx) {
+                LOGGER.log(Level.SEVERE, "Rollback failed during confirmReceivedByCustomer", rEx);
+            }
+            LOGGER.log(Level.SEVERE, "Error in confirmReceivedByCustomer for order: " + orderIdentifier, ex);
+            throw ex;
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException cEx) {
+                LOGGER.log(Level.SEVERE, "Error closing connection", cEx);
+            }
+        }
+    }
 }

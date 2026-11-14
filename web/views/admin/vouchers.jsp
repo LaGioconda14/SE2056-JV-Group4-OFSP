@@ -62,8 +62,8 @@
                     </p>
                 </div>
                 <div class="page-action-tools gap-2">
-                    <button class="btn btn-outline-secondary btn-sm bg-white text-dark fw-bold border shadow-xs" onclick="exportVoucherReport()">
-                        <i class="bi bi-graph-up me-1"></i> Báo cáo hiệu quả ngân sách
+                    <button class="btn btn-outline-secondary btn-sm bg-white text-dark fw-bold border shadow-xs" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i> In danh sách voucher
                     </button>
                     <button class="btn btn-admin-primary btn-sm fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#createVoucherModal">
                         <i class="bi bi-plus-circle me-1"></i> Tạo Voucher Toàn Sàn Mới
@@ -136,37 +136,37 @@
 
             <!-- 2 Mid Banners (Side-by-Side Cards) -->
             <div class="row g-3 mb-3">
-                <!-- Banner 1 (Left - Cơ Chế Đồng Tài Trợ Co-funding) -->
+                <!-- Banner 1: Cơ Chế Quản Lý Khuyến Mãi Sàn -->
                 <div class="col-lg-6">
                     <div class="admin-card p-3 h-100 border">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-shield-check text-success fs-5"></i>
-                                <h4 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Cơ Chế Đồng Tài Trợ (Co-funding)</h4>
+                                <h4 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Chính Sách Khuyến Mãi &amp; Trợ Giá</h4>
                             </div>
-                            <span class="badge bg-light text-muted border fs-8">Áp dụng trừ GMV</span>
+                            <span class="badge bg-light text-muted border fs-8">Hệ thống Gốc Vườn</span>
                         </div>
                         <p class="text-muted fs-8 mb-3">
-                            Chính sách san sẻ kinh phí khuyến mại giữa Sàn Nông Sản và Hợp tác xã/Nhà vườn đối tác nhằm gia tăng biên lợi nhuận cho người nông dân.
+                            Phân định rõ nguồn ngân sách tài trợ: Voucher cấp Sàn áp dụng cho toàn bộ sản phẩm nông sản, Voucher Nhà Vườn do từng chủ shop tự thiết lập và chi trả.
                         </p>
 
                         <div class="row g-2 mb-3">
                             <div class="col-6">
                                 <div class="p-2 rounded-2 border bg-light">
                                     <div class="d-flex align-items-center gap-1 fs-8 fw-bold text-success mb-1">
-                                        <i class="bi bi-circle-fill" style="font-size: 0.45rem;"></i> Sàn Gốc Vườn (65%)
+                                        <i class="bi bi-ticket-perforated-fill"></i> Voucher Sàn
                                     </div>
-                                    <div class="text-muted fs-8">Mức hỗ trợ sàn tối đa:</div>
-                                    <div class="fw-bold text-dark fs-7">₫35,000 / đơn</div>
+                                    <div class="text-muted fs-8">Số lượng đang có:</div>
+                                    <div class="fw-bold text-dark fs-7"><c:out value="${not empty voucherStats.platformCount ? voucherStats.platformCount : 0}"/> mã</div>
                                 </div>
                             </div>
                             <div class="col-6">
                                 <div class="p-2 rounded-2 border bg-light">
                                     <div class="d-flex align-items-center gap-1 fs-8 fw-bold text-warning-emphasis mb-1">
-                                        <i class="bi bi-circle-fill" style="font-size: 0.45rem; color: #ea580c;"></i> Nhà Vườn / HTX (35%)
+                                        <i class="bi bi-shop"></i> Voucher Shop
                                     </div>
-                                    <div class="text-muted fs-8">Ngưỡng tối thiểu HTX:</div>
-                                    <div class="fw-bold text-dark fs-7">₫10,000</div>
+                                    <div class="text-muted fs-8">Số lượng đang có:</div>
+                                    <div class="fw-bold text-dark fs-7"><c:out value="${not empty voucherStats.shopCount ? voucherStats.shopCount : 0}"/> mã</div>
                                 </div>
                             </div>
                         </div>
@@ -174,66 +174,58 @@
                         <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                             <div class="d-flex align-items-center gap-2 fs-8">
                                 <div class="bg-success-subtle text-success p-1 rounded-2">
-                                    <i class="bi bi-shop"></i>
+                                    <i class="bi bi-info-circle"></i>
                                 </div>
                                 <div>
-                                    <strong class="text-dark">72/84 Gian Hàng Tham Gia</strong>
-                                    <div class="text-muted">85.7% đối tác nông sản đã kích hoạt gói tài trợ giá</div>
+                                    <strong class="text-dark">Tổng mã khả dụng: <c:out value="${not empty voucherStats.activeCount ? voucherStats.activeCount : 0}"/></strong>
+                                    <div class="text-muted">Đang kích hoạt trên toàn hệ thống</div>
                                 </div>
                             </div>
-                            <button class="btn btn-outline-secondary btn-sm bg-white border fs-8 fw-bold" onclick="alert('Mở bảng cài đặt tỷ lệ co-funding!')">
-                                Cài đặt tỷ lệ
-                            </button>
+                            <a href="${pageContext.request.contextPath}/admin/vouchers?status=ACTIVE" class="text-success text-decoration-none fs-8 fw-bold">
+                                Xem mã đang chạy &rarr;
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Banner 2 (Right - Flash Sale Giờ Vàng Nông Sản) -->
+                <!-- Banner 2: Thông Tin Trợ Giá Đơn Hàng -->
                 <div class="col-lg-6">
                     <div class="admin-card p-3 h-100 border">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-danger text-white fs-8 fw-bold">🔴 LIVE NOW</span>
-                                <h4 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Flash Sale Giờ Vàng Nông Sản</h4>
+                                <i class="bi bi-graph-up-arrow text-success fs-5"></i>
+                                <h4 class="fw-bold mb-0 text-dark" style="font-size: 0.95rem;">Hiệu Quả Kích Cầu Tiêu Dùng</h4>
                             </div>
                             <span class="badge bg-success-subtle text-success border border-success-subtle fs-8 fw-bold">
-                                <i class="bi bi-clock me-1"></i> CÒN 01H 24M
+                                Dữ liệu thực tế
                             </span>
                         </div>
                         <p class="text-muted fs-8 mb-3">
-                            Chiến dịch kích cầu đơn hàng trái cây tươi hái trong ngày trong khung 11h00 - 13h00
+                            Tổng hợp trợ giá khuyến mãi đã được người mua sử dụng thành công khi hoàn tất đặt hàng.
                         </p>
 
                         <div class="p-2 rounded-2 border bg-light mb-3">
                             <div class="row g-2 text-center">
-                                <div class="col-4 border-end">
-                                    <div class="text-muted fs-8">Mã Đang Phát:</div>
-                                    <div class="fw-bold text-dark fs-7">FLASHCHIN20</div>
-                                    <div class="text-muted fs-8">Giảm 20k đơn từ 120k</div>
+                                <div class="col-6 border-end">
+                                    <div class="text-muted fs-8">Tổng Số Lượt Dùng:</div>
+                                    <div class="fw-bold text-dark fs-7"><c:out value="${not empty voucherStats.totalUsed ? voucherStats.totalUsed : 0}"/> lượt</div>
+                                    <div class="text-muted fs-8">Ghi nhận qua đơn hàng</div>
                                 </div>
-                                <div class="col-4 border-end">
-                                    <div class="text-muted fs-8">Tốc Độ Hấp Thụ:</div>
-                                    <div class="fw-bold text-dark fs-7">92.4%</div>
-                                    <div class="text-muted fs-8">462 / 500 mã nhận</div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-muted fs-8">Doanh Số Đột Biến:</div>
-                                    <div class="fw-bold text-success fs-7">+34.8%</div>
-                                    <div class="text-muted fs-8">So cùng giờ tuần trước</div>
+                                <div class="col-6">
+                                    <div class="text-muted fs-8">Tổng Trợ Giá Đã Chi:</div>
+                                    <div class="fw-bold text-success fs-7"><c:out value="${not empty voucherStats.totalDiscountGrantedFormatted ? voucherStats.totalDiscountGrantedFormatted : '0 ₫'}"/></div>
+                                    <div class="text-muted fs-8">Khấu trừ tiền hàng</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                             <div class="d-flex align-items-center gap-2 fs-8 text-muted">
-                                <div class="d-flex">
-                                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=32&h=32&fit=crop" class="rounded-circle border" style="width: 20px; height: 20px;">
-                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop" class="rounded-circle border ms-n1" style="width: 20px; height: 20px; margin-left: -6px;">
-                                </div>
-                                <span class="text-truncate" style="max-width: 270px;">Áp dụng đặc quyền nhóm vườn Tiền Giang, Bến Tre &amp; Đồng Tháp</span>
+                                <i class="bi bi-check2-circle text-success"></i>
+                                <span>Tự động cập nhật theo trạng thái đơn hàng</span>
                             </div>
-                            <a href="javascript:void(0)" onclick="alert('Chi tiết chiến dịch Flash Sale')" class="text-success text-decoration-none fs-8 fw-bold">
-                                Xem chi tiết &rarr;
+                            <a href="${pageContext.request.contextPath}/admin/orders" class="text-success text-decoration-none fs-8 fw-bold">
+                                Xem luồng đơn hàng &rarr;
                             </a>
                         </div>
                     </div>

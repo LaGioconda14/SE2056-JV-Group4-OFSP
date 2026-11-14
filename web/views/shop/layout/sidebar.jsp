@@ -68,8 +68,8 @@
                 <span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-[10px] font-bold">QC</span>
             </a>
 
-            <div class="text-[10px] uppercase tracking-wider text-slate-400 px-3 pt-2 font-extrabold">ĐƠN HÀNG & GIAO VẬN</div>
-            <a href="${pageContext.request.contextPath}/shop/orders" 
+            <div class="shop-sidebar-group-title">ĐƠN HÀNG & GIAO VẬN</div>
+            <a href="${ctx}/shop/orders" 
                class="shop-sidebar-link ${param.active == 'orders' || curMenu eq 'orders' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
                     <i class="fa-solid fa-receipt text-slate-400 text-sm w-4 text-center"></i>
@@ -77,7 +77,7 @@
                 </span>
                 <span class="badge-counter-orange">${sbPendingOrders}</span>
             </a>
-            <a href="${pageContext.request.contextPath}/shop/shippers" 
+            <a href="${ctx}/shop/shippers" 
                class="shop-sidebar-link ${param.active == 'shippers' || curMenu eq 'shippers' ? 'active' : ''}">
                 <span class="flex items-center gap-3">
                     <i class="fa-solid fa-truck-fast text-slate-400 text-sm w-4 text-center"></i>
@@ -106,5 +106,14 @@
                 </span>
             </a>
         </nav>
+    </div>
+
+    <div class="pt-3 border-t border-slate-100 mt-4">
+        <a href="${ctx}/logout" class="shop-sidebar-link text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition" title="Đăng xuất khỏi tài khoản">
+            <span class="flex items-center gap-3 font-bold">
+                <i class="fa-solid fa-arrow-right-from-bracket text-rose-500 text-sm w-4 text-center"></i>
+                <span>Đăng xuất</span>
+            </span>
+        </a>
     </div>
 </aside>

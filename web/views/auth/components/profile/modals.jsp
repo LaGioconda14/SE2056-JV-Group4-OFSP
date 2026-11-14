@@ -127,7 +127,7 @@
                         </span>
                     </div>
                     <div class="text-muted small d-flex align-items-center gap-2 flex-wrap">
-                        <span>Mã đơn hàng: <strong id="trackModalOrderCode" class="text-dark">#ORD-98241</strong></span>
+                        <span>Mã đơn hàng: <strong id="trackModalOrderCode" class="text-dark">--</strong></span>
                         <span>•</span>
                         <span>Ngày đặt: <span id="trackModalOrderDate">--/--/----</span></span>
                     </div>
@@ -335,23 +335,12 @@
                             <i class="bi bi-camera text-success me-1"></i> Link ảnh bằng chứng thực tế:
                         </label>
                         <input type="text" class="form-control mb-2" name="evidenceImageUrl" id="returnEvidenceInput"
-                               value="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&fit=crop"
-                               placeholder="Nhập đường dẫn ảnh hoặc chọn mẫu bên dưới">
-                        <div class="text-muted fs-xs mb-2">Ảnh mẫu chụp thực tế quả dập để thẩm định nhanh:</div>
-                        <div class="d-flex gap-2">
-                            <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=120&h=80&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 60px; height: 45px; object-fit: cover;"
-                                 alt="Ảnh lỗi 1" onclick="selectReturnPhotoPreset('https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&fit=crop')">
-                            <img src="https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=120&h=80&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 60px; height: 45px; object-fit: cover;"
-                                 alt="Ảnh lỗi 2" onclick="selectReturnPhotoPreset('https://images.unsplash.com/photo-1579613832125-5d34a13ffe0a?w=500&fit=crop')">
-                            <img src="https://images.unsplash.com/photo-1528825871115-3581a5387919?w=120&h=80&fit=crop"
-                                 class="rounded border cursor-pointer" style="width: 60px; height: 45px; object-fit: cover;"
-                                 alt="Ảnh lỗi 3" onclick="selectReturnPhotoPreset('https://images.unsplash.com/photo-1528825871115-3581a5387919?w=500&fit=crop')">
-                        </div>
+                               placeholder="Dán link ảnh chụp thực tế tình trạng quả khi nhận..."
+                               oninput="document.getElementById('returnPreviewImg').src = this.value; document.getElementById('returnPreviewImg').style.display = this.value ? 'inline-block' : 'none';">
                         <div class="mt-2 text-center">
-                            <img id="returnPreviewImg" src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&fit=crop"
-                                 class="rounded border shadow-xs" style="max-height: 100px; object-fit: cover;">
+                            <img id="returnPreviewImg" src=""
+                                 class="rounded border shadow-xs" style="max-height: 100px; object-fit: cover; display: none;"
+                                 onerror="this.style.display='none'">
                         </div>
                     </div>
 

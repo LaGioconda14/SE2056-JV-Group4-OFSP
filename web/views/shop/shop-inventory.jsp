@@ -63,14 +63,14 @@
                             <i class="fa-solid fa-dolly text-sm"></i>
                             <span>+ Nhập kho nhanh (Restock)</span>
                         </button>
-                        <button type="button" class="btn-export-excel" onclick="alert('Đang tạo phiếu kiểm kê kho tươi...');">
-                            <i class="fa-solid fa-clipboard-check text-xs text-slate-600"></i>
-                            <span>Tạo phiếu kiểm kê</span>
+                        <button type="button" class="btn-export-excel" onclick="window.print();">
+                            <i class="fa-solid fa-print text-xs text-slate-600"></i>
+                            <span>In phiếu kiểm kê</span>
                         </button>
-                        <button type="button" class="btn-export-excel" onclick="alert('Đang xuất báo cáo tồn kho ra file Excel...');">
-                            <i class="fa-solid fa-arrow-down-to-bracket text-xs text-slate-600"></i>
-                            <span>Xuất Excel</span>
-                        </button>
+                        <a href="${pageContext.request.contextPath}/shop/inventory/batches" class="btn-export-excel text-decoration-none">
+                            <i class="fa-solid fa-boxes-stacked text-xs text-slate-600"></i>
+                            <span>Xem lô chi tiết</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -101,15 +101,7 @@
                        class="inv-tab-btn ${viewTab == 'freshness' ? 'active' : ''}">
                         <i class="fa-regular fa-clock text-slate-500 text-xs"></i>
                         <span>Độ tươi & Ngày hái lô hàng</span>
-                        <span class="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">12 LÔ</span>
                     </a>
-                </div>
-
-                <div class="flex items-center gap-2 text-xs">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">LỌC THEO:</span>
-                    <a href="#" class="inv-filter-pill active">Tất cả kho lạnh</a>
-                    <a href="#" class="inv-filter-pill">Kho hái sáng (06:00)</a>
-                    <a href="#" class="inv-filter-pill">Kho hái chiều (14:00)</a>
                 </div>
             </div>
 
@@ -297,7 +289,7 @@
                 <!-- Table Footer & Pagination -->
                 <div class="table-pagination-footer">
                     <div class="text-xs text-slate-500">
-                        Hiển thị <strong class="text-slate-800">${not empty listItems ? listItems.size() : 0}</strong> trên <strong class="text-slate-800">${totalCount}</strong> mặt hàng nông sản • <span class="text-emerald-700 font-semibold">Tự động đồng bộ với cảm biến kho lạnh Đà Lạt</span>
+                        Hiển thị <strong class="text-slate-800">${not empty listItems ? listItems.size() : 0}</strong> trên <strong class="text-slate-800">${totalCount}</strong> mặt hàng nông sản • <span class="text-emerald-700 font-semibold">Dữ liệu quản lý kho thời gian thực</span>
                     </div>
 
                     <div class="flex items-center gap-1.5">

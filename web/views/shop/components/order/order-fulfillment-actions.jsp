@@ -242,62 +242,10 @@
 
                                         <button type="submit" id="btnFinishPacking" disabled class="w-full py-3 px-4 rounded-xl bg-slate-200 text-slate-400 font-extrabold text-sm transition shadow-sm flex items-center justify-center gap-2 cursor-not-allowed">
                                             <i class="fa-solid fa-box-check"></i> Hoàn tất đóng gói &amp; Báo sẵn sàng giao
-                                        </button>
-                                    </form>
-                                </div>
-                            </c:when>
-
-                            
-                            <c:when test="${isFailedOrder}">
-                                <div class="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs bg-rose-50/20">
-                                    <div class="flex items-start gap-4">
-                                        <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl font-bold shrink-0 shadow-2xs border border-rose-200">
-                                            <i class="fa-solid fa-truck-ramp-box"></i>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-rose-100">
-                                                <div class="flex items-center gap-2">
-                                                    <h2 class="text-base font-extrabold text-rose-950">Giao Hàng Thất Bại &amp; Kích Hoạt Hoàn Hàng</h2>
-                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-700 border border-rose-300 uppercase">
-                                                        GIAO THẤT BẠI
-                                                    </span>
-                                                </div>
-                                                <c:if test="${not empty subOrder.delivery.deliveredAt or not empty subOrder.updatedAt}">
-                                                    <span class="text-xs text-rose-600 font-medium">
-                                                        <i class="fa-regular fa-clock mr-1"></i>
-                                                        <fmt:formatDate value="${not empty subOrder.delivery.deliveredAt ? subOrder.delivery.deliveredAt : subOrder.updatedAt}" pattern="HH:mm dd/MM/yyyy" />
-                                                    </span>
-                                                </c:if>
-                                            </div>
-
-                                            <div class="mt-3.5 p-3.5 rounded-xl bg-white border border-rose-200/90 text-xs space-y-2 shadow-2xs">
-                                                <div class="flex items-center justify-between">
-                                                    <div class="font-extrabold text-rose-800 flex items-center gap-1.5">
-                                                        <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> Lý do giao không thành công từ Shipper / Khách:
-                                                    </div>
-                                                    <span class="font-mono text-[11px] text-slate-500">Mã vận đơn: <b>${not empty subOrder.delivery.trackingNumber ? subOrder.delivery.trackingNumber : subOrder.subOrderCode}</b></span>
-                                                </div>
-                                                <div class="text-slate-800 leading-relaxed font-semibold pl-4 border-l-2 border-rose-400 bg-rose-50/40 p-2 rounded-r-lg">
-                                                    ${not empty subOrder.cancelReason ? subOrder.cancelReason : (not empty subOrder.delivery.failureReason ? subOrder.delivery.failureReason : 'Khách hàng từ chối nhận hoa quả khi đồng kiểm hoặc không liên lạc được.')}
-                                                </div>
-                                                <c:if test="${not empty subOrder.delivery.driverName}">
-                                                    <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex items-center justify-between">
-                                                        <span>Tài xế bàn giao: <b class="text-slate-800">${subOrder.delivery.driverName}</b> <c:if test="${not empty subOrder.delivery.driverPhone}">(${subOrder.delivery.driverPhone})</c:if></span>
-                                                        <span class="text-emerald-700 font-bold"><i class="fa-solid fa-snowflake"></i> Xe lạnh bảo ôn Gốc Vườn</span>
-                                                    </div>
-                                                </c:if>
-                                            </div>
-
-                                            <div class="mt-3 flex items-start gap-2.5 text-xs text-slate-700 bg-amber-50/80 border border-amber-200 p-3 rounded-xl">
-                                                <i class="fa-solid fa-circle-info text-amber-600 text-sm mt-0.5 shrink-0"></i>
-                                                <div class="leading-relaxed">
-                                                    <b>Tiến trình hỗ trợ Gian hàng:</b> Hệ thống đã tự động ghi nhận khiếu nại hoàn trả. Kiện hàng nông sản tươi sẽ được tài xế chuyển hoàn về kho/vườn của bạn. Mọi hỗ trợ xin liên hệ tổng đài <b>1900 6868</b>.
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </c:when>
+                                         </button>
+                                     </form>
+                                 </div>
+                             </c:when>
 
                             
                             <c:when test="${isDeliveredOrder}">

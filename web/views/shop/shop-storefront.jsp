@@ -7,11 +7,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${not empty shop.shopName ? shop.shopName : "Gian hàng nông sản"} - Gốc Vườn</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <!-- Tailwind CSS CDN (Non-blocking) -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -127,10 +128,10 @@
                         <span id="followText">Theo Dõi Shop</span>
                     </button>
 
-                    <button type="button" onclick="alert('Mở cửa sổ trò chuyện trực tiếp với chủ nông trại!')" 
-                            class="flex-1 lg:flex-none px-6 py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md hover:shadow-lg">
-                        <i class="fa-solid fa-comment-dots text-base"></i>
-                        <span>Chat với Shop</span>
+                    <button type="button" onclick="if(window.showToast){ showToast('Hotline hỗ trợ trực tiếp của nhà vườn: ${not empty shop.phone ? shop.phone : \"1900 8892\"}', 'info'); } else { alert('Hotline hỗ trợ trực tiếp của nhà vườn: ${not empty shop.phone ? shop.phone : \"1900 8892\"}'); }" 
+                            class="flex-1 lg:flex-none px-6 py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md hover:shadow-lg cursor-pointer">
+                        <i class="fa-solid fa-phone text-base"></i>
+                        <span>Liên Hệ Nhà Vườn</span>
                     </button>
                 </div>
 
@@ -205,8 +206,10 @@
                                     </div>
 
                                     <!-- Wishlist Heart Button -->
-                                    <button type="button" onclick="this.classList.toggle('text-rose-600'); this.classList.toggle('text-gray-400');"
-                                            class="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs hover:bg-white text-gray-400 hover:text-rose-600 flex items-center justify-center transition shadow-xs" title="Yêu thích">
+                                    <button type="button" 
+                                            class="wishlist-btn absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs hover:bg-white text-gray-400 hover:text-rose-600 flex items-center justify-center transition shadow-xs" 
+                                            data-product-id="${p.id}"
+                                            title="Yêu thích">
                                         <i class="fa-solid fa-heart text-xs"></i>
                                     </button>
                                 </div>
@@ -246,13 +249,24 @@
                                 </div>
 
                                 <!-- + Add Button -->
-                                <form action="${pageContext.request.contextPath}/add-to-cart" method="GET">
-                                    <input type="hidden" name="productId" value="${p.id}">
-                                    <button type="submit" 
-                                            class="bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 transform active:scale-95">
-                                        <i class="fa-solid fa-plus text-xs"></i> Thêm
-                                    </button>
-                                </form>
+                                <c:choose>
+                                    <c:when test="${p.inStock and (empty p.stockQuantity or p.stockQuantity > 0)}">
+                                        <form action="${pageContext.request.contextPath}/cart/add" method="POST">
+                                            <input type="hidden" name="variantId" value="${p.defaultVariantId > 0 ? p.defaultVariantId : p.id}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <input type="hidden" name="returnUrl" value="/store?id=${shop.shopId}">
+                                            <button type="submit" 
+                                                    class="bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs px-4 py-2 rounded-xl transition shadow-xs flex items-center gap-1.5 transform active:scale-95 cursor-pointer">
+                                                <i class="fa-solid fa-plus text-xs"></i> Thêm
+                                            </button>
+                                        </form>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1.5 rounded-xl">
+                                            Hết hàng
+                                        </span>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
 
                         </div>

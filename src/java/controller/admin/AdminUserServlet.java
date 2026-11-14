@@ -92,16 +92,50 @@ public class AdminUserServlet extends HttpServlet {
                 try {
                     long userId = Long.parseLong(userIdStr.trim());
                     User currentUser = (User) session.getAttribute("user");
-                    String adminIdentifier = currentUser != null 
-                            ? (currentUser.getFullName() + " (" + currentUser.getEmail() + ")") 
-                            : "Ban Quản Trị (admin@freshfruit.com)";
+                    if (currentUser == null) {
+                        currentUser = (User) session.getAttribute("account");
+                    }
+                    Long currentUserId = null;
+                    if (currentUser != null) {
+                        currentUserId = currentUser.getUserId();
+                    } else if (session.getAttribute("userId") != null) {
+                        Object uidObj = session.getAttribute("userId");
+                        if (uidObj instanceof Number) {
+                            currentUserId = ((Number) uidObj).longValue();
+                        } else {
+                            try {
+                                currentUserId = Long.parseLong(uidObj.toString());
+                            } catch (NumberFormatException ignored) {}
+                        }
+                    }
 
-                    boolean updated = dao.updateUserStatus(userId, newStatus.toUpperCase(), decisionReason.trim(), adminIdentifier);
-                    if (updated) {
-                        String statusVn = "BLOCKED".equalsIgnoreCase(newStatus) ? "Khóa tài khoản" : ("ACTIVE".equalsIgnoreCase(newStatus) ? "Mở khóa thành công" : newStatus);
-                        session.setAttribute("successMessage", "Đã " + statusVn + " cho tài khoản ID #" + userId + " (Lý do: " + decisionReason.trim() + ")");
+                    boolean isSelf = (currentUserId != null && currentUserId == userId);
+                    if (!isSelf && currentUser != null && currentUser.getEmail() != null) {
+                        Map<String, Object> targetUserDetail = dao.getUserDetail(userId);
+                        if (targetUserDetail != null && targetUserDetail.get("user") instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> targetUserMap = (Map<String, Object>) targetUserDetail.get("user");
+                            String targetEmail = (String) targetUserMap.get("email");
+                            if (targetEmail != null && currentUser.getEmail().equalsIgnoreCase(targetEmail)) {
+                                isSelf = true;
+                            }
+                        }
+                    }
+
+                    if (isSelf && !"ACTIVE".equalsIgnoreCase(newStatus)) {
+                        session.setAttribute("errorMessage", "Bạn không thể tự khóa tài khoản của chính mình!");
                     } else {
-                        session.setAttribute("errorMessage", "Không thể cập nhật trạng thái tài khoản. Vui lòng kiểm tra lại!");
+                        String adminIdentifier = currentUser != null 
+                                ? (currentUser.getFullName() + " (" + currentUser.getEmail() + ")") 
+                                : "Ban Quản Trị (admin@freshfruit.com)";
+
+                        boolean updated = dao.updateUserStatus(userId, newStatus.toUpperCase(), decisionReason.trim(), adminIdentifier);
+                        if (updated) {
+                            String statusVn = "BLOCKED".equalsIgnoreCase(newStatus) ? "Khóa tài khoản" : ("ACTIVE".equalsIgnoreCase(newStatus) ? "Mở khóa thành công" : newStatus);
+                            session.setAttribute("successMessage", "Đã " + statusVn + " cho tài khoản ID #" + userId + " (Lý do: " + decisionReason.trim() + ")");
+                        } else {
+                            session.setAttribute("errorMessage", "Không thể cập nhật trạng thái tài khoản. Vui lòng kiểm tra lại!");
+                        }
                     }
                 } catch (NumberFormatException e) {
                     session.setAttribute("errorMessage", "Định dạng mã người dùng không đúng!");
