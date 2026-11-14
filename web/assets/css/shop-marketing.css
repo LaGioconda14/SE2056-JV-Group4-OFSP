@@ -64,6 +64,8 @@
 .mk-input { width: 100%; background: #fff; border: 1px solid #d1d5db; border-radius: .75rem; padding: .6rem .85rem; font-size: .88rem; color: #0f172a; outline: none; transition: border-color .15s, box-shadow .15s; }
 .mk-input:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, .14); }
 .mk-input[readonly] { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+.mk-search-input { padding-left: 2.25rem; }
+.mk-picker-search-input { padding: .375rem .85rem .375rem 2rem; font-size: .75rem; }
 .mk-suffix { position: relative; }
 .mk-suffix > span { position: absolute; right: .85rem; top: 50%; transform: translateY(-50%); font-size: .8rem; font-weight: 700; color: #94a3b8; pointer-events: none; }
 .mk-suffix > .mk-input { padding-right: 2.2rem; }
