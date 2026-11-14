@@ -12,11 +12,11 @@ public class ShopRequestDAO extends DBContext {
 
     public boolean insertShopRequest(ShopRequest req) {
         String sql = "INSERT INTO [dbo].[shop_requests] ("
-                + "[user_id], [shop_name], [business_type], [province], [district], [ward], [street_address], "
+                + "[user_id], [shop_name], [business_type], [province], [ward], [street_address], "
                 + "[pickup_address], [return_address], [id_card_number], [tax_code], [id_card_front_url], "
                 + "[id_card_back_url], [shop_description], [shop_logo_url], [shop_banner_url], "
                 + "[bank_name], [bank_account_number], [bank_account_holder], [status], [created_at]"
-                + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', GETDATE())";
+                + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', GETDATE())";
 
         // Sử dụng try-with-resources để tự động đóng Connection và PreparedStatement, 
         // gọi hàm getConnection() được kế thừa từ DBContext
@@ -33,21 +33,20 @@ public class ShopRequestDAO extends DBContext {
             ps.setString(2, req.getShopName());
             ps.setString(3, req.getBusinessType());
             ps.setString(4, req.getProvince());
-            ps.setString(5, req.getDistrict());
-            ps.setString(6, req.getWard());
-            ps.setString(7, req.getStreetAddress());
-            ps.setString(8, req.getPickupAddress());
-            ps.setString(9, req.getReturnAddress());
-            ps.setString(10, req.getIdCardNumber());
-            ps.setString(11, req.getTaxCode());
-            ps.setString(12, req.getIdCardFrontUrl());
-            ps.setString(13, req.getIdCardBackUrl());
-            ps.setString(14, req.getShopDescription());
-            ps.setString(15, req.getShopLogoUrl());
-            ps.setString(16, req.getShopBannerUrl());
-            ps.setString(17, req.getBankName());
-            ps.setString(18, req.getBankAccountNumber());
-            ps.setString(19, req.getBankAccountHolder());
+            ps.setString(5, req.getWard());
+            ps.setString(6, req.getStreetAddress());
+            ps.setString(7, req.getPickupAddress());
+            ps.setString(8, req.getReturnAddress());
+            ps.setString(9, req.getIdCardNumber());
+            ps.setString(10, req.getTaxCode());
+            ps.setString(11, req.getIdCardFrontUrl());
+            ps.setString(12, req.getIdCardBackUrl());
+            ps.setString(13, req.getShopDescription());
+            ps.setString(14, req.getShopLogoUrl());
+            ps.setString(15, req.getShopBannerUrl());
+            ps.setString(16, req.getBankName());
+            ps.setString(17, req.getBankAccountNumber());
+            ps.setString(18, req.getBankAccountHolder());
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -83,7 +82,6 @@ public class ShopRequestDAO extends DBContext {
             shop.setShopName(rs.getString("shop_name"));
             shop.setBusinessType(rs.getString("business_type"));
             shop.setProvince(rs.getString("province"));
-            shop.setDistrict(rs.getString("district"));
             shop.setWard(rs.getString("ward"));
             shop.setStreetAddress(rs.getString("street_address"));
             shop.setPickupAddress(rs.getString("pickup_address"));
@@ -114,7 +112,7 @@ public class ShopRequestDAO extends DBContext {
 public boolean updateShopProfile(ShopRequest shop) {
     String sql = "UPDATE [dbo].[shop_requests] SET "
                + "[shop_name] = ?, [business_type] = ?, [shop_description] = ?, "
-               + "[id_card_number] = ?, [tax_code] = ?, [province] = ?, [district] = ?, [ward] = ?, "
+               + "[id_card_number] = ?, [tax_code] = ?, [province] = ?, [ward] = ?, "
                + "[street_address] = ?, [pickup_address] = ?, [return_address] = ?, "
                + "[bank_name] = ?, [bank_account_number] = ?, [bank_account_holder] = ?, "
                + "[shop_logo_url] = COALESCE(?, [shop_logo_url]), "
@@ -135,17 +133,16 @@ public boolean updateShopProfile(ShopRequest shop) {
         st.setString(4, shop.getIdCardNumber());
         st.setString(5, shop.getTaxCode());
         st.setString(6, shop.getProvince());
-        st.setString(7, shop.getDistrict());
-        st.setString(8, shop.getWard());
-        st.setString(9, shop.getStreetAddress());
-        st.setString(10, shop.getPickupAddress());
-        st.setString(11, shop.getReturnAddress());
-        st.setString(12, shop.getBankName());
-        st.setString(13, shop.getBankAccountNumber());
-        st.setString(14, shop.getBankAccountHolder());
-        st.setString(15, shop.getShopLogoUrl());   // null = giữ nguyên ảnh cũ
-        st.setString(16, shop.getShopBannerUrl()); // null = giữ nguyên ảnh cũ
-        st.setInt(17, shop.getUserId());
+        st.setString(7, shop.getWard());
+        st.setString(8, shop.getStreetAddress());
+        st.setString(9, shop.getPickupAddress());
+        st.setString(10, shop.getReturnAddress());
+        st.setString(11, shop.getBankName());
+        st.setString(12, shop.getBankAccountNumber());
+        st.setString(13, shop.getBankAccountHolder());
+        st.setString(14, shop.getShopLogoUrl());   // null = giữ nguyên ảnh cũ
+        st.setString(15, shop.getShopBannerUrl()); // null = giữ nguyên ảnh cũ
+        st.setInt(16, shop.getUserId());
         
         return st.executeUpdate() > 0;
     } catch (Exception e) {
