@@ -7,12 +7,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import model.entity.promotion.Promotion;
 import util.DBContext;
 
@@ -37,7 +43,7 @@ public class PromotionDAO extends DBContext {
           + "p.active_days, CONVERT(VARCHAR(5), p.daily_start_time, 108) AS daily_start_time, CONVERT(VARCHAR(5), p.daily_end_time, 108) AS daily_end_time, "
           + "p.start_date, p.end_date, p.is_active, p.terminated_at, p.created_at, "
           + STATUS_EXPR + " AS status, "
-          + "(SELECT COUNT(*) FROM promotion_products pp WHERE pp.promotion_id = p.promotion_id) AS product_count "
+          + "(SELECT COUNT(DISTINCT pp.product_id) FROM promotion_products pp WHERE pp.promotion_id = p.promotion_id) AS product_count "
           + "FROM promotions p ";
 
     private Promotion map(ResultSet rs) throws SQLException {
@@ -205,7 +211,7 @@ public class PromotionDAO extends DBContext {
 
     private List<String> loadProductNames(Connection conn, long promotionId, int limit) throws SQLException {
         List<String> names = new ArrayList<>();
-        String sql = "SELECT TOP (" + limit + ") pr.name FROM promotion_products pp JOIN products pr ON pr.product_id = pp.product_id "
+        String sql = "SELECT DISTINCT TOP (" + limit + ") pr.name FROM promotion_products pp JOIN products pr ON pr.product_id = pp.product_id "
                 + "WHERE pp.promotion_id = ? ORDER BY pr.name";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, promotionId);
@@ -228,10 +234,15 @@ public class PromotionDAO extends DBContext {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Promotion p = map(rs);
-                    try (PreparedStatement ps2 = conn.prepareStatement("SELECT product_id FROM promotion_products WHERE promotion_id = ?")) {
+                    try (PreparedStatement ps2 = conn.prepareStatement("SELECT product_id, variant_id FROM promotion_products WHERE promotion_id = ?")) {
                         ps2.setLong(1, promotionId);
                         try (ResultSet r2 = ps2.executeQuery()) {
-                            while (r2.next()) p.getProductIds().add(r2.getLong(1));
+                            while (r2.next()) {
+                                long productId = r2.getLong("product_id");
+                                long variantId = r2.getLong("variant_id");
+                                if (r2.wasNull()) p.getProductIds().add(productId);
+                                else p.getVariantIds().add(variantId);
+                            }
                         }
                     }
                     return p;
@@ -244,39 +255,146 @@ public class PromotionDAO extends DBContext {
     }
 
     /**
-     * Tên các sản phẩm đã nằm trong promotion khác trùng khoảng thời gian (mỗi sản phẩm chỉ tham gia
-     * 1 promotion tại một thời điểm). excludeId = 0 khi tạo mới.
+     * Tên sản phẩm có target trùng (sản phẩm không biến thể hoặc cùng biến thể) trong khoảng thời gian.
+     * excludeId = 0 khi tạo mới.
      */
-    public List<String> findConflictingProducts(long shopId, List<Long> productIds, Timestamp start, Timestamp end, long excludeId) {
-        List<String> names = new ArrayList<>();
-        if (productIds == null || productIds.isEmpty()) {
-            return names;
+    public List<String> findConflictingProducts(long shopId, List<Long> productIds, List<Long> variantIds,
+            Timestamp start, Timestamp end, String activeDays, String dailyStartTime,
+            String dailyEndTime, long excludeId) {
+        Set<String> names = new LinkedHashSet<>();
+        boolean hasProducts = productIds != null && !productIds.isEmpty();
+        boolean hasVariants = variantIds != null && !variantIds.isEmpty();
+        if (!hasProducts && !hasVariants) {
+            return new ArrayList<>();
         }
-        StringBuilder in = new StringBuilder();
-        for (int i = 0; i < productIds.size(); i++) {
-            in.append(i == 0 ? "?" : ",?");
-        }
-        String sql = "SELECT DISTINCT pr.name FROM promotions p "
+        String productIn = placeholders(productIds);
+        String variantIn = placeholders(variantIds);
+        String sql = "SELECT DISTINCT pr.name, p.start_date, p.end_date, p.active_days, "
+                + "CONVERT(VARCHAR(8), p.daily_start_time, 108) AS daily_start_time, "
+                + "CONVERT(VARCHAR(8), p.daily_end_time, 108) AS daily_end_time FROM promotions p "
                 + "JOIN promotion_products pp ON pp.promotion_id = p.promotion_id "
                 + "JOIN products pr ON pr.product_id = pp.product_id "
                 + "WHERE p.shop_id = ? AND p.promotion_id <> ? AND p.terminated_at IS NULL "
-                + "AND p.start_date < ? AND p.end_date > ? AND pp.product_id IN (" + in + ")";
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+                + "AND p.start_date < ? AND p.end_date > ? AND ("
+                + (hasProducts ? "pp.product_id IN (" + productIn + ")" : "1 = 0")
+                + (hasVariants ? " OR pp.variant_id IN (" + variantIn + ")"
+                        + " OR (pp.variant_id IS NULL AND pp.product_id IN (SELECT pv.product_id FROM product_variants pv WHERE pv.variant_id IN (" + variantIn + ")))" : "")
+                + ")";
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new IllegalStateException("Không thể kiểm tra lịch khuyến mãi bị trùng. Vui lòng thử lại.");
+        }
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
             int i = 1;
             ps.setLong(i++, shopId);
             ps.setLong(i++, excludeId);
             ps.setTimestamp(i++, end);
             ps.setTimestamp(i++, start);
-            for (Long pid : productIds) {
-                ps.setLong(i++, pid);
-            }
+            if (hasProducts) for (Long pid : productIds) ps.setLong(i++, pid);
+            if (hasVariants) for (Long vid : variantIds) ps.setLong(i++, vid);
+            if (hasVariants) for (Long vid : variantIds) ps.setLong(i++, vid);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) names.add(rs.getString(1));
+                while (rs.next()) {
+                    if (schedulesOverlap(start, end, activeDays, dailyStartTime, dailyEndTime,
+                            rs.getTimestamp("start_date"), rs.getTimestamp("end_date"),
+                            rs.getString("active_days"), rs.getString("daily_start_time"),
+                            rs.getString("daily_end_time"))) {
+                        names.add(rs.getString("name"));
+                    }
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new IllegalStateException("Không thể kiểm tra lịch khuyến mãi bị trùng. Vui lòng thử lại.", e);
         }
-        return names;
+        return new ArrayList<>(names);
+    }
+
+    /** True only when the two recurring schedules share at least one actual active instant. */
+    private static boolean schedulesOverlap(Timestamp startA, Timestamp endA, String daysA,
+            String timeStartA, String timeEndA, Timestamp startB, Timestamp endB, String daysB,
+            String timeStartB, String timeEndB) {
+        if (startA == null || endA == null || startB == null || endB == null) return false;
+        LocalDateTime from = startA.toLocalDateTime().isAfter(startB.toLocalDateTime())
+                ? startA.toLocalDateTime() : startB.toLocalDateTime();
+        LocalDateTime until = endA.toLocalDateTime().isBefore(endB.toLocalDateTime())
+                ? endA.toLocalDateTime() : endB.toLocalDateTime();
+        if (!from.isBefore(until)) return false;
+
+        Set<Integer> allowedA = parseDays(daysA);
+        Set<Integer> allowedB = parseDays(daysB);
+        LocalDate first = from.toLocalDate();
+        LocalDate last = until.minusNanos(1).toLocalDate();
+        long dayCount = ChronoUnit.DAYS.between(first, last) + 1;
+        // Schedules repeat weekly. Checking two weeks covers the clipped first/last days
+        // and at least one full occurrence of every weekday for longer intervals.
+        int daysToCheck = (int) Math.min(dayCount, 14);
+        LocalTime startTimeA = parseTime(timeStartA);
+        LocalTime endTimeA = parseTime(timeEndA);
+        LocalTime startTimeB = parseTime(timeStartB);
+        LocalTime endTimeB = parseTime(timeEndB);
+        if (startTimeA == null || endTimeA == null) {
+            startTimeA = null;
+            endTimeA = null;
+        }
+        if (startTimeB == null || endTimeB == null) {
+            startTimeB = null;
+            endTimeB = null;
+        }
+        for (int offset = 0; offset < daysToCheck; offset++) {
+            LocalDate day = first.plusDays(offset);
+            int isoDay = day.getDayOfWeek().getValue();
+            if ((!allowedA.isEmpty() && !allowedA.contains(isoDay))
+                    || (!allowedB.isEmpty() && !allowedB.contains(isoDay))) continue;
+
+            LocalDateTime activeFrom = max(from, day.atStartOfDay());
+            LocalDateTime activeUntil = min(until, day.plusDays(1).atStartOfDay());
+            if (startTimeA != null && startTimeB != null) {
+                LocalTime laterStart = startTimeA.isAfter(startTimeB) ? startTimeA : startTimeB;
+                LocalTime earlierEnd = endTimeA.isBefore(endTimeB) ? endTimeA : endTimeB;
+                if (!laterStart.isBefore(earlierEnd)) continue;
+                activeFrom = max(activeFrom, day.atTime(laterStart));
+                activeUntil = min(activeUntil, day.atTime(earlierEnd));
+            } else if (startTimeA != null) {
+                activeFrom = max(activeFrom, day.atTime(startTimeA));
+                activeUntil = min(activeUntil, day.atTime(endTimeA));
+            } else if (startTimeB != null) {
+                activeFrom = max(activeFrom, day.atTime(startTimeB));
+                activeUntil = min(activeUntil, day.atTime(endTimeB));
+            }
+            if (activeFrom.isBefore(activeUntil)) return true;
+        }
+        return false;
+    }
+
+    private static Set<Integer> parseDays(String days) {
+        Set<Integer> result = new java.util.HashSet<>();
+        if (days == null || days.trim().isEmpty()) return result;
+        for (String value : days.split(",")) {
+            try {
+                int day = Integer.parseInt(value.trim());
+                if (day >= 1 && day <= 7) result.add(day);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return result;
+    }
+
+    private static LocalTime parseTime(String value) {
+        if (value == null || value.trim().isEmpty()) return null;
+        try {
+            return LocalTime.parse(value.trim().substring(0, 5));
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static LocalDateTime max(LocalDateTime a, LocalDateTime b) {
+        return a.isAfter(b) ? a : b;
+    }
+
+    private static LocalDateTime min(LocalDateTime a, LocalDateTime b) {
+        return a.isBefore(b) ? a : b;
     }
 
     /** Tạo promotion. Trả về promotion_id mới hoặc -1 nếu lỗi. */
@@ -311,7 +429,7 @@ public class PromotionDAO extends DBContext {
                     conn.rollback();
                     return -1;
                 }
-                saveProducts(conn, id, p.getShopId(), p.getProductIds());
+                saveTargets(conn, id, p.getShopId(), p.getProductIds(), p.getVariantIds());
                 conn.commit();
                 return id;
             } catch (SQLException e) {
@@ -356,7 +474,7 @@ public class PromotionDAO extends DBContext {
                     del.setLong(1, p.getPromotionId());
                     del.executeUpdate();
                 }
-                saveProducts(conn, p.getPromotionId(), p.getShopId(), p.getProductIds());
+                saveTargets(conn, p.getPromotionId(), p.getShopId(), p.getProductIds(), p.getVariantIds());
                 conn.commit();
                 return true;
             } catch (SQLException e) {
@@ -369,20 +487,45 @@ public class PromotionDAO extends DBContext {
         return false;
     }
 
-    private void saveProducts(Connection conn, long promotionId, long shopId, List<Long> productIds) throws SQLException {
-        if (productIds == null) return;
-        // Chỉ nhận sản phẩm thuộc đúng shop
-        String sql = "INSERT INTO promotion_products (promotion_id, product_id) "
-                + "SELECT ?, p.product_id FROM products p WHERE p.product_id = ? AND p.shop_id = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (Long pid : productIds) {
-                ps.setLong(1, promotionId);
-                ps.setLong(2, pid);
-                ps.setLong(3, shopId);
-                ps.addBatch();
+    private void saveTargets(Connection conn, long promotionId, long shopId, List<Long> productIds,
+            List<Long> variantIds) throws SQLException {
+        // NULL variant target is reserved for products that have no active variants.
+        String productSql = "INSERT INTO promotion_products (promotion_id, product_id, variant_id) "
+                + "SELECT ?, p.product_id, NULL FROM products p WHERE p.product_id = ? AND p.shop_id = ? "
+                + "AND NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1)";
+        if (productIds != null && !productIds.isEmpty()) {
+            try (PreparedStatement ps = conn.prepareStatement(productSql)) {
+                for (Long pid : productIds) {
+                    ps.setLong(1, promotionId);
+                    ps.setLong(2, pid);
+                    ps.setLong(3, shopId);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
             }
-            ps.executeBatch();
         }
+        String variantSql = "INSERT INTO promotion_products (promotion_id, product_id, variant_id) "
+                + "SELECT ?, p.product_id, pv.variant_id FROM product_variants pv "
+                + "JOIN products p ON p.product_id = pv.product_id "
+                + "WHERE pv.variant_id = ? AND pv.is_active = 1 AND p.shop_id = ? AND p.is_active = 1";
+        if (variantIds != null && !variantIds.isEmpty()) {
+            try (PreparedStatement ps = conn.prepareStatement(variantSql)) {
+                for (Long variantId : variantIds) {
+                    ps.setLong(1, promotionId);
+                    ps.setLong(2, variantId);
+                    ps.setLong(3, shopId);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+        }
+    }
+
+    private static String placeholders(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) return "";
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) b.append(i == 0 ? "?" : ",?");
+        return b.toString();
     }
 
     // ------------------------------------------------------------------
@@ -418,6 +561,7 @@ public class PromotionDAO extends DBContext {
 
     public List<Map<String, Object>> getShopProductsForPicker(long shopId) {
         List<Map<String, Object>> list = new ArrayList<>();
+        Map<Long, Map<String, Object>> byId = new HashMap<>();
         String sql = "SELECT p.product_id, p.name, "
                 + "(SELECT MIN(v.price) FROM product_variants v WHERE v.product_id = p.product_id AND v.is_active = 1) AS min_price, "
                 + "(SELECT TOP 1 i.image_url FROM product_images i WHERE i.product_id = p.product_id "
@@ -432,7 +576,30 @@ public class PromotionDAO extends DBContext {
                     m.put("name", rs.getString("name"));
                     m.put("minPrice", rs.getBigDecimal("min_price"));
                     m.put("image", rs.getString("image"));
+                    m.put("variants", new ArrayList<Map<String, Object>>());
                     list.add(m);
+                    byId.put((Long) m.get("productId"), m);
+                }
+            }
+            String variantsSql = "SELECT pv.product_id, pv.variant_id, pv.variant_name, pv.unit, pv.price "
+                    + "FROM product_variants pv JOIN products p ON p.product_id = pv.product_id "
+                    + "WHERE p.shop_id = ? AND p.is_active = 1 AND pv.is_active = 1 "
+                    + "ORDER BY pv.product_id, pv.price, pv.variant_id";
+            try (PreparedStatement psVariants = conn.prepareStatement(variantsSql)) {
+                psVariants.setLong(1, shopId);
+                try (ResultSet rs = psVariants.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, Object> product = byId.get(rs.getLong("product_id"));
+                        if (product == null) continue;
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> variants = (List<Map<String, Object>>) product.get("variants");
+                        Map<String, Object> variant = new HashMap<>();
+                        variant.put("variantId", rs.getLong("variant_id"));
+                        variant.put("variantName", rs.getString("variant_name"));
+                        variant.put("unit", rs.getString("unit"));
+                        variant.put("price", rs.getBigDecimal("price"));
+                        variants.add(variant);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -445,36 +612,31 @@ public class PromotionDAO extends DBContext {
     // DÙNG Ở TRANG SẢN PHẨM / GIỎ HÀNG / CHECKOUT
     // ------------------------------------------------------------------
 
-    /**
-     * Promotion đang chạy cho từng sản phẩm: productId -> Promotion.
-     * Dùng Promotion.calcDiscount(unitPrice) / calcDiscountedPrice(unitPrice) để tính giá sau giảm.
-     * (Mỗi sản phẩm chỉ có tối đa 1 promotion tại một thời điểm do đã chặn trùng lịch khi tạo.)
-     */
-    public Map<Long, Promotion> getActivePromotionsByProducts(Collection<Long> productIds) {
+    /** Tải promotion đang chạy cho các biến thể; target cấp sản phẩm cũ (variant_id NULL) vẫn áp dụng cho mọi biến thể. */
+    public Map<Long, Promotion> getActivePromotionsByVariants(Collection<Long> variantIds) {
         Map<Long, Promotion> result = new HashMap<>();
-        if (productIds == null || productIds.isEmpty()) {
+        if (variantIds == null || variantIds.isEmpty()) {
             return result;
         }
-        StringBuilder in = new StringBuilder();
-        for (int i = 0; i < productIds.size(); i++) {
-            in.append(i == 0 ? "?" : ",?");
-        }
-        String sql = "SELECT pp.product_id, p.promotion_id, p.shop_id, p.name, p.promotion_type, p.discount_value, p.max_discount_amount, "
+        String in = placeholders(variantIds);
+        String sql = "SELECT pv.variant_id AS target_variant_id, p.promotion_id, p.shop_id, p.name, p.promotion_type, p.discount_value, p.max_discount_amount, "
                 + "p.min_quantity, p.quota, p.sold_quantity, "
                 + "p.active_days, CONVERT(VARCHAR(5), p.daily_start_time, 108) AS daily_start_time, "
                 + "CONVERT(VARCHAR(5), p.daily_end_time, 108) AS daily_end_time, "
                 + "p.start_date, p.end_date FROM promotions p JOIN promotion_products pp ON pp.promotion_id = p.promotion_id "
+                + "JOIN product_variants pv ON pv.is_active = 1 AND ((pp.variant_id IS NOT NULL AND pv.variant_id = pp.variant_id) "
+                + "OR (pp.variant_id IS NULL AND pv.product_id = pp.product_id)) "
                 + "WHERE p.is_active = 1 AND p.terminated_at IS NULL AND p.start_date <= GETDATE() AND p.end_date >= GETDATE() "
                 + "AND (p.quota IS NULL OR p.sold_quantity < p.quota) AND p.promotion_type <> 'BUY_X_GET_Y' AND " + scheduleOk("p") + " "
-                + "AND pp.product_id IN (" + in + ") ORDER BY p.start_date";
+                + "AND pv.variant_id IN (" + in + ") ORDER BY p.start_date";
         Connection conn = getConnection();
         if (conn == null) {
             return result;
         }
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
             int i = 1;
-            for (Long pid : productIds) {
-                ps.setLong(i++, pid);
+            for (Long variantId : variantIds) {
+                ps.setLong(i++, variantId);
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -489,7 +651,48 @@ public class PromotionDAO extends DBContext {
                     p.setStartDate(rs.getTimestamp("start_date"));
                     p.setEndDate(rs.getTimestamp("end_date"));
                     p.setStatus("ONGOING");
-                    result.put(rs.getLong("product_id"), p);
+                    result.putIfAbsent(rs.getLong("target_variant_id"), p);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    /** Legacy/product-level targets (variant_id NULL), used only when a product has no selectable variant. */
+    public Map<Long, Promotion> getActivePromotionsByProducts(Collection<Long> productIds) {
+        Map<Long, Promotion> result = new HashMap<>();
+        if (productIds == null || productIds.isEmpty()) return result;
+        String in = placeholders(productIds);
+        String sql = "SELECT pp.product_id AS target_product_id, p.promotion_id, p.shop_id, p.name, p.promotion_type, p.discount_value, p.max_discount_amount, "
+                + "p.min_quantity, p.quota, p.sold_quantity, p.active_days, "
+                + "CONVERT(VARCHAR(5), p.daily_start_time, 108) AS daily_start_time, "
+                + "CONVERT(VARCHAR(5), p.daily_end_time, 108) AS daily_end_time, p.start_date, p.end_date "
+                + "FROM promotions p JOIN promotion_products pp ON pp.promotion_id = p.promotion_id "
+                + "WHERE pp.variant_id IS NULL AND p.is_active = 1 AND p.terminated_at IS NULL "
+                + "AND p.start_date <= GETDATE() AND p.end_date >= GETDATE() "
+                + "AND (p.quota IS NULL OR p.sold_quantity < p.quota) AND p.promotion_type <> 'BUY_X_GET_Y' AND " + scheduleOk("p") + " "
+                + "AND pp.product_id IN (" + in + ") ORDER BY p.start_date";
+        Connection conn = getConnection();
+        if (conn == null) return result;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            int i = 1;
+            for (Long productId : productIds) ps.setLong(i++, productId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Promotion p = new Promotion();
+                    p.setPromotionId(rs.getLong("promotion_id"));
+                    p.setShopId(rs.getLong("shop_id"));
+                    p.setName(rs.getString("name"));
+                    p.setPromotionType(rs.getString("promotion_type"));
+                    p.setDiscountValue(rs.getBigDecimal("discount_value"));
+                    p.setMaxDiscountAmount(rs.getBigDecimal("max_discount_amount"));
+                    readExtra(rs, p);
+                    p.setStartDate(rs.getTimestamp("start_date"));
+                    p.setEndDate(rs.getTimestamp("end_date"));
+                    p.setStatus("ONGOING");
+                    result.putIfAbsent(rs.getLong("target_product_id"), p);
                 }
             }
         } catch (SQLException e) {

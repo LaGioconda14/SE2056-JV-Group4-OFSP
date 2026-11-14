@@ -202,31 +202,21 @@
                                     <span id="detail-unit" class="text-lg font-bold text-gray-600">
                                         /${not empty product.unit ? product.unit : 'sản phẩm'}
                                     </span>
-                                    <c:if test="${product.oldPrice gt product.price}">
-                                        <span id="detail-old-price" class="text-base sm:text-lg text-gray-400 line-through">
-                                            <fmt:formatNumber value="${product.oldPrice}" pattern="#,###" />đ/${product.unit}
-                                        </span>
-                                        <span id="detail-savings-badge" class="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                                            Tiết kiệm <fmt:formatNumber value="${product.oldPrice - product.price}" pattern="#,###" />đ (${product.discountPercent}% GIẢM)
-                                        </span>
-                                    </c:if>
+                                    <span id="detail-old-price" class="text-base sm:text-lg text-gray-400 line-through" style="${product.oldPrice gt product.price ? '' : 'display:none'}">
+                                        <fmt:formatNumber value="${product.oldPrice}" pattern="#,###" />đ/${product.unit}
+                                    </span>
+                                    <span id="detail-savings-badge" class="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider" style="${product.oldPrice gt product.price ? '' : 'display:none'}">
+                                        Tiết kiệm <fmt:formatNumber value="${product.oldPrice - product.price}" pattern="#,###" />đ (${product.discountPercent}% GIẢM)
+                                    </span>
                                 </div>
 
-                                <c:if test="${product.onPromotion}">
-                                    <div class="mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                                <div id="detail-promotion-notice" class="mb-4 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3" style="${product.onPromotion ? '' : 'display:none'}">
                                         <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white"><i class="fa-solid fa-bolt"></i></span>
                                         <div class="min-w-0 text-sm">
-                                            <div class="font-extrabold text-rose-700"><c:out value="${product.promotionName}"/> · <c:out value="${product.promotionLabel}"/></div>
-                                            <div class="text-rose-900/80"><c:out value="${product.promotionCondition}"/>. Tự động áp dụng trong giỏ hàng, không cần nhập mã.</div>
-                                            <c:if test="${not empty product.promotionSchedule}">
-                                                <div class="mt-0.5 text-xs font-bold text-rose-700"><i class="fa-solid fa-clock mr-1"></i>Áp dụng: <c:out value="${product.promotionSchedule}"/></div>
-                                            </c:if>
-                                            <c:if test="${not empty product.promotionEndDate}">
-                                                <div class="mt-0.5 text-xs text-rose-700/80">Chương trình kết thúc: <fmt:formatDate value="${product.promotionEndDate}" pattern="HH:mm dd/MM/yyyy"/></div>
-                                            </c:if>
+                                            <div id="detail-promotion-heading" class="font-extrabold text-rose-700"><c:out value="${product.promotionName}"/> · <c:out value="${product.promotionLabel}"/></div>
+                                            <div id="detail-promotion-end" class="mt-0.5 text-sm font-semibold text-rose-700/80" style="${not empty product.promotionEndDate ? '' : 'display:none'}"><c:if test="${not empty product.promotionEndDate}">Kết thúc: <fmt:formatDate value="${product.promotionEndDate}" pattern="HH:mm dd/MM/yyyy"/></c:if></div>
                                         </div>
-                                    </div>
-                                </c:if>
+                                </div>
 
                                 <!-- Trạng Thái Tồn Kho Thực Tế Từ DB -->
                                 <div class="flex items-center gap-2 mb-4 text-xs font-semibold text-gray-700">
@@ -263,9 +253,14 @@
                                             <c:when test="${not empty product.variants}">
                                                 <c:forEach var="variant" items="${product.variants}" varStatus="vStatus">
                                                     <c:set var="isVarActive" value="${(not empty param.variantId and param.variantId == variant.variantId) or (empty param.variantId and vStatus.first)}" />
+                                                    <fmt:formatDate value="${variant.promotionEndDate}" pattern="HH:mm dd/MM/yyyy" var="variantPromotionEnd" />
                                                     <div onclick="selectPackageVariant(${variant.variantId}, ${variant.price}, '${variant.unit}', ${variant.stockQuantity}, ${variant.originalPrice != null ? variant.originalPrice : variant.price}, this)" 
                                                          data-variant-id="${variant.variantId}"
                                                          data-stock="${variant.stockQuantity}"
+                                                         data-promotion-id="${variant.promotionId}"
+                                                         data-promotion-name="${fn:escapeXml(variant.promotionName)}"
+                                                         data-promotion-label="${fn:escapeXml(variant.promotionLabel)}"
+                                                         data-promotion-end-date="${variantPromotionEnd}"
                                                          class="variant-card cursor-pointer rounded-2xl border-2 p-3.5 transition-all text-left relative ${isVarActive ? 'selected' : 'border-gray-200 hover:border-emerald-300 bg-white'}">
                                                         <div class="font-extrabold text-sm mb-1">
                                                             <c:out value="${variant.variantName}"/>
@@ -1012,8 +1007,29 @@
 
                 document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('selected'));
                 if (cardEl) cardEl.classList.add('selected');
+                updatePromotionNotice(cardEl);
 
                 recalculateCartTotal();
+            }
+
+            function updatePromotionNotice(cardEl) {
+                const notice = document.getElementById('detail-promotion-notice');
+                if (!notice || !cardEl) return;
+                const promotionId = Number(cardEl.dataset.promotionId || 0);
+                const heading = document.getElementById('detail-promotion-heading');
+                const endLine = document.getElementById('detail-promotion-end');
+                if (promotionId <= 0) {
+                    notice.style.display = 'none';
+                    return;
+                }
+                const title = [cardEl.dataset.promotionName, cardEl.dataset.promotionLabel].filter(Boolean).join(' · ');
+                if (heading) heading.textContent = title;
+                if (endLine) {
+                    const endDate = cardEl.dataset.promotionEndDate || '';
+                    endLine.textContent = endDate ? 'Kết thúc: ' + endDate : '';
+                    endLine.style.display = endDate ? '' : 'none';
+                }
+                notice.style.display = '';
             }
 
             function updatePriceDisplay(price, unit, oldPrice) {
@@ -1024,15 +1040,14 @@
 
                 if (priceEl) priceEl.textContent = currencyFormatter.format(price) + 'đ';
                 if (unitEl) unitEl.textContent = '/' + unit;
-                if (oldPriceEl && oldPrice > price) {
-                    oldPriceEl.textContent = currencyFormatter.format(oldPrice) + 'đ/' + unit;
-                    if (savingsBadge) {
-                        const saved = oldPrice - price;
-                        savingsBadge.textContent = 'Tiết kiệm ' + currencyFormatter.format(saved) + 'đ';
-                        savingsBadge.style.display = 'inline-block';
-                    }
-                } else if (savingsBadge) {
-                    savingsBadge.style.display = 'none';
+                const hasDiscount = Number(oldPrice) > Number(price);
+                if (oldPriceEl) {
+                    oldPriceEl.style.display = hasDiscount ? '' : 'none';
+                    if (hasDiscount) oldPriceEl.textContent = currencyFormatter.format(oldPrice) + 'đ/' + unit;
+                }
+                if (savingsBadge) {
+                    savingsBadge.style.display = hasDiscount ? 'inline-block' : 'none';
+                    if (hasDiscount) savingsBadge.textContent = 'Tiết kiệm ' + currencyFormatter.format(oldPrice - price) + 'đ';
                 }
             }
 
@@ -1233,6 +1248,7 @@
                     if (activeVariantCard && activeVariantCard.dataset.stock !== undefined) {
                         currentStock = Number(activeVariantCard.dataset.stock);
                     }
+                    if (activeVariantCard) updatePromotionNotice(activeVariantCard);
                     updateStockAndButtons(currentStock, '${product.unit}');
                 }
                 recalculateCartTotal();

@@ -108,6 +108,28 @@ body {
     color: #ffffff !important;
 }
 
+.shop-sidebar-footer {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid #eef2f6;
+}
+
+.shop-sidebar-logout {
+    justify-content: center;
+    border: 1px solid #fee2e2;
+    background: #fff7f7;
+    color: #dc2626;
+}
+
+.shop-sidebar-logout:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.shop-sidebar-logout i {
+    color: inherit;
+}
+
 .badge-counter-red {
     background-color: #fee2e2;
     color: #ef4444;

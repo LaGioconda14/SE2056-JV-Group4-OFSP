@@ -20,7 +20,12 @@ public class ShopPromotionServiceImpl implements IShopPromotionService {
     @Override
     public Promotion findByIdAndShop(long promotionId, long shopId) { return promotionDAO.findByIdAndShop(promotionId, shopId); }
     @Override
-    public List<String> findConflictingProducts(long shopId, List<Long> productIds, Timestamp start, Timestamp end, long excludeId) { return promotionDAO.findConflictingProducts(shopId, productIds, start, end, excludeId); }
+    public List<String> findConflictingProducts(long shopId, List<Long> productIds, List<Long> variantIds,
+            Timestamp start, Timestamp end, String activeDays, String dailyStartTime,
+            String dailyEndTime, long excludeId) {
+        return promotionDAO.findConflictingProducts(shopId, productIds, variantIds, start, end,
+                activeDays, dailyStartTime, dailyEndTime, excludeId);
+    }
     @Override
     public long create(Promotion promotion) { return promotionDAO.create(promotion); }
     @Override

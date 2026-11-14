@@ -146,6 +146,8 @@ public class ShopPromotionServlet extends BaseShopServlet {
             throws ServletException, IOException {
         request.setAttribute("promotion", p);
         request.setAttribute("mode", mode);
+        request.setAttribute("variantPickerEnabled", Boolean.TRUE);
+        request.setAttribute("selectedVariantIds", p.getVariantIds());
         request.setAttribute("pickerProducts", promotionService.getShopProductsForPicker(shopId));
         request.getRequestDispatcher("/views/shop/shop-promotion-form.jsp").forward(request, response);
     }
@@ -195,6 +197,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         p.setStartDate(parseDateTime(req.getParameter("startDate")));
         p.setEndDate(parseDateTime(req.getParameter("endDate")));
         p.setProductIds(parseIdList(req.getParameterValues("productIds")));
+        p.setVariantIds(parseIdList(req.getParameterValues("variantIds")));
         p.setActive(req.getParameter("active") != null);
         return p;
     }
@@ -230,16 +233,43 @@ public class ShopPromotionServlet extends BaseShopServlet {
         if (!editing && !p.getEndDate().after(new Timestamp(System.currentTimeMillis()))) {
             return "Thời gian kết thúc phải ở tương lai.";
         }
-        if (p.getProductIds().isEmpty()) {
+        if (p.getProductIds().isEmpty() && p.getVariantIds().isEmpty()) {
             return "Vui lòng chọn ít nhất một sản phẩm tham gia khuyến mãi.";
+        }
+        List<java.util.Map<String, Object>> pickerProducts = promotionService.getShopProductsForPicker(shopId);
+        java.util.Set<Long> validProductTargets = new java.util.HashSet<>();
+        java.util.Set<Long> validVariantTargets = new java.util.HashSet<>();
+        for (java.util.Map<String, Object> row : pickerProducts) {
+            Long pid = (Long) row.get("productId");
+            @SuppressWarnings("unchecked")
+            List<java.util.Map<String, Object>> variants = (List<java.util.Map<String, Object>>) row.get("variants");
+            if (variants.isEmpty()) validProductTargets.add(pid);
+            for (java.util.Map<String, Object> variant : variants) {
+                validVariantTargets.add((Long) variant.get("variantId"));
+            }
+        }
+        if (!validProductTargets.containsAll(p.getProductIds())
+                || !validVariantTargets.containsAll(p.getVariantIds())) {
+            return "Danh sách sản phẩm hoặc biến thể đã chọn không hợp lệ. Vui lòng chọn lại.";
         }
         if (p.isFixedPrice() || p.isTimeWindow()) {
             List<String> tooLow = new java.util.ArrayList<>();
-            for (java.util.Map<String, Object> row : promotionService.getShopProductsForPicker(shopId)) {
+            for (java.util.Map<String, Object> row : pickerProducts) {
                 Long pid = (Long) row.get("productId");
                 BigDecimal minPrice = (BigDecimal) row.get("minPrice");
-                if (p.getProductIds().contains(pid) && minPrice != null && p.getDiscountValue().compareTo(minPrice) >= 0) {
+                @SuppressWarnings("unchecked")
+                List<java.util.Map<String, Object>> variants = (List<java.util.Map<String, Object>>) row.get("variants");
+                if (p.getProductIds().contains(pid) && variants.isEmpty() && minPrice != null && p.getDiscountValue().compareTo(minPrice) >= 0) {
                     tooLow.add((String) row.get("name"));
+                }
+                if (!variants.isEmpty()) {
+                    for (java.util.Map<String, Object> variant : variants) {
+                        Long variantId = (Long) variant.get("variantId");
+                        BigDecimal price = (BigDecimal) variant.get("price");
+                        if (p.getVariantIds().contains(variantId) && price != null && p.getDiscountValue().compareTo(price) >= 0) {
+                            tooLow.add((String) row.get("name") + " - " + variant.get("variantName"));
+                        }
+                    }
                 }
             }
             if (!tooLow.isEmpty()) {
@@ -249,10 +279,17 @@ public class ShopPromotionServlet extends BaseShopServlet {
                         + (tooLow.size() > 3 ? " và " + (tooLow.size() - 3) + " sản phẩm khác" : "") + ".";
             }
         }
-        List<String> conflicts = promotionService.findConflictingProducts(shopId, p.getProductIds(), p.getStartDate(), p.getEndDate(), editing ? p.getPromotionId() : 0);
+        List<String> conflicts;
+        try {
+            conflicts = promotionService.findConflictingProducts(shopId, p.getProductIds(), p.getVariantIds(),
+                    p.getStartDate(), p.getEndDate(), p.getActiveDays(), p.getDailyStartTime(),
+                    p.getDailyEndTime(), editing ? p.getPromotionId() : 0);
+        } catch (IllegalStateException ex) {
+            return "Không thể kiểm tra lịch khuyến mãi bị trùng. Vui lòng thử lại.";
+        }
         if (!conflicts.isEmpty()) {
             String shown = String.join(", ", conflicts.size() > 3 ? conflicts.subList(0, 3) : conflicts);
-            return "Sản phẩm đã tham gia chương trình khuyến mãi khác trong cùng thời gian: " + shown
+            return "Sản phẩm hoặc biến thể đã tham gia chương trình khuyến mãi khác trong cùng thời gian: " + shown
                     + (conflicts.size() > 3 ? " và " + (conflicts.size() - 3) + " sản phẩm khác" : "")
                     + ". Hãy đổi thời gian hoặc bỏ chọn các sản phẩm này.";
         }

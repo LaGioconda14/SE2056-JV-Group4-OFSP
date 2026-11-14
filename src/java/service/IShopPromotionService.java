@@ -11,7 +11,9 @@ public interface IShopPromotionService {
     Map<String, Integer> countByTab(long shopId);
     Map<String, Object> getShopSummary(long shopId);
     Promotion findByIdAndShop(long promotionId, long shopId);
-    List<String> findConflictingProducts(long shopId, List<Long> productIds, Timestamp start, Timestamp end, long excludeId);
+    List<String> findConflictingProducts(long shopId, List<Long> productIds, List<Long> variantIds,
+            Timestamp start, Timestamp end, String activeDays, String dailyStartTime,
+            String dailyEndTime, long excludeId);
     long create(Promotion promotion);
     boolean update(Promotion promotion);
     boolean setActive(long promotionId, long shopId, boolean active);

@@ -107,4 +107,13 @@
             </a>
         </nav>
     </div>
+
+    <div class="shop-sidebar-footer">
+        <a href="${ctx}/logout" class="shop-sidebar-link shop-sidebar-logout">
+            <span class="flex items-center gap-2">
+                <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                <span>Đăng xuất</span>
+            </span>
+        </a>
+    </div>
 </aside>
