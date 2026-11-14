@@ -1483,6 +1483,68 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
+    /**
+     * Lấy danh sách sản phẩm liên quan theo categoryId có giới hạn TOP trực tiếp từ SQL (tối ưu hiệu năng).
+     */
+    public List<ProductCardDTO> getRelatedProducts(int categoryId, long excludeProductId, int limit) {
+        List<ProductCardDTO> list = new ArrayList<>();
+        int max = (limit > 0 && limit <= 20) ? limit : 4;
+        String query = "SELECT TOP (" + max + ") p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
+                + "p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, "
+                + "COALESCE(v_stat.min_price, 100000) AS price, "
+                + "v_stat.unit, "
+                + "COALESCE(v_stat.total_stock, 0) AS total_stock "
+                + "FROM products p "
+                + "JOIN categories c ON p.category_id = c.category_id "
+                + "LEFT JOIN ( "
+                + "    SELECT product_id, MIN(price) AS min_price, MAX(unit) AS unit, SUM(stock_quantity) AS total_stock "
+                + "    FROM product_variants WHERE is_active = 1 GROUP BY product_id "
+                + ") v_stat ON v_stat.product_id = p.product_id "
+                + "OUTER APPLY ( "
+                + "    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC "
+                + ") pi "
+                + "OUTER APPLY ( "
+                + "    SELECT TOP 1 variant_id FROM product_variants WHERE product_id = p.product_id AND is_active = 1 AND stock_quantity > 0 ORDER BY price ASC "
+                + ") dv "
+                + "WHERE p.is_active = 1 AND p.category_id = ? AND p.product_id != ? "
+                + "ORDER BY p.product_id DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, categoryId);
+            ps.setLong(2, excludeProductId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long id = rs.getLong("product_id");
+                    String name = rs.getString("name");
+                    int catId = rs.getInt("category_id");
+                    String categoryName = rs.getString("category_name");
+                    String categorySlugVal = rs.getString("category_slug");
+                    String image = rs.getString("image_url");
+                    if (image == null || image.isEmpty()) {
+                        image = getDefaultFruitImage(name);
+                    }
+                    BigDecimal price = rs.getBigDecimal("price");
+                    ProductCardDTO p = new ProductCardDTO(id, name, categoryName, image, price, price, 0, 5.0, 0);
+                    p.setCategoryId(catId);
+                    p.setCategorySlug(categorySlugVal);
+                    p.setOrigin(rs.getString("origin"));
+                    p.setCertification(rs.getString("certification"));
+                    p.setStorageTemp(rs.getString("storage_temp"));
+                    p.setDefaultVariantId(rs.getLong("default_variant_id"));
+                    p.setUnit(rs.getString("unit"));
+                    int totalStock = rs.getInt("total_stock");
+                    p.setStockQuantity(totalStock);
+                    p.setInStock(totalStock > 0);
+                    list.add(p);
+                }
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Error loading related products", ex);
+        }
+        util.PromotionPricing.applyToProducts(list);
+        return list;
+    }
+
     // 1. Lấy thông tin chi tiết sản phẩm theo ID chuẩn theo model Product
     public ProductDetailDTO getProductById(int productId) {
         ProductDetailDTO p = null;
