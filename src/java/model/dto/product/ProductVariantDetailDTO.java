@@ -2,6 +2,7 @@ package model.dto.product;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.List;
 
 /**
@@ -41,6 +42,12 @@ public class ProductVariantDetailDTO implements Serializable {
     private String shopName;
     private String shopStatus;
     private boolean productActive = true;
+
+    // Promotion active for this specific variant on the product detail page.
+    private long promotionId;
+    private String promotionName;
+    private String promotionLabel;
+    private Timestamp promotionEndDate;
 
     public ProductVariantDetailDTO() {
     }
@@ -122,4 +129,16 @@ public class ProductVariantDetailDTO implements Serializable {
 
     public boolean isProductActive() { return productActive; }
     public void setProductActive(boolean productActive) { this.productActive = productActive; }
+
+    public long getPromotionId() { return promotionId; }
+    public void setPromotionId(long promotionId) { this.promotionId = promotionId; }
+
+    public String getPromotionName() { return promotionName; }
+    public void setPromotionName(String promotionName) { this.promotionName = promotionName; }
+
+    public String getPromotionLabel() { return promotionLabel; }
+    public void setPromotionLabel(String promotionLabel) { this.promotionLabel = promotionLabel; }
+
+    public Timestamp getPromotionEndDate() { return promotionEndDate; }
+    public void setPromotionEndDate(Timestamp promotionEndDate) { this.promotionEndDate = promotionEndDate; }
 }

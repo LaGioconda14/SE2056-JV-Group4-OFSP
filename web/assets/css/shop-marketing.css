@@ -91,6 +91,12 @@
 .mk-picker-item input { width: 1.05rem; height: 1.05rem; accent-color: #059669; flex-shrink: 0; }
 .mk-picker-item img, .mk-picker-ph { width: 2.4rem; height: 2.4rem; border-radius: .6rem; object-fit: cover; flex-shrink: 0; background: #ecfdf5; color: #10b981; display: flex; align-items: center; justify-content: center; }
 .mk-picker-item.hidden-item { display: none; }
+.mk-picker-product { display: block; cursor: default; }
+.mk-picker-product-head { display: flex; align-items: center; gap: .75rem; }
+.mk-picker-variants { margin: .45rem 0 0 3.15rem; border-left: 2px solid #e2e8f0; }
+.mk-picker-variant { display: flex; align-items: center; gap: .55rem; padding: .35rem .55rem; cursor: pointer; font-size: .75rem; }
+.mk-picker-variant:hover { background: #f0fdf4; }
+.mk-picker-variant input { width: .95rem; height: .95rem; accent-color: #059669; }
 
 /* --- Xem trước voucher --- */
 .mk-ticket { position: relative; display: flex; background: #fff; border-radius: 1rem; overflow: hidden; border: 1px solid #d1fae5; box-shadow: 0 8px 20px rgba(5, 150, 105, .12); }

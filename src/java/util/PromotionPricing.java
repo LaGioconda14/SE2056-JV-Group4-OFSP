@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import model.dto.product.ProductCardDTO;
@@ -32,13 +33,19 @@ public final class PromotionPricing {
         if (products == null || products.isEmpty()) {
             return;
         }
-        Set<Long> ids = new HashSet<>();
+        Set<Long> variantIds = new HashSet<>();
+        Set<Long> productIdsWithoutVariant = new HashSet<>();
         for (ProductCardDTO p : products) {
-            ids.add(p.getProductId());
+            if (p.getDefaultVariantId() > 0) variantIds.add(p.getDefaultVariantId());
+            else productIdsWithoutVariant.add(p.getProductId());
         }
-        Map<Long, Promotion> promos = new PromotionDAO().getActivePromotionsByProducts(ids);
+        PromotionDAO dao = new PromotionDAO();
+        Map<Long, Promotion> promosByVariant = dao.getActivePromotionsByVariants(variantIds);
+        Map<Long, Promotion> promosByProduct = dao.getActivePromotionsByProducts(productIdsWithoutVariant);
         for (ProductCardDTO p : products) {
-            applyToProductCard(p, promos.get(p.getProductId()));
+            Promotion promo = p.getDefaultVariantId() > 0
+                    ? promosByVariant.get(p.getDefaultVariantId()) : promosByProduct.get(p.getProductId());
+            applyToProductCard(p, promo);
         }
     }
 
@@ -47,14 +54,29 @@ public final class PromotionPricing {
         if (product == null) {
             return;
         }
-        Set<Long> ids = new HashSet<>();
-        ids.add(product.getId());
-        Promotion promo = new PromotionDAO().getActivePromotionsByProducts(ids).get(product.getId());
-        applyToProductDetail(product, promo);
-        if (promo != null && promo.isUnitPriceType() && product.getVariants() != null) {
+        List<ProductVariantDetailDTO> variants = product.getVariants();
+        Set<Long> variantIds = new HashSet<>();
+        if (variants != null) {
+            for (ProductVariantDetailDTO v : variants) if (v.getVariantId() > 0) variantIds.add(v.getVariantId());
+        }
+        PromotionDAO dao = new PromotionDAO();
+        Map<Long, Promotion> promosByVariant = dao.getActivePromotionsByVariants(variantIds);
+        Promotion primaryPromo = null;
+        if (variants != null && !variants.isEmpty()) {
+            primaryPromo = promosByVariant.get(variants.get(0).getVariantId());
+        } else {
+            primaryPromo = dao.getActivePromotionsByProducts(java.util.Collections.singleton(product.getId())).get(product.getId());
+        }
+        if (variants != null) {
             for (ProductVariantDetailDTO v : product.getVariants()) {
+                Promotion promo = promosByVariant.get(v.getVariantId());
                 BigDecimal base = v.getPrice();
-                if (base == null) continue;
+                if (promo == null) continue;
+                v.setPromotionId(promo.getPromotionId());
+                v.setPromotionName(promo.getName());
+                v.setPromotionLabel(promo.getBadgeLabel());
+                v.setPromotionEndDate(promo.getEndDate());
+                if (!promo.isUnitPriceType() || base == null) continue;
                 BigDecimal discounted = promo.calcDiscountedPrice(base);
                 if (discounted.compareTo(base) < 0) {
                     v.setOriginalPrice(base);
@@ -62,6 +84,7 @@ public final class PromotionPricing {
                 }
             }
         }
+        applyToProductDetail(product, primaryPromo);
     }
 
     private static void applyToProductCard(ProductCardDTO p, Promotion promo) {
@@ -120,13 +143,13 @@ public final class PromotionPricing {
         if (items == null || items.isEmpty()) {
             return;
         }
-        Set<Long> ids = new HashSet<>();
+        Set<Long> variantIds = new HashSet<>();
         for (CartItem item : items) {
-            if (item.getVariant() != null && item.getVariant().getProductId() > 0) {
-                ids.add(item.getVariant().getProductId());
+            if (item.getVariant() != null && item.getVariant().getVariantId() > 0) {
+                variantIds.add(item.getVariant().getVariantId());
             }
         }
-        Map<Long, Promotion> promos = new PromotionDAO().getActivePromotionsByProducts(ids);
+        Map<Long, Promotion> promos = new PromotionDAO().getActivePromotionsByVariants(variantIds);
 
         // Cùng một sản phẩm có thể nằm ở nhiều phân loại: suất ưu đãi (quota) dùng chung, nên trừ dần theo thứ tự dòng.
         Map<Long, Integer> remaining = new java.util.HashMap<>();
@@ -136,7 +159,7 @@ public final class PromotionPricing {
                     || item.getVariant().getPrice() == null) {
                 continue;
             }
-            Promotion promo = promos.get(item.getVariant().getProductId());
+            Promotion promo = promos.get(item.getVariant().getVariantId());
             if (promo == null) {
                 continue;
             }

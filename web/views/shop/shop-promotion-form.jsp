@@ -6,6 +6,7 @@
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
 <c:set var="editing" value="${mode == 'edit'}" />
 <c:set var="selectedIds" value="${promotion.productIds}" scope="request" />
+<c:set var="selectedVariantIds" value="${promotion.variantIds}" scope="request" />
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -157,7 +158,7 @@
                                 <input type="datetime-local" name="endDate" class="mk-input" value="${promotion.endDateInput}" required>
                             </div>
                         </div>
-                        <p class="mk-hint"><i class="fa-solid fa-circle-info"></i> Mỗi sản phẩm chỉ tham gia một chương trình khuyến mãi tại một thời điểm.</p>
+                        <p class="mk-hint"><i class="fa-solid fa-circle-info"></i> Mỗi biến thể chỉ tham gia một chương trình khuyến mãi tại một thời điểm. Sản phẩm không có biến thể được áp dụng theo sản phẩm.</p>
                     </div>
 
                     <div class="mk-card mk-card-pad flex flex-col gap-4">
