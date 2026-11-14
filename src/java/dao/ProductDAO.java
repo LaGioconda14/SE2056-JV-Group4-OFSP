@@ -1957,12 +1957,17 @@ public class ProductDAO extends DBContext {
                         sql.append(i == 0 ? "?" : ", ?");
                         params.add(catIds.get(i));
                     }
-                    sql.append(") OR p.category_id IN (SELECT sub.category_id FROM categories sub WHERE sub.parent_id IN (");
+                    sql.append(") OR p.category_id IN (SELECT s1.category_id FROM categories s1 WHERE s1.parent_id IN (");
                     for (int i = 0; i < catIds.size(); i++) {
                         sql.append(i == 0 ? "?" : ", ?");
                         params.add(catIds.get(i));
                     }
-                    sql.append(")))");
+                    sql.append(")) OR p.category_id IN (SELECT s2.category_id FROM categories s2 WHERE s2.parent_id IN (SELECT s1.category_id FROM categories s1 WHERE s1.parent_id IN (");
+                    for (int i = 0; i < catIds.size(); i++) {
+                        sql.append(i == 0 ? "?" : ", ?");
+                        params.add(catIds.get(i));
+                    }
+                    sql.append("))))");
                     first = false;
                 }
                 if (!catSlugs.isEmpty()) {
@@ -1974,7 +1979,12 @@ public class ProductDAO extends DBContext {
                         sql.append(i == 0 ? "?" : ", ?");
                         params.add(catSlugs.get(i));
                     }
-                    sql.append(") OR p.category_id IN (SELECT sub.category_id FROM categories sub JOIN categories pcat ON sub.parent_id = pcat.category_id WHERE pcat.slug IN (");
+                    sql.append(") OR p.category_id IN (SELECT s1.category_id FROM categories s1 JOIN categories p1 ON s1.parent_id = p1.category_id WHERE p1.slug IN (");
+                    for (int i = 0; i < catSlugs.size(); i++) {
+                        sql.append(i == 0 ? "?" : ", ?");
+                        params.add(catSlugs.get(i));
+                    }
+                    sql.append(")) OR p.category_id IN (SELECT s2.category_id FROM categories s2 JOIN categories s1 ON s2.parent_id = s1.category_id JOIN categories p1 ON s1.parent_id = p1.category_id WHERE p1.slug IN (");
                     for (int i = 0; i < catSlugs.size(); i++) {
                         sql.append(i == 0 ? "?" : ", ?");
                         params.add(catSlugs.get(i));

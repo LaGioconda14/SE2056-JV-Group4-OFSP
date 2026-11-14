@@ -38,9 +38,10 @@ public class CategoryDAO extends DBContext {
     public List<Category> getAllCategoriesWithCount() {
         List<Category> list = new ArrayList<>();
         String sql = "SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.display_order, c.is_active, "
-                + "(SELECT COUNT(*) FROM products p WHERE p.is_active = 1 "
+                + "(SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.is_active = 1 "
                 + "  AND (p.category_id = c.category_id "
-                + "       OR p.category_id IN (SELECT sub.category_id FROM categories sub WHERE sub.parent_id = c.category_id))) AS product_count "
+                + "       OR p.category_id IN (SELECT s1.category_id FROM categories s1 WHERE s1.parent_id = c.category_id) "
+                + "       OR p.category_id IN (SELECT s2.category_id FROM categories s2 WHERE s2.parent_id IN (SELECT s1.category_id FROM categories s1 WHERE s1.parent_id = c.category_id)))) AS product_count "
                 + "FROM categories c WHERE c.is_active = 1 ORDER BY c.display_order ASC, c.category_id ASC";
 
         try (Connection conn = getConnection();

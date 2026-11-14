@@ -1538,3 +1538,27 @@ body {
     background-color: #cbd5e1;
     border-radius: 4px;
 }
+
+/* --- Standardized Page Container (Đồng bộ chuẩn max-w-7xl với Trang Cửa Hàng & Header) --- */
+.profile-container {
+    max-width: 80rem !important; /* 1280px = max-w-7xl */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    width: 100% !important;
+}
+
+@media (min-width: 640px) {
+    .profile-container {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .profile-container {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+}

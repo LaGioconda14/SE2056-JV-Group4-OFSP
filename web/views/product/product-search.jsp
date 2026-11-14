@@ -9,12 +9,17 @@
         <title>Tìm kiếm: ${txtSearch} - Gốc Vườn</title>
         <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <!-- Google Fonts Inter -->
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <!-- Google Fonts Inter & Plus Jakarta Sans -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <!-- Custom Search CSS -->
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/search-products.css">
         <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+            body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+        </style>
         <!-- Custom Search JS (Tailwind config) -->
         <script src="${pageContext.request.contextPath}/assets/js/search-products.js"></script>
     </head>
