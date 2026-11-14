@@ -1489,8 +1489,8 @@ public class ProductDAO extends DBContext {
         String sql = "SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
                 + "p.shop_id, p.origin, p.description, p.storage_temp, p.certification, "
                 + "COALESCE(pi.image_url, 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&fit=crop') AS image_url, "
-                + "(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, "
-                + "(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, "
+                + "COALESCE(dv.price, 750000) AS price, "
+                + "COALESCE(dv.unit, 'kg') AS unit, "
                 + "(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock "
                 + "FROM products p "
                 + "LEFT JOIN categories c ON p.category_id = c.category_id "
@@ -1499,6 +1499,11 @@ public class ProductDAO extends DBContext {
                 + "    WHERE product_id = p.product_id "
                 + "    ORDER BY is_thumbnail DESC, display_order ASC"
                 + ") pi "
+                + "OUTER APPLY ("
+                + "    SELECT TOP 1 price, unit FROM product_variants "
+                + "    WHERE product_id = p.product_id AND is_active = 1 "
+                + "    ORDER BY price ASC, variant_id ASC"
+                + ") dv "
                 + "WHERE p.product_id = ? AND p.is_active = 1";
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -1522,15 +1527,10 @@ public class ProductDAO extends DBContext {
                     }
                     p.setImage(img);
 
-                    // Lấy giá chuẩn từ product_variants
+                    // Lấy giá và đơn vị tính đồng bộ từ cùng 1 biến thể rẻ nhất
                     java.math.BigDecimal price = rs.getBigDecimal("price");
-                    if (price == null) {
-                        price = new java.math.BigDecimal("750000"); // Giá mặc định nếu DB trống
-                    }
-                    p.setPrice(price);
-
-                    String unit = rs.getString("unit");
-                    p.setUnit(unit != null && !unit.trim().isEmpty() ? unit : "kg");
+                    p.setPrice(price != null ? price : new java.math.BigDecimal("750000"));
+                    p.setUnit(rs.getString("unit"));
 
                     String origin = rs.getString("origin");
                     p.setOrigin(origin != null && !origin.trim().isEmpty() ? origin : "Đà Lạt, Lâm Đồng");
@@ -1553,7 +1553,7 @@ public class ProductDAO extends DBContext {
                     List<ProductVariantDetailDTO> variants = getVariantsByProductId(productId);
                     p.setVariants(variants);
 
-                    // Giá gạch ngang chỉ lấy từ "giá gốc" seller nhập (nếu cao hơn giá bán); không còn tự bịa 17% / 20%.
+                    // Giá gạch ngang chỉ lấy từ "giá gốc" seller nhập (nếu cao hơn giá bán)
                     p.setOldPrice(price);
                     p.setDiscountPercent(0);
                     if (variants != null && !variants.isEmpty()) {
@@ -1566,12 +1566,7 @@ public class ProductDAO extends DBContext {
                         }
                     }
 
-                    double[] rStats = getProductRatingStats(productId);
-                    p.setRating(rStats[0]);
-                    p.setReviewsCount((int) rStats[1]);
-                    p.setTag("-" + p.getDiscountPercent() + "% SALE");
-
-                    // Gắn danh sách ảnh chi tiết (đảm bảo đủ 4 ảnh minh họa như mẫu FreshFruit)
+                    // Gắn danh sách ảnh chi tiết (đảm bảo đủ ảnh minh họa)
                     List<String> imgs = getImagesByProductId(productId);
                     if (imgs == null) {
                         imgs = new ArrayList<>();
