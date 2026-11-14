@@ -22,6 +22,7 @@ public class SubOrderDetailDTO implements Serializable {
     private long orderId;
     private long shopId;
     private String deliverySlot;
+    private String note;
     private BigDecimal shopSubtotal = BigDecimal.ZERO;
     private BigDecimal shopShippingFee = BigDecimal.ZERO;
     private BigDecimal shopDiscount = BigDecimal.ZERO;
@@ -95,6 +96,14 @@ public class SubOrderDetailDTO implements Serializable {
 
     public void setDeliverySlot(DeliverySlot deliverySlot) {
         this.deliverySlot = deliverySlot != null ? deliverySlot.name() : null;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public BigDecimal getShopSubtotal() {

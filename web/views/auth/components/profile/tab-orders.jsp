@@ -61,6 +61,7 @@
                              data-cancel-reason="${order.cancelReason != null ? order.cancelReason : ''}"
                              data-failure-reason="${order.delivery != null and order.delivery.failureReason != null ? order.delivery.failureReason : ''}"
                              data-delivery-slot="${order.deliverySlot != null ? order.deliverySlot : ''}"
+                             data-note="${order.note != null ? order.note : ''}"
                              data-recipient-name="${order.shippingAddress != null ? order.shippingAddress.recipientName : user.fullName}"
                              data-recipient-phone="${order.shippingAddress != null ? order.shippingAddress.recipientPhone : user.phone}"
                              data-recipient-address="${order.shippingAddress != null ? order.shippingAddress.fullAddress : 'Địa chỉ nhận hàng'}"

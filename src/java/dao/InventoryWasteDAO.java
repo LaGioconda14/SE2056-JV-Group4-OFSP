@@ -664,7 +664,14 @@ public class InventoryWasteDAO extends DBContext {
 
     public List<SubOrderDTO> getPendingReturnedOrdersByShop(long shopId) {
         List<SubOrderDTO> list = new ArrayList<>();
+        Connection conn = getConnection();
+        if (conn == null) {
+            return list;
+        }
+
+        boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
+                + (hasNote ? "so.note, " : "NULL AS note, ")
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
                 + "       o.order_code, o.payment_status, o.payment_method, "
@@ -674,11 +681,6 @@ public class InventoryWasteDAO extends DBContext {
                 + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
                 + "WHERE so.shop_id = ? AND so.status IN ('RETURNED', 'FAILED') "
                 + "ORDER BY so.updated_at DESC, so.created_at DESC";
-
-        Connection conn = getConnection();
-        if (conn == null) {
-            return list;
-        }
 
         OrderFulfillmentDAO fulfillmentDAO = new OrderFulfillmentDAO();
         try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -691,7 +693,9 @@ public class InventoryWasteDAO extends DBContext {
                     so.setOrderId(rs.getLong("order_id"));
                     so.setOrderCode(rs.getString("order_code"));
                     so.setShopId(rs.getLong("shop_id"));
-                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    String[] parsedSlot = OrderDAO.parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
+                    so.setDeliverySlot(parsedSlot[0]);
+                    so.setNote(parsedSlot[1]);
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
                     so.setShopDiscount(rs.getBigDecimal("shop_discount"));
