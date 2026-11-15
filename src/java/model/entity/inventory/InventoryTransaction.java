@@ -15,11 +15,23 @@ public class InventoryTransaction {
     private int newStock;
     private String reason;
     private java.sql.Timestamp createdAt;
- 
-    // Thông tin bổ sung từ bảng users
+
+    // Các trường mới cho quản lý hao hụt / tổn thất
+    private Long subOrderId;
+    private String wasteStage;
+    private java.math.BigDecimal costPrice;
+    private java.math.BigDecimal estimatedLoss;
+
+    // Thông tin bổ sung từ bảng users, product_variants, products, product_batches
     private String fullName;
     private String userAvatar;
     private String userEmail;
+    private String unit;
+    private String productName;
+    private String variantName;
+    private String sku;
+    private String batchCode;
+    private String subOrderCode;
  
     // Constructors, Getters và Setters
     public InventoryTransaction() {
@@ -150,5 +162,85 @@ public class InventoryTransaction {
  
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+
+    public Long getSubOrderId() {
+        return subOrderId;
+    }
+
+    public void setSubOrderId(Long subOrderId) {
+        this.subOrderId = subOrderId;
+    }
+
+    public String getWasteStage() {
+        return wasteStage;
+    }
+
+    public void setWasteStage(String wasteStage) {
+        this.wasteStage = wasteStage;
+    }
+
+    public java.math.BigDecimal getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(java.math.BigDecimal costPrice) {
+        this.costPrice = costPrice;
+    }
+
+    public java.math.BigDecimal getEstimatedLoss() {
+        return estimatedLoss;
+    }
+
+    public void setEstimatedLoss(java.math.BigDecimal estimatedLoss) {
+        this.estimatedLoss = estimatedLoss;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getVariantName() {
+        return variantName;
+    }
+
+    public void setVariantName(String variantName) {
+        this.variantName = variantName;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public String getBatchCode() {
+        return batchCode;
+    }
+
+    public void setBatchCode(String batchCode) {
+        this.batchCode = batchCode;
+    }
+
+    public String getSubOrderCode() {
+        return subOrderCode;
+    }
+
+    public void setSubOrderCode(String subOrderCode) {
+        this.subOrderCode = subOrderCode;
     }
 }
