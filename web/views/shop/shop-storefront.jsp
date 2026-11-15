@@ -120,9 +120,6 @@
                     </button>
 
 
-                    <c:set var="contactPhone" value="${not empty shop.phone ? shop.phone : '1900 8892'}" />
-                    <button type="button" onclick="if(window.showToast){ showToast('Hotline hỗ trợ trực tiếp của nhà vườn: ${contactPhone}', 'info'); } else { alert('Hotline hỗ trợ trực tiếp của nhà vườn: ${contactPhone}'); }" 
-
                     <button type="button" onclick="contactShop()" 
                             class="flex-1 lg:flex-none px-6 py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md hover:shadow-lg cursor-pointer">
                         <i class="fa-solid fa-phone text-base"></i>
