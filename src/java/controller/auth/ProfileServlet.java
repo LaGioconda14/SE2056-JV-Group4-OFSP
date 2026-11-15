@@ -169,6 +169,10 @@ public class ProfileServlet extends HttpServlet {
             case "cancelOrder":
                 handleCancelOrder(request, response, session, sessionUser);
                 break;
+            case "requestReturn":
+                session.setAttribute("orderSuccess", "Yêu cầu trả hàng / hoàn tiền đã được gửi tới nhà vườn và bộ phận CSKH để xử lý!");
+                response.sendRedirect(request.getContextPath() + "/profile#orders");
+                break;
             case "confirmReceived":
                 handleConfirmReceivedOrder(request, response, session, sessionUser);
                 break;

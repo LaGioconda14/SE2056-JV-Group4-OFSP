@@ -103,7 +103,7 @@
                                     <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
                                         <div class="flex items-center gap-2.5 min-w-0 pr-2">
                                             <input type="checkbox" name="category" value="${cat.categoryId}" 
-                                                   ${selectedCategoriesList != null and (selectedCategoriesList.contains(String.valueOf(cat.categoryId)) or selectedCategoriesList.contains(cat.slug)) ? 'checked' : ''} 
+                                                   ${selectedCategoriesList != null and (selectedCategoriesList.contains(cat.categoryId.toString()) or selectedCategoriesList.contains(cat.slug)) ? 'checked' : ''} 
                                                    class="custom-checkbox">
                                             <span class="text-xs font-medium text-slate-700 group-hover:text-emerald-700 transition truncate">
                                                 ${cat.categoryName}
@@ -246,7 +246,7 @@
                                         <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
                                             <div class="flex items-center gap-2.5 min-w-0 pr-2">
                                                 <input type="checkbox" name="category" value="${sub.categoryId}" 
-                                                       ${selectedCategoriesList != null and (selectedCategoriesList.contains(String.valueOf(sub.categoryId)) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
+                                                       ${selectedCategoriesList != null and (selectedCategoriesList.contains(sub.categoryId.toString()) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
                                                        class="custom-checkbox">
                                                 <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${sub.categoryName}">
                                                     ${sub.categoryName}
@@ -264,7 +264,7 @@
                                             <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
                                                 <div class="flex items-center gap-2.5 min-w-0 pr-2">
                                                     <input type="checkbox" name="category" value="${sub.categoryId}" 
-                                                           ${selectedCategoriesList != null and (selectedCategoriesList.contains(String.valueOf(sub.categoryId)) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
+                                                           ${selectedCategoriesList != null and (selectedCategoriesList.contains(sub.categoryId.toString()) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
                                                            class="custom-checkbox">
                                                     <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${sub.categoryName}">
                                                         ${sub.categoryName}

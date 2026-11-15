@@ -12,14 +12,41 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
-        <!-- Tailwind CSS (Non-blocking) -->
-        <script src="https://cdn.tailwindcss.com" defer></script>
+
+        <!-- Google Fonts: Inter & Plus Jakarta Sans & Material Symbols -->
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
         <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <!-- Google Fonts Inter & Plus Jakarta Sans -->
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        
+
+        <!-- Tailwind CSS (Direct Sync Load) -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            brand: {
+                                DEFAULT: '#00652c',
+                                dark: '#005323',
+                                light: '#059669',
+                                surface: '#f8faf8'
+                            }
+                        },
+                        fontFamily: {
+                            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
+                        }
+                    }
+                }
+            }
+        </script>
+
+        <!-- Product Detail Dedicated CSS -->
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/product-detail.css">
+
         <style>
+            .hidden { display: none !important; }
             body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
             .badge-sale {
                 background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
@@ -74,7 +101,7 @@
                 <a href="${pageContext.request.contextPath}/products" class="hover:text-[#00652c] transition">Nông sản sạch</a>
                 <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
                 <c:if test="${not empty product.categoryName}">
-                    <a href="${pageContext.request.contextPath}/products?categorySlug=${product.categorySlug}" class="hover:text-[#00652c] transition">
+                    <a href="${pageContext.request.contextPath}/products?category=${product.categorySlug}" class="hover:text-[#00652c] transition">
                         ${product.categoryName}
                     </a>
                     <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
@@ -184,7 +211,7 @@
                                         <span class="font-extrabold text-gray-800"><fmt:formatNumber value="${product.rating}" pattern="#0.0" /> / 5.0</span>
                                     </div>
                                     <span class="text-gray-300">•</span>
-                                    <a href="#tab-reviews" onclick="switchTab('reviews')" class="text-gray-500 hover:text-[#00652c] transition underline font-medium">
+                                    <a href="#tab-content-reviews" onclick="switchTab('reviews')" class="text-gray-500 hover:text-[#00652c] transition underline font-medium">
                                         ${product.reviewsCount} đánh giá xác thực
                                     </a>
                                     <span class="text-gray-300">•</span>
@@ -479,7 +506,7 @@
                                         <i class="fa-solid fa-chevron-right text-[9px] text-gray-300"></i>
                                         <a href="${pageContext.request.contextPath}/products" class="hover:underline">Nông Sản Sạch</a>
                                         <i class="fa-solid fa-chevron-right text-[9px] text-gray-300"></i>
-                                        <a href="${pageContext.request.contextPath}/products?categorySlug=${product.categorySlug}" class="hover:underline">${product.categoryName}</a>
+                                        <a href="${pageContext.request.contextPath}/products?category=${product.categorySlug}" class="hover:underline">${product.categoryName}</a>
                                         <i class="fa-solid fa-chevron-right text-[9px] text-gray-300"></i>
                                         <span class="text-gray-700">${product.name}</span>
                                     </div>
@@ -875,7 +902,7 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <a href="${pageContext.request.contextPath}/shop/${shop.shopId}" class="w-full text-center py-3 bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs rounded-xl transition">
+                    <a href="${pageContext.request.contextPath}/store?id=${shop.shopId}" class="w-full text-center py-3 bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs rounded-xl transition">
                         <i class="fa-solid fa-store me-1"></i> Ghé Thăm Gian Hàng Nhà Vườn
                     </a>
                 </div>

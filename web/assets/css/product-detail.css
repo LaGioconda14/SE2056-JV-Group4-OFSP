@@ -1,0 +1,312 @@
+/* ==========================================================================
+   PRODUCT DETAIL CSS - OFSP MARKETPLACE (GỐC VƯỜN)
+   Giao diện chi tiết sản phẩm chuẩn E-Commerce Hiện Đại, Chuẩn Responsive
+   ========================================================================== */
+
+:root {
+    --brand-primary: #00652c;
+    --brand-primary-hover: #005323;
+    --brand-primary-light: #e8f5e9;
+    --brand-emerald: #059669;
+    --brand-emerald-dark: #065f46;
+    --brand-amber: #f59e0b;
+    --brand-surface: #f8faf8;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    --border-color: #e5e7eb;
+}
+
+/* Fallback utilities so UI never breaks even if CDN is delayed/blocked */
+.hidden {
+    display: none !important;
+}
+
+/* Base resets & typography */
+body {
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--brand-surface);
+    color: #1f2937;
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+}
+
+/* Fallback Grid & Layout Utilities */
+.max-w-7xl {
+    max-width: 80rem;
+}
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+.grid {
+    display: grid;
+}
+.flex {
+    display: flex;
+}
+.flex-col {
+    flex-direction: column;
+}
+.items-center {
+    align-items: center;
+}
+.justify-between {
+    justify-content: space-between;
+}
+.justify-center {
+    justify-content: center;
+}
+.relative {
+    position: relative;
+}
+.absolute {
+    position: absolute;
+}
+.fixed {
+    position: fixed;
+}
+.rounded-3xl {
+    border-radius: 1.5rem;
+}
+.rounded-2xl {
+    border-radius: 1rem;
+}
+.rounded-xl {
+    border-radius: 0.75rem;
+}
+.rounded-full {
+    border-radius: 9999px;
+}
+.bg-white {
+    background-color: #ffffff;
+}
+.border {
+    border-width: 1px;
+    border-style: solid;
+}
+.border-gray-100 {
+    border-color: #f3f4f6;
+}
+.border-gray-200 {
+    border-color: #e5e7eb;
+}
+
+@media (min-width: 1024px) {
+    .lg\:grid-cols-12 {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+    .lg\:col-span-5 {
+        grid-column: span 5 / span 5;
+    }
+    .lg\:col-span-7 {
+        grid-column: span 7 / span 7;
+    }
+    .lg\:col-span-8 {
+        grid-column: span 8 / span 8;
+    }
+    .lg\:col-span-4 {
+        grid-column: span 4 / span 4;
+    }
+}
+
+/* Badges */
+.badge-sale {
+    background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+    color: #ffffff;
+}
+
+.badge-organic {
+    background: linear-gradient(135deg, #047857 0%, #10b981 100%);
+    color: #ffffff;
+}
+
+/* Gallery & Zoom */
+.zoom-img-container {
+    position: relative;
+    overflow: hidden;
+    background-color: #f3f4f6;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-img {
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zoom-img-container:hover .zoom-img {
+    transform: scale(1.08);
+}
+
+.gallery-thumb-scroll {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    padding-top: 0.25rem;
+}
+
+.gallery-thumb-scroll::-webkit-scrollbar {
+    height: 5px;
+}
+
+.gallery-thumb-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 9999px;
+}
+
+.gallery-thumb-scroll::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+}
+
+.thumb-btn {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    background-color: #f9fafb;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.thumb-btn:hover {
+    border-color: #9ca3af;
+}
+
+/* Variant Selection Cards */
+.variant-card {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    border: 2px solid #e5e7eb;
+    border-radius: 1rem;
+    padding: 0.875rem 1rem;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.variant-card:hover {
+    border-color: #00652c;
+    background-color: #f4f7f4;
+}
+
+.variant-card.selected {
+    background-color: #00652c !important;
+    color: #ffffff !important;
+    border-color: #00652c !important;
+    box-shadow: 0 4px 14px rgba(0, 101, 44, 0.25) !important;
+}
+
+.variant-card.selected .variant-subtext {
+    color: #d1fae5 !important;
+}
+
+.variant-card.selected .variant-badge {
+    background-color: #ffffff !important;
+    color: #00652c !important;
+}
+
+/* Tab Navigation */
+.tab-btn {
+    padding-bottom: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.tab-btn:hover {
+    color: #00652c;
+}
+
+.tab-btn.active {
+    color: #00652c !important;
+    border-bottom: 3px solid #00652c !important;
+    font-weight: 700 !important;
+}
+
+/* Quantity Stepper & Buttons */
+.quantity-stepper {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    background-color: #f9fafb;
+    overflow: hidden;
+}
+
+.stepper-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #374151;
+    font-weight: bold;
+    transition: background 0.15s;
+}
+
+.stepper-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.stepper-input {
+    width: 3rem;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    color: #111827;
+    outline: none;
+}
+
+/* Shop info card */
+.shop-card-box {
+    background-color: #ffffff;
+    border: 1px solid #f3f4f6;
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* Product Toast */
+#product-toast {
+    animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

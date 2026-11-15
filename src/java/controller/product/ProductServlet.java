@@ -44,10 +44,14 @@ public class ProductServlet extends HttpServlet {
                 }
             }
         }
-        // Fallback parameter "categoryId" nếu có
+        // Fallback parameter "categoryId" hoặc "categorySlug" nếu có
         String singleCatId = request.getParameter("categoryId");
         if (singleCatId != null && !singleCatId.trim().isEmpty() && !selectedCategories.contains(singleCatId.trim())) {
             selectedCategories.add(singleCatId.trim());
+        }
+        String singleCatSlug = request.getParameter("categorySlug");
+        if (singleCatSlug != null && !singleCatSlug.trim().isEmpty() && !selectedCategories.contains(singleCatSlug.trim())) {
+            selectedCategories.add(singleCatSlug.trim());
         }
 
         // 3. Price range filter

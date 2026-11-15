@@ -64,43 +64,17 @@ public class ShopStorefrontServlet extends HttpServlet {
             return;
         }
 
-        String keyword = request.getParameter("keyword");
         String sort = request.getParameter("sort");
 
-        List<ProductCardDTO> products = productDAO.getProductsByShop(shop.getShopId(), null, keyword, sort);
+        List<ProductCardDTO> products = productDAO.getProductsByShop(shop.getShopId(), sort);
         List<Review> reviews = shopDAO.getReviewsByShopId(shop.getShopId());
         int totalProductsCount = shopDAO.getTotalProductsCountByShopId(shop.getShopId());
-
-        String shopJoinedTime = "Từ khi thành lập";
-        if (shop.getCreatedAt() != null) {
-            long diffMillis = System.currentTimeMillis() - shop.getCreatedAt().getTime();
-            long days = diffMillis / (1000 * 60 * 60 * 24);
-            if (days < 30) {
-                shopJoinedTime = Math.max(1, days) + " ngày trước";
-            } else if (days < 365) {
-                shopJoinedTime = (days / 30) + " tháng trước";
-            } else {
-                shopJoinedTime = (days / 365) + " năm trước";
-            }
-        }
-
-        boolean isOwner = false;
-        HttpSession session = request.getSession(false);
-        if (session != null && session.getAttribute("user") != null) {
-            User user = (User) session.getAttribute("user");
-            if (user != null && user.getId() == shop.getOwnerId()) {
-                isOwner = true;
-            }
-        }
 
         request.setAttribute("shop", shop);
         request.setAttribute("products", products);
         request.setAttribute("reviews", reviews);
         request.setAttribute("totalProductsCount", totalProductsCount);
-        request.setAttribute("shopJoinedTime", shopJoinedTime);
         request.setAttribute("selectedSort", sort);
-        request.setAttribute("searchKeyword", keyword);
-        request.setAttribute("isOwner", isOwner);
 
         request.getRequestDispatcher("/views/shop/shop-storefront.jsp").forward(request, response);
     }

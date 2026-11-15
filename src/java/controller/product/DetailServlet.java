@@ -1,6 +1,5 @@
 package controller.product;
 
-import dao.ShopDAO;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,13 +17,15 @@ import service.IProductService;
 import service.impl.ProductServiceImpl;
 import service.IReviewService;
 import service.impl.ReviewServiceImpl;
+import service.IShopProductService;
+import service.impl.ShopProductServiceImpl;
 
 @WebServlet(name="DetailServlet", urlPatterns={"/detail"})
 public class DetailServlet extends HttpServlet {
 
     private final IProductService productService = new ProductServiceImpl();
     private final IReviewService reviewService = new ReviewServiceImpl();
-    private final ShopDAO shopDAO = new ShopDAO();
+    private final IShopProductService shopProductService = new ShopProductServiceImpl();
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -44,17 +45,17 @@ public class DetailServlet extends HttpServlet {
                 if (product != null) {
                     request.setAttribute("product", product);
 
-                    // Lấy thông tin Shop bán sản phẩm này
+                    // Lấy thông tin Shop bán sản phẩm này hoàn toàn từ Service
                     Shop shop = null;
                     int shopTotalProducts = 0;
                     try {
                         long targetShopId = product.getShopId() > 0 ? product.getShopId() : 1L;
-                        shop = shopDAO.getShopById(targetShopId);
+                        shop = shopProductService.getShopById(targetShopId);
                         if (shop == null && targetShopId != 1L) {
-                            shop = shopDAO.getShopById(1L);
+                            shop = shopProductService.getShopById(1L);
                         }
                         if (shop != null) {
-                            shopTotalProducts = shopDAO.getTotalProductsCountByShopId(shop.getShopId());
+                            shopTotalProducts = productService.countProductsByShopId(shop.getShopId());
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -78,10 +79,13 @@ public class DetailServlet extends HttpServlet {
                     request.setAttribute("shop", shop);
                     request.setAttribute("shopTotalProducts", shopTotalProducts);
 
-                    // Lấy danh sách đánh giá thật từ bảng reviews
-                    IReviewService reviewService = new ReviewServiceImpl();
+                    // Lấy danh sách đánh giá thật từ bảng reviews qua ReviewService
                     List<Review> reviews = reviewService.getReviewsByProduct(product.getId(), 1, 20);
                     ReviewSummary reviewSummary = reviewService.getReviewSummary(product.getId());
+                    if (reviewSummary != null && reviewSummary.getTotalReviews() > 0) {
+                        product.setRating(reviewSummary.getAverageRating());
+                        product.setReviewsCount(reviewSummary.getTotalReviews());
+                    }
                     request.setAttribute("reviews", reviews);
                     request.setAttribute("reviewSummary", reviewSummary);
 

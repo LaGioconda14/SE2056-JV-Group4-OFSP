@@ -1609,6 +1609,9 @@ public class ProductDAO extends DBContext {
                     // Gắn danh sách biến thể
                     List<ProductVariantDetailDTO> variants = getVariantsByProductId(productId);
                     p.setVariants(variants);
+                    if (variants != null && !variants.isEmpty()) {
+                        p.setDefaultVariantId(variants.get(0).getVariantId());
+                    }
 
                     // Giá gạch ngang chỉ lấy từ "giá gốc" seller nhập (nếu cao hơn giá bán)
                     p.setOldPrice(price);
@@ -2136,23 +2139,20 @@ public class ProductDAO extends DBContext {
         return p;
     }
 
-    public List<ProductCardDTO> getProductsByShop(long shopId, Integer categoryId, String keyword, String sortBy) {
+    public List<ProductCardDTO> getProductsByShop(long shopId, String sortBy) {
         List<ProductCardDTO> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
-                .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
-                .append("(SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS price, ")
-                .append("(SELECT MIN(original_price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS original_price, ")
-                .append("(SELECT TOP 1 unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS unit, ")
-                .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
-                .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
-                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
-                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
-                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
-                .append("(SELECT COUNT(*) FROM reviews r ")
-                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
-                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
-                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
+        sql.append("SELECT ")
+                .append("    p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
+                .append("    p.origin, p.certification, p.storage_temp, ")
+                .append("    pi.image_url, ")
+                .append("    dv.variant_id AS default_variant_id, ")
+                .append("    COALESCE(dv.unit, 'kg') AS unit, ")
+                .append("    COALESCE(pv.price, 0) AS price, ")
+                .append("    COALESCE(pv.original_price, pv.price, 0) AS original_price, ")
+                .append("    COALESCE(pv.total_stock, 0) AS total_stock, ")
+                .append("    COALESCE(rev.avg_rating, 0.0) AS avg_rating, ")
+                .append("    COALESCE(rev.reviews_count, 0) AS reviews_count ")
                 .append("FROM products p ")
                 .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
                 .append("OUTER APPLY (")
@@ -2161,44 +2161,44 @@ public class ProductDAO extends DBContext {
                 .append("    ORDER BY is_thumbnail DESC, display_order ASC")
                 .append(") pi ")
                 .append("OUTER APPLY (")
-                .append("    SELECT TOP 1 variant_id FROM product_variants ")
-                .append("    WHERE product_id = p.product_id AND is_active = 1 AND stock_quantity > 0 ")
-                .append("    ORDER BY price ASC")
+                .append("    SELECT ")
+                .append("        MIN(price) AS price, ")
+                .append("        MIN(original_price) AS original_price, ")
+                .append("        SUM(stock_quantity) AS total_stock ")
+                .append("    FROM product_variants ")
+                .append("    WHERE product_id = p.product_id AND is_active = 1")
+                .append(") pv ")
+                .append("OUTER APPLY (")
+                .append("    SELECT TOP 1 variant_id, unit ")
+                .append("    FROM product_variants ")
+                .append("    WHERE product_id = p.product_id AND is_active = 1 ")
+                .append("    ORDER BY CASE WHEN stock_quantity > 0 THEN 0 ELSE 1 END, price ASC")
                 .append(") dv ")
+                .append("OUTER APPLY (")
+                .append("    SELECT ")
+                .append("        COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) AS avg_rating, ")
+                .append("        COUNT(r.review_id) AS reviews_count ")
+                .append("    FROM reviews r ")
+                .append("    JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append("    JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append("    WHERE rv.product_id = p.product_id AND r.status = 'APPROVED'")
+                .append(") rev ")
                 .append("WHERE p.is_active = 1 AND p.shop_id = ? ");
 
-        List<Object> params = new ArrayList<>();
-        params.add(shopId);
-
-        if (categoryId != null && categoryId > 0) {
-            sql.append(" AND p.category_id = ? ");
-            params.add(categoryId);
-        }
-
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ? OR c.category_name LIKE ?) ");
-            String kw = "%" + keyword.trim() + "%";
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-        }
-
         if ("price_asc".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) ASC, p.product_id DESC");
+            sql.append(" ORDER BY pv.price ASC, p.product_id DESC");
         } else if ("price_desc".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) DESC, p.product_id DESC");
+            sql.append(" ORDER BY pv.price DESC, p.product_id DESC");
         } else if ("newest".equalsIgnoreCase(sortBy)) {
             sql.append(" ORDER BY p.product_id DESC");
         } else if ("rating".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
+            sql.append(" ORDER BY rev.avg_rating DESC, p.is_featured DESC, p.product_id DESC");
         } else {
             sql.append(" ORDER BY p.is_featured DESC, p.product_id ASC");
         }
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            for (int i = 0; i < params.size(); i++) {
-                ps.setObject(i + 1, params.get(i));
-            }
+            ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     ProductCardDTO p = mapProductFromCatalogResultSet(rs);
