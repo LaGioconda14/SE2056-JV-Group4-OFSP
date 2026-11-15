@@ -16,85 +16,132 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <!-- Custom Search CSS -->
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/search-products.css">
+        <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/product-catalog.css">
         <!-- Tailwind CSS (Non-blocking) -->
         <script src="https://cdn.tailwindcss.com"></script>
         <!-- Custom Search JS (Tailwind config) -->
         <script src="${pageContext.request.contextPath}/assets/js/search-products.js" defer></script>
     </head>
-    <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
-
-
+    <body class="bg-[#f8fafc] text-slate-800 font-sans antialiased selection:bg-emerald-600 selection:text-white">
 
         <!-- Header Đồng Bộ Cart -->
         <jsp:include page="/views/common/header.jsp" />
 
         <!-- Main Content Section: Search Results & Filter Sidebar -->
-        <main class="max-w-7xl mx-auto px-4 py-8">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 
-                <!-- CỘT TRÁI: BỘ LỌC TÌM KIẾM -->
-<aside class="lg:col-span-1 filter-card space-y-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-    <h2 class="font-extrabold text-base text-gray-900 flex items-center gap-2.5 border-b border-gray-100 pb-4">
-        <i class="fa-solid fa-filter text-emerald-600"></i> BỘ LỌC TÌM KIẾM
-    </h2>
+                <!-- CỘT TRÁI: BỘ LỌC TÌM KIẾM ĐỒNG BỘ VỚI TRANG PRODUCTS -->
+                <aside class="lg:col-span-1">
+                    <form action="${pageContext.request.contextPath}/search" method="GET" id="searchFilterForm" 
+                          class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-6">
+                        
+                        <!-- Giữ nguyên từ khóa tìm kiếm khi lọc -->
+                        <input type="hidden" name="query" value="${txtSearch}" />
 
-    <form action="${pageContext.request.contextPath}/search" method="GET" id="searchFilterForm" class="space-y-6">
-        <!-- Giữ nguyên từ khóa tìm kiếm khi lọc -->
-        <input type="hidden" name="query" value="${txtSearch}" />
-        <input type="hidden" name="rating" id="searchRatingInput" value="${param.rating}" />
+                        <!-- Filter Header -->
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-sliders text-[#00652c] text-sm"></i>
+                                <span class="font-extrabold text-base text-slate-900 tracking-tight">Bộ Lọc Tìm Kiếm</span>
+                            </div>
+                            <a href="${pageContext.request.contextPath}/search?query=${txtSearch}" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline transition">
+                                Thiết lập lại
+                            </a>
+                        </div>
 
-        <!-- Theo Danh Mục (Đổ dữ liệu động từ Database) -->
-        <div>
-            <h3 class="font-bold text-sm mb-3 text-gray-800">Theo Danh Mục</h3>
-            <div class="space-y-2.5 text-sm max-h-60 overflow-y-auto pr-2">
-                <label class="flex items-center gap-2.5 cursor-pointer text-gray-600 hover:text-emerald-600 transition">
-                    <input type="radio" name="categoryId" value="" ${empty selectedCategory or selectedCategory == '0' ? 'checked' : ''} class="text-emerald-600 focus:ring-emerald-500"> Tất cả danh mục
-                </label>
-                
-                <c:forEach var="cat" items="${listCategories}">
-                    <label class="flex items-center gap-2.5 cursor-pointer text-gray-600 hover:text-emerald-600 transition">
-                        <input type="radio" name="categoryId" value="${cat.categoryId}" ${selectedCategory == cat.categoryId ? 'checked' : ''} class="text-emerald-600 focus:ring-emerald-500"> 
-                        ${cat.categoryName}
-                    </label>
-                </c:forEach>
-            </div>
-        </div>
+                        <!-- 1. DANH MỤC SẢN PHẨM (DANH SÁCH PHẲNG) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3.5">
+                                <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                                    Danh Mục Sản Phẩm
+                                </h4>
+                                <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Tất cả</span>
+                            </div>
+                            <div class="space-y-2.5 text-xs max-h-72 overflow-y-auto pr-1">
+                                <c:forEach var="cat" items="${listCategories}">
+                                    <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
+                                        <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                                            <input type="checkbox" name="category" value="${cat.categoryId}" 
+                                                   ${selectedCategoriesList != null and (selectedCategoriesList.contains(cat.categoryId.toString()) or selectedCategoriesList.contains(cat.slug)) ? 'checked' : ''} 
+                                                   class="custom-checkbox">
+                                            <span class="text-xs font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${cat.categoryName}">
+                                                ${cat.categoryName}
+                                            </span>
+                                        </div>
+                                        <span class="text-xs font-bold ${cat.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full group-hover:bg-emerald-50 group-hover:text-emerald-700 transition">
+                                            ${cat.productCount}
+                                        </span>
+                                    </label>
+                                </c:forEach>
+                            </div>
+                        </div>
 
-        <!-- Khoảng Giá -->
-        <div class="border-t border-gray-100 pt-5">
-            <h3 class="font-bold text-sm mb-3 text-gray-800">Khoảng Giá (VNĐ)</h3>
-            <div class="flex items-center gap-2 mb-3">
-                <input type="number" name="minPrice" value="${minPrice}" placeholder="đ TỪ" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
-                <span class="text-gray-400 font-bold">-</span>
-                <input type="number" name="maxPrice" value="${maxPrice}" placeholder="đ ĐẾN" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-emerald-500">
-            </div>
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-sm">ÁP DỤNG BỘ LỌC</button>
-        </div>
+                        <!-- 2. KHOẢNG GIÁ (2 ô nhập giá: từ ở trên đến ở dưới) -->
+                        <div class="border-t border-slate-100 pt-5">
+                            <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3">
+                                Khoảng Giá (VNĐ)
+                            </h4>
 
-        <!-- Đánh Giá -->
-        <div class="border-t border-gray-100 pt-5">
-            <h3 class="font-bold text-sm mb-3 text-gray-800">Đánh Giá</h3>
-            <div class="space-y-2.5 text-xs">
-                <button type="button" onclick="document.getElementById('searchRatingInput').value='5'; document.getElementById('searchFilterForm').submit();" class="flex items-center gap-1.5 text-amber-400 hover:underline bg-transparent border-0 cursor-pointer p-0 text-left w-full ${param.rating == '5' ? 'font-bold' : ''}">
-                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> <span class="text-gray-600 font-medium ml-1">5 sao</span>
-                </button>
-                <button type="button" onclick="document.getElementById('searchRatingInput').value='4'; document.getElementById('searchFilterForm').submit();" class="flex items-center gap-1.5 text-amber-400 hover:underline bg-transparent border-0 cursor-pointer p-0 text-left w-full ${param.rating == '4' ? 'font-bold' : ''}">
-                    <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star text-gray-300"></i> <span class="text-gray-600 font-medium ml-1">4 sao trở lên</span>
-                </button>
-                <c:if test="${not empty param.rating}">
-                    <button type="button" onclick="document.getElementById('searchRatingInput').value=''; document.getElementById('searchFilterForm').submit();" class="text-xs text-rose-600 hover:underline bg-transparent border-0 cursor-pointer p-0 text-left pt-1 font-semibold">
-                        <i class="fa-solid fa-xmark mr-1"></i>Bỏ lọc số sao
-                    </button>
-                </c:if>
-            </div>
-        </div>
-    </form>
-</aside>
+                            <!-- 2 ô nhập Từ (ở trên) - Đến (ở dưới) -->
+                            <div class="space-y-2.5 text-xs">
+                                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:bg-white transition">
+                                    <span class="text-slate-400 text-xs font-semibold shrink-0 w-8">Từ:</span>
+                                    <input type="number" id="inputMinPrice" name="minPrice" 
+                                           placeholder="Từ 0đ"
+                                           min="0"
+                                           value="${paramMinPrice != null ? paramMinPrice : (minPrice != null ? minPrice : '')}" 
+                                           class="w-full bg-transparent font-bold text-slate-800 focus:outline-none text-xs">
+                                    <span class="text-xs text-slate-400 font-bold shrink-0">đ</span>
+                                </div>
+                                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:bg-white transition">
+                                    <span class="text-slate-400 text-xs font-semibold shrink-0 w-8">Đến:</span>
+                                    <input type="number" id="inputMaxPrice" name="maxPrice" 
+                                           placeholder="Đến mức tối đa"
+                                           min="0"
+                                           value="${paramMaxPrice != null ? paramMaxPrice : (maxPrice != null ? maxPrice : '')}" 
+                                           class="w-full bg-transparent font-bold text-slate-800 focus:outline-none text-xs">
+                                    <span class="text-xs text-slate-400 font-bold shrink-0">đ</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. TÌNH TRẠNG HÀNG -->
+                        <div class="border-t border-slate-100 pt-5">
+                            <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3.5">
+                                Tình Trạng Hàng
+                            </h4>
+                            <div class="space-y-2.5 text-xs">
+                                <label class="flex items-center justify-between cursor-pointer group select-none">
+                                    <div class="flex items-center gap-2.5">
+                                        <input type="checkbox" name="availability" value="in_stock" 
+                                               ${paramAvailability eq 'in_stock' or selectedAvailability eq 'in_stock' ? 'checked' : ''} 
+                                               class="custom-checkbox">
+                                        <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition">Còn Hàng</span>
+                                    </div>
+                                    <span class="text-xs font-bold text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-50">
+                                        ${not empty inStockCount ? inStockCount : 0}
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- NÚT ÁP DỤNG BỘ LỌC (MÀU XANH LÁ ĐẬM CHỦ ĐẠO #00652C) -->
+                        <div class="pt-2">
+                            <button type="submit" class="w-full py-3.5 bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md shadow-emerald-900/10 hover:shadow-lg transition-all duration-200 cursor-pointer flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-sliders text-xs"></i>
+                                <span>Áp Dụng Bộ Lọc</span>
+                            </button>
+                        </div>
+                    </form>
+                </aside>
 
                 <!-- CỘT PHẢI: KẾT QUẢ TÌM KIẾM & LƯỚI SẢN PHẨM -->
                 <div class="lg:col-span-3 space-y-6">
-                    <div class="bg-white p-5 rounded-3xl shadow-sm text-sm text-gray-700 border border-gray-100 flex items-center justify-between">
-                        <div>Kết quả tìm kiếm cho từ khóa: <span class="font-extrabold text-emerald-600">"${txtSearch}"</span></div>
+                    <div class="bg-white p-5 rounded-3xl shadow-sm text-sm text-slate-700 border border-slate-200/90 flex items-center justify-between">
+                        <div>Kết quả tìm kiếm cho từ khóa: <span class="font-extrabold text-[#00652c]">"${txtSearch}"</span>
+                            <span class="text-xs text-slate-500 font-medium ml-1">(${totalProducts != null ? totalProducts : (not empty listProduct ? listProduct.size() : 0)} sản phẩm)</span>
+                        </div>
                     </div>
 
                     <!-- Shop Liên Quan Đến Tìm Kiếm (Shopee Style) -->

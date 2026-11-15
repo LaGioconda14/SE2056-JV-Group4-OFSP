@@ -89,31 +89,29 @@
                         </a>
                     </div>
 
-                    <!-- 1. NHÓM NÔNG SẢN (DANH MỤC CHÍNH) -->
+                    <!-- 1. DANH MỤC SẢN PHẨM (DANH SÁCH PHẲNG) -->
                     <div>
                         <div class="flex items-center justify-between mb-3.5">
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                                Nhóm Nông Sản
+                                Danh Mục Sản Phẩm
                             </h4>
-                            <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Chính</span>
+                            <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Tất cả</span>
                         </div>
-                        <div class="space-y-2.5 text-xs">
-                            <c:forEach var="cat" items="${not empty parentCategories ? parentCategories : listCategories}">
-                                <c:if test="${empty cat.parentId or cat.parentId le 0}">
-                                    <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
-                                        <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                                            <input type="checkbox" name="category" value="${cat.categoryId}" 
-                                                   ${selectedCategoriesList != null and (selectedCategoriesList.contains(cat.categoryId.toString()) or selectedCategoriesList.contains(cat.slug)) ? 'checked' : ''} 
-                                                   class="custom-checkbox">
-                                            <span class="text-xs font-medium text-slate-700 group-hover:text-emerald-700 transition truncate">
-                                                ${cat.categoryName}
-                                            </span>
-                                        </div>
-                                        <span class="text-xs font-bold ${cat.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full group-hover:bg-emerald-50 group-hover:text-emerald-700 transition">
-                                            ${cat.productCount}
+                        <div class="space-y-2.5 text-xs max-h-72 overflow-y-auto pr-1">
+                            <c:forEach var="cat" items="${listCategories}">
+                                <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
+                                    <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                                        <input type="checkbox" name="category" value="${cat.categoryId}" 
+                                               ${selectedCategoriesList != null and (selectedCategoriesList.contains(cat.categoryId.toString()) or selectedCategoriesList.contains(cat.slug)) ? 'checked' : ''} 
+                                               class="custom-checkbox">
+                                        <span class="text-xs font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${cat.categoryName}">
+                                            ${cat.categoryName}
                                         </span>
-                                    </label>
-                                </c:if>
+                                    </div>
+                                    <span class="text-xs font-bold ${cat.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full group-hover:bg-emerald-50 group-hover:text-emerald-700 transition">
+                                        ${cat.productCount}
+                                    </span>
+                                </label>
                             </c:forEach>
                         </div>
                     </div>
@@ -164,56 +162,6 @@
                                     ${not empty inStockCount ? inStockCount : 0}
                                 </span>
                             </label>
-                        </div>
-                    </div>
-
-                    <!-- 4. LOẠI NÔNG SẢN CHI TIẾT (TIỂU MỤC) -->
-                    <div class="border-t border-slate-100 pt-5">
-                        <div class="flex items-center justify-between mb-3.5">
-                            <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                                Loại Nông Sản Chi Tiết
-                            </h4>
-                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Tiểu mục</span>
-                        </div>
-                        <div class="space-y-2.5 text-xs max-h-72 overflow-y-auto pr-1">
-                            <c:choose>
-                                <c:when test="${not empty subCategories}">
-                                    <c:forEach var="sub" items="${subCategories}">
-                                        <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
-                                            <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                                                <input type="checkbox" name="category" value="${sub.categoryId}" 
-                                                       ${selectedCategoriesList != null and (selectedCategoriesList.contains(sub.categoryId.toString()) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
-                                                       class="custom-checkbox">
-                                                <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${sub.categoryName}">
-                                                    ${sub.categoryName}
-                                                </span>
-                                            </div>
-                                            <span class="text-xs font-bold ${sub.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full group-hover:bg-emerald-100 transition">
-                                                ${sub.productCount}
-                                            </span>
-                                        </label>
-                                    </c:forEach>
-                                </c:when>
-                                <c:otherwise>
-                                    <c:forEach var="sub" items="${listCategories}">
-                                        <c:if test="${not empty sub.parentId}">
-                                            <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
-                                                <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                                                    <input type="checkbox" name="category" value="${sub.categoryId}" 
-                                                           ${selectedCategoriesList != null and (selectedCategoriesList.contains(sub.categoryId.toString()) or selectedCategoriesList.contains(sub.slug)) ? 'checked' : ''} 
-                                                           class="custom-checkbox">
-                                                    <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition truncate" title="${sub.categoryName}">
-                                                        ${sub.categoryName}
-                                                    </span>
-                                                </div>
-                                                <span class="text-xs font-bold ${sub.productCount > 0 ? 'text-emerald-700 bg-emerald-50' : 'text-slate-400 bg-slate-50'} font-mono shrink-0 px-2 py-0.5 rounded-full">
-                                                    ${sub.productCount}
-                                                </span>
-                                            </label>
-                                        </c:if>
-                                    </c:forEach>
-                                </c:otherwise>
-                            </c:choose>
                         </div>
                     </div>
 
@@ -380,56 +328,6 @@
                             </div>
                         </c:otherwise>
                     </c:choose>
-                </div>
-
-                <!-- ===============================================================
-                     THANH PHÂN TRANG (PAGINATION BAR) 100% TIẾNG VIỆT
-                     =============================================================== -->
-                <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col sm:flex-row items-center justify-between gap-4">
-                    
-                    <!-- Hiển thị số lượng -->
-                    <span class="text-xs text-slate-600 font-medium">
-                        Hiển thị <strong>${totalProducts > 0 ? ((currentPage - 1) * pageSize + 1) : 0}-${currentPage * pageSize > totalProducts ? totalProducts : currentPage * pageSize}</strong> trên tổng <strong>${totalProducts}</strong> sản phẩm
-                    </span>
-
-                    <!-- Các nút trang -->
-                    <c:if test="${totalPages > 1}">
-                        <div class="flex items-center gap-1.5 flex-wrap justify-center">
-                            <!-- Nút Trang trước -->
-                            <c:if test="${currentPage > 1}">
-                                <a href="${pageContext.request.contextPath}/products?page=${currentPage - 1}&keyword=${paramKeyword}&minPrice=${paramMinPrice}&maxPrice=${paramMaxPrice}&rating=${paramRating}&availability=${paramAvailability}&sortBy=${paramSortBy}" 
-                                   class="catalog-page-btn text-xs">
-                                    &larr; Trang trước
-                                </a>
-                            </c:if>
-
-                            <!-- Số trang -->
-                            <c:forEach var="pageNum" begin="1" end="${totalPages}">
-                                <c:choose>
-                                    <c:when test="${pageNum == currentPage}">
-                                        <span class="catalog-page-btn active text-xs">${pageNum}</span>
-                                    </c:when>
-                                    <c:when test="${pageNum <= 3 or pageNum == totalPages or (pageNum >= currentPage - 1 and pageNum <= currentPage + 1)}">
-                                        <a href="${pageContext.request.contextPath}/products?page=${pageNum}&keyword=${paramKeyword}&minPrice=${paramMinPrice}&maxPrice=${paramMaxPrice}&rating=${paramRating}&availability=${paramAvailability}&sortBy=${paramSortBy}" 
-                                           class="catalog-page-btn text-xs">
-                                            ${pageNum}
-                                        </a>
-                                    </c:when>
-                                    <c:when test="${pageNum == 4 and totalPages > 5 and currentPage > 3}">
-                                        <span class="px-1 text-slate-400 text-xs">...</span>
-                                    </c:when>
-                                </c:choose>
-                            </c:forEach>
-
-                            <!-- Nút Trang sau -->
-                            <c:if test="${currentPage < totalPages}">
-                                <a href="${pageContext.request.contextPath}/products?page=${currentPage + 1}&keyword=${paramKeyword}&minPrice=${paramMinPrice}&maxPrice=${paramMaxPrice}&rating=${paramRating}&availability=${paramAvailability}&sortBy=${paramSortBy}" 
-                                   class="catalog-page-btn text-xs">
-                                    Trang sau &rarr;
-                                </a>
-                            </c:if>
-                        </div>
-                    </c:if>
                 </div>
 
             </div>

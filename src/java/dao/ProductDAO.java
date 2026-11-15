@@ -1927,16 +1927,12 @@ public class ProductDAO extends DBContext {
             sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
         }
 
-        // Pagination
-        if (page < 1) {
-            page = 1;
+        // Pagination (chỉ phân trang khi có tham số page > 0 và pageSize > 0)
+        if (page > 0 && pageSize > 0) {
+            sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+            params.add((page - 1) * pageSize);
+            params.add(pageSize);
         }
-        if (pageSize < 1) {
-            pageSize = 12;
-        }
-        sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
-        params.add((page - 1) * pageSize);
-        params.add(pageSize);
 
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
@@ -2012,44 +2008,24 @@ public class ProductDAO extends DBContext {
                 sql.append(" AND (");
                 boolean first = true;
                 if (!catIds.isEmpty()) {
-                    sql.append("(p.category_id IN (");
+                    sql.append("p.category_id IN (");
                     for (int i = 0; i < catIds.size(); i++) {
                         sql.append(i == 0 ? "?" : ", ?");
                         params.add(catIds.get(i));
                     }
-                    sql.append(") OR p.category_id IN (SELECT s1.category_id FROM categories s1 WHERE s1.parent_id IN (");
-                    for (int i = 0; i < catIds.size(); i++) {
-                        sql.append(i == 0 ? "?" : ", ?");
-                        params.add(catIds.get(i));
-                    }
-                    sql.append(")) OR p.category_id IN (SELECT s2.category_id FROM categories s2 WHERE s2.parent_id IN (SELECT s1.category_id FROM categories s1 WHERE s1.parent_id IN (");
-                    for (int i = 0; i < catIds.size(); i++) {
-                        sql.append(i == 0 ? "?" : ", ?");
-                        params.add(catIds.get(i));
-                    }
-                    sql.append("))))");
+                    sql.append(")");
                     first = false;
                 }
                 if (!catSlugs.isEmpty()) {
                     if (!first) {
                         sql.append(" OR ");
                     }
-                    sql.append("(c.slug IN (");
+                    sql.append("c.slug IN (");
                     for (int i = 0; i < catSlugs.size(); i++) {
                         sql.append(i == 0 ? "?" : ", ?");
                         params.add(catSlugs.get(i));
                     }
-                    sql.append(") OR p.category_id IN (SELECT s1.category_id FROM categories s1 JOIN categories p1 ON s1.parent_id = p1.category_id WHERE p1.slug IN (");
-                    for (int i = 0; i < catSlugs.size(); i++) {
-                        sql.append(i == 0 ? "?" : ", ?");
-                        params.add(catSlugs.get(i));
-                    }
-                    sql.append(")) OR p.category_id IN (SELECT s2.category_id FROM categories s2 JOIN categories s1 ON s2.parent_id = s1.category_id JOIN categories p1 ON s1.parent_id = p1.category_id WHERE p1.slug IN (");
-                    for (int i = 0; i < catSlugs.size(); i++) {
-                        sql.append(i == 0 ? "?" : ", ?");
-                        params.add(catSlugs.get(i));
-                    }
-                    sql.append(")))");
+                    sql.append(")");
                 }
                 sql.append(") ");
             }
