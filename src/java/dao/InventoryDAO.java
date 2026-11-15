@@ -629,13 +629,16 @@ public class InventoryDAO extends DBContext {
     }
 
     public boolean adjustBatch(long batchId, long variantId, long shopId, long userId, int deductQuantity, String transactionType, String reason) {
-        String sqlGetBatch = "SELECT current_quantity, status FROM product_batches WHERE batch_id = ?";
+        String sqlGetBatch = "SELECT pb.current_quantity, pb.batch_code, pb.status, pv.price "
+                + "FROM product_batches pb "
+                + "JOIN product_variants pv ON pb.variant_id = pv.variant_id "
+                + "WHERE pb.batch_id = ?";
         String sqlUpdateBatch = "UPDATE product_batches SET current_quantity = current_quantity - ?, "
                 + "status = CASE WHEN (current_quantity - ?) <= 0 OR ? = 'EXPIRED' THEN 'INACTIVE' ELSE status END, "
                 + "updated_at = GETDATE() WHERE batch_id = ?";
         String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity - ?, updated_at = GETDATE() WHERE variant_id = ?";
-        String sqlInsertTrans = "INSERT INTO inventory_transactions (batch_id, variant_id, shop_id, user_id, transaction_type, quantity_changed, previous_stock, new_stock, reason, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
+        String sqlInsertTrans = "INSERT INTO inventory_transactions (batch_id, variant_id, shop_id, user_id, transaction_type, quantity_changed, previous_stock, new_stock, reason, cost_price, estimated_loss, waste_stage, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, GETDATE())";
 
         Connection conn = null;
         try {
@@ -643,11 +646,15 @@ public class InventoryDAO extends DBContext {
             conn.setAutoCommit(false); // Bật Transaction
 
             int currentQty = 0;
+            String batchCode = "";
+            java.math.BigDecimal price = java.math.BigDecimal.ZERO;
             try (PreparedStatement psGet = conn.prepareStatement(sqlGetBatch)) {
                 psGet.setLong(1, batchId);
                 try (ResultSet rs = psGet.executeQuery()) {
                     if (rs.next()) {
                         currentQty = rs.getInt("current_quantity");
+                        batchCode = rs.getString("batch_code");
+                        price = rs.getBigDecimal("price");
                     } else {
                         return false;
                     }
@@ -677,7 +684,21 @@ public class InventoryDAO extends DBContext {
                 psUpVar.executeUpdate();
             }
 
-            // 3. Ghi log giao dịch kho
+            // 3. Ghi trực tiếp vào bảng duy nhất inventory_transactions (phục vụ cả thẻ kho và báo cáo hao hụt)
+            boolean isWaste = "DAMAGED".equalsIgnoreCase(transactionType)
+                    || "EXPIRED".equalsIgnoreCase(transactionType)
+                    || "STORAGE_ISSUE".equalsIgnoreCase(transactionType)
+                    || "LOST".equalsIgnoreCase(transactionType);
+            java.math.BigDecimal totalLoss = (isWaste && price != null)
+                    ? price.multiply(java.math.BigDecimal.valueOf(deductQuantity)) : null;
+            java.math.BigDecimal costPrice = isWaste ? price : null;
+            String wasteStage = isWaste ? "WAREHOUSE_EXPIRED" : null;
+
+            String transReason = (reason != null && !reason.trim().isEmpty()) ? reason : "Trừ hao kho thủ công";
+            if (batchCode != null && !batchCode.isBlank()) {
+                transReason = "[Lô " + batchCode + "] " + transReason;
+            }
+
             try (PreparedStatement psTrans = conn.prepareStatement(sqlInsertTrans)) {
                 psTrans.setLong(1, batchId);
                 psTrans.setLong(2, variantId);
@@ -687,7 +708,22 @@ public class InventoryDAO extends DBContext {
                 psTrans.setInt(6, -deductQuantity);
                 psTrans.setInt(7, currentQty);
                 psTrans.setInt(8, newQty);
-                psTrans.setString(9, (reason != null && !reason.trim().isEmpty()) ? reason : "Trừ hao kho thủ công");
+                psTrans.setString(9, transReason);
+                if (costPrice != null) {
+                    psTrans.setBigDecimal(10, costPrice);
+                } else {
+                    psTrans.setNull(10, java.sql.Types.DECIMAL);
+                }
+                if (totalLoss != null) {
+                    psTrans.setBigDecimal(11, totalLoss);
+                } else {
+                    psTrans.setNull(11, java.sql.Types.DECIMAL);
+                }
+                if (wasteStage != null) {
+                    psTrans.setString(12, wasteStage);
+                } else {
+                    psTrans.setNull(12, java.sql.Types.VARCHAR);
+                }
                 psTrans.executeUpdate();
             }
 
@@ -803,11 +839,14 @@ public class InventoryDAO extends DBContext {
 
     
 public boolean disposeBatch(long batchId, long variantId, long shopId, long userId, String reasonCode, String description) {
-        String sqlGet = "SELECT variant_id, current_quantity FROM product_batches WHERE batch_id = ?";
+        String sqlGet = "SELECT pb.variant_id, pb.current_quantity, pb.batch_code, pv.price "
+                + "FROM product_batches pb "
+                + "JOIN product_variants pv ON pb.variant_id = pv.variant_id "
+                + "WHERE pb.batch_id = ?";
         String sqlUpBatch = "UPDATE product_batches SET current_quantity = 0, status = 'INACTIVE', updated_at = GETDATE() WHERE batch_id = ?";
         String sqlUpVar = "UPDATE product_variants SET stock_quantity = stock_quantity - ?, updated_at = GETDATE() WHERE variant_id = ?";
-        String sqlInsTrans = "INSERT INTO inventory_transactions (batch_id, variant_id, shop_id, user_id, transaction_type, quantity_changed, previous_stock, new_stock, reason, created_at) "
-                           + "VALUES (?, ?, ?, ?, 'DISPOSAL', ?, ?, 0, ?, GETDATE())";
+        String sqlInsTrans = "INSERT INTO inventory_transactions (batch_id, variant_id, shop_id, user_id, transaction_type, quantity_changed, previous_stock, new_stock, reason, cost_price, estimated_loss, waste_stage, created_at) "
+                           + "VALUES (?, ?, ?, ?, 'DISPOSAL', ?, ?, 0, ?, ?, ?, 'WAREHOUSE_EXPIRED', GETDATE())";
 
         Connection conn = null;
         try {
@@ -816,6 +855,8 @@ public boolean disposeBatch(long batchId, long variantId, long shopId, long user
 
             int currentQty = 0;
             long realVariantId = 0;
+            String batchCode = "";
+            java.math.BigDecimal price = java.math.BigDecimal.ZERO;
 
             // 1. Lấy thông tin lô hàng
             try (PreparedStatement ps = conn.prepareStatement(sqlGet)) {
@@ -824,6 +865,8 @@ public boolean disposeBatch(long batchId, long variantId, long shopId, long user
                     if (rs.next()) {
                         realVariantId = rs.getLong("variant_id");
                         currentQty = rs.getInt("current_quantity");
+                        batchCode = rs.getString("batch_code");
+                        price = rs.getBigDecimal("price");
                     } else {
                         conn.rollback();
                         return false;
@@ -849,7 +892,13 @@ public boolean disposeBatch(long batchId, long variantId, long shopId, long user
                 ps.executeUpdate();
             }
 
-            // 4. Ghi log lịch sử giao dịch hủy kho
+            // 4. Ghi trực tiếp vào bảng duy nhất inventory_transactions (phục vụ cả thẻ kho và báo cáo hao hụt)
+            String fullReason = buildReasonText(reasonCode, description);
+            if (batchCode != null && !batchCode.isBlank()) {
+                fullReason = "[Xuất hủy toàn bộ lô " + batchCode + "] " + fullReason;
+            }
+            java.math.BigDecimal totalLoss = (price != null) ? price.multiply(java.math.BigDecimal.valueOf(currentQty)) : java.math.BigDecimal.ZERO;
+
             try (PreparedStatement ps = conn.prepareStatement(sqlInsTrans)) {
                 ps.setLong(1, batchId);
                 ps.setLong(2, realVariantId);
@@ -857,7 +906,9 @@ public boolean disposeBatch(long batchId, long variantId, long shopId, long user
                 ps.setLong(4, userId);
                 ps.setInt(5, -currentQty);
                 ps.setInt(6, currentQty);
-                ps.setString(7, buildReasonText(reasonCode, description));
+                ps.setString(7, fullReason);
+                ps.setBigDecimal(8, price != null ? price : java.math.BigDecimal.ZERO);
+                ps.setBigDecimal(9, totalLoss);
                 ps.executeUpdate();
             }
 

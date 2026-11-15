@@ -8,6 +8,7 @@ public class InventoryWasteLog {
     private long wasteId;
     private long shopId;
     private long variantId;
+    private Long batchId;
     private Long subOrderId;
     private String wasteStage;
     private int quantity;
@@ -22,6 +23,7 @@ public class InventoryWasteLog {
     private String productName;
     private String variantName;
     private String sku;
+    private String batchCode;
     private String subOrderCode;
     private String loggedByName;
 
@@ -50,6 +52,22 @@ public class InventoryWasteLog {
 
     public void setVariantId(long variantId) {
         this.variantId = variantId;
+    }
+
+    public Long getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(Long batchId) {
+        this.batchId = batchId;
+    }
+
+    public String getBatchCode() {
+        return batchCode;
+    }
+
+    public void setBatchCode(String batchCode) {
+        this.batchCode = batchCode;
     }
 
     public Long getSubOrderId() {

@@ -443,8 +443,8 @@ public class ProductDAO extends DBContext {
                 + "VALUES (?, ?, ?, LOWER(REPLACE(?, ' ', '-')), ?, ?, ?, ?, 1)";
         String sqlVariant = "INSERT INTO product_variants (product_id, sku, variant_name, unit, price, original_price, stock_quantity, low_stock_threshold, is_active) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)";
-        String sqlBatch = "INSERT INTO product_batches (batch_code, variant_id, farm_source, harvest_date, expiry_date, initial_quantity, current_quantity, import_cost, status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')";
+        String sqlBatch = "INSERT INTO product_batches (batch_code, variant_id, harvest_date, expiry_date, initial_quantity, current_quantity, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, 'ACTIVE')";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -499,12 +499,10 @@ public class ProductDAO extends DBContext {
                 try (PreparedStatement ps = conn.prepareStatement(sqlBatch)) {
                     ps.setString(1, batchCode);
                     ps.setLong(2, variantId);
-                    ps.setString(3, origin);
-                    ps.setDate(4, harvestDate);
-                    ps.setDate(5, expiryDate);
+                    ps.setDate(3, harvestDate);
+                    ps.setDate(4, expiryDate);
+                    ps.setInt(5, stockQuantity);
                     ps.setInt(6, stockQuantity);
-                    ps.setInt(7, stockQuantity);
-                    ps.setBigDecimal(8, importCost != null ? importCost : BigDecimal.ZERO);
                     ps.executeUpdate();
                 } catch (Exception ignored) {
                     // Bỏ qua nếu bảng product_batches chưa được tạo
@@ -900,8 +898,8 @@ public class ProductDAO extends DBContext {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
         String sqlImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) "
                 + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
-        String sqlBatch = "INSERT INTO product_batches (batch_code, variant_id, farm_source, harvest_date, expiry_date, initial_quantity, current_quantity, import_cost, freshness_score, harvest_time_label, freshness_note, batch_type, pending_packing_text, status, created_at, updated_at) "
-                + "VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATEADD(day, 7, CURRENT_TIMESTAMP), ?, ?, ?, 98, N'05:30 Sáng nay', N'Độ tươi 98% (Vừa hái sáng nay)', N'Hái sáng', N'0 Đơn chờ đóng gói', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        String sqlBatch = "INSERT INTO product_batches (batch_code, variant_id, harvest_date, expiry_date, initial_quantity, current_quantity, freshness_score, harvest_time_label, freshness_note, batch_type, pending_packing_text, status, created_at, updated_at) "
+                + "VALUES (?, ?, CURRENT_TIMESTAMP, DATEADD(day, 7, CURRENT_TIMESTAMP), ?, ?, 98, N'05:30 Sáng nay', N'Độ tươi 98% (Vừa hái sáng nay)', N'Hái sáng', N'0 Đơn chờ đóng gói', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -1008,10 +1006,8 @@ public class ProductDAO extends DBContext {
             try (PreparedStatement ps = conn.prepareStatement(sqlBatch)) {
                 ps.setString(1, batchCode);
                 ps.setLong(2, variantId);
-                ps.setString(3, origin != null && !origin.trim().isEmpty() ? origin.trim() : "Vườn Đà Lạt");
+                ps.setInt(3, stockQuantity);
                 ps.setInt(4, stockQuantity);
-                ps.setInt(5, stockQuantity);
-                ps.setBigDecimal(6, originalPrice != null ? originalPrice.multiply(new BigDecimal("0.65")) : BigDecimal.ZERO);
                 ps.executeUpdate();
             } catch (Exception batchEx) {
                 batchEx.printStackTrace();

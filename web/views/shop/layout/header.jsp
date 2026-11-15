@@ -175,13 +175,6 @@
                     </div>
                 </div>
             </div>
-
-            <a href="${ctx}/logout" 
-               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 text-xs font-bold transition shadow-2xs" 
-               title="Đăng xuất khỏi hệ thống">
-                <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i>
-                <span class="hidden sm:inline">Đăng xuất</span>
-            </a>
         </div>
     </div>
 </header>

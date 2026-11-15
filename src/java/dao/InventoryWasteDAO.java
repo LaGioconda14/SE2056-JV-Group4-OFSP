@@ -86,26 +86,24 @@ public class InventoryWasteDAO extends DBContext {
                 // Bỏ qua nếu bảng batches không tồn tại
             }
 
-            // 3. Ghi log tiêu hủy
+            // 3. Ghi log tiêu hủy trực tiếp vào bảng duy nhất inventory_transactions
             String stage = (wasteStage != null && !wasteStage.isBlank()) ? wasteStage.trim() : "WAREHOUSE_EXPIRED";
             BigDecimal totalLoss = price.multiply(BigDecimal.valueOf(quantity));
-            String insertSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, quantity, "
-                    + "unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
-                    + "VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+            String insertSql = "INSERT INTO inventory_transactions (shop_id, variant_id, batch_id, sub_order_id, user_id, "
+                    + "transaction_type, waste_stage, quantity_changed, previous_stock, new_stock, cost_price, estimated_loss, reason, created_at) "
+                    + "VALUES (?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
             try (PreparedStatement psIns = conn.prepareStatement(insertSql)) {
                 psIns.setLong(1, shopId);
                 psIns.setLong(2, variantId);
-                psIns.setString(3, stage);
-                psIns.setInt(4, quantity);
-                psIns.setNString(5, unit != null ? unit : "kg");
-                psIns.setBigDecimal(6, price);
-                psIns.setBigDecimal(7, totalLoss);
-                psIns.setNString(8, reasonNote);
-                if (loggedBy != null) {
-                    psIns.setLong(9, loggedBy);
-                } else {
-                    psIns.setNull(9, Types.BIGINT);
-                }
+                psIns.setLong(3, loggedBy != null ? loggedBy : 3L);
+                psIns.setString(4, stage);
+                psIns.setString(5, stage);
+                psIns.setInt(6, -quantity);
+                psIns.setInt(7, currentStock);
+                psIns.setInt(8, Math.max(0, currentStock - quantity));
+                psIns.setBigDecimal(9, price);
+                psIns.setBigDecimal(10, totalLoss);
+                psIns.setNString(11, reasonNote);
                 psIns.executeUpdate();
             }
 
@@ -191,9 +189,9 @@ public class InventoryWasteDAO extends DBContext {
     private void processCancellationWasteAndRestock(Connection conn, long shopId, long subOrderId,
             List<Object[]> items, Map<Long, Integer> wastedQtyMap, String reason, Long loggedBy) throws SQLException {
 
-        String insertWasteSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, "
-                + "quantity, unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
-                + "VALUES (?, ?, ?, 'QC_PACKING', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String insertWasteSql = "INSERT INTO inventory_transactions (shop_id, variant_id, batch_id, sub_order_id, user_id, "
+                + "transaction_type, waste_stage, quantity_changed, previous_stock, new_stock, cost_price, estimated_loss, reason, created_at) "
+                + "VALUES (?, ?, NULL, ?, ?, 'QC_PACKING', 'QC_PACKING', ?, 0, 0, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE variant_id = ?";
@@ -217,22 +215,17 @@ public class InventoryWasteDAO extends DBContext {
                 }
                 int goodQty = Math.max(0, totalOrderedQty - wastedQty);
 
-                // Ghi sổ hao hụt phần nông sản bị dập hỏng
+                // Ghi sổ biến động kho (hao hụt phần nông sản bị dập hỏng)
                 if (wastedQty > 0) {
                     BigDecimal loss = price.multiply(BigDecimal.valueOf(wastedQty));
                     psWaste.setLong(1, shopId);
                     psWaste.setLong(2, varId);
                     psWaste.setLong(3, subOrderId);
-                    psWaste.setInt(4, wastedQty);
-                    psWaste.setNString(5, unit != null ? unit : "kg");
+                    psWaste.setLong(4, loggedBy != null ? loggedBy : 3L);
+                    psWaste.setInt(5, -wastedQty);
                     psWaste.setBigDecimal(6, price);
                     psWaste.setBigDecimal(7, loss);
-                    psWaste.setNString(8, reason);
-                    if (loggedBy != null) {
-                        psWaste.setLong(9, loggedBy);
-                    } else {
-                        psWaste.setNull(9, Types.BIGINT);
-                    }
+                    psWaste.setNString(8, reason != null ? reason : "Hỏng khi sơ chế đóng gói");
                     psWaste.addBatch();
                     hasWaste = true;
                 }
@@ -329,9 +322,9 @@ public class InventoryWasteDAO extends DBContext {
     private void processTransitDamageWasteAndRestock(Connection conn, long shopId, long subOrderId,
             List<Object[]> items, Map<Long, Integer> wastedQtyMap, String note, Long loggedBy) throws SQLException {
 
-        String insertWasteSql = "INSERT INTO inventory_waste_logs (shop_id, variant_id, sub_order_id, waste_stage, "
-                + "quantity, unit, cost_price, estimated_loss, reason_note, logged_by, created_at) "
-                + "VALUES (?, ?, ?, 'TRANSIT_DAMAGE', ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String insertWasteSql = "INSERT INTO inventory_transactions (shop_id, variant_id, batch_id, sub_order_id, user_id, "
+                + "transaction_type, waste_stage, quantity_changed, previous_stock, new_stock, cost_price, estimated_loss, reason, created_at) "
+                + "VALUES (?, ?, NULL, ?, ?, 'TRANSIT_DAMAGE', 'TRANSIT_DAMAGE', ?, 0, 0, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE variant_id = ?";
@@ -355,22 +348,17 @@ public class InventoryWasteDAO extends DBContext {
                 }
                 int goodQty = Math.max(0, totalOrderedQty - wastedQty);
 
-                // Ghi sổ hao hụt phần hoa quả dập nát do vận chuyển
+                // Ghi sổ biến động kho (hao hụt phần hoa quả dập nát do vận chuyển)
                 if (wastedQty > 0) {
                     BigDecimal loss = price.multiply(BigDecimal.valueOf(wastedQty));
                     psWaste.setLong(1, shopId);
                     psWaste.setLong(2, varId);
                     psWaste.setLong(3, subOrderId);
-                    psWaste.setInt(4, wastedQty);
-                    psWaste.setNString(5, unit != null ? unit : "kg");
+                    psWaste.setLong(4, loggedBy != null ? loggedBy : 3L);
+                    psWaste.setInt(5, -wastedQty);
                     psWaste.setBigDecimal(6, price);
                     psWaste.setBigDecimal(7, loss);
                     psWaste.setNString(8, "Đứt chuỗi lạnh/dập nát khi giao: " + (note != null ? note : ""));
-                    if (loggedBy != null) {
-                        psWaste.setLong(9, loggedBy);
-                    } else {
-                        psWaste.setNull(9, Types.BIGINT);
-                    }
                     psWaste.addBatch();
                     hasWaste = true;
                 }
@@ -430,26 +418,29 @@ public class InventoryWasteDAO extends DBContext {
     public List<InventoryWasteLog> getWasteLogsByShop(long shopId, String stageFilter, String keyword, int page, int pageSize) {
         List<InventoryWasteLog> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT l.waste_id, l.shop_id, l.variant_id, l.sub_order_id, l.waste_stage, l.quantity, "
-                + "l.unit, l.cost_price, l.estimated_loss, l.reason_note, l.image_proof_url, l.logged_by, l.created_at, "
-                + "p.name AS product_name, pv.variant_name, pv.sku, so.sub_order_code, u.full_name AS logged_by_name "
-                + "FROM inventory_waste_logs l "
-                + "JOIN product_variants pv ON l.variant_id = pv.variant_id "
+                "SELECT it.transaction_id AS waste_id, it.shop_id, it.variant_id, it.batch_id, it.sub_order_id, "
+                + "COALESCE(it.waste_stage, 'WAREHOUSE_EXPIRED') AS waste_stage, ABS(it.quantity_changed) AS quantity, "
+                + "pv.unit, it.cost_price, it.estimated_loss, it.reason AS reason_note, it.user_id AS logged_by, it.created_at, "
+                + "p.name AS product_name, pv.variant_name, pv.sku, pb.batch_code, so.sub_order_code, u.full_name AS logged_by_name "
+                + "FROM inventory_transactions it "
+                + "JOIN product_variants pv ON it.variant_id = pv.variant_id "
                 + "JOIN products p ON pv.product_id = p.product_id "
-                + "LEFT JOIN sub_orders so ON l.sub_order_id = so.sub_order_id "
-                + "LEFT JOIN users u ON l.logged_by = u.user_id "
-                + "WHERE l.shop_id = ? "
+                + "LEFT JOIN product_batches pb ON it.batch_id = pb.batch_id "
+                + "LEFT JOIN sub_orders so ON it.sub_order_id = so.sub_order_id "
+                + "LEFT JOIN users u ON it.user_id = u.user_id "
+                + "WHERE it.shop_id = ? "
+                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
         );
 
         if (stageFilter != null && !stageFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(stageFilter)) {
-            sql.append(" AND l.waste_stage = ? ");
+            sql.append(" AND it.waste_stage = ? ");
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR so.sub_order_code LIKE ?) ");
+            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR pb.batch_code LIKE ? OR so.sub_order_code LIKE ?) ");
         }
 
-        sql.append(" ORDER BY l.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        sql.append(" ORDER BY it.created_at DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -470,6 +461,7 @@ public class InventoryWasteDAO extends DBContext {
                 ps.setString(idx++, kw);
                 ps.setString(idx++, kw);
                 ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
             }
 
             int offset = Math.max(0, (page - 1) * pageSize);
@@ -482,6 +474,11 @@ public class InventoryWasteDAO extends DBContext {
                     item.setWasteId(rs.getLong("waste_id"));
                     item.setShopId(rs.getLong("shop_id"));
                     item.setVariantId(rs.getLong("variant_id"));
+                    long batchId = rs.getLong("batch_id");
+                    if (!rs.wasNull()) {
+                        item.setBatchId(batchId);
+                    }
+                    item.setBatchCode(rs.getString("batch_code"));
                     long subId = rs.getLong("sub_order_id");
                     if (!rs.wasNull()) {
                         item.setSubOrderId(subId);
@@ -492,7 +489,6 @@ public class InventoryWasteDAO extends DBContext {
                     item.setCostPrice(rs.getBigDecimal("cost_price"));
                     item.setEstimatedLoss(rs.getBigDecimal("estimated_loss"));
                     item.setReasonNote(rs.getString("reason_note"));
-                    item.setImageProofUrl(rs.getString("image_proof_url"));
                     long lby = rs.getLong("logged_by");
                     if (!rs.wasNull()) {
                         item.setLoggedBy(lby);
@@ -514,19 +510,21 @@ public class InventoryWasteDAO extends DBContext {
 
     public int countWasteLogsByShop(long shopId, String stageFilter, String keyword) {
         StringBuilder sql = new StringBuilder(
-                "SELECT COUNT(*) FROM inventory_waste_logs l "
-                + "JOIN product_variants pv ON l.variant_id = pv.variant_id "
+                "SELECT COUNT(*) FROM inventory_transactions it "
+                + "JOIN product_variants pv ON it.variant_id = pv.variant_id "
                 + "JOIN products p ON pv.product_id = p.product_id "
-                + "LEFT JOIN sub_orders so ON l.sub_order_id = so.sub_order_id "
-                + "WHERE l.shop_id = ? "
+                + "LEFT JOIN product_batches pb ON it.batch_id = pb.batch_id "
+                + "LEFT JOIN sub_orders so ON it.sub_order_id = so.sub_order_id "
+                + "WHERE it.shop_id = ? "
+                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
         );
 
         if (stageFilter != null && !stageFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(stageFilter)) {
-            sql.append(" AND l.waste_stage = ? ");
+            sql.append(" AND it.waste_stage = ? ");
         }
 
         if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR so.sub_order_code LIKE ?) ");
+            sql.append(" AND (p.name LIKE ? OR pv.variant_name LIKE ? OR pv.sku LIKE ? OR pb.batch_code LIKE ? OR so.sub_order_code LIKE ?) ");
         }
 
         Connection conn = getConnection();
@@ -548,6 +546,7 @@ public class InventoryWasteDAO extends DBContext {
                 ps.setString(idx++, kw);
                 ps.setString(idx++, kw);
                 ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -563,9 +562,11 @@ public class InventoryWasteDAO extends DBContext {
 
     public WasteStatisticDTO getWasteStatisticsByShop(long shopId) {
         WasteStatisticDTO dto = new WasteStatisticDTO();
-        String summarySql = "SELECT ISNULL(SUM(quantity), 0) AS total_qty, "
-                + "ISNULL(SUM(estimated_loss), 0) AS total_loss, COUNT(*) AS total_count "
-                + "FROM inventory_waste_logs WHERE shop_id = ?";
+        String summarySql = "SELECT ISNULL(SUM(ABS(it.quantity_changed)), 0) AS total_qty, "
+                + "ISNULL(SUM(it.estimated_loss), 0) AS total_loss, COUNT(*) AS total_count "
+                + "FROM inventory_transactions it "
+                + "WHERE it.shop_id = ? "
+                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE'))";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -585,11 +586,12 @@ public class InventoryWasteDAO extends DBContext {
             }
 
             String topSql = "SELECT TOP 5 pv.variant_id, p.name AS product_name, pv.variant_name, pv.unit, "
-                    + "SUM(l.quantity) AS qty, SUM(l.estimated_loss) AS loss "
-                    + "FROM inventory_waste_logs l "
-                    + "JOIN product_variants pv ON l.variant_id = pv.variant_id "
+                    + "SUM(ABS(it.quantity_changed)) AS qty, SUM(it.estimated_loss) AS loss "
+                    + "FROM inventory_transactions it "
+                    + "JOIN product_variants pv ON it.variant_id = pv.variant_id "
                     + "JOIN products p ON pv.product_id = p.product_id "
-                    + "WHERE l.shop_id = ? "
+                    + "WHERE it.shop_id = ? "
+                    + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
                     + "GROUP BY pv.variant_id, p.name, pv.variant_name, pv.unit "
                     + "ORDER BY loss DESC";
 

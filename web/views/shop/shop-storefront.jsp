@@ -231,6 +231,7 @@
                                 <c:choose>
                                     <c:when test="${p.inStock and (empty p.stockQuantity or p.stockQuantity > 0)}">
                                         <form action="${pageContext.request.contextPath}/cart/add" method="POST">
+                                            <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
                                             <input type="hidden" name="variantId" value="${p.defaultVariantId > 0 ? p.defaultVariantId : p.id}">
                                             <input type="hidden" name="quantity" value="1">
                                             <input type="hidden" name="returnUrl" value="/store?id=${shop.shopId}">

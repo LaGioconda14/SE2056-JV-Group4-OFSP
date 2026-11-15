@@ -14,7 +14,7 @@ import jakarta.servlet.http.HttpSession;
 
 @WebFilter(filterName = "CartCsrfFilter", urlPatterns = {
     "", "/home", "/products", "/search", "/detail", "/cart", "/cart/*", "/checkout", "/order/place",
-    "/wishlist", "/wishlist/*"
+    "/wishlist", "/wishlist/*", "/store", "/shop/storefront", "/shop/detail", "/shop-detail"
 })
 public class CartCsrfFilter implements Filter {
 

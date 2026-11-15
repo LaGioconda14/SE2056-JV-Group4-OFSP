@@ -235,8 +235,13 @@
                                                         <div class="font-bold text-slate-900 truncate hover:text-emerald-700 transition cursor-pointer">
                                                             ${log.productName}
                                                         </div>
-                                                        <div class="text-[11px] text-slate-500 font-medium">
-                                                            ${log.variantName} <span class="text-slate-400">(${log.sku})</span>
+                                                        <div class="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 flex-wrap">
+                                                            <span>${log.variantName} <span class="text-slate-400">(${log.sku})</span></span>
+                                                            <c:if test="${not empty log.batchCode}">
+                                                                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200" title="Mã lô xuất hủy">
+                                                                    <i class="fa-solid fa-barcode text-[9px]"></i>${log.batchCode}
+                                                                </span>
+                                                            </c:if>
                                                         </div>
                                                     </div>
                                                 </div>
