@@ -61,17 +61,37 @@ public class InventoryDAO extends DBContext {
                    .append("    p.name AS product_name, ")
                    .append("    pv.variant_name, ")
                    .append("    p.certification, ")
-                   .append("    COALESCE(pb.batch_type, pv.variant_name) AS batch_type, ")
+                   .append("    pv.variant_name AS batch_type, ")
                     .append("    COALESCE(pi.image_url, (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC)) AS image_url, ")
                     .append("    pb.harvest_date, ")
-                    .append("    COALESCE(pb.harvest_time_label, N'Tồn kho chung') AS harvest_time_label, ")
-                    .append("    COALESCE(pb.freshness_score, CASE WHEN pv.stock_quantity > 0 THEN 100 ELSE 0 END) AS freshness_score, ")
-                    .append("    COALESCE(pb.freshness_note, CASE WHEN pv.stock_quantity > 0 THEN N'Đang mở bán' ELSE N'Hết hàng' END) AS freshness_note, ")
+                    .append("    CASE ")
+                    .append("        WHEN pb.harvest_date IS NOT NULL THEN CONCAT(CONVERT(VARCHAR(5), pb.harvest_date, 108), N' Ngày ', CONVERT(VARCHAR(10), pb.harvest_date, 103)) ")
+                    .append("        ELSE N'Tồn kho chung' ")
+                    .append("    END AS harvest_time_label, ")
+                    .append("    CASE ")
+                    .append("        WHEN pb.expiry_date IS NULL THEN (CASE WHEN pv.stock_quantity > 0 THEN 100 ELSE 0 END) ")
+                    .append("        WHEN pb.expiry_date <= GETDATE() THEN 0 ")
+                    .append("        WHEN DATEDIFF(day, GETDATE(), pb.expiry_date) >= 7 THEN 98 ")
+                    .append("        WHEN DATEDIFF(day, GETDATE(), pb.expiry_date) BETWEEN 4 AND 6 THEN 85 ")
+                    .append("        WHEN DATEDIFF(day, GETDATE(), pb.expiry_date) BETWEEN 1 AND 3 THEN 70 ")
+                    .append("        ELSE 40 ")
+                    .append("    END AS freshness_score, ")
+                    .append("    CASE ")
+                    .append("        WHEN pb.expiry_date IS NULL THEN (CASE WHEN pv.stock_quantity > 0 THEN N'Đang mở bán' ELSE N'Hết hàng' END) ")
+                    .append("        WHEN pb.expiry_date <= GETDATE() THEN N'Đã hết hạn sử dụng' ")
+                    .append("        WHEN DATEDIFF(day, GETDATE(), pb.expiry_date) <= 3 THEN N'Cận date (Cần xử lý gấp)' ")
+                    .append("        ELSE N'Tươi ngon (Chuẩn kho mát)' ")
+                    .append("    END AS freshness_note, ")
                     .append("    COALESCE(pb.current_quantity, pv.stock_quantity) AS current_quantity, ")
                     .append("    COALESCE(pb.initial_quantity, pv.stock_quantity) AS initial_quantity, ")
                     .append("    pv.low_stock_threshold, ")
                     .append("    pv.unit, ")
-                    .append("    COALESCE(pb.pending_packing_text, N'--') AS pending_packing_text, ")
+                    .append("    COALESCE(( ")
+                    .append("        SELECT CONCAT(ISNULL(SUM(oi.quantity), 0), N' đơn chờ xuất') ")
+                    .append("        FROM order_items oi ")
+                    .append("        JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id ")
+                    .append("        WHERE oi.variant_id = pv.variant_id AND so.status IN ('CONFIRMED', 'PACKING') ")
+                    .append("    ), N'0 đơn chờ xuất') AS pending_packing_text, ")
                     .append("    pv.price ")
                     .append("FROM product_variants pv ")
                     .append("JOIN products p ON pv.product_id = p.product_id ")
@@ -123,7 +143,9 @@ public class InventoryDAO extends DBContext {
             }
 
             String qtyCol = hasBatches ? "COALESCE(pb.current_quantity, pv.stock_quantity)" : "pv.stock_quantity";
-            String freshCol = hasBatches ? "COALESCE(pb.freshness_score, 100)" : "100";
+            String freshCol = hasBatches 
+                    ? "(CASE WHEN pb.expiry_date <= GETDATE() THEN 0 WHEN DATEDIFF(day, GETDATE(), pb.expiry_date) <= 3 THEN 70 ELSE 95 END)" 
+                    : "100";
 
             // Risk Level filter
             if (riskLevel != null && !riskLevel.trim().isEmpty() && !"all".equalsIgnoreCase(riskLevel)) {
@@ -244,7 +266,9 @@ public class InventoryDAO extends DBContext {
             }
 
             String qtyCol = hasBatches ? "COALESCE(pb.current_quantity, pv.stock_quantity)" : "pv.stock_quantity";
-            String freshCol = hasBatches ? "COALESCE(pb.freshness_score, 100)" : "100";
+            String freshCol = hasBatches 
+                    ? "(CASE WHEN pb.expiry_date <= GETDATE() THEN 0 WHEN DATEDIFF(day, GETDATE(), pb.expiry_date) <= 3 THEN 70 ELSE 95 END)" 
+                    : "100";
 
             if (riskLevel != null && !riskLevel.trim().isEmpty() && !"all".equalsIgnoreCase(riskLevel)) {
                 if ("critical".equalsIgnoreCase(riskLevel)) {
@@ -366,7 +390,7 @@ public class InventoryDAO extends DBContext {
             if (hasBatches) {
                 String sql = "SELECT COUNT(pb.batch_id) FROM product_batches pb JOIN product_variants pv ON pb.variant_id = pv.variant_id "
                            + "JOIN products p ON pv.product_id = p.product_id "
-                           + "WHERE p.shop_id = ? AND (pb.freshness_score <= 80 OR DATEDIFF(hour, pb.harvest_date, GETDATE()) >= 48)";
+                           + "WHERE p.shop_id = ? AND (DATEDIFF(day, GETDATE(), pb.expiry_date) <= 3 OR DATEDIFF(hour, pb.harvest_date, GETDATE()) >= 48)";
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setLong(1, shopId);
                     try (ResultSet rs = ps.executeQuery()) {

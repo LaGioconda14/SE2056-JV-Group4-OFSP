@@ -196,8 +196,12 @@ public class InventoryWasteDAO extends DBContext {
         String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE variant_id = ?";
 
+        String deductBatchSql = "UPDATE product_batches SET current_quantity = CASE WHEN current_quantity >= ? THEN current_quantity - ? ELSE 0 END, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE batch_id = (SELECT TOP 1 batch_id FROM product_batches WHERE variant_id = ? AND status = 'ACTIVE' ORDER BY expiry_date ASC)";
+
         try (PreparedStatement psWaste = conn.prepareStatement(insertWasteSql);
-             PreparedStatement psRestore = conn.prepareStatement(restoreStockSql)) {
+             PreparedStatement psRestore = conn.prepareStatement(restoreStockSql);
+             PreparedStatement psBatchDeduct = conn.prepareStatement(deductBatchSql)) {
 
             boolean hasWaste = false;
             boolean hasRestore = false;
@@ -227,6 +231,13 @@ public class InventoryWasteDAO extends DBContext {
                     psWaste.setBigDecimal(7, loss);
                     psWaste.setNString(8, reason != null ? reason : "Hỏng khi sơ chế đóng gói");
                     psWaste.addBatch();
+
+                    // Đồng bộ trừ tồn lô tương ứng theo FEFO
+                    psBatchDeduct.setInt(1, wastedQty);
+                    psBatchDeduct.setInt(2, wastedQty);
+                    psBatchDeduct.setLong(3, varId);
+                    psBatchDeduct.addBatch();
+
                     hasWaste = true;
                 }
 
@@ -241,6 +252,7 @@ public class InventoryWasteDAO extends DBContext {
 
             if (hasWaste) {
                 psWaste.executeBatch();
+                psBatchDeduct.executeBatch();
             }
             if (hasRestore) {
                 psRestore.executeBatch();
@@ -329,8 +341,12 @@ public class InventoryWasteDAO extends DBContext {
         String restoreStockSql = "UPDATE product_variants SET stock_quantity = stock_quantity + ?, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE variant_id = ?";
 
+        String deductBatchSql = "UPDATE product_batches SET current_quantity = CASE WHEN current_quantity >= ? THEN current_quantity - ? ELSE 0 END, updated_at = CURRENT_TIMESTAMP "
+                + "WHERE batch_id = (SELECT TOP 1 batch_id FROM product_batches WHERE variant_id = ? AND status = 'ACTIVE' ORDER BY expiry_date ASC)";
+
         try (PreparedStatement psWaste = conn.prepareStatement(insertWasteSql);
-             PreparedStatement psRestore = conn.prepareStatement(restoreStockSql)) {
+             PreparedStatement psRestore = conn.prepareStatement(restoreStockSql);
+             PreparedStatement psBatchDeduct = conn.prepareStatement(deductBatchSql)) {
 
             boolean hasWaste = false;
             boolean hasRestore = false;
@@ -360,6 +376,13 @@ public class InventoryWasteDAO extends DBContext {
                     psWaste.setBigDecimal(7, loss);
                     psWaste.setNString(8, "Đứt chuỗi lạnh/dập nát khi giao: " + (note != null ? note : ""));
                     psWaste.addBatch();
+
+                    // Đồng bộ trừ tồn lô tương ứng theo FEFO
+                    psBatchDeduct.setInt(1, wastedQty);
+                    psBatchDeduct.setInt(2, wastedQty);
+                    psBatchDeduct.setLong(3, varId);
+                    psBatchDeduct.addBatch();
+
                     hasWaste = true;
                 }
 
@@ -374,6 +397,7 @@ public class InventoryWasteDAO extends DBContext {
 
             if (hasWaste) {
                 psWaste.executeBatch();
+                psBatchDeduct.executeBatch();
             }
             if (hasRestore) {
                 psRestore.executeBatch();

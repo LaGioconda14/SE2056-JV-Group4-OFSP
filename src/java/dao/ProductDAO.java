@@ -898,8 +898,8 @@ public class ProductDAO extends DBContext {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
         String sqlImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) "
                 + "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
-        String sqlBatch = "INSERT INTO product_batches (batch_code, variant_id, harvest_date, expiry_date, initial_quantity, current_quantity, freshness_score, harvest_time_label, freshness_note, batch_type, pending_packing_text, status, created_at, updated_at) "
-                + "VALUES (?, ?, CURRENT_TIMESTAMP, DATEADD(day, 7, CURRENT_TIMESTAMP), ?, ?, 98, N'05:30 Sáng nay', N'Độ tươi 98% (Vừa hái sáng nay)', N'Hái sáng', N'0 Đơn chờ đóng gói', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+        String sqlBatch = "INSERT INTO product_batches (batch_code, variant_id, harvest_date, expiry_date, initial_quantity, current_quantity, status, created_at, updated_at) "
+                + "VALUES (?, ?, CURRENT_TIMESTAMP, DATEADD(day, 7, CURRENT_TIMESTAMP), ?, ?, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
