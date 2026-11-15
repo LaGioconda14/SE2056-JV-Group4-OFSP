@@ -461,8 +461,13 @@
                         </div>
                     </div>
 
-                    <!-- Nút Đặt Hàng -->
-                    <div class="pt-6 border-t border-gray-100 flex justify-end">
+                    <!-- Nút Hủy / Đặt Hàng -->
+                    <div class="pt-6 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                        <a href="<c:out value='${cartUrl}'/>"
+                           class="w-full sm:w-56 py-3.5 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 font-extrabold rounded-xl text-base transition duration-200 active:scale-95 inline-flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                            Hủy, về giỏ hàng
+                        </a>
                         <button type="submit" id="submit-order-btn" class="w-full sm:w-56 py-3.5 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold rounded-xl text-base shadow-md transition duration-200 active:scale-95 cursor-pointer">
                             Đặt hàng
                         </button>
