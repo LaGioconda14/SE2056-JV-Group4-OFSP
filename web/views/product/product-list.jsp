@@ -13,11 +13,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <!-- FontAwesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (Non-blocking) -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
     <script>
         tailwind.config = {
             theme: {
@@ -88,17 +89,17 @@
                         </a>
                     </div>
 
-                    <!-- 1. DANH MỤC CHA -->
+                    <!-- 1. NHÓM NÔNG SẢN (DANH MỤC CHÍNH) -->
                     <div>
                         <div class="flex items-center justify-between mb-3.5">
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                                Danh Mục Cha
+                                Nhóm Nông Sản
                             </h4>
                             <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Chính</span>
                         </div>
                         <div class="space-y-2.5 text-xs">
                             <c:forEach var="cat" items="${not empty parentCategories ? parentCategories : listCategories}">
-                                <c:if test="${empty cat.parentId}">
+                                <c:if test="${empty cat.parentId or cat.parentId le 0}">
                                     <label class="flex items-center justify-between cursor-pointer group select-none py-0.5">
                                         <div class="flex items-center gap-2.5 min-w-0 pr-2">
                                             <input type="checkbox" name="category" value="${cat.categoryId}" 
@@ -230,11 +231,11 @@
                         </div>
                     </div>
 
-                    <!-- 5. DANH MỤC CON (Thay thế bộ lọc vùng trồng / xuất xứ theo yêu cầu) -->
+                    <!-- 5. LOẠI NÔNG SẢN CHI TIẾT (TIỂU MỤC) -->
                     <div class="border-t border-slate-100 pt-5">
                         <div class="flex items-center justify-between mb-3.5">
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                                Danh Mục Con
+                                Loại Nông Sản Chi Tiết
                             </h4>
                             <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Tiểu mục</span>
                         </div>
@@ -315,7 +316,7 @@
                     <div class="flex items-center gap-3 sm:gap-4 self-end sm:self-center">
                         <div class="flex items-center gap-2 text-xs">
                             <span class="text-slate-600 font-medium">Sắp xếp theo:</span>
-                            <select onchange="location.href='${pageContext.request.contextPath}/products?sortBy=' + this.value + '&keyword=${paramKeyword}&minPrice=${paramMinPrice}&maxPrice=${paramMaxPrice}&rating=${paramRating}&availability=${paramAvailability}';" 
+                            <select onchange="changeCatalogSort(this.value);" 
                                     class="bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 transition cursor-pointer">
                                 <option value="featured" ${paramSortBy eq 'featured' ? 'selected' : ''}>Nổi Bật Nhất</option>
                                 <option value="price_asc" ${paramSortBy eq 'price_asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>

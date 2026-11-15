@@ -15,9 +15,12 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Giỏ hàng - Gốc Vườn</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com" defer></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: 'class',
@@ -91,9 +94,9 @@
     </style>
 </head>
 <body class="bg-surface font-body-md text-on-surface antialiased">
-<%@ include file="components/cart-header.jsp" %>
+<jsp:include page="/views/common/header.jsp" />
 
-<main class="w-full pt-36 bg-surface min-h-[calc(100vh-280px)]" data-cart>
+<main class="w-full pt-6 bg-surface min-h-[calc(100vh-280px)]" data-cart>
     <div class="flex flex-col w-full">
         <section class="w-full max-w-[1360px] mx-auto px-margin-sm lg:px-margin pb-space-xl">
             <c:if test="${not empty errorMessage}">
@@ -112,21 +115,21 @@
                 </div>
             </c:if>
 
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md pt-space-md pb-space-lg">
-                <div class="flex flex-col gap-space-xs">
-                    <nav class="flex items-center gap-space-xs text-body-sm font-body-sm text-on-surface-variant" aria-label="Breadcrumb">
-                        <a class="hover:text-primary transition-colors flex items-center gap-1" href="<c:out value='${homeUrl}'/>"><span class="material-symbols-outlined text-[16px]">home</span><span>Trang Chủ</span></a>
-                        <span>/</span><a class="hover:text-primary transition-colors" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a><span>/</span><span class="text-on-surface font-semibold">Giỏ Hàng</span>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-4 pb-6">
+                <div class="flex flex-col gap-1.5">
+                    <nav class="flex items-center gap-1.5 text-xs text-gray-500 font-medium" aria-label="Breadcrumb">
+                        <a class="hover:text-[#00652c] transition-colors flex items-center gap-1" href="<c:out value='${homeUrl}'/>"><span class="material-symbols-outlined text-[16px]">home</span><span>Trang Chủ</span></a>
+                        <span class="text-gray-300">/</span><a class="hover:text-[#00652c] transition-colors" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a><span class="text-gray-300">/</span><span class="text-gray-900 font-bold">Giỏ Hàng</span>
                     </nav>
-                    <div class="flex items-center gap-space-sm mt-1">
-                        <h1 class="text-headline-lg font-headline-lg text-on-surface tracking-tight">Shopping Cart</h1>
-                        <span class="px-space-sm py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-caps text-label-caps" id="badge-total-items"><c:out value="${cart ne null and not empty cart.items ? cart.items.size() : 0}"/> món trong giỏ</span>
+                    <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Giỏ Hàng Của Bạn</h1>
+                        <span class="px-3 py-1 rounded-full bg-emerald-100 text-[#00652c] font-bold text-xs shadow-xs" id="badge-total-items"><c:out value="${cart ne null and not empty cart.items ? cart.items.size() : 0}"/> món trong giỏ</span>
                     </div>
                 </div>
                 <c:if test="${cart ne null and not empty cart.items}">
-                    <div class="flex items-center gap-space-sm text-body-sm font-medium text-on-surface-variant bg-surface-container-lowest px-space-md py-2 rounded-xl shadow-sm border border-outline-variant/30">
-                        <span class="material-symbols-outlined text-primary text-[18px]">verified</span>
-                        <span data-selected-summary-count aria-live="polite">Đã chọn: <strong class="text-on-surface font-bold"><c:out value="${cart.items.size()}"/>/<c:out value="${cart.items.size()}"/> món</strong></span>
+                    <div class="flex items-center gap-2 text-xs font-semibold text-gray-700 bg-white px-3.5 py-2 rounded-xl shadow-xs border border-gray-200">
+                        <span class="material-symbols-outlined text-[#00652c] text-[18px]">verified</span>
+                        <span data-selected-summary-count aria-live="polite">Đã chọn: <strong class="text-gray-900 font-bold"><c:out value="${cart.items.size()}"/>/<c:out value="${cart.items.size()}"/> món</strong></span>
                     </div>
                 </c:if>
             </div>
@@ -142,8 +145,8 @@
                 </c:when>
                 <c:otherwise>
                     <div class="space-y-4 pb-4">
-                        <div class="hidden lg:grid grid-cols-[minmax(0,1fr)_140px_180px_150px_72px] gap-4 items-center rounded-2xl border border-outline-variant/20 bg-surface-container-lowest px-5 py-4 text-xs font-bold uppercase tracking-wider text-on-surface-variant shadow-sm">
-                            <label class="flex items-center gap-3 normal-case text-sm text-on-surface cursor-pointer"><input type="checkbox" data-select-all class="select-all-toggle w-4 h-4 accent-primary" aria-label="Chọn tất cả sản phẩm">Sản phẩm (<span id="select-all-count"><c:out value="${cart.items.size()}"/></span>)</label>
+                        <div class="hidden lg:grid grid-cols-[minmax(0,1fr)_140px_180px_150px_72px] gap-4 items-center rounded-2xl border border-gray-200/80 bg-white px-5 py-4 text-xs font-bold uppercase tracking-wider text-gray-500 shadow-xs">
+                            <label class="flex items-center gap-3 normal-case text-sm text-gray-900 cursor-pointer"><input type="checkbox" data-select-all class="select-all-toggle w-4 h-4 rounded accent-[#00652c]" aria-label="Chọn tất cả sản phẩm">Sản phẩm (<span id="select-all-count"><c:out value="${cart.items.size()}"/></span>)</label>
                             <span class="text-center">Đơn giá</span><span class="text-center">Số lượng</span><span class="text-center">Số tiền</span><span class="text-center">Thao tác</span>
                         </div>
                         <c:forEach var="shopEntry" items="${cart.itemsByShop}">
@@ -159,7 +162,8 @@
     </div>
 </main>
 
-<%@ include file="components/cart-footer.jsp" %>
+<!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
+<jsp:include page="/views/common/site-footer.jsp" />
 <script src="<c:url value='/assets/js/cart.js?v=20261104b'/>"></script>
 </body>
 </html>

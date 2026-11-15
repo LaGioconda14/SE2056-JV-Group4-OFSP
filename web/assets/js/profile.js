@@ -705,21 +705,9 @@ function sendContactChatMessage() {
     input.value = '';
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
-    // Phản hồi thông minh tự động từ nhà vườn nhắc đến tên sản phẩm thay vì mã đơn
+    // Thông báo xác nhận chuyển lời nhắn đến nhà vườn
     setTimeout(() => {
-        let reply = 'Dạ nhà vườn chúng tôi đã nhận được thông tin yêu cầu của bạn về sản phẩm ' + currentContactShop.productName + '. Nhân viên tư vấn đang xử lý và sẽ phản hồi hoặc liên hệ hỗ trợ bạn ngay ạ!';
-        const lowerMsg = msg.toLowerCase();
-
-        if (lowerMsg.includes('khi nào') || lowerMsg.includes('bao giờ') || lowerMsg.includes('thời gian') || lowerMsg.includes('giao')) {
-            reply = 'Dạ kiện hàng sản phẩm ' + currentContactShop.productName + ' của bạn đang được nông trại đóng thùng chuỗi lạnh và chuyển giao bưu tá. Bạn có thể theo dõi hành trình chi tiết bằng nút "Tra cứu vận chuyển" trên đơn hàng nhé!';
-        } else if (lowerMsg.includes('lạnh') || lowerMsg.includes('bảo quản') || lowerMsg.includes('đóng gói')) {
-            reply = 'Dạ toàn bộ ' + currentContactShop.productName + ' được thu hái tươi trong ngày, bọc xốp chống dập và đóng thùng giữ nhiệt FreshCold đạt chuẩn 2–8°C để bảo đảm độ giòn tươi ngon nhất khi đến tay bạn ạ!';
-        } else if (lowerMsg.includes('đổi giờ') || lowerMsg.includes('ghi chú') || lowerMsg.includes('hẹn')) {
-            reply = 'Dạ nông trại đã ghi nhận thay đổi của bạn cho kiện hàng ' + currentContactShop.productName + '. Bưu tá khi nhận đơn sẽ liên hệ trước khi phát hàng, bạn cũng có thể trao đổi trực tiếp giờ nhận thuận tiện nhất với tài xế ạ!';
-        } else if (lowerMsg.includes('đổi trả') || lowerMsg.includes('dập') || lowerMsg.includes('hỏng') || lowerMsg.includes('chất lượng')) {
-            reply = 'Dạ nông trại cam kết bảo hành 1 đổi 1 hoặc hoàn tiền nếu sản phẩm ' + currentContactShop.productName + ' có hiện tượng dập nát, hư hỏng. Quý khách vui lòng đồng kiểm cùng shipper hoặc chụp lại ảnh kiện hàng gửi shop để được hỗ trợ tức thì ạ!';
-        }
-
+        const reply = 'Hệ thống đã ghi nhận tin nhắn của bạn gửi tới ' + currentContactShop.shopName + ' về sản phẩm ' + currentContactShop.productName + '. Đại diện gian hàng sẽ liên hệ phản hồi bạn trong thời gian sớm nhất!';
         const shopMsgEl = document.createElement('div');
         shopMsgEl.className = 'd-flex align-items-start gap-2.5';
         shopMsgEl.innerHTML = `
@@ -733,7 +721,7 @@ function sendContactChatMessage() {
         `;
         chatContainer.appendChild(shopMsgEl);
         chatContainer.scrollTop = chatContainer.scrollHeight;
-    }, 700);
+    }, 400);
 }
 
 window.openChatFromCard = openChatFromCard;
@@ -743,9 +731,25 @@ window.handleContactChatKeyPress = handleContactChatKeyPress;
 window.sendContactChatMessage = sendContactChatMessage;
 
 function confirmReceivedOrder(orderId) {
-    if (confirm('Bạn xác nhận đã nhận được đầy đủ hoa quả của đơn hàng #' + orderId + ' và không có vấn đề gì?')) {
-        alert('Cảm ơn bạn! Đơn hàng #' + orderId + ' đã được cập nhật sang trạng thái Hoàn thành. Hãy để lại đánh giá nhé!');
-        location.reload();
+    if (confirm('Bạn xác nhận đã nhận được đầy đủ hoa quả của đơn hàng #' + orderId + ' và đồng ý hoàn tất đơn hàng?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = (window.contextPath || '') + '/profile';
+        
+        const act = document.createElement('input');
+        act.type = 'hidden';
+        act.name = 'action';
+        act.value = 'confirmReceived';
+        form.appendChild(act);
+        
+        const ord = document.createElement('input');
+        ord.type = 'hidden';
+        ord.name = 'orderId';
+        ord.value = orderId;
+        form.appendChild(ord);
+        
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 

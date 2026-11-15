@@ -11,11 +11,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thanh toán đơn hàng - Gốc Vườn</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts & Material Symbols -->
+    <!-- Google Fonts & Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <!-- Tailwind CSS CDN (Non-blocking) -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
     <style>
         body {
@@ -243,7 +244,7 @@
                                     <div class="flex items-center gap-2">
                                         <c:choose>
                                             <c:when test="${not empty currentShopCode and not empty currentSubOrder and currentSubOrder.shopDiscount gt 0}">
-                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Shop'}"/>', ${shopSubtotal})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
+                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng'}"/>', ${shopSubtotal})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
                                                     Thay Đổi
                                                 </button>
                                                 <button type="button" onclick="removeShopCoupon('${shopEntry.key}')" class="text-red-500 hover:underline font-semibold cursor-pointer">
@@ -251,7 +252,7 @@
                                                 </button>
                                             </c:when>
                                             <c:otherwise>
-                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Shop'}"/>', ${shopSubtotal})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
+                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng'}"/>', ${shopSubtotal})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
                                                     Chọn Voucher
                                                 </button>
                                             </c:otherwise>

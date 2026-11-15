@@ -7,6 +7,18 @@
 // Function: Mở Modal Khóa / Mở khóa tài khoản với lý do bắt buộc (Decision Reason)
 // -------------------------------------------------------------------------
 function openToggleStatusModal(userId, fullName, email, targetStatus, currentReason) {
+    const form = document.getElementById('toggleStatusForm');
+    const currentUserId = form ? form.dataset.currentUserId : null;
+
+    if (currentUserId && String(userId) === String(currentUserId) && targetStatus === 'BLOCKED') {
+        if (typeof showAdminToast === 'function') {
+            showAdminToast('Bạn không thể tự khóa tài khoản của chính mình!');
+        } else {
+            alert('Bạn không thể tự khóa tài khoản của chính mình!');
+        }
+        return;
+    }
+
     document.getElementById('toggleStatusUserId').value = userId;
     document.getElementById('toggleStatusNewStatus').value = targetStatus;
     document.getElementById('toggleUserNameDisplay').textContent = fullName + ' (ID: #' + userId + ')';
@@ -41,3 +53,32 @@ function openToggleStatusModal(userId, fullName, email, targetStatus, currentRea
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 }
+
+// -------------------------------------------------------------------------
+// Validate chặn submit tự khóa chính mình từ toggleStatusForm
+// -------------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', function () {
+    const toggleForm = document.getElementById('toggleStatusForm');
+    if (toggleForm) {
+        toggleForm.addEventListener('submit', function (e) {
+            const currentUserId = toggleForm.dataset.currentUserId;
+            const targetUserId = document.getElementById('toggleStatusUserId') ? document.getElementById('toggleStatusUserId').value : '';
+            const targetStatus = document.getElementById('toggleStatusNewStatus') ? document.getElementById('toggleStatusNewStatus').value : '';
+
+            if (currentUserId && String(targetUserId) === String(currentUserId) && targetStatus === 'BLOCKED') {
+                e.preventDefault();
+                if (typeof showAdminToast === 'function') {
+                    showAdminToast('Bạn không thể tự khóa tài khoản của chính mình!');
+                } else {
+                    alert('Bạn không thể tự khóa tài khoản của chính mình!');
+                }
+                const modalEl = document.getElementById('toggleUserStatusModal');
+                if (modalEl && window.bootstrap) {
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+                }
+                return false;
+            }
+        });
+    }
+});

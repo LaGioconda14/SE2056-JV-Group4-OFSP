@@ -36,7 +36,7 @@ public class UserDAO extends DBContext {
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
                    + "LEFT JOIN shops s ON u.user_id = s.owner_id "
-                   + "WHERE LOWER(u.email) = LOWER(?)";
+                   + "WHERE u.email = ?";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -84,7 +84,7 @@ public class UserDAO extends DBContext {
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
                    + "LEFT JOIN shops s ON u.user_id = s.owner_id "
-                   + "WHERE LOWER(u.email) = LOWER(?)";
+                   + "WHERE u.email = ?";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -123,7 +123,7 @@ public class UserDAO extends DBContext {
                    + "FROM users u "
                    + "LEFT JOIN user_roles ur ON u.user_id = ur.user_id "
                    + "LEFT JOIN roles r ON ur.role_id = r.role_id "
-                   + "WHERE LOWER(u.email) = LOWER(?) OR u.phone = ?";
+                   + "WHERE u.email = ? OR u.phone = ?";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -325,7 +325,7 @@ public class UserDAO extends DBContext {
      * @return true if email exists, false otherwise
      */
     public boolean isEmailExists(String email) {
-        String sql = "SELECT 1 FROM users WHERE LOWER(email) = LOWER(?)";
+        String sql = "SELECT 1 FROM users WHERE email = ?";
 
         Connection conn = getConnection();
         if (conn == null) {

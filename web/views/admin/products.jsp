@@ -262,9 +262,18 @@
                                             <strong>Ngành hàng:</strong> ${p.categoryName}
                                         </div>
                                         <div class="mod-box-line mt-auto">
-                                            <a href="javascript:void(0)" onclick="previewPdfDoc('ho_so_${p.sku}.pdf')" class="text-primary text-decoration-none fw-semibold">
-                                                <i class="bi bi-paperclip"></i> ho_so_kiem_dinh_${p.sku}.pdf
-                                            </a>
+                                            <c:choose>
+                                                <c:when test="${not empty p.certification}">
+                                                    <span class="text-success fw-semibold">
+                                                        <i class="bi bi-shield-check"></i> Đạt chuẩn ${p.certification}
+                                                    </span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="text-muted fw-normal">
+                                                        <i class="bi bi-info-circle"></i> Đang chờ cập nhật chứng chỉ
+                                                    </span>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </div>
                                     </div>
 
@@ -341,16 +350,16 @@
                         <i class="bi bi-shield-check"></i>
                     </div>
                     <div>
-                        <div class="freshguard-title">Cơ Chế Thẩm định AI &amp; Đối Soát Nông sản Quốc gia (FreshGuard 3.0)</div>
+                        <div class="freshguard-title">Quy Chuẩn Kiểm Duyệt Nông Sản (FreshGuard)</div>
                         <div class="freshguard-desc">
-                            <div>• Vision AI 3.0 tự động phát hiện ảnh tải mạng, ảnh dập mác trái phép, ảnh hoa quả qua chỉnh sửa màu sắc bất thường.</div>
-                            <div>• Hệ thống tự động liên thông API Cục Bảo vệ Thực vật &amp; Cổng Dịch vụ công Quốc gia để tra cứu mã vùng trồng và số hiệu VietGAP.</div>
+                            <div>• Kiểm tra tính hợp lệ của hình ảnh, nguồn gốc xuất xứ và quy chuẩn bảo quản kho mát.</div>
+                            <div>• Đối soát chứng nhận VietGAP, GlobalGAP và điều kiện mở bán an toàn thực phẩm trên sàn.</div>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <button class="btn btn-outline-secondary btn-sm bg-white text-dark fw-bold border shadow-xs" onclick="updateQ4Standards()">
-                        <i class="bi bi-gear-wide-connected me-1"></i> Cập nhật tiêu chuẩn kiểm duyệt Q4/2024
+                    <button class="btn btn-outline-secondary btn-sm bg-white text-dark fw-bold border shadow-xs" data-bs-toggle="modal" data-bs-target="#sopStandardModal">
+                        <i class="bi bi-book-half me-1"></i> Xem quy chuẩn kiểm duyệt
                     </button>
                 </div>
             </div>
@@ -411,8 +420,8 @@
             </div>
             <div class="modal-footer border-top bg-light">
                 <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-admin-primary btn-sm" onclick="alert('Đã tải tài liệu PDF quy chuẩn về máy.')">
-                    <i class="bi bi-download me-1"></i> Tải trọn bộ SOP (PDF)
+                <button type="button" class="btn btn-admin-primary btn-sm" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i> In quy chuẩn (SOP)
                 </button>
             </div>
         </div>
@@ -627,19 +636,9 @@
         if (currentPreviewSku) approveSku(currentPreviewSku);
     }
 
-    // Preview PDF doc
-    function previewPdfDoc(filename) {
-        alert('Đang mở tài liệu xác thực: ' + filename + '\n(Hệ thống xác thực mã số qua Cổng Dịch Vụ Công Bộ Nông Nghiệp)');
-    }
-
     // Edit sub tag modal
     function editSubTagModal(sku) {
         showToast('Mở trình chỉnh sửa tag phụ cho SKU: ' + sku);
-    }
-
-    // Update Q4 standards
-    function updateQ4Standards() {
-        showToast('Hệ thống FreshGuard 3.0 đã đồng bộ tiêu chuẩn kiểm duyệt Q4/2024 mới nhất từ Cục Bảo vệ Thực vật!');
     }
 
     // Toast helper

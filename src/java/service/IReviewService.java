@@ -1,6 +1,7 @@
 package service;
 
 import java.util.List;
+import java.util.Map;
 import model.entity.review.Review;
 import model.dto.review.ReviewSummary;
 
@@ -17,6 +18,12 @@ public interface IReviewService {
     List<Review> getReviewsByCustomer(long customerId);
 
     List<Review> getReviewsByShop(long shopId, int page, int pageSize);
+
+    List<Review> getReviewsByShop(long shopId, Integer rating, String replyStatus, String keyword, int page, int pageSize);
+
+    int countReviewsByShop(long shopId, Integer rating, String replyStatus, String keyword);
+
+    Map<String, Object> getShopReviewStats(long shopId);
 
     boolean replyReview(long reviewId, long shopId, String replyComment);
 

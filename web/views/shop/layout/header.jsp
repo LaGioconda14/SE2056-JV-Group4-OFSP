@@ -10,11 +10,19 @@
             <i class="fa-solid fa-bars text-sm"></i>
         </button>
 
-        <div class="header-search-container">
-            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-            <form action="${ctx}${hdSearchAction}" method="GET">
+        <div class="header-search-container" style="width: 390px;">
+            <form id="shopHeaderSearchForm" action="${ctx}${hdSearchAction}" method="GET" onsubmit="handleShopHeaderSearch(event)" class="relative flex items-center">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 <input type="text" id="shopHeaderSearch" name="keyword" value="<c:out value='${param.keyword}'/>"
-                       placeholder="Tìm theo SKU, tên trái cây, hoặc mã đơn con (Ctrl + K)..." class="header-search-input">
+                       placeholder="Tìm nông sản, SKU hoặc mã đơn... (Ctrl + K)"
+                       class="header-search-input" style="padding-right: 5.75rem;">
+                <div class="absolute right-1.5 top-1/2 -translate-y-1/2">
+                    <select id="shopSearchScope" class="text-[11px] font-bold text-slate-600 bg-slate-200/80 hover:bg-slate-300/80 border-0 rounded-lg px-2 py-1 outline-none cursor-pointer transition">
+                        <option value="auto">Tự động</option>
+                        <option value="products" ${hdSearchAction.contains('products') ? 'selected' : ''}>Sản phẩm</option>
+                        <option value="orders" ${hdSearchAction.contains('orders') ? 'selected' : ''}>Đơn hàng</option>
+                    </select>
+                </div>
             </form>
         </div>
     </div>
@@ -66,28 +74,155 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-3 pl-3 border-l border-slate-200">
-            <div class="text-right hidden sm:block">
-                <span class="text-xs font-bold text-gray-900 block leading-tight">
-                    <c:out value="${not empty sessionScope.user.fullName ? sessionScope.user.fullName : 'Chủ gian hàng'}" />
-                </span>
-                <span class="text-[11px] text-gray-500 block leading-tight">Chủ gian hàng</span>
+        <!-- User Profile Dropdown Menu -->
+        <div class="relative group" id="shop-user-menu-container">
+            <button type="button" id="shop-user-menu-btn" onclick="toggleShopUserMenu(event)"
+                    class="flex items-center gap-2.5 pl-3 border-l border-slate-200 cursor-pointer focus:outline-none"
+                    title="Menu tài khoản chủ shop">
+                <div class="text-right hidden sm:block">
+                    <span class="text-xs font-bold text-gray-900 block leading-tight group-hover:text-emerald-700 transition">
+                        <c:out value="${not empty sessionScope.user.fullName ? sessionScope.user.fullName : 'Chủ gian hàng'}" />
+                    </span>
+                    <span class="text-[11px] text-gray-500 block leading-tight">Chủ gian hàng</span>
+                </div>
+                <div class="w-9 h-9 rounded-full bg-[#166534] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ring-2 ring-transparent group-hover:ring-emerald-500/30 transition overflow-hidden">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.user.avatarUrl}">
+                            <c:set var="userAvt" value="${sessionScope.user.avatarUrl.startsWith('http://') or sessionScope.user.avatarUrl.startsWith('https://') ? sessionScope.user.avatarUrl : (sessionScope.user.avatarUrl.startsWith('/') ? pageContext.request.contextPath.concat(sessionScope.user.avatarUrl) : pageContext.request.contextPath.concat('/').concat(sessionScope.user.avatarUrl))}" />
+                            <img src="${userAvt}" alt="Avatar" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${sessionScope.user.fullName}&background=166534&color=fff';">
+                        </c:when>
+                        <c:otherwise>
+                            <i class="fa-regular fa-user text-xs"></i>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-700 transition"></i>
+            </button>
+
+            <!-- Dropdown Menu Popover (Mở khi hover hoặc click) -->
+            <div id="shop-user-menu-popover"
+                 class="hidden group-hover:block absolute right-0 top-full pt-1.5 w-72 z-50 transform origin-top-right transition-all">
+                <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 text-left">
+                    <!-- Thông tin tóm tắt -->
+                    <div class="px-3 py-2.5 bg-slate-50 rounded-xl mb-1.5 border border-slate-100">
+                        <p class="text-xs font-extrabold text-slate-900 truncate">
+                            <c:out value="${not empty sessionScope.user.fullName ? sessionScope.user.fullName : 'Chủ gian hàng'}" />
+                        </p>
+                        <p class="text-[11px] text-slate-500 truncate mt-0.5">
+                            <c:out value="${not empty sessionScope.user.email ? sessionScope.user.email : ''}" />
+                        </p>
+                        <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 truncate max-w-[180px]">
+                                <i class="fa-solid fa-leaf text-[9px]"></i> <c:out value="${not empty sessionScope.shopName ? sessionScope.shopName : (not empty sessionScope.shopObj.shopName ? sessionScope.shopObj.shopName : 'Gian hàng')}" />
+                            </span>
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-slate-200 text-slate-700 tracking-wider">
+                                SELLER
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Các mục điều hướng -->
+                    <div class="space-y-0.5">
+                        <!-- Xem gian hàng thực tế (khách hàng nhìn thấy) -->
+                        <c:set var="targetShopId" value="${not empty sessionScope.shopId ? sessionScope.shopId : (not empty sessionScope.shopObj.shopId ? sessionScope.shopObj.shopId : 1)}" />
+                        <a href="${ctx}/store?id=${targetShopId}" target="_blank"
+                           class="flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition group/item">
+                            <span class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-store text-slate-400 group-hover/item:text-emerald-600 w-4 text-center"></i>
+                                <span>Xem gian hàng (khách thấy)</span>
+                            </span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400 group-hover/item:text-emerald-600"></i>
+                        </a>
+
+                        <!-- Cài đặt & Thông tin Shop -->
+                        <a href="${ctx}/shop/profile"
+                           class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition group/item">
+                            <i class="fa-solid fa-id-card text-slate-400 group-hover/item:text-emerald-600 w-4 text-center"></i>
+                            <span>Hồ sơ &amp; Cài đặt Shop</span>
+                        </a>
+
+                        <!-- Profile của chủ shop -->
+                        <a href="${ctx}/profile"
+                           class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition group/item">
+                            <i class="fa-regular fa-user text-slate-400 group-hover/item:text-emerald-600 w-4 text-center"></i>
+                            <span>Hồ sơ cá nhân chủ shop</span>
+                        </a>
+
+                        <!-- Đổi mật khẩu -->
+                        <a href="${ctx}/change-password"
+                           class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition group/item">
+                            <i class="fa-solid fa-key text-slate-400 group-hover/item:text-emerald-600 w-4 text-center"></i>
+                            <span>Đổi mật khẩu</span>
+                        </a>
+
+                        <div class="h-px bg-slate-100 my-1"></div>
+
+                        <!-- Về trang chủ mua sắm -->
+                        <a href="${ctx}/home"
+                           class="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition group/item">
+                            <i class="fa-solid fa-house text-slate-400 group-hover/item:text-emerald-600 w-4 text-center"></i>
+                            <span>Về trang chủ mua sắm</span>
+                        </a>
+
+                        <div class="h-px bg-slate-100 my-1"></div>
+
+                        <!-- Đăng xuất -->
+                        <a href="${ctx}/logout"
+                           class="flex items-center gap-2.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition group/item">
+                            <i class="fa-solid fa-right-from-bracket text-rose-400 group-hover/item:text-rose-600 w-4 text-center"></i>
+                            <span>Đăng xuất</span>
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="w-9 h-9 rounded-full bg-[#166534] text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
-                <c:choose>
-                    <c:when test="${not empty sessionScope.user.avatarUrl}">
-                        <img src="<c:out value='${sessionScope.user.avatarUrl}'/>" alt="Avatar" class="w-full h-full rounded-full object-cover">
-                    </c:when>
-                    <c:otherwise>
-                        <i class="fa-regular fa-user text-xs"></i>
-                    </c:otherwise>
-                </c:choose>
-            </div>
+
+            <a href="${ctx}/logout" 
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 text-xs font-bold transition shadow-2xs" 
+               title="Đăng xuất khỏi hệ thống">
+                <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i>
+                <span class="hidden sm:inline">Đăng xuất</span>
+            </a>
         </div>
     </div>
 </header>
 
 <script>
+    window.handleShopHeaderSearch = function(e) {
+        if (e) e.preventDefault();
+        var input = document.getElementById('shopHeaderSearch');
+        var kw = input ? input.value.trim() : '';
+        if (!kw) return;
+        var scopeEl = document.getElementById('shopSearchScope');
+        var scope = scopeEl ? scopeEl.value : 'auto';
+
+        var isOrder = /^SUB-/i.test(kw) || /^ORD-/i.test(kw) || /^\d{4,}$/.test(kw);
+        if (scope === 'orders' || (scope === 'auto' && isOrder)) {
+            window.location.href = '${ctx}/shop/orders?keyword=' + encodeURIComponent(kw);
+        } else {
+            window.location.href = '${ctx}/shop/products?keyword=' + encodeURIComponent(kw);
+        }
+    };
+
+    window.toggleShopUserMenu = function(e) {
+        if (e) {
+            e.stopPropagation();
+            e.preventDefault();
+        }
+        var notiPop = document.getElementById('shop-noti-popover');
+        if (notiPop) notiPop.classList.add('hidden');
+
+        var menu = document.getElementById('shop-user-menu-popover');
+        if (menu) {
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('block');
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('block');
+            }
+        }
+    };
+
     window.toggleShopNotifications = function(e) {
         if (e) {
             e.stopPropagation();
@@ -210,12 +345,24 @@
         if (container && popover && !container.contains(e.target)) {
             popover.classList.add('hidden');
         }
+
+        var userContainer = document.getElementById('shop-user-menu-container');
+        var userPopover = document.getElementById('shop-user-menu-popover');
+        if (userContainer && userPopover && !userContainer.contains(e.target)) {
+            userPopover.classList.add('hidden');
+            userPopover.classList.remove('block');
+        }
     });
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             var popover = document.getElementById('shop-noti-popover');
             if (popover) popover.classList.add('hidden');
+            var userPopover = document.getElementById('shop-user-menu-popover');
+            if (userPopover) {
+                userPopover.classList.add('hidden');
+                userPopover.classList.remove('block');
+            }
         }
     });
 </script>

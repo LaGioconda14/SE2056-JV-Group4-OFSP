@@ -14,6 +14,8 @@
 <c:url var="changePasswordUrl" value="/change-password" />
 
 <!-- Material Symbols & Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <style>
@@ -25,7 +27,7 @@
 <!-- ==================== HEADER CHUẨN ĐỒNG BỘ CART ==================== -->
 <header class="sticky top-0 left-0 right-0 w-full z-50 bg-white/95 backdrop-blur-xl shadow-[0_4px_20px_rgba(20,83,45,0.06)] border-b border-gray-100">
     <!-- Main Header Bar -->
-    <div class="max-w-[1360px] mx-auto px-4 lg:px-8 h-20 flex items-center justify-between gap-4 lg:gap-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4 lg:gap-6">
         <!-- 1. Brand Logo -->
         <a href="<c:out value='${homeUrl}'/>" class="flex items-center gap-3 shrink-0 no-underline">
             <!-- Apple Icon SVG -->
@@ -52,10 +54,21 @@
             <div class="flex items-center gap-1 pr-3 text-gray-600 text-xs cursor-pointer shrink-0">
                 <select name="categoryId" class="bg-transparent border-0 outline-none text-gray-700 cursor-pointer text-sm font-medium pr-1">
                     <option value="">Tất cả danh mục</option>
-                    <option value="1">Trái Cây Nội Địa</option>
-                    <option value="2">Trái Cây Nhập Khẩu</option>
-                    <option value="3">Hộp Quà &amp; Combo</option>
-                    <option value="4">Trái Cây Sấy</option>
+                    <c:choose>
+                        <c:when test="${not empty categories}">
+                            <c:forEach var="c" items="${categories}">
+                                <c:if test="${empty c.parentId}">
+                                    <option value="${c.categoryId}" ${param.categoryId == c.categoryId ? 'selected' : ''}>${c.categoryName}</option>
+                                </c:if>
+                            </c:forEach>
+                        </c:when>
+                        <c:otherwise>
+                            <option value="6" ${param.categoryId == '6' ? 'selected' : ''}>Trái Cây Nội Địa</option>
+                            <option value="5" ${param.categoryId == '5' ? 'selected' : ''}>Trái Cây Nhập Khẩu</option>
+                            <option value="7" ${param.categoryId == '7' ? 'selected' : ''}>Hộp Quà &amp; Combo</option>
+                            <option value="8" ${param.categoryId == '8' ? 'selected' : ''}>Trái Cây Chế Biến &amp; Sấy</option>
+                        </c:otherwise>
+                    </c:choose>
                 </select>
             </div>
             <div class="h-5 w-px bg-gray-300 mr-3"></div>
@@ -92,20 +105,9 @@
                         <button type="button" onclick="clearAllNotifications(event)" class="text-xs text-[#00652c] hover:underline font-semibold cursor-pointer">Đánh dấu đã đọc</button>
                     </div>
                     <div class="max-h-72 overflow-y-auto space-y-2.5" id="header-noti-list">
-                        <!-- Default notifications -->
-                        <div class="flex items-start gap-3 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-100 text-xs text-gray-700">
-                            <span class="material-symbols-outlined text-emerald-600 text-[18px] shrink-0 mt-0.5">shopping_bag</span>
-                            <div class="flex-1">
-                                <p class="font-bold text-gray-900">Giỏ hàng của bạn</p>
-                                <p class="text-gray-600 text-[11px] mt-0.5">Bạn đang có <strong class="text-[#00652c]" id="noti-cart-count">${cartSize}</strong> món trong giỏ hàng.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start gap-3 p-2.5 rounded-xl bg-amber-50/70 border border-amber-100 text-xs text-gray-700">
-                            <span class="material-symbols-outlined text-amber-600 text-[18px] shrink-0 mt-0.5">confirmation_number</span>
-                            <div class="flex-1">
-                                <p class="font-bold text-gray-900">Mã giảm giá mới</p>
-                                <p class="text-gray-600 text-[11px] mt-0.5">Mã SAN10K (giảm 10.000₫) và mã Shop giảm đến 10% đã sẵn sàng.</p>
-                            </div>
+                        <div class="py-6 text-center text-gray-400">
+                            <span class="material-symbols-outlined text-[32px] text-gray-300 mb-1">notifications_off</span>
+                            <p class="text-xs">Chưa có thông báo mới nào</p>
                         </div>
                     </div>
                     <div class="pt-3 border-t border-gray-100 mt-3 text-center">
@@ -203,14 +205,14 @@
     <c:set var="isHomeActive" value="${reqUri.endsWith('/home') or reqUri.endsWith('/home.jsp') or reqUri eq ctxPath or reqUri eq ctxPath.concat('/')}" />
     <c:set var="isProductsActive" value="${fn:contains(reqUri, '/products') or fn:contains(reqUri, '/product-list')}" />
     <div class="bg-white border-t border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-        <div class="max-w-[1360px] mx-auto px-4 lg:px-8 h-11 flex items-center justify-between">
-            <nav class="flex items-center gap-5 lg:gap-6 text-sm h-full">
-                <a class="transition-colors flex items-center h-full border-b-2 ${isHomeActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
-                <a class="transition-colors flex items-center h-full border-b-2 ${isProductsActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-11 flex items-center justify-between">
+            <nav class="flex items-center gap-6 lg:gap-7 xl:gap-8 text-sm h-full">
+                <a class="transition-colors flex items-center h-full px-1 border-b-2 ${isHomeActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
+                <a class="transition-colors flex items-center h-full px-1 border-b-2 ${isProductsActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
 
                 <%-- 1. TRÁI CÂY NỘI ĐỊA (Dropdown danh mục con quả nội địa) --%>
                 <div class="relative group h-full flex items-center">
-                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1" 
+                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
                        href="<c:out value='${productsUrl}'/>?category=trai-cay-viet-nam">
                         <span>Trái Cây Nội Địa</span>
                         <span class="material-symbols-outlined text-[16px] text-gray-400 group-hover:text-[#00652c] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
@@ -224,27 +226,15 @@
                             </a>
                             <div class="h-px bg-gray-100 my-1"></div>
                             <div class="space-y-0.5">
-                                <c:set var="foundDomestic" value="false" />
-                                <c:if test="${not empty categories}">
-                                    <c:forEach var="c" items="${categories}">
-                                        <c:if test="${c.parentId == 6 or c.parentId == 9}">
-                                            <c:set var="foundDomestic" value="true" />
-                                            <a href="<c:out value='${productsUrl}'/>?category=${c.slug}" 
-                                               class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>
-                                                <span class="truncate"><c:out value="${c.categoryName}"/></span>
-                                            </a>
-                                        </c:if>
-                                    </c:forEach>
-                                </c:if>
-                                <c:if test="${!foundDomestic}">
-                                    <a href="<c:out value='${productsUrl}'/>?category=buoi-cam-quyt" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Bưởi, Cam, Quýt</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=xoai-chuoi" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Xoài &amp; Chuối</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=tao-le-oi" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Táo, Lê, Ổi</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=trai-cay-theo-mua" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Trái Cây Theo Mùa</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=dua-hau-dua-luoi-giai-nhiet" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Dưa Hấu &amp; Dưa Lưới</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=thanh-long-trai-cay-mong-nuoc" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Thanh Long &amp; Trái Cây Mọng Nước</a>
-                                </c:if>
+                                <c:forEach var="c" items="${categories}">
+                                    <c:if test="${c.parentId == 6 or c.parentId == 9}">
+                                        <a href="<c:out value='${productsUrl}'/>?category=${c.slug}" 
+                                           class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>
+                                            <span class="truncate"><c:out value="${c.categoryName}"/></span>
+                                        </a>
+                                    </c:if>
+                                </c:forEach>
                             </div>
                         </div>
                     </div>
@@ -252,7 +242,7 @@
 
                 <%-- 2. TRÁI CÂY NHẬP KHẨU (Dropdown danh mục con quả nhập khẩu) --%>
                 <div class="relative group h-full flex items-center">
-                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1" 
+                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
                        href="<c:out value='${productsUrl}'/>?category=trai-cay-nhap-khau">
                         <span>Trái Cây Nhập Khẩu</span>
                         <span class="material-symbols-outlined text-[16px] text-gray-400 group-hover:text-[#00652c] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
@@ -266,28 +256,15 @@
                             </a>
                             <div class="h-px bg-gray-100 my-1"></div>
                             <div class="space-y-0.5">
-                                <c:set var="foundImported" value="false" />
-                                <c:if test="${not empty categories}">
-                                    <c:forEach var="c" items="${categories}">
-                                        <c:if test="${c.parentId == 5}">
-                                            <c:set var="foundImported" value="true" />
-                                            <a href="<c:out value='${productsUrl}'/>?category=${c.slug}" 
-                                               class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>
-                                                <span class="truncate"><c:out value="${c.categoryName}"/></span>
-                                            </a>
-                                        </c:if>
-                                    </c:forEach>
-                                </c:if>
-                                <c:if test="${!foundImported}">
-                                    <a href="<c:out value='${productsUrl}'/>?category=nho-nhap-khau" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Nho Nhập Khẩu</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=tao-envy" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Táo Envy</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=kiwi-nhap-khau" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Kiwi Nhập Khẩu</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=man-nhap-khau" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Mận Nhập Khẩu</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=tao-nhap-khau" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Táo Nhập Khẩu</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=dau-tay-cac-loai-qua-mong" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Dâu Tây &amp; Quả Mọng</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=trai-cay-huu-co" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Trái Cây Hữu Cơ</a>
-                                </c:if>
+                                <c:forEach var="c" items="${categories}">
+                                    <c:if test="${c.parentId == 5}">
+                                        <a href="<c:out value='${productsUrl}'/>?category=${c.slug}" 
+                                           class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>
+                                            <span class="truncate"><c:out value="${c.categoryName}"/></span>
+                                        </a>
+                                    </c:if>
+                                </c:forEach>
                             </div>
                         </div>
                     </div>
@@ -295,7 +272,7 @@
 
                 <%-- 3. HỘP QUÀ & COMBO (Dropdown hộp quà, giỏ quà, combo tiện lợi) --%>
                 <div class="relative group h-full flex items-center">
-                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1" 
+                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
                        href="<c:out value='${productsUrl}'/>?category=qua-tang-trai-cay">
                         <span>Hộp Quà &amp; Combo</span>
                         <span class="material-symbols-outlined text-[16px] text-gray-400 group-hover:text-[#00652c] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
@@ -309,32 +286,22 @@
                             </a>
                             <div class="h-px bg-gray-100 my-1"></div>
                             <div class="space-y-0.5">
-                                <c:set var="foundGift" value="false" />
-                                <c:if test="${not empty categories}">
-                                    <c:forEach var="c" items="${categories}">
-                                        <c:if test="${c.parentId == 7 or c.parentId == 8 or c.categoryId == 3}">
-                                            <c:set var="foundGift" value="true" />
-                                            <a href="<c:out value='${productsUrl}'/>?category=${c.slug}" 
-                                               class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>
-                                                <span class="truncate"><c:out value="${c.categoryName}"/></span>
-                                            </a>
-                                        </c:if>
-                                    </c:forEach>
-                                </c:if>
-                                <c:if test="${!foundGift}">
-                                    <a href="<c:out value='${productsUrl}'/>?category=hop-qua-bieu-tang-cao-cap" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Hộp Quà Biếu Tặng Cao Cấp</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=thung-trai-cay-nguyen-kien" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Thùng Trái Cây Nguyên Kiện</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=hop-trai-cay-van-phong" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Hộp Trái Cây Văn Phòng</a>
-                                    <a href="<c:out value='${productsUrl}'/>?category=dia-trai-cay-eat-clean" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>Đĩa Trái Cây Eat-Clean</a>
-                                </c:if>
+                                <c:forEach var="c" items="${categories}">
+                                    <c:if test="${c.parentId == 7 or c.parentId == 8 or c.categoryId == 3}">
+                                        <a href="<c:out value='${productsUrl}'/>?category=${c.slug}" 
+                                           class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:text-[#00652c] hover:bg-emerald-50/70 transition-colors">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0"></span>
+                                            <span class="truncate"><c:out value="${c.categoryName}"/></span>
+                                        </a>
+                                    </c:if>
+                                </c:forEach>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full" href="<c:out value='${homeUrl}'/>#about">Về Nông Trại</a>
-                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full" href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a>
+                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full px-1" href="<c:out value='${homeUrl}'/>#about">Về Nông Trại</a>
+                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full px-1" href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a>
             </nav>
             <div class="hidden sm:flex items-center">
                 <span class="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-semibold">

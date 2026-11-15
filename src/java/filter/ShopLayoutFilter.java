@@ -52,9 +52,14 @@ public class ShopLayoutFilter implements Filter {
                     if (shopId != null && shopId > 0) {
                         req.setAttribute("sidebarLowStockCount", shopProductService.getLowStockCountByShopId(shopId));
                         req.setAttribute("sidebarPendingOrdersCount", fulfillmentService.countSubOrdersByShop(shopId, SubOrderStatus.NEW));
-                        try {
-                            new service.impl.NotificationServiceImpl().checkAndNotifyExpiringBatches(shopId, ((User) u).getId());
-                        } catch (Exception ignored) {}
+
+                        // Chỉ kiểm tra lô cận hạn khi người bán truy cập trang Kho hàng hoặc Hàng hủy
+                        String servletPath = req.getServletPath();
+                        if (servletPath != null && (servletPath.contains("inventory") || servletPath.contains("waste"))) {
+                            try {
+                                new service.impl.NotificationServiceImpl().checkAndNotifyExpiringBatches(shopId, ((User) u).getId());
+                            } catch (Exception ignored) {}
+                        }
                     }
                 } catch (Exception e) {
                     // Không để lỗi đếm badge làm hỏng cả trang; sidebar sẽ hiện 0

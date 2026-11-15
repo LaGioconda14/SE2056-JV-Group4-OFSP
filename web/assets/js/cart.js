@@ -116,7 +116,7 @@
         document.querySelectorAll('[data-selected-summary-count]').forEach(output => {
             output.replaceChildren('Đã chọn: ');
             const strong = document.createElement('strong');
-            strong.className = 'text-on-surface font-bold';
+            strong.className = 'text-gray-900 font-bold';
             strong.textContent = selectedCount + '/' + totalCount + ' món';
             output.append(strong);
         });

@@ -880,7 +880,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     public List<Map<String, Object>> getCategoriesList(String statusFilter, String searchKeyword, String parentIdFilter) {
         List<Map<String, Object>> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.display_order, c.is_active, ")
+        sql.append("SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.icon_class, c.is_active, ")
            .append("       pcat.category_name as parent_name, ")
            .append("       COALESCE(p.active_skus, 0) as active_skus ")
            .append("FROM categories c ")
@@ -922,7 +922,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         if (!conditions.isEmpty()) {
             sql.append("WHERE ").append(String.join(" AND ", conditions)).append(" ");
         }
-        sql.append("ORDER BY COALESCE(c.parent_id, c.category_id) ASC, c.display_order ASC, c.category_id ASC");
+        sql.append("ORDER BY COALESCE(c.parent_id, c.category_id) ASC, c.category_id ASC");
 
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -941,33 +941,11 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("categoryName", rs.getString("category_name"));
                     item.put("slug", rs.getString("slug"));
                     item.put("description", rs.getString("description"));
-                    item.put("imageUrl", rs.getString("image_url"));
                     item.put("iconClass", rs.getString("icon_class"));
                     item.put("activeSkus", rs.getInt("active_skus"));
-                    item.put("displayOrder", rs.getInt("display_order"));
                     item.put("isActive", rs.getBoolean("is_active"));
+                    item.put("takeRate", "8.0%");
 
-                    // Cold Storage details by category group
-                    int pid = rs.getInt("parent_id");
-                    if (id == 5 || pid == 5) {
-                        item.put("tempRange", "1°C – 3°C");
-                        item.put("recommendedStorage", "Kho lạnh ngoại nhập Hub A");
-                    } else if (id == 6 || pid == 6) {
-                        item.put("tempRange", "10°C – 14°C");
-                        item.put("recommendedStorage", "Kho thoáng mát Vùng 3");
-                    } else if (id == 7 || pid == 7) {
-                        item.put("tempRange", "0°C – 2°C");
-                        item.put("recommendedStorage", "Hầm lạnh sơ chế Eat-Clean");
-                    } else if (id == 8 || pid == 8) {
-                        item.put("tempRange", "4°C – 8°C");
-                        item.put("recommendedStorage", "Kho đóng gói nguyên kiện Hub C");
-                    } else if (id == 9 || pid == 9) {
-                        item.put("tempRange", "8°C – 12°C");
-                        item.put("recommendedStorage", "Kho trữ mát mùa hè");
-                    } else {
-                        item.put("tempRange", "2°C – 5°C");
-                        item.put("recommendedStorage", "Kho lạnh tiêu chuẩn");
-                    }
                     list.add(item);
                 }
             }
@@ -980,8 +958,8 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     public List<Map<String, Object>> getFruitMegaMenuCategories() {
         List<Map<String, Object>> list = new ArrayList<>();
         // Select Level 1 root categories (parent_id IS NULL)
-        String sql = "SELECT c.category_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.is_active "
-                   + "FROM categories c WHERE c.parent_id IS NULL ORDER BY c.display_order ASC";
+        String sql = "SELECT c.category_id, c.category_name, c.slug, c.description, c.icon_class, c.is_active "
+                   + "FROM categories c WHERE c.parent_id IS NULL ORDER BY c.category_id ASC";
 
         try (Connection conn = getConnection();
              Statement st = conn.createStatement();
@@ -993,7 +971,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                 item.put("categoryName", rs.getString("category_name"));
                 item.put("slug", rs.getString("slug"));
                 item.put("description", rs.getString("description"));
-                item.put("imageUrl", rs.getString("image_url"));
+
                 item.put("iconClass", rs.getString("icon_class"));
                 item.put("isActive", rs.getBoolean("is_active"));
 
@@ -1005,7 +983,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                               + "    SELECT category_id, COUNT(product_id) as active_skus "
                               + "    FROM products WHERE is_active = 1 GROUP BY category_id"
                               + ") p ON c.category_id = p.category_id "
-                              + "WHERE c.parent_id = ? ORDER BY c.display_order ASC";
+                              + "WHERE c.parent_id = ? ORDER BY c.category_id ASC";
                 try (PreparedStatement subPs = conn.prepareStatement(subSql)) {
                     subPs.setInt(1, catId);
                     try (ResultSet subRs = subPs.executeQuery()) {
@@ -1046,7 +1024,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
     }
 
     public Map<String, Object> getCategoryDetail(int categoryId) {
-        String sql = "SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.image_url, c.icon_class, c.display_order, c.is_active, "
+        String sql = "SELECT c.category_id, c.parent_id, c.category_name, c.slug, c.description, c.icon_class, c.is_active, "
                    + "       pcat.category_name as parent_name, "
                    + "       (SELECT COUNT(*) FROM products WHERE category_id = c.category_id) as total_products, "
                    + "       (SELECT COUNT(*) FROM categories WHERE parent_id = c.category_id) as child_categories_count "
@@ -1065,9 +1043,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     map.put("categoryName", rs.getString("category_name"));
                     map.put("slug", rs.getString("slug"));
                     map.put("description", rs.getString("description"));
-                    map.put("imageUrl", rs.getString("image_url"));
                     map.put("iconClass", rs.getString("icon_class"));
-                    map.put("displayOrder", rs.getInt("display_order"));
                     map.put("isActive", rs.getBoolean("is_active"));
                     map.put("totalProducts", rs.getInt("total_products"));
                     map.put("childCategoriesCount", rs.getInt("child_categories_count"));
@@ -1080,14 +1056,14 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         return null;
     }
 
-    public boolean addCategory(String name, String slug, String description, Integer parentId, String iconClass, String imageUrl, int displayOrder, boolean isActive) {
+    public boolean addCategory(String name, String slug, String description, Integer parentId, String iconClass, boolean isActive) {
         if (slug == null || slug.trim().isEmpty()) {
             slug = toSlug(name);
         } else {
             slug = toSlug(slug);
         }
-        String sql = "INSERT INTO categories (category_name, slug, description, parent_id, icon_class, image_url, display_order, is_active) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO categories (category_name, slug, description, parent_id, icon_class, is_active) "
+                   + "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name != null ? name.trim() : "");
@@ -1099,9 +1075,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                 ps.setNull(4, java.sql.Types.INTEGER);
             }
             ps.setString(5, iconClass != null && !iconClass.trim().isEmpty() ? iconClass.trim() : "bi-folder");
-            ps.setString(6, imageUrl != null && !imageUrl.trim().isEmpty() ? imageUrl.trim() : null);
-            ps.setInt(7, displayOrder);
-            ps.setBoolean(8, isActive);
+            ps.setBoolean(6, isActive);
             return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error in addCategory: " + ex.getMessage(), ex);
@@ -1109,13 +1083,13 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         }
     }
 
-    public boolean updateCategory(int categoryId, String name, String slug, String description, Integer parentId, String iconClass, String imageUrl, int displayOrder, boolean isActive) {
+    public boolean updateCategory(int categoryId, String name, String slug, String description, Integer parentId, String iconClass, boolean isActive) {
         if (slug == null || slug.trim().isEmpty()) {
             slug = toSlug(name);
         } else {
             slug = toSlug(slug);
         }
-        String sql = "UPDATE categories SET category_name = ?, slug = ?, description = ?, parent_id = ?, icon_class = ?, image_url = ?, display_order = ?, is_active = ? "
+        String sql = "UPDATE categories SET category_name = ?, slug = ?, description = ?, parent_id = ?, icon_class = ?, is_active = ? "
                    + "WHERE category_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -1128,10 +1102,8 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                 ps.setNull(4, java.sql.Types.INTEGER);
             }
             ps.setString(5, iconClass != null && !iconClass.trim().isEmpty() ? iconClass.trim() : "bi-folder");
-            ps.setString(6, imageUrl != null && !imageUrl.trim().isEmpty() ? imageUrl.trim() : null);
-            ps.setInt(7, displayOrder);
-            ps.setBoolean(8, isActive);
-            ps.setInt(9, categoryId);
+            ps.setBoolean(6, isActive);
+            ps.setInt(7, categoryId);
             return ps.executeUpdate() > 0;
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error in updateCategory: " + ex.getMessage(), ex);

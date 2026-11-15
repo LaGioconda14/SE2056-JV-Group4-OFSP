@@ -161,7 +161,7 @@ public class ShopInventoryServlet extends HttpServlet {
                 String criticalNames = inventoryService.getCriticalItemNames(shopId);
                 int expiringFreshnessCount = inventoryService.getExpiringFreshnessCount(shopId);
                 BigDecimal totalInventoryValue = inventoryService.getTotalInventoryValue(shopId);
-                int totalSkus = 115;
+                int totalSkus = productService.countVariantsByShopId(shopId);
 
                 request.setAttribute("inventoryList", inventoryList);
                 request.setAttribute("keyword", keyword != null ? keyword : "");
@@ -172,11 +172,11 @@ public class ShopInventoryServlet extends HttpServlet {
                 request.setAttribute("totalCount", totalCount);
                 request.setAttribute("totalPages", totalPages);
 
-                request.setAttribute("criticalStockCount", criticalStockCount > 0 ? criticalStockCount : 3);
+                request.setAttribute("criticalStockCount", criticalStockCount);
                 request.setAttribute("criticalNames", criticalNames);
                 request.setAttribute("expiringFreshnessCount", expiringFreshnessCount);
                 request.setAttribute("totalInventoryValue", totalInventoryValue);
-                request.setAttribute("totalSkus", totalSkus > 0 ? totalSkus : 115);
+                request.setAttribute("totalSkus", totalSkus);
             }
 
         } catch (Exception e) {

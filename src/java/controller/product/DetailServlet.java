@@ -103,7 +103,6 @@ public class DetailServlet extends HttpServlet {
                         }
                     }
                     request.setAttribute("shopJoinedTime", shopJoinedTime);
-
                     HttpSession session = request.getSession(false);
                     if (session != null) {
                         request.setAttribute("currentUser", session.getAttribute("user"));

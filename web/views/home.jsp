@@ -8,39 +8,12 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Gốc Vườn - Siêu Thị Hoa Quả Tươi Sạch</title>
-        <!-- Google Fonts: Inter & Plus Jakarta Sans -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-        <!-- FontAwesome -->
+        <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+        <script src="https://cdn.tailwindcss.com" defer></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            brand: {
-                                DEFAULT: '#00652c',
-                                dark: '#005323',
-                                light: '#059669',
-                                surface: '#f4f7f4'
-                            }
-                        },
-                        fontFamily: {
-                            sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
-                        }
-                    }
-                }
-            }
-        </script>
-        <style>
-            body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
-        </style>
-
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/home.css">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/wishlist.css">
         <script src="${pageContext.request.contextPath}/assets/js/home.js" defer></script>
@@ -55,6 +28,9 @@
         <section class="hero-banner">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div class="relative z-10 max-w-3xl">
+                    <div class="hero-badge">
+                        <i class="fa-solid fa-award text-amber-300"></i> 100% Organic Đạt Chuẩn VietGAP & GlobalGAP
+                    </div>
                     <h1 class="hero-title">
                         Hoa Quả Tươi Sạch,<br>Giao Nhanh Mỗi Ngày.
                     </h1>
@@ -78,6 +54,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Sản Phẩm Tươi Ngon Theo Danh Mục</h2>
+                    <p class="text-xs sm:text-sm text-gray-500">Tuyển tập hoa quả hữu cơ chuẩn VietGAP & GlobalGAP tươi sạch mỗi ngày</p>
                 </div>
             </div>
 

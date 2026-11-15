@@ -62,44 +62,44 @@ public class InventoryDAO extends DBContext {
                    .append("    pv.variant_name, ")
                    .append("    p.certification, ")
                    .append("    COALESCE(pb.batch_type, pv.variant_name) AS batch_type, ")
-                   .append("    COALESCE(pi.image_url, (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC)) AS image_url, ")
-                   .append("    pb.harvest_date, ")
-                   .append("    COALESCE(pb.harvest_time_label, N'06:00 Hôm nay') AS harvest_time_label, ")
-                   .append("    COALESCE(pb.freshness_score, 95) AS freshness_score, ")
-                   .append("    COALESCE(pb.freshness_note, N'Độ tươi: 95% (Chuẩn kho lạnh)') AS freshness_note, ")
-                   .append("    COALESCE(pb.current_quantity, pv.stock_quantity) AS current_quantity, ")
-                   .append("    COALESCE(pb.initial_quantity, CASE WHEN pv.stock_quantity > 50 THEN pv.stock_quantity ELSE 50 END) AS initial_quantity, ")
-                   .append("    pv.low_stock_threshold, ")
-                   .append("    pv.unit, ")
-                   .append("    COALESCE(pb.pending_packing_text, N'0 đơn chờ xuất') AS pending_packing_text, ")
-                   .append("    pv.price ")
-                   .append("FROM product_variants pv ")
-                   .append("JOIN products p ON pv.product_id = p.product_id ")
-                   .append("LEFT JOIN product_batches pb ON pv.variant_id = pb.variant_id ")
-                   .append("LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 ")
-                   .append("WHERE p.shop_id = ? ");
-            } else {
-                sql.append("SELECT ")
-                   .append("    0 AS batch_id, ")
-                   .append("    CONCAT('LH-', pv.sku) AS batch_code, ")
-                   .append("    pv.variant_id, ")
-                   .append("    p.product_id, ")
-                   .append("    pv.sku, ")
-                   .append("    p.name AS product_name, ")
-                   .append("    pv.variant_name, ")
-                   .append("    p.certification, ")
-                   .append("    pv.variant_name AS batch_type, ")
-                   .append("    COALESCE(pi.image_url, (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC)) AS image_url, ")
-                   .append("    pv.created_at AS harvest_date, ")
-                   .append("    N'06:00 Hôm nay' AS harvest_time_label, ")
-                   .append("    95 AS freshness_score, ")
-                   .append("    N'Độ tươi: 95% (Chuẩn kho lạnh)' AS freshness_note, ")
-                   .append("    pv.stock_quantity AS current_quantity, ")
-                   .append("    CASE WHEN pv.stock_quantity > 50 THEN pv.stock_quantity ELSE 50 END AS initial_quantity, ")
-                   .append("    pv.low_stock_threshold, ")
-                   .append("    pv.unit, ")
-                   .append("    N'0 đơn chờ xuất' AS pending_packing_text, ")
-                   .append("    pv.price ")
+                    .append("    COALESCE(pi.image_url, (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC)) AS image_url, ")
+                    .append("    pb.harvest_date, ")
+                    .append("    COALESCE(pb.harvest_time_label, N'Tồn kho chung') AS harvest_time_label, ")
+                    .append("    COALESCE(pb.freshness_score, CASE WHEN pv.stock_quantity > 0 THEN 100 ELSE 0 END) AS freshness_score, ")
+                    .append("    COALESCE(pb.freshness_note, CASE WHEN pv.stock_quantity > 0 THEN N'Đang mở bán' ELSE N'Hết hàng' END) AS freshness_note, ")
+                    .append("    COALESCE(pb.current_quantity, pv.stock_quantity) AS current_quantity, ")
+                    .append("    COALESCE(pb.initial_quantity, pv.stock_quantity) AS initial_quantity, ")
+                    .append("    pv.low_stock_threshold, ")
+                    .append("    pv.unit, ")
+                    .append("    COALESCE(pb.pending_packing_text, N'--') AS pending_packing_text, ")
+                    .append("    pv.price ")
+                    .append("FROM product_variants pv ")
+                    .append("JOIN products p ON pv.product_id = p.product_id ")
+                    .append("LEFT JOIN product_batches pb ON pv.variant_id = pb.variant_id ")
+                    .append("LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 ")
+                    .append("WHERE p.shop_id = ? ");
+             } else {
+                 sql.append("SELECT ")
+                    .append("    0 AS batch_id, ")
+                    .append("    pv.sku AS batch_code, ")
+                    .append("    pv.variant_id, ")
+                    .append("    p.product_id, ")
+                    .append("    pv.sku, ")
+                    .append("    p.name AS product_name, ")
+                    .append("    pv.variant_name, ")
+                    .append("    p.certification, ")
+                    .append("    pv.variant_name AS batch_type, ")
+                    .append("    COALESCE(pi.image_url, (SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, image_id ASC)) AS image_url, ")
+                    .append("    pv.created_at AS harvest_date, ")
+                    .append("    N'Tồn kho chung' AS harvest_time_label, ")
+                    .append("    CASE WHEN pv.stock_quantity > 0 THEN 100 ELSE 0 END AS freshness_score, ")
+                    .append("    CASE WHEN pv.stock_quantity > 0 THEN N'Đang mở bán' ELSE N'Hết hàng' END AS freshness_note, ")
+                    .append("    pv.stock_quantity AS current_quantity, ")
+                    .append("    pv.stock_quantity AS initial_quantity, ")
+                    .append("    pv.low_stock_threshold, ")
+                    .append("    pv.unit, ")
+                    .append("    N'--' AS pending_packing_text, ")
+                    .append("    pv.price ")
                    .append("FROM product_variants pv ")
                    .append("JOIN products p ON pv.product_id = p.product_id ")
                    .append("LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_thumbnail = 1 ")
@@ -123,7 +123,7 @@ public class InventoryDAO extends DBContext {
             }
 
             String qtyCol = hasBatches ? "COALESCE(pb.current_quantity, pv.stock_quantity)" : "pv.stock_quantity";
-            String freshCol = hasBatches ? "COALESCE(pb.freshness_score, 95)" : "95";
+            String freshCol = hasBatches ? "COALESCE(pb.freshness_score, 100)" : "100";
 
             // Risk Level filter
             if (riskLevel != null && !riskLevel.trim().isEmpty() && !"all".equalsIgnoreCase(riskLevel)) {
@@ -244,7 +244,7 @@ public class InventoryDAO extends DBContext {
             }
 
             String qtyCol = hasBatches ? "COALESCE(pb.current_quantity, pv.stock_quantity)" : "pv.stock_quantity";
-            String freshCol = hasBatches ? "COALESCE(pb.freshness_score, 95)" : "95";
+            String freshCol = hasBatches ? "COALESCE(pb.freshness_score, 100)" : "100";
 
             if (riskLevel != null && !riskLevel.trim().isEmpty() && !"all".equalsIgnoreCase(riskLevel)) {
                 if ("critical".equalsIgnoreCase(riskLevel)) {

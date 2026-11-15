@@ -7,21 +7,19 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Tìm kiếm: ${txtSearch} - Gốc Vườn</title>
-        <!-- FontAwesome Icons -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <!-- Google Fonts Inter & Plus Jakarta Sans -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+        <!-- FontAwesome Icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Google Fonts Inter -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <!-- Custom Search CSS -->
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/search-products.css">
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-            body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
-        </style>
+        <!-- Tailwind CSS (Non-blocking) -->
+        <script src="https://cdn.tailwindcss.com" defer></script>
         <!-- Custom Search JS (Tailwind config) -->
-        <script src="${pageContext.request.contextPath}/assets/js/search-products.js"></script>
+        <script src="${pageContext.request.contextPath}/assets/js/search-products.js" defer></script>
     </head>
     <body class="bg-gray-50 text-gray-800 font-sans antialiased selection:bg-emerald-500 selection:text-white">
 
@@ -40,9 +38,10 @@
         <i class="fa-solid fa-filter text-emerald-600"></i> BỘ LỌC TÌM KIẾM
     </h2>
 
-    <form action="${pageContext.request.contextPath}/search" method="GET" class="space-y-6">
+    <form action="${pageContext.request.contextPath}/search" method="GET" id="searchFilterForm" class="space-y-6">
         <!-- Giữ nguyên từ khóa tìm kiếm khi lọc -->
         <input type="hidden" name="query" value="${txtSearch}" />
+        <input type="hidden" name="rating" id="searchRatingInput" value="${param.rating}" />
 
         <!-- Theo Danh Mục (Đổ dữ liệu động từ Database) -->
         <div>
@@ -76,12 +75,17 @@
         <div class="border-t border-gray-100 pt-5">
             <h3 class="font-bold text-sm mb-3 text-gray-800">Đánh Giá</h3>
             <div class="space-y-2.5 text-xs">
-                <a href="${pageContext.request.contextPath}/search?query=${txtSearch}&rating=5" class="flex items-center gap-1.5 text-amber-400 hover:underline">
+                <button type="button" onclick="document.getElementById('searchRatingInput').value='5'; document.getElementById('searchFilterForm').submit();" class="flex items-center gap-1.5 text-amber-400 hover:underline bg-transparent border-0 cursor-pointer p-0 text-left w-full ${param.rating == '5' ? 'font-bold' : ''}">
                     <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i> <span class="text-gray-600 font-medium ml-1">5 sao</span>
-                </a>
-                <a href="${pageContext.request.contextPath}/search?query=${txtSearch}&rating=4" class="flex items-center gap-1.5 text-amber-400 hover:underline">
+                </button>
+                <button type="button" onclick="document.getElementById('searchRatingInput').value='4'; document.getElementById('searchFilterForm').submit();" class="flex items-center gap-1.5 text-amber-400 hover:underline bg-transparent border-0 cursor-pointer p-0 text-left w-full ${param.rating == '4' ? 'font-bold' : ''}">
                     <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star text-gray-300"></i> <span class="text-gray-600 font-medium ml-1">4 sao trở lên</span>
-                </a>
+                </button>
+                <c:if test="${not empty param.rating}">
+                    <button type="button" onclick="document.getElementById('searchRatingInput').value=''; document.getElementById('searchFilterForm').submit();" class="text-xs text-rose-600 hover:underline bg-transparent border-0 cursor-pointer p-0 text-left pt-1 font-semibold">
+                        <i class="fa-solid fa-xmark mr-1"></i>Bỏ lọc số sao
+                    </button>
+                </c:if>
             </div>
         </div>
     </form>

@@ -8,36 +8,19 @@
     <title>Hồ Sơ Cá Nhân & Cài Đặt Tài Khoản - Gốc Vườn</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=<%= System.currentTimeMillis() %>">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            DEFAULT: '#00652c',
-                            dark: '#005323',
-                            light: '#059669',
-                            surface: '#f4f7f4'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=2">
 </head>
-<body class="bg-[#f8fafc] text-slate-800 antialiased font-sans">
+<body>
+
+<script src="https://cdn.tailwindcss.com" defer></script>
 
 <jsp:include page="/views/common/header.jsp" />
 
-<div class="profile-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 w-full">
+<div class="container py-4">
     <%@include file="components/profile/breadcrumb-hero.jsp"%>
 
     <div class="row g-4">
@@ -49,6 +32,7 @@
             <div class="tab-content" id="profileTabContent">
                 <%@include file="components/profile/tab-info.jsp"%>
                 <%@include file="components/profile/tab-orders.jsp"%>
+                <%@include file="components/profile/tab-vouchers.jsp"%>
                 <%@include file="components/profile/tab-notifications.jsp"%>
                 <%@include file="components/profile/tab-address.jsp"%>
                 <%@include file="components/profile/tab-security.jsp"%>
@@ -58,9 +42,6 @@
 </div>
 
 <%@include file="components/profile/modals.jsp"%>
-
-<!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
-<jsp:include page="/views/common/site-footer.jsp" />
 
 <script>
     window.contextPath = '${pageContext.request.contextPath}';

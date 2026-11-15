@@ -6,7 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import model.entity.review.Review;
@@ -277,30 +279,60 @@ public class ReviewDAO extends DBContext {
     }
 
     public List<Review> getReviewsByShop(long shopId, int page, int pageSize) {
+        return getReviewsByShop(shopId, null, null, null, page, pageSize);
+    }
+
+    public List<Review> getReviewsByShop(long shopId, Integer rating, String replyStatus, String keyword, int page, int pageSize) {
         List<Review> list = new ArrayList<>();
         if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 15;
+        if (pageSize < 1) pageSize = 10;
         int offset = (page - 1) * pageSize;
 
-        String sql = "SELECT r.review_id, r.order_item_id, r.customer_id, u.full_name AS customer_name, u.avatar_url AS customer_avatar, "
-                + "       r.shop_id, s.shop_name, pv.product_id, oi.product_name_snapshot, oi.variant_name_snapshot, "
-                + "       (SELECT TOP 1 pi.image_url FROM product_images pi WHERE pi.product_id = pv.product_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image, "
-                + "       r.rating, r.comment, r.reply_comment, r.status, r.created_at, r.updated_at "
-                + "FROM reviews r "
-                + "JOIN order_items oi ON r.order_item_id = oi.order_item_id "
-                + "JOIN product_variants pv ON oi.variant_id = pv.variant_id "
-                + "JOIN users u ON r.customer_id = u.user_id "
-                + "JOIN shops s ON r.shop_id = s.shop_id "
-                + "WHERE r.shop_id = ? "
-                + "ORDER BY r.created_at DESC "
-                + "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT r.review_id, r.order_item_id, r.customer_id, u.full_name AS customer_name, u.avatar_url AS customer_avatar, ")
+           .append("       r.shop_id, s.shop_name, pv.product_id, oi.product_name_snapshot, oi.variant_name_snapshot, ")
+           .append("       (SELECT TOP 1 pi.image_url FROM product_images pi WHERE pi.product_id = pv.product_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image, ")
+           .append("       r.rating, r.comment, r.reply_comment, r.status, r.created_at, r.updated_at ")
+           .append("FROM reviews r ")
+           .append("JOIN order_items oi ON r.order_item_id = oi.order_item_id ")
+           .append("LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id ")
+           .append("JOIN users u ON r.customer_id = u.user_id ")
+           .append("LEFT JOIN shops s ON r.shop_id = s.shop_id ")
+           .append("WHERE r.shop_id = ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(shopId);
+
+        if (rating != null && rating >= 1 && rating <= 5) {
+            sql.append(" AND r.rating = ? ");
+            params.add(rating);
+        }
+
+        if ("UNREPLIED".equalsIgnoreCase(replyStatus)) {
+            sql.append(" AND (r.reply_comment IS NULL OR LTRIM(RTRIM(r.reply_comment)) = '') ");
+        } else if ("REPLIED".equalsIgnoreCase(replyStatus)) {
+            sql.append(" AND (r.reply_comment IS NOT NULL AND LTRIM(RTRIM(r.reply_comment)) <> '') ");
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (oi.product_name_snapshot LIKE ? OR u.full_name LIKE ? OR r.comment LIKE ?) ");
+            String kwParam = "%" + keyword.trim() + "%";
+            params.add(kwParam);
+            params.add(kwParam);
+            params.add(kwParam);
+        }
+
+        sql.append(" ORDER BY r.created_at DESC ")
+           .append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(pageSize);
 
         try (Connection conn = getConnection()) {
             if (conn == null) return list;
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setLong(1, shopId);
-                ps.setInt(2, offset);
-                ps.setInt(3, pageSize);
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) {
+                    ps.setObject(i + 1, params.get(i));
+                }
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         Review r = new Review();
@@ -333,6 +365,105 @@ public class ReviewDAO extends DBContext {
             LOGGER.log(Level.SEVERE, "Error loading shop reviews for shop " + shopId, ex);
         }
         return list;
+    }
+
+    public int countReviewsByShop(long shopId, Integer rating, String replyStatus, String keyword) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) ")
+           .append("FROM reviews r ")
+           .append("JOIN order_items oi ON r.order_item_id = oi.order_item_id ")
+           .append("JOIN users u ON r.customer_id = u.user_id ")
+           .append("WHERE r.shop_id = ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(shopId);
+
+        if (rating != null && rating >= 1 && rating <= 5) {
+            sql.append(" AND r.rating = ? ");
+            params.add(rating);
+        }
+
+        if ("UNREPLIED".equalsIgnoreCase(replyStatus)) {
+            sql.append(" AND (r.reply_comment IS NULL OR LTRIM(RTRIM(r.reply_comment)) = '') ");
+        } else if ("REPLIED".equalsIgnoreCase(replyStatus)) {
+            sql.append(" AND (r.reply_comment IS NOT NULL AND LTRIM(RTRIM(r.reply_comment)) <> '') ");
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (oi.product_name_snapshot LIKE ? OR u.full_name LIKE ? OR r.comment LIKE ?) ");
+            String kwParam = "%" + keyword.trim() + "%";
+            params.add(kwParam);
+            params.add(kwParam);
+            params.add(kwParam);
+        }
+
+        try (Connection conn = getConnection()) {
+            if (conn == null) return 0;
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < params.size(); i++) {
+                    ps.setObject(i + 1, params.get(i));
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) return rs.getInt(1);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error counting reviews for shop " + shopId, ex);
+        }
+        return 0;
+    }
+
+    public Map<String, Object> getShopReviewStats(long shopId) {
+        Map<String, Object> stats = new HashMap<>();
+        int[] counts = new int[6];
+        int total = 0;
+        double sum = 0.0;
+        int unreplied = 0;
+
+        String sql = "SELECT rating, "
+                   + "       COUNT(*) AS total_count, "
+                   + "       SUM(CASE WHEN reply_comment IS NULL OR LTRIM(RTRIM(reply_comment)) = '' THEN 1 ELSE 0 END) AS unreplied_count "
+                   + "FROM reviews "
+                   + "WHERE shop_id = ? AND status = 'APPROVED' "
+                   + "GROUP BY rating";
+
+        try (Connection conn = getConnection()) {
+            if (conn != null) {
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setLong(1, shopId);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            int r = rs.getInt("rating");
+                            int c = rs.getInt("total_count");
+                            int u = rs.getInt("unreplied_count");
+                            if (r >= 1 && r <= 5) {
+                                counts[r] = c;
+                                total += c;
+                                sum += (double) r * c;
+                                unreplied += u;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error loading review stats for shop " + shopId, ex);
+        }
+
+        double avg = total > 0 ? (double) Math.round((sum / total) * 10.0) / 10.0 : 5.0;
+        int positiveCount = counts[4] + counts[5];
+        int positivePercent = total > 0 ? (int) Math.round((double) positiveCount * 100.0 / total) : 100;
+
+        stats.put("total", total);
+        stats.put("avgRating", avg);
+        stats.put("unrepliedCount", unreplied);
+        stats.put("repliedCount", total - unreplied);
+        stats.put("positivePercent", positivePercent);
+        for (int i = 1; i <= 5; i++) {
+            stats.put("c" + i, counts[i]);
+            stats.put("p" + i, total > 0 ? (int) Math.round((double) counts[i] * 100.0 / total) : 0);
+        }
+        return stats;
     }
 
     public boolean replyReview(long reviewId, long shopId, String replyComment) {

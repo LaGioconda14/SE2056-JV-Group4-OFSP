@@ -8,13 +8,15 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${not empty product ? product.name : 'Chi Tiết Sản Phẩm'} - Gốc Vườn</title>
-        <!-- Tailwind CSS -->
-        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Preconnect & DNS-Prefetch for Fast CDN Loading -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+        <!-- Tailwind CSS (Non-blocking) -->
+        <script src="https://cdn.tailwindcss.com" defer></script>
         <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <!-- Google Fonts Inter & Plus Jakarta Sans -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         
         <style>
@@ -63,7 +65,7 @@
         <jsp:include page="/views/common/header.jsp" />
 
         <!-- Thanh Điều Hướng (Breadcrumb) -->
-        <div class="max-w-[1360px] mx-auto px-4 lg:px-8 pt-5 pb-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-2">
             <nav class="flex text-xs text-gray-500 gap-2 items-center flex-wrap">
                 <a href="${pageContext.request.contextPath}/home" class="hover:text-[#00652c] transition flex items-center gap-1">
                     <i class="fa-solid fa-house text-[11px]"></i> Trang chủ
@@ -82,7 +84,7 @@
         </div>
 
         <!-- Khung Nội Dung Chi Tiết Sản Phẩm -->
-        <main class="max-w-[1360px] mx-auto px-4 lg:px-8 py-4">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 
             <!-- Toast Thông Báo Hệ Thống -->
             <c:if test="${not empty successMessage}">
@@ -175,11 +177,9 @@
                                 <div class="flex items-center gap-3 mb-4 text-xs flex-wrap">
                                     <div class="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100">
                                         <div class="flex text-amber-400 text-xs gap-0.5">
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star"></i>
-                                            <i class="fa-solid fa-star-half-stroke"></i>
+                                            <c:forEach begin="1" end="5" var="s">
+                                                <i class="fa-solid fa-star ${product.rating >= s ? 'text-amber-400' : (product.rating >= s - 0.5 ? 'text-amber-300' : 'text-gray-200')}"></i>
+                                            </c:forEach>
                                         </div>
                                         <span class="font-extrabold text-gray-800"><fmt:formatNumber value="${product.rating}" pattern="#0.0" /> / 5.0</span>
                                     </div>
@@ -676,11 +676,9 @@
                                             </div>
                                             <div class="text-xs text-gray-500 font-bold">trên 5 sao</div>
                                             <div class="flex text-amber-400 text-xs gap-0.5 mt-1 justify-center">
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
-                                                <i class="fa-solid fa-star"></i>
+                                                <c:forEach begin="1" end="5" var="s">
+                                                    <i class="fa-solid fa-star ${product.rating >= s ? 'text-amber-400' : (product.rating >= s - 0.5 ? 'text-amber-300' : 'text-gray-200')}"></i>
+                                                </c:forEach>
                                             </div>
                                         </div>
                                         <div class="h-12 w-px bg-gray-300 hidden sm:block"></div>
@@ -692,10 +690,19 @@
                                         </div>
                                     </div>
 
-                                    <!-- Nút Mở Modal Viết Đánh Giá -->
-                                    <button type="button" onclick="openReviewModal()" class="px-5 py-2.5 rounded-xl bg-[#00652c] hover:bg-[#005323] text-white font-extrabold text-xs flex items-center gap-2 transition shadow">
-                                        <i class="fa-solid fa-pen-to-square"></i> Viết Đánh Giá Của Bạn
-                                    </button>
+                                    <!-- Nút Đánh Giá Từ Đơn Mua -->
+                                    <c:choose>
+                                        <c:when test="${not empty sessionScope.user}">
+                                            <a href="${pageContext.request.contextPath}/profile" class="px-5 py-2.5 rounded-xl bg-[#00652c] hover:bg-[#005323] text-white font-extrabold text-xs flex items-center gap-2 transition shadow">
+                                                <i class="fa-solid fa-pen-to-square"></i> Đánh Giá Từ Đơn Mua
+                                            </a>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <a href="${pageContext.request.contextPath}/login" class="px-5 py-2.5 rounded-xl bg-[#00652c] hover:bg-[#005323] text-white font-extrabold text-xs flex items-center gap-2 transition shadow">
+                                                <i class="fa-solid fa-arrow-right-to-bracket"></i> Đăng nhập để đánh giá
+                                            </a>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
 
                                 <!-- Bộ Lọc Đánh Giá Tiếng Việt -->
@@ -858,16 +865,19 @@
                 </div>
 
                 <div class="space-y-3 mb-5 max-h-56 overflow-y-auto pr-1 text-xs">
-                    <div class="bg-gray-100 p-3 rounded-2xl max-w-[85%] text-gray-700 leading-relaxed">
-                        Kính chào quý khách! Cảm ơn bạn đã quan tâm đến sản phẩm <strong>${product.name}</strong>. Nhà vườn chúng tôi có thể hỗ trợ tư vấn thông tin gì cho bạn ạ?
+                    <div class="bg-gray-100 p-3.5 rounded-2xl text-gray-700 leading-relaxed">
+                        Kính chào quý khách! Cảm ơn bạn đã quan tâm đến sản phẩm <strong>${product.name}</strong>. Để được tư vấn chi tiết về xuất xứ và đặt hàng số lượng lớn, bạn có thể liên hệ trực tiếp với nhà vườn:
+                    </div>
+                    <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-1.5 text-xs text-emerald-950">
+                        <div><i class="fa-solid fa-phone me-1.5 text-emerald-700"></i><strong>Hotline Shop:</strong> <a href="tel:${not empty shop.phone ? shop.phone : '19008892'}" class="text-emerald-700 font-bold underline">${not empty shop.phone ? shop.phone : '1900 8892'}</a></div>
+                        <div><i class="fa-solid fa-envelope me-1.5 text-emerald-700"></i><strong>Email:</strong> ${not empty shop.email ? shop.email : 'cskh@gocvuon.vn'}</div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <input type="text" id="chat-quick-input" placeholder="Nhập tin nhắn cần tư vấn..." class="flex-1 text-xs p-3 rounded-xl border border-gray-200 focus:border-emerald-600 outline-none">
-                    <button type="button" onclick="sendQuickChat()" class="px-4 py-3 bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs rounded-xl transition">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
+                    <a href="${pageContext.request.contextPath}/shop/${shop.shopId}" class="w-full text-center py-3 bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs rounded-xl transition">
+                        <i class="fa-solid fa-store me-1"></i> Ghé Thăm Gian Hàng Nhà Vườn
+                    </a>
                 </div>
             </div>
         </div>
@@ -1176,14 +1186,6 @@
                 if (modal) {
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
-                }
-            }
-            function sendQuickChat() {
-                const input = document.getElementById('chat-quick-input');
-                if (input && input.value.trim() !== '') {
-                    alert('Đã gửi tin nhắn đến ${not empty shop.shopName ? shop.shopName : "Nhà Vườn"}: "' + input.value + '"\nNhân viên hỗ trợ sẽ phản hồi trong giây lát.');
-                    input.value = '';
-                    closeChatModal();
                 }
             }
 

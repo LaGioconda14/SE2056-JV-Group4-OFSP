@@ -1,10 +1,32 @@
 <%@page pageEncoding="UTF-8"%>
-<footer class="w-full mt-space-xl border-t border-primary/10 bg-[#f2f7f2] text-on-surface-variant">
-    <div class="max-w-[1360px] mx-auto px-margin-sm lg:px-margin">
+<footer id="about" class="w-full mt-10 border-t border-[#00652c]/10 bg-[#f2f7f2] text-[#3f493f]">
+    <div id="contact" class="max-w-[1360px] mx-auto px-4 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 py-10">
-            <div class="max-w-md"><div class="flex items-center gap-3 mb-4"><svg class="h-10 w-10 shrink-0" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 4C19 4 24 4 23 9C20 9 18 7 19 4Z" fill="#16a34a"/><path d="M18 6.5C17.5 8.5 16 10.5 15 11.5" stroke="#4b5563" stroke-width="2" stroke-linecap="round"/><path d="M18 12.5C16 9.5 11 9.5 8 12.5C4 16.5 5 23.5 9 28.5C12 32.5 15 32.5 18 30.5C21 32.5 24 32.5 27 28.5C31 23.5 32 16.5 28 12.5C25 9.5 20 9.5 18 12.5Z" fill="url(#appleGradCartFooter)"/><defs><linearGradient id="appleGradCartFooter" x1="8" y1="11" x2="28" y2="33" gradientUnits="userSpaceOnUse"><stop stop-color="#fb7185"/><stop offset="0.6" stop-color="#ef4444"/><stop offset="1" stop-color="#dc2626"/></linearGradient></defs></svg><div><p class="text-xl font-bold tracking-tight text-primary">Gốc Vườn</p><p class="text-[9px] font-bold tracking-widest uppercase text-primary/80">NÔNG SẢN TẬN VƯỜN</p></div></div><p class="text-sm leading-relaxed">Một chút tươi xanh cho bữa ăn, một chút ngọt lành cho ngày mới. Cảm ơn bạn đã chọn Gốc Vườn cho giỏ hàng của mình.</p></div>
-            <div class="flex flex-col items-start md:justify-self-end"><div><p class="text-xs font-bold tracking-widest uppercase text-primary mb-2">Đồng hành cùng bạn</p><h2 class="text-lg font-semibold text-on-surface">Cần hỗ trợ đơn hàng?</h2><p class="text-sm leading-relaxed mt-1 max-w-xs">Liên hệ để được hỗ trợ về sản phẩm, giao nhận và đơn hàng của bạn.</p></div></div>
+            <div class="max-w-md">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="inline-flex items-center justify-center w-11 h-11 rounded-2xl bg-[#00652c] text-white shrink-0">
+                        <span class="material-symbols-outlined text-[25px]" aria-hidden="true">eco</span>
+                    </span>
+                    <div>
+                        <p class="text-xl font-bold tracking-tight text-[#00652c]">Gốc Vườn</p>
+                        <p class="text-[11px] font-semibold tracking-widest uppercase text-[#00652c]/70">Tươi ngon mỗi ngày</p>
+                    </div>
+                </div>
+                <p class="text-sm leading-relaxed">Một chút tươi xanh cho bữa ăn, một chút ngọt lành cho ngày mới. Cảm ơn bạn đã chọn Gốc Vườn cho giỏ hàng của mình.</p>
+            </div>
+            <div class="flex flex-col items-start md:justify-self-end">
+                <div>
+                    <p class="text-xs font-bold tracking-widest uppercase text-[#00652c] mb-2">Đồng hành cùng bạn</p>
+                    <h2 class="text-lg font-semibold text-[#131b2e]">Cần hỗ trợ đơn hàng?</h2>
+                    <p class="text-sm leading-relaxed mt-1 max-w-xs">Liên hệ để được hỗ trợ về sản phẩm, giao nhận và đơn hàng của bạn.</p>
+                </div>
+            </div>
         </div>
-        <div class="border-t border-primary/10 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"><p>© 2026 Gốc Vườn Marketplace. Bảo lưu mọi quyền.</p><span class="inline-flex items-center gap-1.5 text-primary"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">favorite</span>Cảm ơn bạn đã mua sắm cùng Gốc Vườn</span></div>
+        <div class="border-t border-[#00652c]/10 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <p>© 2026 Gốc Vườn Marketplace. Bảo lưu mọi quyền.</p>
+            <span class="inline-flex items-center gap-1.5 text-[#00652c]">
+                <span class="material-symbols-outlined text-[16px]" aria-hidden="true">favorite</span>Cảm ơn bạn đã mua sắm cùng Gốc Vườn
+            </span>
+        </div>
     </div>
 </footer>

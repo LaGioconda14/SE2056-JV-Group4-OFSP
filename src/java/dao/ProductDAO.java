@@ -827,12 +827,12 @@ public class ProductDAO extends DBContext {
 
     public List<Category> getAllCategories() {
         List<Category> list = new ArrayList<>();
-        String sql = "SELECT c.category_id, c.category_name, c.slug, c.image_url, c.icon_class, "
+        String sql = "SELECT c.category_id, c.category_name, c.slug, c.icon_class, "
                 + "       COUNT(p.product_id) AS product_count "
                 + "FROM categories c "
                 + "LEFT JOIN products p ON c.category_id = p.category_id AND p.is_active = 1 "
                 + "WHERE c.is_active = 1 "
-                + "GROUP BY c.category_id, c.category_name, c.slug, c.image_url, c.icon_class "
+                + "GROUP BY c.category_id, c.category_name, c.slug, c.icon_class "
                 + "ORDER BY product_count DESC, c.category_name ASC";
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -841,7 +841,6 @@ public class ProductDAO extends DBContext {
                 cat.setCategoryName(rs.getString("category_name"));
                 cat.setSlug(rs.getString("slug"));
                 cat.setProductCount(rs.getInt("product_count"));
-                cat.setImageUrl(rs.getString("image_url"));
                 cat.setIconClass(rs.getString("icon_class"));
 
                 list.add(cat);
@@ -1274,12 +1273,12 @@ public class ProductDAO extends DBContext {
 
     public List<Category> getHierarchyCategories() {
         List<Category> list = new ArrayList<>();
-        String queryParents = "SELECT category_id, category_name, slug, description, image_url, icon_class, display_order "
+        String queryParents = "SELECT category_id, category_name, slug, description, icon_class "
                 + "FROM categories WHERE parent_id IS NULL AND is_active = 1 "
-                + "ORDER BY display_order ASC, category_id ASC";
-        String querySubs = "SELECT category_id, parent_id, category_name, slug, description, image_url, icon_class, display_order "
+                + "ORDER BY category_id ASC";
+        String querySubs = "SELECT category_id, parent_id, category_name, slug, description, icon_class "
                 + "FROM categories WHERE parent_id IS NOT NULL AND is_active = 1 "
-                + "ORDER BY display_order ASC, category_id ASC";
+                + "ORDER BY category_id ASC";
 
         try (Connection conn = getConnection()) {
             if (conn != null) {
@@ -1290,9 +1289,7 @@ public class ProductDAO extends DBContext {
                         c.setCategoryName(rs.getString("category_name"));
                         c.setSlug(rs.getString("slug"));
                         c.setDescription(rs.getString("description"));
-                        c.setImageUrl(rs.getString("image_url"));
                         c.setIconClass(rs.getString("icon_class"));
-                        c.setDisplayOrder(rs.getInt("display_order"));
                         c.setIsActive(true);
                         list.add(c);
                     }
@@ -1307,9 +1304,7 @@ public class ProductDAO extends DBContext {
                         sub.setCategoryName(rs.getString("category_name"));
                         sub.setSlug(rs.getString("slug"));
                         sub.setDescription(rs.getString("description"));
-                        sub.setImageUrl(rs.getString("image_url"));
                         sub.setIconClass(rs.getString("icon_class"));
-                        sub.setDisplayOrder(rs.getInt("display_order"));
                         sub.setIsActive(true);
 
                         for (Category parent : list) {
@@ -1480,6 +1475,68 @@ public class ProductDAO extends DBContext {
             e.printStackTrace();
         }
         util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
+        return list;
+    }
+
+    /**
+     * Lấy danh sách sản phẩm liên quan theo categoryId có giới hạn TOP trực tiếp từ SQL (tối ưu hiệu năng).
+     */
+    public List<ProductCardDTO> getRelatedProducts(int categoryId, long excludeProductId, int limit) {
+        List<ProductCardDTO> list = new ArrayList<>();
+        int max = (limit > 0 && limit <= 20) ? limit : 4;
+        String query = "SELECT TOP (" + max + ") p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, "
+                + "p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, "
+                + "COALESCE(v_stat.min_price, 100000) AS price, "
+                + "v_stat.unit, "
+                + "COALESCE(v_stat.total_stock, 0) AS total_stock "
+                + "FROM products p "
+                + "JOIN categories c ON p.category_id = c.category_id "
+                + "LEFT JOIN ( "
+                + "    SELECT product_id, MIN(price) AS min_price, MAX(unit) AS unit, SUM(stock_quantity) AS total_stock "
+                + "    FROM product_variants WHERE is_active = 1 GROUP BY product_id "
+                + ") v_stat ON v_stat.product_id = p.product_id "
+                + "OUTER APPLY ( "
+                + "    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC "
+                + ") pi "
+                + "OUTER APPLY ( "
+                + "    SELECT TOP 1 variant_id FROM product_variants WHERE product_id = p.product_id AND is_active = 1 AND stock_quantity > 0 ORDER BY price ASC "
+                + ") dv "
+                + "WHERE p.is_active = 1 AND p.category_id = ? AND p.product_id != ? "
+                + "ORDER BY p.product_id DESC";
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setInt(1, categoryId);
+            ps.setLong(2, excludeProductId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long id = rs.getLong("product_id");
+                    String name = rs.getString("name");
+                    int catId = rs.getInt("category_id");
+                    String categoryName = rs.getString("category_name");
+                    String categorySlugVal = rs.getString("category_slug");
+                    String image = rs.getString("image_url");
+                    if (image == null || image.isEmpty()) {
+                        image = getDefaultFruitImage(name);
+                    }
+                    BigDecimal price = rs.getBigDecimal("price");
+                    ProductCardDTO p = new ProductCardDTO(id, name, categoryName, image, price, price, 0, 5.0, 0);
+                    p.setCategoryId(catId);
+                    p.setCategorySlug(categorySlugVal);
+                    p.setOrigin(rs.getString("origin"));
+                    p.setCertification(rs.getString("certification"));
+                    p.setStorageTemp(rs.getString("storage_temp"));
+                    p.setDefaultVariantId(rs.getLong("default_variant_id"));
+                    p.setUnit(rs.getString("unit"));
+                    int totalStock = rs.getInt("total_stock");
+                    p.setStockQuantity(totalStock);
+                    p.setInStock(totalStock > 0);
+                    list.add(p);
+                }
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Error loading related products", ex);
+        }
+        util.PromotionPricing.applyToProducts(list);
         return list;
     }
 

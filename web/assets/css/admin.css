@@ -3243,6 +3243,15 @@ body.admin-body {
     color: #ffffff;
     border-color: #dc2626;
 }
+.btn-action-lock:disabled,
+.btn-action-lock[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed !important;
+    background: #f1f5f9 !important;
+    color: #94a3b8 !important;
+    border-color: #e2e8f0 !important;
+    pointer-events: auto !important;
+}
 .btn-action-unlock {
     color: #15803d;
     background: #f0fdf4;

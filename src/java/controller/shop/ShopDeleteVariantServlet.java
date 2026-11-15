@@ -60,41 +60,8 @@ public class ShopDeleteVariantServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-        Long shopId = (Long) session.getAttribute("shopId");
-
-        if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole()) || shopId == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        Long variantId = null;
-        try {
-            variantId = Long.parseLong(request.getParameter("variantId"));
-        } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/shop/products");
-            return;
-        }
-
-        ProductVariantDetailDTO variant = productService.getShopVariantById(variantId, shopId);
-        if (variant == null) {
-            response.sendRedirect(request.getContextPath() + "/shop/products");
-            return;
-        }
-        long productId = variant.getProductId();
-
-        // Thực hiện xóa mềm
-        boolean success = productService.softDeleteVariant(variantId, shopId);
-
-        if (success) {
-            session.setAttribute("successMessage", "Đã ẩn / xóa biến thể thành công!");
-        } else {
-            session.setAttribute("errorMessage", "Xóa biến thể thất bại!");
-        }
-
-        response.sendRedirect(request.getContextPath() + "/shop/product/variants?productId=" + productId);
-    } 
+        response.sendRedirect(request.getContextPath() + "/shop/products");
+    }
 
     /** 
      * Handles the HTTP <code>POST</code> method.

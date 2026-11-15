@@ -86,8 +86,6 @@ public class AdminCategoryServlet extends HttpServlet {
             String description = request.getParameter("description");
             String parentIdStr = request.getParameter("parentId");
             String iconClass = request.getParameter("iconClass");
-            String imageUrl = request.getParameter("imageUrl");
-            String displayOrderStr = request.getParameter("displayOrder");
             boolean isActive = "1".equals(request.getParameter("isActive")) || "true".equalsIgnoreCase(request.getParameter("isActive")) || "on".equalsIgnoreCase(request.getParameter("isActive"));
 
             if (name == null || name.trim().isEmpty()) {
@@ -103,14 +101,7 @@ public class AdminCategoryServlet extends HttpServlet {
                 } catch (NumberFormatException ignored) {}
             }
 
-            int displayOrder = 0;
-            if (displayOrderStr != null && !displayOrderStr.trim().isEmpty()) {
-                try {
-                    displayOrder = Integer.parseInt(displayOrderStr.trim());
-                } catch (NumberFormatException ignored) {}
-            }
-
-            boolean ok = dao.addCategory(name, slug, description, parentId, iconClass, imageUrl, displayOrder, isActive);
+            boolean ok = dao.addCategory(name, slug, description, parentId, iconClass, isActive);
             if (ok) {
                 session.setAttribute("successMessage", "Thêm mới danh mục '" + name.trim() + "' thành công!");
             } else {
@@ -127,8 +118,6 @@ public class AdminCategoryServlet extends HttpServlet {
             String description = request.getParameter("description");
             String parentIdStr = request.getParameter("parentId");
             String iconClass = request.getParameter("iconClass");
-            String imageUrl = request.getParameter("imageUrl");
-            String displayOrderStr = request.getParameter("displayOrder");
             boolean isActive = "1".equals(request.getParameter("isActive")) || "true".equalsIgnoreCase(request.getParameter("isActive")) || "on".equalsIgnoreCase(request.getParameter("isActive"));
 
             if (catIdStr == null || catIdStr.trim().isEmpty()) {
@@ -150,12 +139,7 @@ public class AdminCategoryServlet extends HttpServlet {
                     parentId = Integer.parseInt(parentIdStr.trim());
                 }
 
-                int displayOrder = 0;
-                if (displayOrderStr != null && !displayOrderStr.trim().isEmpty()) {
-                    displayOrder = Integer.parseInt(displayOrderStr.trim());
-                }
-
-                boolean ok = dao.updateCategory(categoryId, name, slug, description, parentId, iconClass, imageUrl, displayOrder, isActive);
+                boolean ok = dao.updateCategory(categoryId, name, slug, description, parentId, iconClass, isActive);
                 if (ok) {
                     session.setAttribute("successMessage", "Cập nhật danh mục '" + name.trim() + "' thành công!");
                 } else {

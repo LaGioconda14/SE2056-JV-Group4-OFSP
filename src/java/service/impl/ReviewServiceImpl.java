@@ -2,6 +2,7 @@ package service.impl;
 
 import dao.ReviewDAO;
 import java.util.List;
+import java.util.Map;
 import model.entity.review.Review;
 import model.dto.review.ReviewSummary;
 import service.IReviewService;
@@ -46,6 +47,21 @@ public class ReviewServiceImpl implements IReviewService {
     @Override
     public List<Review> getReviewsByShop(long shopId, int page, int pageSize) {
         return reviewDAO.getReviewsByShop(shopId, page, pageSize);
+    }
+
+    @Override
+    public List<Review> getReviewsByShop(long shopId, Integer rating, String replyStatus, String keyword, int page, int pageSize) {
+        return reviewDAO.getReviewsByShop(shopId, rating, replyStatus, keyword, page, pageSize);
+    }
+
+    @Override
+    public int countReviewsByShop(long shopId, Integer rating, String replyStatus, String keyword) {
+        return reviewDAO.countReviewsByShop(shopId, rating, replyStatus, keyword);
+    }
+
+    @Override
+    public Map<String, Object> getShopReviewStats(long shopId) {
+        return reviewDAO.getShopReviewStats(shopId);
     }
 
     @Override

@@ -217,4 +217,14 @@ public interface IOrderService {
      * @throws Exception nếu không thể hủy (ví dụ đơn đã chuyển sang trạng thái đang giao)
      */
     boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception;
+
+    /**
+     * Khách hàng xác nhận đã nhận hàng thành công, cập nhật đơn sang DELIVERED / COMPLETED.
+     *
+     * @param customerId      ID khách hàng
+     * @param orderIdentifier mã đơn hàng (sub_order_code, sub_order_id, order_code, hoặc order_id)
+     * @return true nếu xác nhận thành công
+     * @throws Exception nếu xảy ra lỗi
+     */
+    boolean confirmReceivedByCustomer(long customerId, String orderIdentifier) throws Exception;
 }
