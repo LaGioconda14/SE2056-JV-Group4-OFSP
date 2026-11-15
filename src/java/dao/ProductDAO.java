@@ -2156,34 +2156,6 @@ public class ProductDAO extends DBContext {
         return list;
     }
 
-    public List<Category> getCategoriesByShopId(long shopId) {
-        List<Category> list = new ArrayList<>();
-        String sql = "SELECT c.category_id, c.category_name, c.slug, c.icon_class, COUNT(p.product_id) AS product_count "
-                + "FROM categories c "
-                + "JOIN products p ON c.category_id = p.category_id "
-                + "WHERE p.shop_id = ? AND p.is_active = 1 "
-                + "GROUP BY c.category_id, c.category_name, c.slug, c.icon_class "
-                + "ORDER BY product_count DESC, c.category_name ASC";
-
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, shopId);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Category cat = new Category();
-                    cat.setCategoryId(rs.getInt("category_id"));
-                    cat.setCategoryName(rs.getString("category_name"));
-                    cat.setSlug(rs.getString("slug"));
-                    cat.setIconClass(rs.getString("icon_class"));
-                    cat.setProductCount(rs.getInt("product_count"));
-                    list.add(cat);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
     // =========================================================================
     // SHOP PRODUCT & VARIANT MANAGEMENT METHODS (from feature/shop_product)
     // =========================================================================

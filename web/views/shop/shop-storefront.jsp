@@ -129,31 +129,19 @@
         </div>
     </section>
 
-    <!-- 5. CATEGORY FILTER PILLS & SORTING BAR -->
+    <!-- 5. SORTING BAR -->
     <section id="shop-products" class="max-w-7xl mx-auto px-4 pt-12 pb-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/70 pb-5">
-            
-            <!-- Category Pills Filter -->
-            <div class="flex items-center gap-2 overflow-x-auto hide-scrollbar py-1">
-                <!-- All Products Pill -->
-                <a href="${pageContext.request.contextPath}/store?id=${shop.shopId}&sort=${selectedSort}" 
-                   class="px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shadow-xs ${empty selectedCatId ? 'bg-emerald-800 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-600'}">
-                    Tất Cả Sản Phẩm (${totalProductsCount})
-                </a>
-
-                <!-- Dynamic Category Pills from DB -->
-                <c:forEach var="c" items="${categories}">
-                    <a href="${pageContext.request.contextPath}/store?id=${shop.shopId}&cat=${c.categoryId}&sort=${selectedSort}" 
-                       class="px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap shadow-xs ${selectedCatId eq c.categoryId ? 'bg-emerald-800 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:border-emerald-600'}">
-                        ${c.categoryName} (${c.productCount})
-                    </a>
-                </c:forEach>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200/70 pb-5">
+            <div>
+                <h3 class="text-base sm:text-lg font-extrabold text-gray-900">
+                    Danh Sách Sản Phẩm (${totalProductsCount})
+                </h3>
             </div>
 
             <!-- Sort Dropdown -->
-            <div class="flex items-center gap-2 flex-shrink-0 self-end md:self-auto">
+            <div class="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
                 <span class="text-xs text-gray-500 font-medium">Sắp xếp:</span>
-                <select onchange="location.href='${pageContext.request.contextPath}/store?id=${shop.shopId}&cat=${selectedCatId}&sort=' + this.value" 
+                <select onchange="location.href='${pageContext.request.contextPath}/store?id=${shop.shopId}&sort=' + this.value" 
                         class="bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-800 focus:outline-none focus:border-emerald-600 cursor-pointer shadow-xs">
                     <option value="featured" ${selectedSort eq 'featured' ? 'selected' : ''}>Nổi Bật Nhất</option>
                     <option value="price_asc" ${selectedSort eq 'price_asc' ? 'selected' : ''}>Giá: Thấp Đến Cao</option>
@@ -161,7 +149,6 @@
                     <option value="newest" ${selectedSort eq 'newest' ? 'selected' : ''}>Mới Thu Hoạch</option>
                 </select>
             </div>
-
         </div>
     </section>
 

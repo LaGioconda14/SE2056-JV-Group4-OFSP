@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import model.entity.product.Category;
 import model.dto.product.ProductCardDTO;
 import model.entity.review.Review;
 import model.entity.shop.Shop;
@@ -65,20 +64,10 @@ public class ShopStorefrontServlet extends HttpServlet {
             return;
         }
 
-        String catIdStr = request.getParameter("catId");
         String keyword = request.getParameter("keyword");
         String sort = request.getParameter("sort");
 
-        Integer selectedCatId = null;
-        if (catIdStr != null && !catIdStr.trim().isEmpty()) {
-            try {
-                selectedCatId = Integer.parseInt(catIdStr.trim());
-            } catch (NumberFormatException ignored) {
-            }
-        }
-
-        List<ProductCardDTO> products = productDAO.getProductsByShop(shop.getShopId(), selectedCatId, keyword, sort);
-        List<Category> categories = productDAO.getCategoriesByShopId(shop.getShopId());
+        List<ProductCardDTO> products = productDAO.getProductsByShop(shop.getShopId(), null, keyword, sort);
         List<Review> reviews = shopDAO.getReviewsByShopId(shop.getShopId());
         int totalProductsCount = shopDAO.getTotalProductsCountByShopId(shop.getShopId());
 
@@ -106,11 +95,9 @@ public class ShopStorefrontServlet extends HttpServlet {
 
         request.setAttribute("shop", shop);
         request.setAttribute("products", products);
-        request.setAttribute("categories", categories);
         request.setAttribute("reviews", reviews);
         request.setAttribute("totalProductsCount", totalProductsCount);
         request.setAttribute("shopJoinedTime", shopJoinedTime);
-        request.setAttribute("selectedCatId", selectedCatId);
         request.setAttribute("selectedSort", sort);
         request.setAttribute("searchKeyword", keyword);
         request.setAttribute("isOwner", isOwner);

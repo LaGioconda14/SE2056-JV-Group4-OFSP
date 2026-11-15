@@ -775,54 +775,6 @@
                         </div>
                     </div>
 
-                    <!-- ========================================== -->
-                    <!-- 4. KHỐI SẢN PHẨM TƯƠNG TỰ -->
-                    <!-- ========================================== -->
-                    <c:if test="${not empty relatedProducts}">
-                        <div class="mt-12">
-                            <div class="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900">
-                                        Sản Phẩm Tương Tự
-                                    </h2>
-                                    <p class="text-xs text-gray-500 mt-1">Các loại nông sản tươi sạch cùng phân khúc bạn có thể quan tâm</p>
-                                </div>
-                                <a href="${pageContext.request.contextPath}/products" class="text-xs font-bold text-[#00652c] hover:underline flex items-center gap-1">
-                                    Xem tất cả <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                                </a>
-                            </div>
-
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                                <c:forEach var="item" items="${relatedProducts}">
-                                    <a href="${pageContext.request.contextPath}/detail?id=${item.id}" class="group bg-white rounded-2xl p-3 sm:p-4 border border-gray-100 hover:border-emerald-300 hover:shadow-lg transition-all flex flex-col justify-between">
-                                        <div>
-                                            <div class="w-full h-40 sm:h-48 rounded-xl overflow-hidden bg-gray-50 mb-3 relative">
-                                                <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                                <c:if test="${not empty item.tag}">
-                                                    <span class="absolute top-2 left-2 bg-[#00652c] text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
-                                                        ${item.tag}
-                                                    </span>
-                                                </c:if>
-                                            </div>
-                                            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                                                ${item.categoryName}
-                                            </div>
-                                            <h3 class="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-[#00652c] transition line-clamp-2 leading-snug mb-2">
-                                                ${item.name}
-                                            </h3>
-                                        </div>
-                                        <div class="pt-2 border-t border-gray-50 flex items-baseline justify-between">
-                                            <div class="text-sm sm:text-base font-extrabold text-[#00652c]">
-                                                <fmt:formatNumber value="${item.price}" pattern="#,###"/>đ
-                                            </div>
-                                            <span class="text-[10px] text-gray-400">/${item.unit}</span>
-                                        </div>
-                                    </a>
-                                </c:forEach>
-                            </div>
-                        </div>
-                    </c:if>
-
                 </c:when>
                 <c:otherwise>
                     <!-- Báo lỗi không tìm thấy sản phẩm -->
