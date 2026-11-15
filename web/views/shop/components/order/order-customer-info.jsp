@@ -43,45 +43,28 @@
                                 </div>
                             </div>
 
-                            <c:set var="rawSlot" value="${subOrder.deliverySlot}" />
-                            <c:set var="slotOnly" value="${rawSlot}" />
-                            <c:set var="noteOnly" value="${not empty subOrder.note ? subOrder.note : ''}" />
-                            <c:if test="${empty noteOnly and not empty rawSlot and fn:contains(rawSlot, 'Lời nhắn:')}">
-                                <c:set var="noteOnly" value="${fn:trim(fn:substringAfter(rawSlot, 'Lời nhắn:'))}" />
-                            </c:if>
-                            <c:if test="${not empty rawSlot and fn:contains(rawSlot, 'Lời nhắn:')}">
-                                <c:choose>
-                                    <c:when test="${fn:contains(rawSlot, '• Lời nhắn:')}">
-                                        <c:set var="slotOnly" value="${fn:trim(fn:substringBefore(rawSlot, '• Lời nhắn:'))}" />
-                                    </c:when>
-                                    <c:otherwise>
-                                        <c:set var="slotOnly" value="${fn:trim(fn:substringBefore(rawSlot, 'Lời nhắn:'))}" />
-                                    </c:otherwise>
-                                </c:choose>
-                            </c:if>
-
                             <div class="mt-3.5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
                                 <div class="flex items-center gap-1.5 text-slate-700 font-bold text-[11px] pb-2 border-b border-slate-200/80">
                                     <i class="fa-regular fa-comment-dots text-emerald-600"></i> GHI CHÚ GIAO HÀNG TỪ KHÁCH:
                                 </div>
 
                                 <c:choose>
-                                    <c:when test="${not empty slotOnly or not empty noteOnly}">
+                                    <c:when test="${not empty subOrder.deliverySlot or not empty subOrder.note}">
                                         <div>
                                             <div class="text-[10px] font-bold text-slate-400 uppercase">Khung giờ giao yêu cầu:</div>
                                             <div class="text-xs font-bold text-slate-800 mt-1 flex items-center gap-1.5">
                                                 <i class="fa-regular fa-clock text-emerald-600"></i>
-                                                <span>${not empty slotOnly ? slotOnly : "Tiêu chuẩn"}</span>
+                                                <span>${not empty subOrder.deliverySlot ? subOrder.deliverySlot : "Tiêu chuẩn"}</span>
                                             </div>
                                         </div>
 
                                         <div class="pt-2.5 border-t border-slate-200/60">
                                             <div class="text-[10px] font-bold text-slate-400 uppercase">Lời nhắn từ khách:</div>
                                             <c:choose>
-                                                <c:when test="${not empty noteOnly}">
+                                                <c:when test="${not empty subOrder.note}">
                                                     <div class="text-xs font-medium text-slate-800 bg-white p-2.5 rounded-lg border border-slate-200 mt-1 break-words shadow-2xs">
                                                         <i class="fa-regular fa-message text-amber-500 mr-1"></i>
-                                                        ${noteOnly}
+                                                        ${subOrder.note}
                                                     </div>
                                                 </c:when>
                                                 <c:otherwise>

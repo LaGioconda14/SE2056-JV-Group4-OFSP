@@ -31,12 +31,10 @@ public class DeliveryDAO extends DBContext {
         Connection conn = getConnection();
         if (conn == null) return list;
 
-        boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
         StringBuilder sql = new StringBuilder(
             "SELECT d.delivery_id, d.sub_order_id, d.driver_id, d.tracking_number, d.delivery_status, "
             + "       d.proof_image_url, d.failure_reason, d.assigned_at, d.delivered_at, "
-            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_slot, "
-            + (hasNote ? "so.note, " : "NULL AS note, ")
+            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_slot, so.note, "
             + "       so.status AS sub_order_status, "
             + "       s.shop_name, s.phone AS shop_phone, s.address AS shop_address, s.province AS shop_province, "
             + "       o.payment_method, o.payment_status, "
@@ -100,11 +98,9 @@ public class DeliveryDAO extends DBContext {
         Connection conn = getConnection();
         if (conn == null) return null;
 
-        boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
         String sql = "SELECT d.delivery_id, d.sub_order_id, d.driver_id, d.tracking_number, d.delivery_status, "
             + "       d.proof_image_url, d.failure_reason, d.assigned_at, d.delivered_at, "
-            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_slot, "
-            + (hasNote ? "so.note, " : "NULL AS note, ")
+            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_slot, so.note, "
             + "       so.status AS sub_order_status, "
             + "       s.shop_name, s.phone AS shop_phone, s.address AS shop_address, s.province AS shop_province, "
             + "       o.payment_method, o.payment_status, "
@@ -372,10 +368,9 @@ public class DeliveryDAO extends DBContext {
         del.setShopAddress(rs.getString("shop_address"));
         del.setShopProvince(rs.getString("shop_province"));
         del.setShopTotal(rs.getBigDecimal("shop_total"));
-        String[] parsedSlot = OrderDAO.parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
-        del.setDeliverySlot(parsedSlot[0]);
-        del.setDeliveryNote(parsedSlot[1]);
-        del.setNote(parsedSlot[1]);
+        del.setDeliverySlot(rs.getString("delivery_slot"));
+        del.setDeliveryNote(rs.getString("note"));
+        del.setNote(rs.getString("note"));
 
         del.setPaymentMethod(rs.getString("payment_method"));
         del.setPaymentStatus(rs.getString("payment_status"));

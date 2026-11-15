@@ -13,6 +13,7 @@
     </head>
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
+        <%-- ==================== 1. SIDEBAR & HEADER ==================== --%>
         <jsp:include page="/views/shop/layout/sidebar.jsp">
             <jsp:param name="active" value="orders" />
         </jsp:include>
@@ -23,6 +24,7 @@
             <div class="shop-content-container">
                 <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
+                <%-- ==================== 2. TIÊU ĐỀ & TÌM KIẾM ==================== --%>
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Danh Sách Đơn Hàng Con</h1>
@@ -47,6 +49,7 @@
                     </form>
                 </div>
 
+                <%-- ==================== 3. BỘ LỌC THEO TRẠNG THÁI ==================== --%>
                 <div class="flex items-center gap-1 overflow-x-auto pb-1 border-b border-slate-200 text-xs font-bold">
                     <a href="?status=ALL${not empty keyword ? '&keyword=' += keyword : ''}" 
                        class="px-3.5 py-2.5 border-b-2 transition flex items-center gap-2 ${currentTab eq 'ALL' ? 'border-emerald-600 text-emerald-700' : 'border-transparent text-slate-500 hover:text-slate-800'}">
@@ -85,6 +88,7 @@
                     </a>
                 </div>
 
+                <%-- ==================== 4. BẢNG DANH SÁCH ĐƠN HÀNG ==================== --%>
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-xs">

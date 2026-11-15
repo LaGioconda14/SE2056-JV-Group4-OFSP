@@ -19,33 +19,19 @@ import enums.SubOrderStatus;
 import enums.OrderStatus;
 import util.DBContext;
 
-/**
- * DAO xử lý các thao tác hoàn tất đơn hàng (Fulfillment) cho người bán (Shop):
- * - Tra cứu chi tiết đơn hàng con (sub_order) kèm thông tin giao hàng, tài xế và sản phẩm.
- * - Cập nhật trạng thái đơn con và tự động đồng bộ trạng thái đơn cha (orders).
- * - Hủy đơn con và hoàn trả tồn kho sản phẩm.
- * - Xử lý nhập lại kho đối với đơn giao thất bại hoặc trả hàng.
- */
+
 public class OrderFulfillmentDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(OrderFulfillmentDAO.class.getName());
     private final PromotionDAO promotionDAO = new PromotionDAO();
 
-    /**
-     * Lấy thông tin chi tiết một đơn con theo subOrderCode.
-     *
-     * @param subOrderCode mã đơn con
-     * @return SubOrderDetailDTO hoặc null nếu không tìm thấy
-     */
     public SubOrderDetailDTO getSubOrderDetails(String subOrderCode) {
         Connection conn = getConnection();
         if (conn == null) {
             return null;
         }
 
-        boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
-        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
-                + (hasNote ? "so.note, " : "NULL AS note, ")
+        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, so.note, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.cancelled_at, so.created_at, so.updated_at, "
                 + "       s.shop_name, "
@@ -77,9 +63,8 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setOrderCode(rs.getString("order_code"));
                     so.setShopId(rs.getLong("shop_id"));
                     so.setShopName(rs.getString("shop_name"));
-                    String[] parsedSlot = OrderDAO.parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
-                    so.setDeliverySlot(parsedSlot[0]);
-                    so.setNote(parsedSlot[1]);
+                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    so.setNote(rs.getString("note"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
                     so.setShopDiscount(rs.getBigDecimal("shop_discount"));
@@ -131,12 +116,6 @@ public class OrderFulfillmentDAO extends DBContext {
         return null;
     }
 
-    /**
-     * Lấy danh sách sản phẩm trong một đơn con theo subOrderId.
-     *
-     * @param subOrderId ID đơn con
-     * @return danh sách OrderItemFulfillmentDTO
-     */
     public List<OrderItemFulfillmentDTO> getOrderItemsBySubOrderId(long subOrderId) {
         Connection conn = getConnection();
         if (conn == null) {
@@ -196,15 +175,7 @@ public class OrderFulfillmentDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Cập nhật trạng thái đơn hàng con và tự động đồng bộ trạng thái đơn hàng cha (orders):
-     * - Khi đơn con chuyển sang SHIPPING -> đơn cha cập nhật thành SHIPPING.
-     * - Khi tất cả các đơn con của đơn cha đều DELIVERED (hoặc CANCELLED/REFUNDED) -> đơn cha cập nhật thành COMPLETED.
-     *
-     * @param subOrderCode mã đơn con
-     * @param newStatus    trạng thái mới
-     * @return true nếu cập nhật thành công
-     */
+
     public boolean updateSubOrderStatus(String subOrderCode, SubOrderStatus newStatus) {
         if (newStatus == null)
             return false;
@@ -251,24 +222,14 @@ public class OrderFulfillmentDAO extends DBContext {
         }
     }
 
-    /**
-     * Lấy danh sách các đơn con thuộc một shop kèm thông tin người nhận và sản phẩm, hỗ trợ lọc trạng thái và tìm kiếm.
-     *
-     * @param shopId  ID cửa hàng
-     * @param status  trạng thái lọc
-     * @param keyword từ khóa tìm kiếm (mã đơn, tên/sđt người nhận)
-     * @return danh sách SubOrderDTO
-     */
     public List<SubOrderDTO> getSubOrdersByShop(long shopId, SubOrderStatus status, String keyword) {
         List<SubOrderDTO> list = new ArrayList<>();
         Connection conn = getConnection();
         if (conn == null)
             return list;
 
-        boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
         StringBuilder sql = new StringBuilder(
-                "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
-                        + (hasNote ? "so.note, " : "NULL AS note, ")
+                "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, so.note, "
                         + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                         + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
                         + "       o.order_code, o.payment_status, o.payment_method, "
@@ -312,9 +273,8 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setOrderId(rs.getLong("order_id"));
                     so.setOrderCode(rs.getString("order_code"));
                     so.setShopId(rs.getLong("shop_id"));
-                    String[] parsedSlot = OrderDAO.parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
-                    so.setDeliverySlot(parsedSlot[0]);
-                    so.setNote(parsedSlot[1]);
+                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    so.setNote(rs.getString("note"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
                     so.setShopDiscount(rs.getBigDecimal("shop_discount"));
@@ -346,13 +306,6 @@ public class OrderFulfillmentDAO extends DBContext {
         return list;
     }
 
-    /**
-     * Đếm tổng số đơn hàng con của shop theo trạng thái.
-     *
-     * @param shopId ID cửa hàng
-     * @param status trạng thái lọc (null để đếm tất cả)
-     * @return số lượng đơn
-     */
     public int countSubOrdersByShop(long shopId, SubOrderStatus status) {
         boolean isAll = (status == null);
 
@@ -381,16 +334,7 @@ public class OrderFulfillmentDAO extends DBContext {
         }
         return 0;
     }
-    /**
-     * Hủy đơn hàng con và tự động hoàn trả số lượng vào tồn kho của biến thể:
-     * - Cập nhật trạng thái CANCELLED, lưu lý do hủy và người hủy.
-     * - Hoàn lại stock_quantity = stock_quantity + quantity cho từng sản phẩm trong đơn.
-     *
-     * @param subOrderCode mã đơn con
-     * @param cancelReason lý do hủy
-     * @param cancelledBy  ID tài khoản thực hiện hủy
-     * @return true nếu hủy thành công
-     */
+    
     public boolean cancelSubOrderWithRestock(String subOrderCode, String cancelReason, Long cancelledBy) {
         Connection conn = getConnection();
         if (conn == null) return false;
@@ -413,31 +357,70 @@ public class OrderFulfillmentDAO extends DBContext {
         }
     }
 
+    private static class SubOrderCancelInfo {
+        final long subOrderId;
+        final long parentOrderId;
+        final long shopId;
+
+        SubOrderCancelInfo(long subOrderId, long parentOrderId, long shopId) {
+            this.subOrderId = subOrderId;
+            this.parentOrderId = parentOrderId;
+            this.shopId = shopId;
+        }
+    }
+
     private boolean cancelSubOrderInternal(Connection conn, String subOrderCode, String cancelReason,
             Long cancelledBy) throws SQLException {
-        String findSql = "SELECT sub_order_id, order_id, shop_id, status FROM sub_orders WHERE sub_order_code = ?";
-        long subOrderId = -1;
-        long parentOrderId = -1;
-        long shopId = -1;
-        String currentStatus = null;
-
-        try (PreparedStatement psFind = conn.prepareStatement(findSql)) {
-            psFind.setString(1, subOrderCode);
-            try (ResultSet rs = psFind.executeQuery()) {
-                if (rs.next()) {
-                    subOrderId = rs.getLong("sub_order_id");
-                    parentOrderId = rs.getLong("order_id");
-                    shopId = rs.getLong("shop_id");
-                    currentStatus = rs.getString("status");
-                }
-            }
-        }
-
-        if (subOrderId == -1 || SubOrderStatus.CANCELLED.name().equalsIgnoreCase(currentStatus)
-                || SubOrderStatus.DELIVERED.name().equalsIgnoreCase(currentStatus)) {
+        SubOrderCancelInfo info = findAndValidateSubOrder(conn, subOrderCode);
+        if (info == null) {
             return false;
         }
 
+        // 1. Cập nhật trạng thái đơn con sang CANCELLED
+        if (!updateSubOrderToCancelled(conn, info.subOrderId, cancelReason, cancelledBy)) {
+            return false;
+        }
+
+        // 2. Hoàn trả 100% tồn kho bán vì hoa quả còn tươi nguyên
+        restoreStockQuantity(conn, info.subOrderId);
+
+        // 3. Giải phóng quota Flash Sale / Khuyến mãi
+        promotionDAO.releaseQuotaBySubOrder(conn, info.subOrderId);
+
+        // 4. Hoàn lại lượt voucher shop của sub_order này (nếu có)
+        restoreShopCoupon(conn, info.parentOrderId, info.shopId);
+
+        // 5. Đồng bộ trạng thái đơn cha (nếu tất cả đơn con đã CANCELLED) & hoàn voucher sàn
+        syncParentOrderAndPlatformCoupon(conn, info.parentOrderId);
+
+        return true;
+    }
+
+    private SubOrderCancelInfo findAndValidateSubOrder(Connection conn, String subOrderCode) throws SQLException {
+        String findSql = "SELECT sub_order_id, order_id, shop_id, status FROM sub_orders WHERE sub_order_code = ?";
+        try (PreparedStatement psFind = conn.prepareStatement(findSql)) {
+            psFind.setString(1, subOrderCode);
+            try (ResultSet rs = psFind.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                long subOrderId = rs.getLong("sub_order_id");
+                long parentOrderId = rs.getLong("order_id");
+                long shopId = rs.getLong("shop_id");
+                String currentStatus = rs.getString("status");
+
+                if (subOrderId == -1
+                        || SubOrderStatus.CANCELLED.name().equalsIgnoreCase(currentStatus)
+                        || SubOrderStatus.DELIVERED.name().equalsIgnoreCase(currentStatus)) {
+                    return null;
+                }
+                return new SubOrderCancelInfo(subOrderId, parentOrderId, shopId);
+            }
+        }
+    }
+
+    private boolean updateSubOrderToCancelled(Connection conn, long subOrderId, String cancelReason, Long cancelledBy)
+            throws SQLException {
         String cancelSql = "UPDATE sub_orders SET status = '" + SubOrderStatus.CANCELLED.name()
                 + "', cancel_reason = ?, cancelled_by = ?, "
                 + "       cancelled_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP "
@@ -450,13 +433,11 @@ public class OrderFulfillmentDAO extends DBContext {
                 psCancel.setNull(2, java.sql.Types.BIGINT);
             }
             psCancel.setLong(3, subOrderId);
-            int rows = psCancel.executeUpdate();
-            if (rows <= 0) {
-                return false;
-            }
+            return psCancel.executeUpdate() > 0;
         }
+    }
 
-        // 1. Hoàn trả 100% tồn kho bán vì hoa quả còn tươi nguyên
+    private void restoreStockQuantity(Connection conn, long subOrderId) throws SQLException {
         String restoreSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, pv.updated_at = CURRENT_TIMESTAMP "
                 + "FROM product_variants pv "
                 + "JOIN order_items oi ON pv.variant_id = oi.variant_id "
@@ -465,10 +446,9 @@ public class OrderFulfillmentDAO extends DBContext {
             psRestock.setLong(1, subOrderId);
             psRestock.executeUpdate();
         }
-        // 2. Giải phóng quota Flash Sale / Khuyến mãi
-        promotionDAO.releaseQuotaBySubOrder(conn, subOrderId);
+    }
 
-        // 3. Hoàn lại lượt voucher shop của sub_order này (nếu có)
+    private void restoreShopCoupon(Connection conn, long parentOrderId, long shopId) throws SQLException {
         String restoreShopVoucherSql = "UPDATE c SET c.used_count = CASE WHEN c.used_count > 0 THEN c.used_count - 1 ELSE 0 END "
                 + "FROM coupons c INNER JOIN coupon_usages u ON u.coupon_id = c.coupon_id "
                 + "WHERE u.order_id = ? AND c.shop_id = ?";
@@ -485,8 +465,9 @@ public class OrderFulfillmentDAO extends DBContext {
             psDel.setLong(2, shopId);
             psDel.executeUpdate();
         }
+    }
 
-        // 4. Đồng bộ trạng thái đơn cha (nếu tất cả đơn con đã CANCELLED)
+    private void syncParentOrderAndPlatformCoupon(Connection conn, long parentOrderId) throws SQLException {
         String checkOthersSql = "SELECT 1 FROM sub_orders WHERE order_id = ? AND status <> '" + SubOrderStatus.CANCELLED.name() + "'";
         boolean hasActiveSubOrders = false;
         try (PreparedStatement psCheck = conn.prepareStatement(checkOthersSql)) {
@@ -520,20 +501,8 @@ public class OrderFulfillmentDAO extends DBContext {
                 psDelP.executeUpdate();
             }
         }
-
-        return true;
     }
 
-    /**
-     * Xử lý hoàn kho đối với đơn giao hàng thất bại hoặc khách trả hàng (trạng thái RETURNED):
-     * - Hoàn lại tồn kho cho từng sản phẩm trong sub_order.
-     * - Cập nhật trạng thái sub_order thành RETURNED kèm ghi chú.
-     *
-     * @param subOrderCode mã đơn con
-     * @param note         ghi chú khi hoàn kho
-     * @param processedBy  ID tài khoản người xử lý
-     * @return true nếu xử lý hoàn kho thành công
-     */
     public boolean processReturnedOrderRestock(String subOrderCode, String note, Long processedBy) {
         Connection conn = getConnection();
         if (conn == null) return false;

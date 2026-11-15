@@ -47,39 +47,19 @@ public class OrderDAO extends DBContext {
     private final CouponDAO couponDAO = new CouponDAO();
     private final PromotionDAO promotionDAO = new PromotionDAO();
     private static volatile Boolean HAS_ORDER_ITEM_PROMOTION_COLS = null;
-    private static volatile Boolean HAS_SUB_ORDER_NOTE_COL = null;
 
     /**
-     * Kiểm tra cơ sở dữ liệu có cột note trong bảng sub_orders hay không.
-     * Cố gắng tự động tạo cột nếu chưa có (migration on-the-fly).
+     * @deprecated Cột note hiện đã là cột chuẩn trong dbo.sub_orders.
      */
+    @Deprecated
     public static boolean checkHasSubOrderNoteCol(Connection conn) {
-        if (HAS_SUB_ORDER_NOTE_COL != null) {
-            return HAS_SUB_ORDER_NOTE_COL;
-        }
-        try (Statement st = conn.createStatement()) {
-            try (ResultSet rs = st.executeQuery("SELECT COL_LENGTH('dbo.sub_orders', 'note')")) {
-                if (rs.next() && rs.getObject(1) != null) {
-                    HAS_SUB_ORDER_NOTE_COL = true;
-                    return true;
-                }
-            }
-            try {
-                st.executeUpdate("ALTER TABLE dbo.sub_orders ADD note NVARCHAR(500) NULL");
-                HAS_SUB_ORDER_NOTE_COL = true;
-                return true;
-            } catch (SQLException ignored) {
-            }
-        } catch (SQLException ex) {
-            HAS_SUB_ORDER_NOTE_COL = false;
-        }
-        return Boolean.TRUE.equals(HAS_SUB_ORDER_NOTE_COL);
+        return true;
     }
 
     /**
-     * Tách khung giờ giao và lời nhắn cho trường hợp dữ liệu cũ lưu chung hoặc cột mới.
-     * @return mảng 2 phần tử: [slot, note]
+     * @deprecated Dữ liệu delivery_slot và note hiện đã được tách độc lập trong DB.
      */
+    @Deprecated
     public static String[] parseSlotAndNote(String rawSlot, String rawNote) {
         String slot = rawSlot != null ? rawSlot.trim() : null;
         String note = rawNote != null ? rawNote.trim() : null;
@@ -453,16 +433,10 @@ public class OrderDAO extends DBContext {
             throw new Exception("Không thể kết nối đến cơ sở dữ liệu!");
         }
         boolean hasPromoCols = checkHasOrderItemPromotionCols(conn);
-        boolean hasNoteCol = checkHasSubOrderNoteCol(conn);
-        String insertSubOrderSql = hasNoteCol
-                ? "INSERT INTO sub_orders "
+        String insertSubOrderSql = "INSERT INTO sub_orders "
                 + "(sub_order_code, order_id, shop_id, delivery_slot, note, shop_subtotal, shop_shipping_fee, "
                 + "shop_discount, shop_total, commission_rate, commission_amount, status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                : "INSERT INTO sub_orders "
-                + "(sub_order_code, order_id, shop_id, delivery_slot, shop_subtotal, shop_shipping_fee, "
-                + "shop_discount, shop_total, commission_rate, commission_amount, status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String insertOrderItemSql = hasPromoCols
                 ? "INSERT INTO order_items "
                 + "(sub_order_id, variant_id, product_name_snapshot, variant_name_snapshot, "
@@ -588,16 +562,8 @@ public class OrderDAO extends DBContext {
                     ps.setString(pIdx++, subCode);
                     ps.setLong(pIdx++, orderId);
                     ps.setLong(pIdx++, sub.getShopId());
-                    if (hasNoteCol) {
-                        ps.setString(pIdx++, sub.getDeliverySlot());
-                        ps.setString(pIdx++, sub.getNote());
-                    } else {
-                        String legacySlot = sub.getDeliverySlot();
-                        if (sub.getNote() != null && !sub.getNote().trim().isEmpty()) {
-                            legacySlot = (legacySlot != null ? legacySlot : "") + " • Lời nhắn: " + sub.getNote().trim();
-                        }
-                        ps.setString(pIdx++, legacySlot);
-                    }
+                    ps.setString(pIdx++, sub.getDeliverySlot());
+                    ps.setString(pIdx++, sub.getNote());
                     ps.setBigDecimal(pIdx++, sub.getShopSubtotal());
                     ps.setBigDecimal(pIdx++, sub.getShopShippingFee());
                     ps.setBigDecimal(pIdx++, sub.getShopDiscount());
@@ -902,9 +868,8 @@ public class OrderDAO extends DBContext {
         Connection conn = getConnection();
         if (conn == null) return null;
 
-        boolean hasNote = checkHasSubOrderNoteCol(conn);
         String sqlSub = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, s.shop_name, "
-                + "so.delivery_slot, " + (hasNote ? "so.note, " : "NULL AS note, ")
+                + "so.delivery_slot, so.note, "
                 + "so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, "
                 + "so.shop_total, so.status, so.created_at "
                 + "FROM sub_orders so "
@@ -966,9 +931,8 @@ public class OrderDAO extends DBContext {
                             sub.setOrderId(orderId);
                             sub.setShopId(rsSub.getLong("shop_id"));
                             sub.setShopName(rsSub.getString("shop_name"));
-                            String[] parsedSlot = parseSlotAndNote(rsSub.getString("delivery_slot"), rsSub.getString("note"));
-                            sub.setDeliverySlot(parsedSlot[0]);
-                            sub.setNote(parsedSlot[1]);
+                            sub.setDeliverySlot(rsSub.getString("delivery_slot"));
+                            sub.setNote(rsSub.getString("note"));
                             sub.setShopSubtotal(rsSub.getBigDecimal("shop_subtotal"));
                             sub.setShopShippingFee(rsSub.getBigDecimal("shop_shipping_fee"));
                             sub.setShopDiscount(rsSub.getBigDecimal("shop_discount"));
@@ -1024,10 +988,8 @@ public class OrderDAO extends DBContext {
             return list;
         }
 
-        boolean hasNote = checkHasSubOrderNoteCol(conn);
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, o.order_code, o.customer_id, "
-                   + "       so.shop_id, sh.shop_name, sh.logo_url, so.delivery_slot, "
-                   + (hasNote ? "so.note, " : "NULL AS note, ")
+                   + "       so.shop_id, sh.shop_name, sh.logo_url, so.delivery_slot, so.note, "
                    + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                    + "       so.status AS sub_order_status, so.cancel_reason, so.cancelled_by, so.cancelled_at, "
                    + "       COALESCE(so.created_at, o.created_at) AS created_at, so.updated_at, "
@@ -1062,9 +1024,8 @@ public class OrderDAO extends DBContext {
                     so.setShopId(rs.getLong("shop_id"));
                     so.setShopName(rs.getString("shop_name"));
                     so.setShopLogoUrl(rs.getString("logo_url"));
-                    String[] parsedSlot = parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
-                    so.setDeliverySlot(parsedSlot[0]);
-                    so.setNote(parsedSlot[1]);
+                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    so.setNote(rs.getString("note"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
                     so.setShopDiscount(rs.getBigDecimal("shop_discount"));

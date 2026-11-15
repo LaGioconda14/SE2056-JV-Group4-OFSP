@@ -695,9 +695,7 @@ public class InventoryWasteDAO extends DBContext {
             return list;
         }
 
-        boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
-        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, "
-                + (hasNote ? "so.note, " : "NULL AS note, ")
+        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, so.note, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
                 + "       o.order_code, o.payment_status, o.payment_method, "
@@ -719,9 +717,8 @@ public class InventoryWasteDAO extends DBContext {
                     so.setOrderId(rs.getLong("order_id"));
                     so.setOrderCode(rs.getString("order_code"));
                     so.setShopId(rs.getLong("shop_id"));
-                    String[] parsedSlot = OrderDAO.parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
-                    so.setDeliverySlot(parsedSlot[0]);
-                    so.setNote(parsedSlot[1]);
+                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    so.setNote(rs.getString("note"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
                     so.setShopDiscount(rs.getBigDecimal("shop_discount"));

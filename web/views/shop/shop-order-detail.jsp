@@ -15,6 +15,7 @@
 
     <body class="bg-[#f8fafc] text-[#0f172a]">
 
+        <%-- ==================== 1. SIDEBAR & HEADER ==================== --%>
         <jsp:include page="/views/shop/layout/sidebar.jsp">
             <jsp:param name="active" value="orders" />
         </jsp:include>
@@ -24,6 +25,7 @@
         <main class="shop-main-wrapper">
             <div class="shop-content-container">
 
+                <%-- ==================== 2. TIÊU ĐỀ & THÔNG TIN TỔNG QUAN ==================== --%>
                 <div class="flex items-center justify-between text-xs text-slate-500">
                     <a href="${pageContext.request.contextPath}/shop/orders" 
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-emerald-700 transition shadow-2xs">
@@ -38,16 +40,9 @@
                                 Chi Tiết Đơn Hàng Con
                             </h1>
                         </div>
-                        <c:set var="headerSlot" value="${subOrder.deliverySlot}" />
-                        <c:if test="${not empty headerSlot and fn:contains(headerSlot, '• Lời nhắn:')}">
-                            <c:set var="headerSlot" value="${fn:trim(fn:substringBefore(headerSlot, '• Lời nhắn:'))}" />
-                        </c:if>
-                        <c:if test="${not empty headerSlot and fn:contains(headerSlot, 'Lời nhắn:')}">
-                            <c:set var="headerSlot" value="${fn:trim(fn:substringBefore(headerSlot, 'Lời nhắn:'))}" />
-                        </c:if>
                         <div class="flex flex-wrap items-center gap-2.5 mt-2 text-xs">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
-                                <i class="fa-solid fa-snowflake text-[10px] text-emerald-600"></i> ${not empty headerSlot ? headerSlot : "Tiêu chuẩn"}
+                                <i class="fa-solid fa-snowflake text-[10px] text-emerald-600"></i> ${not empty subOrder.deliverySlot ? subOrder.deliverySlot : "Tiêu chuẩn"}
                             </span>
                             <span class="text-slate-500 font-medium">
                                 <i class="fa-regular fa-clock text-slate-400 mr-1"></i> 
@@ -57,6 +52,7 @@
                     </div>
                 </div>
 
+                <%-- ==================== 3. THÔNG BÁO & CẢNH BÁO LỖI ==================== --%>
                 <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
                 <c:if test="${param.error eq 'unpaid_vnpay' or not empty sessionScope.orderDetailError}">
@@ -79,14 +75,18 @@
                     <c:remove var="orderDetailError" scope="session"/>
                 </c:if>
 
+                <%-- ==================== 4. TIẾN TRÌNH ĐƠN HÀNG (STEPPER) ==================== --%>
                 <jsp:include page="/views/shop/components/order/order-stepper.jsp" />
 
+                <%-- ==================== 5. CHI TIẾT ĐƠN HÀNG & THAO TÁC ==================== --%>
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <%-- Cột trái (8/12): Hành động xử lý đơn & Danh sách sản phẩm --%>
                     <div class="lg:col-span-8 space-y-5">
                         <jsp:include page="/views/shop/components/order/order-fulfillment-actions.jsp" />
                         <jsp:include page="/views/shop/components/order/order-items-card.jsp" />
                     </div>
 
+                    <%-- Cột phải (4/12): Thông tin khách hàng & Địa chỉ nhận --%>
                     <div class="lg:col-span-4 space-y-5">
                         <jsp:include page="/views/shop/components/order/order-customer-info.jsp" />
                     </div>
@@ -95,6 +95,7 @@
             </div>
         </main>
 
+        <%-- ==================== 6. MODAL XỬ LÝ (POPUP) ==================== --%>
         <jsp:include page="/views/shop/components/order/modal-cancel-order.jsp" />
         <jsp:include page="/views/shop/components/order/modal-return-waste.jsp" />
 

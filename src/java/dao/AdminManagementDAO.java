@@ -734,9 +734,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
             // 4. Fetch Vendor Orders (if Shop Owner)
             List<Map<String, Object>> vendorOrders = new ArrayList<>();
             if (shopMap != null) {
-                boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
-                String vendorOrderSql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.delivery_slot, "
-                                      + (hasNote ? "so.note, " : "NULL AS note, ")
+                String vendorOrderSql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.delivery_slot, so.note, "
                                       + "       so.shop_total, so.commission_rate, so.commission_amount, so.status, so.created_at, "
                                       + "       u.full_name as buyer_name, u.phone as buyer_phone "
                                       + "FROM sub_orders so "
@@ -754,9 +752,8 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                             vo.put("subOrderId", rs.getLong("sub_order_id"));
                             vo.put("subOrderCode", rs.getString("sub_order_code"));
                             vo.put("orderId", rs.getLong("order_id"));
-                            String[] parsedSlot = OrderDAO.parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
-                            vo.put("deliverySlot", parsedSlot[0]);
-                            vo.put("note", parsedSlot[1]);
+                            vo.put("deliverySlot", rs.getString("delivery_slot"));
+                            vo.put("note", rs.getString("note"));
                             double shopTotal = rs.getDouble("shop_total");
                             vo.put("shopTotalFormatted", CURRENCY_FORMAT.format(shopTotal));
                             vo.put("commissionAmountFormatted", CURRENCY_FORMAT.format(rs.getDouble("commission_amount")));
@@ -2402,9 +2399,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
             }
 
             // 2. Fetch Sub-Orders for this Master Order
-            boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
-            String subSql = "SELECT so.sub_order_id, so.sub_order_code, so.shop_id, so.delivery_slot, "
-                          + (hasNote ? "so.note, " : "NULL AS note, ")
+            String subSql = "SELECT so.sub_order_id, so.sub_order_code, so.shop_id, so.delivery_slot, so.note, "
                           + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                           + "       so.commission_rate, so.commission_amount, so.status, so.created_at, "
                           + "       s.shop_name, s.phone as shop_phone, s.address as shop_address, s.province as shop_province "
@@ -2427,9 +2422,9 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                         sub.put("shopPhone", rsSub.getString("shop_phone"));
                         sub.put("shopAddress", rsSub.getString("shop_address"));
                         sub.put("shopProvince", rsSub.getString("shop_province"));
-                        String[] parsedSlot = OrderDAO.parseSlotAndNote(rsSub.getString("delivery_slot"), rsSub.getString("note"));
-                        sub.put("deliverySlot", parsedSlot[0] != null ? parsedSlot[0] : "Tiêu chuẩn");
-                        sub.put("note", parsedSlot[1]);
+                        String slot = rsSub.getString("delivery_slot");
+                        sub.put("deliverySlot", slot != null ? slot : "Tiêu chuẩn");
+                        sub.put("note", rsSub.getString("note"));
 
                         sub.put("subtotalFormatted", CURRENCY_FORMAT.format(rsSub.getDouble("shop_subtotal")));
                         sub.put("shippingFeeFormatted", CURRENCY_FORMAT.format(rsSub.getDouble("shop_shipping_fee")));
@@ -2603,12 +2598,10 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         Connection conn = getConnection();
         if (conn == null) return list;
 
-        boolean hasNote = OrderDAO.checkHasSubOrderNoteCol(conn);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT del.delivery_id, del.sub_order_id, del.driver_id, del.tracking_number, ")
            .append("       del.delivery_status, del.proof_image_url, del.failure_reason, del.assigned_at, del.delivered_at, ")
-           .append("       so.sub_order_code, so.shop_total, so.delivery_slot, ")
-           .append(hasNote ? "so.note, " : "NULL AS note, ")
+           .append("       so.sub_order_code, so.shop_total, so.delivery_slot, so.note, ")
            .append("       o.order_id, o.order_code, ")
            .append("       s.shop_id, s.shop_name, s.phone as shop_phone, s.province as shop_province, ")
            .append("       uCust.full_name as customer_name, uCust.phone as customer_phone, ")
@@ -2664,9 +2657,9 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("orderCode", rs.getString("order_code"));
                     item.put("trackingNumber", rs.getString("tracking_number"));
                     item.put("shopTotalFormatted", CURRENCY_FORMAT.format(rs.getDouble("shop_total")));
-                    String[] parsedSlot = OrderDAO.parseSlotAndNote(rs.getString("delivery_slot"), rs.getString("note"));
-                    item.put("deliverySlot", parsedSlot[0] != null ? parsedSlot[0] : "Tiêu chuẩn");
-                    item.put("note", parsedSlot[1]);
+                    String slot = rs.getString("delivery_slot");
+                    item.put("deliverySlot", slot != null ? slot : "Tiêu chuẩn");
+                    item.put("note", rs.getString("note"));
 
                     String dStatus = rs.getString("delivery_status");
                     item.put("deliveryStatus", dStatus);
