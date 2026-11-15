@@ -19,9 +19,6 @@
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 
 
-        <!-- Tailwind CSS (Non-blocking) -->
-        <script src="https://cdn.tailwindcss.com"></script>
-
         <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -902,7 +899,7 @@
                     </div>
                     <div class="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-1.5 text-xs text-emerald-950">
                         <div><i class="fa-solid fa-phone me-1.5 text-emerald-700"></i><strong>Hotline Shop:</strong> <a href="tel:${not empty shop.phone ? shop.phone : '19008892'}" class="text-emerald-700 font-bold underline">${not empty shop.phone ? shop.phone : '1900 8892'}</a></div>
-                        <div><i class="fa-solid fa-envelope me-1.5 text-emerald-700"></i><strong>Email:</strong> ${not empty shop.email ? shop.email : 'cskh@gocvuon.vn'}</div>
+                        <div><i class="fa-solid fa-envelope me-1.5 text-emerald-700"></i><strong>Email:</strong> cskh@gocvuon.vn</div>
                     </div>
                 </div>
 

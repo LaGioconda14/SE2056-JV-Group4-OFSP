@@ -121,9 +121,15 @@ public class DetailServlet extends HttpServlet {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            if (!response.isCommitted()) {
+                response.sendRedirect(request.getContextPath() + "/products");
+            }
+            return;
         }
         // Nếu ID không hợp lệ hoặc không tìm thấy sản phẩm thì mới chuyển hướng về trang danh sách
-        response.sendRedirect(request.getContextPath() + "/products");
+        if (!response.isCommitted()) {
+            response.sendRedirect(request.getContextPath() + "/products");
+        }
     } 
 
     private void transferFlashMessage(HttpSession session, HttpServletRequest request,

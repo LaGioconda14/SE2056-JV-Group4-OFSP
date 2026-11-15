@@ -23,6 +23,7 @@ public class Shop {
     private String status;
     private Timestamp createdAt;
     private Timestamp updatedAt;
+    private String email;
 
     public Shop() {
     }
@@ -84,4 +85,7 @@ public class Shop {
 
     public Timestamp getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getEmail() { return email != null && !email.trim().isEmpty() ? email : "cskh@gocvuon.vn"; }
+    public void setEmail(String email) { this.email = email; }
 }
