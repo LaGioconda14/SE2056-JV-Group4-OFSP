@@ -22,6 +22,15 @@
     .material-symbols-outlined {
         font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+    }
 </style>
 
 <!-- ==================== HEADER CHUẨN ĐỒNG BỘ CART ==================== -->
@@ -206,7 +215,7 @@
     <c:set var="isProductsActive" value="${fn:contains(reqUri, '/products') or fn:contains(reqUri, '/product-list')}" />
     <div class="bg-white border-t border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-11 flex items-center justify-between gap-4">
-            <nav class="flex items-center gap-5 lg:gap-6 xl:gap-8 text-sm h-full whitespace-nowrap overflow-x-auto hide-scrollbar">
+            <nav class="flex items-center gap-4 sm:gap-5 lg:gap-6 xl:gap-8 text-sm h-full whitespace-nowrap overflow-x-auto lg:overflow-visible hide-scrollbar">
                 <a class="whitespace-nowrap shrink-0 transition-colors flex items-center h-full px-1 border-b-2 ${isHomeActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
                 <a class="whitespace-nowrap shrink-0 transition-colors flex items-center h-full px-1 border-b-2 ${isProductsActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
 

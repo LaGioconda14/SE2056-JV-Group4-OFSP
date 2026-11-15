@@ -118,100 +118,36 @@
                         </div>
                     </div>
 
-                    <!-- 2. KHOẢNG GIÁ (Đã bỏ hoàn toàn 2 thanh kéo, thay bằng 2 ô nhập + chọn nhanh tiện lợi) -->
+                    <!-- 2. KHOẢNG GIÁ (2 ô nhập giá: từ ở trên đến ở dưới) -->
                     <div class="border-t border-slate-100 pt-5">
                         <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3">
                             Khoảng Giá (VNĐ)
                         </h4>
 
-                        <!-- 2 ô nhập Từ - Đến -->
-                        <div class="flex items-center gap-2 text-xs mb-3">
-                            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 flex-1 focus-within:border-emerald-600 focus-within:bg-white transition">
-                                <span class="text-slate-400 text-[11px] font-medium shrink-0">Từ:</span>
+                        <!-- 2 ô nhập Từ (ở trên) - Đến (ở dưới) -->
+                        <div class="space-y-2.5 text-xs">
+                            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:bg-white transition">
+                                <span class="text-slate-400 text-xs font-semibold shrink-0 w-8">Từ:</span>
                                 <input type="number" id="inputMinPrice" name="minPrice" 
-                                       placeholder="45.000"
+                                       placeholder="Từ 0đ"
+                                       min="0"
                                        value="${paramMinPrice != null ? paramMinPrice : ''}" 
                                        class="w-full bg-transparent font-bold text-slate-800 focus:outline-none text-xs">
-                                <span class="text-[10px] text-slate-400 font-bold shrink-0">đ</span>
+                                <span class="text-xs text-slate-400 font-bold shrink-0">đ</span>
                             </div>
-                            <span class="text-slate-400 text-xs font-bold">-</span>
-                            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 flex-1 focus-within:border-emerald-600 focus-within:bg-white transition">
-                                <span class="text-slate-400 text-[11px] font-medium shrink-0">Đến:</span>
+                            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:bg-white transition">
+                                <span class="text-slate-400 text-xs font-semibold shrink-0 w-8">Đến:</span>
                                 <input type="number" id="inputMaxPrice" name="maxPrice" 
-                                       placeholder="750.000"
+                                       placeholder="Đến mức tối đa"
+                                       min="0"
                                        value="${paramMaxPrice != null ? paramMaxPrice : ''}" 
                                        class="w-full bg-transparent font-bold text-slate-800 focus:outline-none text-xs">
-                                <span class="text-[10px] text-slate-400 font-bold shrink-0">đ</span>
+                                <span class="text-xs text-slate-400 font-bold shrink-0">đ</span>
                             </div>
                         </div>
-
-                        <!-- 4 nút chọn nhanh khoảng giá chuẩn e-commerce -->
-                        <div class="grid grid-cols-2 gap-1.5">
-                            <button type="button" class="quick-price-btn" data-min="0" data-max="100000">
-                                Dưới 100k
-                            </button>
-                            <button type="button" class="quick-price-btn" data-min="100000" data-max="300000">
-                                100k - 300k
-                            </button>
-                            <button type="button" class="quick-price-btn" data-min="300000" data-max="500000">
-                                300k - 500k
-                            </button>
-                            <button type="button" class="quick-price-btn" data-min="500000" data-max="2000000">
-                                Trên 500k
-                            </button>
-                        </div>
                     </div>
 
-                    <!-- 3. ĐÁNH GIÁ CỦA KHÁCH -->
-                    <div class="border-t border-slate-100 pt-5">
-                        <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3.5">
-                            Đánh Giá Của Khách
-                        </h4>
-                        <div class="space-y-2.5 text-xs">
-                            <!-- 5 Sao -->
-                            <label class="flex items-center justify-between cursor-pointer group select-none">
-                                <div class="flex items-center gap-2">
-                                    <input type="radio" name="rating" value="5" ${paramRating == 5 ? 'checked' : ''} class="custom-radio">
-                                    <div class="flex text-amber-400 text-xs gap-0.5">
-                                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                                    </div>
-                                </div>
-                                <span class="text-slate-500 group-hover:text-slate-800 transition font-medium">5 Sao</span>
-                            </label>
-
-                            <!-- Từ 4 sao trở lên -->
-                            <label class="flex items-center justify-between cursor-pointer group select-none">
-                                <div class="flex items-center gap-2">
-                                    <input type="radio" name="rating" value="4" ${paramRating == 4 ? 'checked' : ''} class="custom-radio">
-                                    <div class="flex text-amber-400 text-xs gap-0.5">
-                                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star text-slate-300"></i>
-                                    </div>
-                                </div>
-                                <span class="text-slate-500 group-hover:text-slate-800 transition font-medium">Từ 4 sao trở lên</span>
-                            </label>
-
-                            <!-- Từ 3 sao trở lên -->
-                            <label class="flex items-center justify-between cursor-pointer group select-none">
-                                <div class="flex items-center gap-2">
-                                    <input type="radio" name="rating" value="3" ${paramRating == 3 ? 'checked' : ''} class="custom-radio">
-                                    <div class="flex text-amber-400 text-xs gap-0.5">
-                                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-regular fa-star text-slate-300"></i><i class="fa-regular fa-star text-slate-300"></i>
-                                    </div>
-                                </div>
-                                <span class="text-slate-500 group-hover:text-slate-800 transition font-medium">Từ 3 sao trở lên</span>
-                            </label>
-
-                            <!-- Tất cả -->
-                            <label class="flex items-center justify-between cursor-pointer group select-none pt-0.5">
-                                <div class="flex items-center gap-2">
-                                    <input type="radio" name="rating" value="" ${empty paramRating ? 'checked' : ''} class="custom-radio">
-                                    <span class="text-xs text-slate-600 font-medium group-hover:text-slate-900">Tất cả đánh giá</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- 4. TÌNH TRẠNG HÀNG -->
+                    <!-- 3. TÌNH TRẠNG HÀNG -->
                     <div class="border-t border-slate-100 pt-5">
                         <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3.5">
                             Tình Trạng Hàng
@@ -231,7 +167,7 @@
                         </div>
                     </div>
 
-                    <!-- 5. LOẠI NÔNG SẢN CHI TIẾT (TIỂU MỤC) -->
+                    <!-- 4. LOẠI NÔNG SẢN CHI TIẾT (TIỂU MỤC) -->
                     <div class="border-t border-slate-100 pt-5">
                         <div class="flex items-center justify-between mb-3.5">
                             <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500">
