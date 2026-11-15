@@ -13,10 +13,10 @@
     <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/profile.css?v=2">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-
-<script src="https://cdn.tailwindcss.com" defer></script>
 
 <jsp:include page="/views/common/header.jsp" />
 

@@ -205,14 +205,14 @@
     <c:set var="isHomeActive" value="${reqUri.endsWith('/home') or reqUri.endsWith('/home.jsp') or reqUri eq ctxPath or reqUri eq ctxPath.concat('/')}" />
     <c:set var="isProductsActive" value="${fn:contains(reqUri, '/products') or fn:contains(reqUri, '/product-list')}" />
     <div class="bg-white border-t border-gray-100 shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-11 flex items-center justify-between">
-            <nav class="flex items-center gap-6 lg:gap-7 xl:gap-8 text-sm h-full">
-                <a class="transition-colors flex items-center h-full px-1 border-b-2 ${isHomeActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
-                <a class="transition-colors flex items-center h-full px-1 border-b-2 ${isProductsActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-11 flex items-center justify-between gap-4">
+            <nav class="flex items-center gap-5 lg:gap-6 xl:gap-8 text-sm h-full whitespace-nowrap overflow-x-auto hide-scrollbar">
+                <a class="whitespace-nowrap shrink-0 transition-colors flex items-center h-full px-1 border-b-2 ${isHomeActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${homeUrl}'/>">Trang Chủ</a>
+                <a class="whitespace-nowrap shrink-0 transition-colors flex items-center h-full px-1 border-b-2 ${isProductsActive ? 'text-[#00652c] font-bold border-[#00652c]' : 'text-gray-600 hover:text-[#00652c] border-transparent font-medium'}" href="<c:out value='${productsUrl}'/>">Cửa Hàng</a>
 
                 <%-- 1. TRÁI CÂY NỘI ĐỊA (Dropdown danh mục con quả nội địa) --%>
-                <div class="relative group h-full flex items-center">
-                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
+                <div class="relative group h-full flex items-center shrink-0">
+                    <a class="whitespace-nowrap shrink-0 text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
                        href="<c:out value='${productsUrl}'/>?category=trai-cay-viet-nam">
                         <span>Trái Cây Nội Địa</span>
                         <span class="material-symbols-outlined text-[16px] text-gray-400 group-hover:text-[#00652c] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
@@ -241,8 +241,8 @@
                 </div>
 
                 <%-- 2. TRÁI CÂY NHẬP KHẨU (Dropdown danh mục con quả nhập khẩu) --%>
-                <div class="relative group h-full flex items-center">
-                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
+                <div class="relative group h-full flex items-center shrink-0">
+                    <a class="whitespace-nowrap shrink-0 text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
                        href="<c:out value='${productsUrl}'/>?category=trai-cay-nhap-khau">
                         <span>Trái Cây Nhập Khẩu</span>
                         <span class="material-symbols-outlined text-[16px] text-gray-400 group-hover:text-[#00652c] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
@@ -271,8 +271,8 @@
                 </div>
 
                 <%-- 3. HỘP QUÀ & COMBO (Dropdown hộp quà, giỏ quà, combo tiện lợi) --%>
-                <div class="relative group h-full flex items-center">
-                    <a class="text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
+                <div class="relative group h-full flex items-center shrink-0">
+                    <a class="whitespace-nowrap shrink-0 text-gray-600 group-hover:text-[#00652c] transition-colors font-medium flex items-center gap-1 h-full py-1 px-1" 
                        href="<c:out value='${productsUrl}'/>?category=qua-tang-trai-cay">
                         <span>Hộp Quà &amp; Combo</span>
                         <span class="material-symbols-outlined text-[16px] text-gray-400 group-hover:text-[#00652c] group-hover:rotate-180 transition-transform duration-200">expand_more</span>
@@ -300,11 +300,11 @@
                     </div>
                 </div>
 
-                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full px-1" href="<c:out value='${homeUrl}'/>#about">Về Nông Trại</a>
-                <a class="text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full px-1" href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a>
+                <a class="whitespace-nowrap shrink-0 text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full px-1" href="<c:out value='${homeUrl}'/>#about">Về Nông Trại</a>
+                <a class="whitespace-nowrap shrink-0 text-gray-600 hover:text-[#00652c] transition-colors font-medium flex items-center h-full px-1" href="<c:out value='${homeUrl}'/>#contact">Liên Hệ</a>
             </nav>
-            <div class="hidden sm:flex items-center">
-                <span class="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-semibold">
+            <div class="hidden xl:flex items-center shrink-0">
+                <span class="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-semibold whitespace-nowrap">
                     <span class="material-symbols-outlined text-[14px] text-amber-700">bolt</span>
                     <span>Nông sản tươi sạch: <strong>Giao nhanh trong ngày</strong></span>
                 </span>
