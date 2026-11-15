@@ -82,20 +82,12 @@ public class SearchServlet extends HttpServlet {
             }
         } catch (Exception ignored) {}
 
-        // 4. Tình trạng hàng (availability)
-        String availability = request.getParameter("availability");
-        Boolean inStockOnly = false;
-        if ("in_stock".equalsIgnoreCase(availability) || "true".equalsIgnoreCase(availability) || "1".equals(availability)) {
-            inStockOnly = true;
-        }
-
-        // 5. Thống kê danh mục phẳng có số lượng sản phẩm
+        // 4. Thống kê danh mục phẳng có số lượng sản phẩm
         List<Category> listCategories = productService.getAllCategoriesWithCount();
-        int inStockCount = productService.countInStockProducts();
 
-        // 6. Lấy danh sách toàn bộ sản phẩm theo từ khóa và các tiêu chí lọc (không phân trang)
-        List<ProductCardDTO> listProduct = productService.getFilteredCatalogProducts(
-                query, selectedCategories, minPrice, maxPrice, null, null, inStockOnly, "featured", 0, 0
+        // 5. Lấy danh sách toàn bộ sản phẩm theo từ khóa và các tiêu chí lọc (không phân trang)
+        List<ProductCardDTO> listProducts = productService.getFilteredCatalogProducts(
+                query, selectedCategories, minPrice, maxPrice, null, null, null, "featured", 0, 0
         );
 
         // Lưu toàn bộ dữ liệu đã xử lý vào Request Attributes
@@ -106,14 +98,10 @@ public class SearchServlet extends HttpServlet {
         request.setAttribute("maxPrice", maxPriceStr);
         request.setAttribute("paramMinPrice", minPrice);
         request.setAttribute("paramMaxPrice", maxPrice);
-        request.setAttribute("selectedAvailability", availability);
-        request.setAttribute("paramAvailability", availability);
-        request.setAttribute("inStockCount", inStockCount);
 
         request.setAttribute("listCategories", listCategories);
-        request.setAttribute("listProduct", listProduct);
-        request.setAttribute("listProducts", listProduct);
-        request.setAttribute("totalProducts", listProduct != null ? listProduct.size() : 0);
+        request.setAttribute("listProducts", listProducts);
+        request.setAttribute("totalProducts", listProducts != null ? listProducts.size() : 0);
 
         // Sau khi xử lý xong dữ liệu, gọi processRequest để in thông tin ra JSP
         processRequest(request, response);

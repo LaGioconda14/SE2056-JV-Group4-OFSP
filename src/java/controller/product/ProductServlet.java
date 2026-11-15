@@ -39,17 +39,7 @@ public class ProductServlet extends HttpServlet {
     throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
-
-        // 1. Keyword search
-        String keyword = request.getParameter("keyword");
-        if (keyword == null || keyword.trim().isEmpty()) {
-            keyword = request.getParameter("query"); // fallback từ header search
-        }
-        if (keyword != null) {
-            keyword = keyword.trim();
-        }
-
-        // 2. Categories filter (hỗ trợ cả multi-checkbox và single param)
+        // 1. Categories filter (hỗ trợ cả multi-checkbox và single param)
         String[] catArr = request.getParameterValues("category");
         List<String> selectedCategories = new ArrayList<>();
         if (catArr != null) {
@@ -59,7 +49,7 @@ public class ProductServlet extends HttpServlet {
                 }
             }
         }
-        // Fallback parameter "categoryId" hoặc "categorySlug" nếu có
+        // Nhận thêm categoryId hoặc categorySlug nếu người dùng đi từ menu
         String singleCatId = request.getParameter("categoryId");
         if (singleCatId != null && !singleCatId.trim().isEmpty() && !selectedCategories.contains(singleCatId.trim())) {
             selectedCategories.add(singleCatId.trim());
@@ -69,7 +59,7 @@ public class ProductServlet extends HttpServlet {
             selectedCategories.add(singleCatSlug.trim());
         }
 
-        // 3. Price range filter
+        // 2. Price range filter
         String minPriceStr = request.getParameter("minPrice");
         String maxPriceStr = request.getParameter("maxPrice");
         BigDecimal minPrice = null;
@@ -85,14 +75,7 @@ public class ProductServlet extends HttpServlet {
             }
         } catch (Exception ignored) {}
 
-        // 4. Availability filter
-        String availability = request.getParameter("availability");
-        Boolean inStockOnly = false;
-        if ("in_stock".equalsIgnoreCase(availability) || "true".equalsIgnoreCase(availability) || "1".equals(availability)) {
-            inStockOnly = true;
-        }
-
-        // 5. Sort by
+        // 3. Sort by
         String sortBy = request.getParameter("sortBy");
         if (sortBy == null || sortBy.trim().isEmpty()) {
             sortBy = "featured";
@@ -100,30 +83,24 @@ public class ProductServlet extends HttpServlet {
             sortBy = sortBy.trim();
         }
 
-        // 6. Lấy dữ liệu danh mục phẳng kèm số lượng sản phẩm & thống kê
+        // 4. Lấy dữ liệu danh mục phẳng kèm số lượng sản phẩm
         List<Category> listCategories = productService.getAllCategoriesWithCount();
-        int inStockCount = productService.countInStockProducts();
 
-        // 7. Query toàn bộ sản phẩm theo bộ lọc (không phân trang)
+        // 5. Query toàn bộ sản phẩm theo bộ lọc (không phân trang)
         List<ProductCardDTO> listProducts = productService.getFilteredCatalogProducts(
-                keyword, selectedCategories, minPrice, maxPrice, null, null, inStockOnly, sortBy, 0, 0
+                null, selectedCategories, minPrice, maxPrice, null, null, null, sortBy, 0, 0
         );
         int totalProducts = listProducts != null ? listProducts.size() : 0;
 
         // Lưu toàn bộ dữ liệu đã xử lý vào Request Attributes
         request.setAttribute("listProducts", listProducts);
-        request.setAttribute("listProduct", listProducts); // Tương thích ngược
         request.setAttribute("totalProducts", totalProducts);
 
         request.setAttribute("listCategories", listCategories);
-        request.setAttribute("categories", listCategories); // Tương thích ngược
-        request.setAttribute("inStockCount", inStockCount);
 
         request.setAttribute("selectedCategoriesList", selectedCategories);
-        request.setAttribute("paramKeyword", keyword);
         request.setAttribute("paramMinPrice", minPrice);
         request.setAttribute("paramMaxPrice", maxPrice);
-        request.setAttribute("paramAvailability", availability);
         request.setAttribute("paramSortBy", sortBy);
 
         // Sau khi xử lý xong dữ liệu, gọi processRequest để in thông tin ra JSP

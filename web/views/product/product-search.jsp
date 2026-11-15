@@ -106,26 +106,6 @@
                             </div>
                         </div>
 
-                        <!-- 3. TÌNH TRẠNG HÀNG -->
-                        <div class="border-t border-slate-100 pt-5">
-                            <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3.5">
-                                Tình Trạng Hàng
-                            </h4>
-                            <div class="space-y-2.5 text-xs">
-                                <label class="flex items-center justify-between cursor-pointer group select-none">
-                                    <div class="flex items-center gap-2.5">
-                                        <input type="checkbox" name="availability" value="in_stock" 
-                                               ${paramAvailability eq 'in_stock' or selectedAvailability eq 'in_stock' ? 'checked' : ''} 
-                                               class="custom-checkbox">
-                                        <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition">Còn Hàng</span>
-                                    </div>
-                                    <span class="text-xs font-bold text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-50">
-                                        ${not empty inStockCount ? inStockCount : 0}
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-
                         <!-- NÚT ÁP DỤNG BỘ LỌC (MÀU XANH LÁ ĐẬM CHỦ ĐẠO #00652C) -->
                         <div class="pt-2">
                             <button type="submit" class="w-full py-3.5 bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md shadow-emerald-900/10 hover:shadow-lg transition-all duration-200 cursor-pointer flex items-center justify-center gap-2">
@@ -140,7 +120,7 @@
                 <div class="lg:col-span-3 space-y-6">
                     <div class="bg-white p-5 rounded-3xl shadow-sm text-sm text-slate-700 border border-slate-200/90 flex items-center justify-between">
                         <div>Kết quả tìm kiếm cho từ khóa: <span class="font-extrabold text-[#00652c]">"${txtSearch}"</span>
-                            <span class="text-xs text-slate-500 font-medium ml-1">(${totalProducts != null ? totalProducts : (not empty listProduct ? listProduct.size() : 0)} sản phẩm)</span>
+                            <span class="text-xs text-slate-500 font-medium ml-1">(${totalProducts != null ? totalProducts : (not empty listProducts ? listProducts.size() : 0)} sản phẩm)</span>
                         </div>
                     </div>
 
@@ -186,8 +166,8 @@
                     <!-- Lưới sản phẩm chuẩn chỉnh, bo góc mềm mại và bắt mắt -->
 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
     <c:choose>
-        <c:when test="${not empty listProduct}">
-            <c:forEach var="p" items="${listProduct}">
+        <c:when test="${not empty listProducts}">
+            <c:forEach var="p" items="${listProducts}">
                 <div class="bg-white rounded-3xl border border-gray-100 p-4 flex flex-col justify-between shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all duration-300 group">
                     <div>
                         <!-- Khung ảnh sản phẩm có hiệu ứng phóng to và nhãn giảm giá -->

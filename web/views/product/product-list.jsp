@@ -72,10 +72,6 @@
                 <form action="${pageContext.request.contextPath}/products" method="GET" id="catalogFilterForm" 
                       class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-6">
                     
-                    <!-- Giữ lại keyword và sort nếu có -->
-                    <c:if test="${not empty paramKeyword}">
-                        <input type="hidden" name="keyword" value="${paramKeyword}">
-                    </c:if>
                     <input type="hidden" name="sortBy" value="${paramSortBy}">
 
                     <!-- Filter Header -->
@@ -145,26 +141,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. TÌNH TRẠNG HÀNG -->
-                    <div class="border-t border-slate-100 pt-5">
-                        <h4 class="text-[11px] font-black uppercase tracking-wider text-slate-500 mb-3.5">
-                            Tình Trạng Hàng
-                        </h4>
-                        <div class="space-y-2.5 text-xs">
-                            <label class="flex items-center justify-between cursor-pointer group select-none">
-                                <div class="flex items-center gap-2.5">
-                                    <input type="checkbox" name="availability" value="in_stock" 
-                                           ${paramAvailability eq 'in_stock' ? 'checked' : ''} 
-                                           class="custom-checkbox">
-                                    <span class="font-medium text-slate-700 group-hover:text-emerald-700 transition">Còn Hàng</span>
-                                </div>
-                                <span class="text-xs font-bold text-slate-400 font-mono px-2 py-0.5 rounded-full bg-slate-50">
-                                    ${not empty inStockCount ? inStockCount : 0}
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-
                     <!-- NÚT ÁP DỤNG BỘ LỌC (MÀU XANH LÁ ĐẬM CHỦ ĐẠO #00652C) -->
                     <div class="pt-2">
                         <button type="submit" class="w-full py-3.5 bg-[#00652c] hover:bg-[#005323] text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md shadow-emerald-900/10 hover:shadow-lg transition-all duration-200 cursor-pointer flex items-center justify-center gap-2">
@@ -187,9 +163,6 @@
                     <div>
                         <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
                             <span>Tìm thấy ${totalProducts} sản phẩm tươi sạch</span>
-                            <c:if test="${not empty paramKeyword}">
-                                <span class="text-xs font-normal text-slate-500">(từ khóa: "<strong class="text-emerald-700">${paramKeyword}</strong>")</span>
-                            </c:if>
                         </h2>
                         <p class="text-xs text-slate-500 mt-0.5">
                             Cam kết 100% tươi sạch, chuẩn VietGAP từ nông trại đến bàn ăn

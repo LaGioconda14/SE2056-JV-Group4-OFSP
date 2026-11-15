@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -1887,67 +1888,122 @@ public class ProductDAO extends DBContext {
             Boolean inStockOnly, String sortBy,
             int page, int pageSize) {
         List<ProductCardDTO> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
-                .append("p.origin, p.certification, p.storage_temp, pi.image_url, dv.variant_id AS default_variant_id, ")
-                .append("dv.price AS price, dv.original_price AS original_price, dv.unit AS unit, ")
-                .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
-                .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
-                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
-                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
-                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
-                .append("(SELECT COUNT(*) FROM reviews r ")
-                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
-                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
-                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
-                .append("FROM products p ")
-                .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
-                .append("OUTER APPLY ( ")
-                .append("    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC ")
-                .append(") pi ")
-                .append("OUTER APPLY ( ")
-                .append("    SELECT TOP 1 variant_id, price, original_price, unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY (CASE WHEN stock_quantity > 0 THEN 0 ELSE 1 END), price ASC, variant_id ASC ")
-                .append(") dv ")
-                .append("WHERE p.is_active = 1 ");
+           .append("p.origin, p.certification, p.storage_temp, pi.image_url, ")
+           .append("dv.variant_id AS default_variant_id, dv.price, dv.original_price, dv.unit, ")
+           .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
+           .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
+           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
+           .append("(SELECT COUNT(*) FROM reviews r ")
+           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
+           .append("FROM products p ")
+           .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
+           .append("OUTER APPLY ( ")
+           .append("    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC ")
+           .append(") pi ")
+           .append("OUTER APPLY ( ")
+           .append("    SELECT TOP 1 variant_id, price, original_price, unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY (CASE WHEN stock_quantity > 0 THEN 0 ELSE 1 END), price ASC, variant_id ASC ")
+           .append(") dv ")
+           .append("WHERE p.is_active = 1");
 
-        List<Object> params = new ArrayList<>();
-        appendCatalogFilters(sql, params, keyword, categoryParams, minPrice, maxPrice, origins, inStockOnly);
-
-        // Sorting
-        if ("price_asc".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) ASC, p.product_id DESC");
-        } else if ("price_desc".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) DESC, p.product_id DESC");
-        } else if ("newest".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY p.product_id DESC");
-        } else if ("rating".equalsIgnoreCase(sortBy)) {
-            sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
-        } else {
-            // "featured" default
-            sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
+        // 1. Tìm theo từ khóa (tên, xuất xứ, danh mục)
+        if (keyword != null && !keyword.isBlank()) {
+            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ? OR c.category_name LIKE ?)");
+            String kw = "%" + keyword.trim() + "%";
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
         }
 
-        // Pagination (chỉ phân trang khi có tham số page > 0 và pageSize > 0)
+        // 2. Lọc theo danh mục (hỗ trợ cả ID số từ sidebar và Slug chữ từ menu header)
+        if (categoryParams != null && !categoryParams.isEmpty()) {
+            List<Integer> ids = new ArrayList<>();
+            List<String> slugs = new ArrayList<>();
+            for (String c : categoryParams) {
+                if (c == null || c.trim().isEmpty() || "all".equalsIgnoreCase(c) || "0".equals(c)) continue;
+                try {
+                    ids.add(Integer.parseInt(c.trim()));
+                } catch (Exception e) {
+                    slugs.add(c.trim());
+                }
+            }
+            if (!ids.isEmpty() || !slugs.isEmpty()) {
+                sql.append(" AND (");
+                if (!ids.isEmpty()) {
+                    sql.append("p.category_id IN (");
+                    for (int i = 0; i < ids.size(); i++) {
+                        sql.append(i == 0 ? "?" : ", ?");
+                        params.add(ids.get(i));
+                    }
+                    sql.append(")");
+                }
+                if (!slugs.isEmpty()) {
+                    if (!ids.isEmpty()) sql.append(" OR ");
+                    sql.append("c.slug IN (");
+                    for (int i = 0; i < slugs.size(); i++) {
+                        sql.append(i == 0 ? "?" : ", ?");
+                        params.add(slugs.get(i));
+                    }
+                    sql.append(")");
+                }
+                sql.append(")");
+            }
+        }
+
+        // 3. Lọc theo khoảng giá
+        if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) > 0) {
+            sql.append(" AND dv.price >= ?");
+            params.add(minPrice);
+        }
+        if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) > 0) {
+            sql.append(" AND dv.price <= ?");
+            params.add(maxPrice);
+        }
+
+        // 4. Lọc xuất xứ (nếu có)
+        if (origins != null && !origins.isEmpty()) {
+            sql.append(" AND p.origin IN (").append(String.join(",", Collections.nCopies(origins.size(), "?"))).append(")");
+            params.addAll(origins);
+        }
+
+        // 5. Sắp xếp
+        switch (sortBy != null ? sortBy.toLowerCase() : "") {
+            case "price_asc":  sql.append(" ORDER BY dv.price ASC, p.product_id DESC"); break;
+            case "price_desc": sql.append(" ORDER BY dv.price DESC, p.product_id DESC"); break;
+            case "newest":     sql.append(" ORDER BY p.product_id DESC"); break;
+            default:           sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC"); break;
+        }
+
+        // 6. Phân trang (nếu có tham số page > 0 và pageSize > 0)
         if (page > 0 && pageSize > 0) {
             sql.append(" OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
             params.add((page - 1) * pageSize);
             params.add(pageSize);
         }
 
+        // 7. Thực thi truy vấn
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 ps.setObject(i + 1, params.get(i));
             }
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    ProductCardDTO p = mapProductFromCatalogResultSet(rs);
-                    list.add(p);
+                    list.add(mapProductFromCatalogResultSet(rs));
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        util.PromotionPricing.applyToProducts(list); // khuyến mãi (Promotion) đang chạy
+
+        // 8. Áp dụng giá khuyến mãi
+        util.PromotionPricing.applyToProducts(list);
         return list;
     }
 
@@ -1955,104 +2011,7 @@ public class ProductDAO extends DBContext {
             BigDecimal minPrice, BigDecimal maxPrice,
             Double minRating, List<String> origins,
             Boolean inStockOnly) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT COUNT(DISTINCT p.product_id) ")
-                .append("FROM products p ")
-                .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
-                .append("WHERE p.is_active = 1 ");
-
-        List<Object> params = new ArrayList<>();
-        appendCatalogFilters(sql, params, keyword, categoryParams, minPrice, maxPrice, origins, inStockOnly);
-
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            for (int i = 0; i < params.size(); i++) {
-                ps.setObject(i + 1, params.get(i));
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    private void appendCatalogFilters(StringBuilder sql, List<Object> params,
-            String keyword, List<String> categoryParams,
-            BigDecimal minPrice, BigDecimal maxPrice,
-            List<String> origins, Boolean inStockOnly) {
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            sql.append(" AND (p.name LIKE ? OR p.origin LIKE ? OR c.category_name LIKE ?) ");
-            String kw = "%" + keyword.trim() + "%";
-            params.add(kw);
-            params.add(kw);
-            params.add(kw);
-        }
-
-        if (categoryParams != null && !categoryParams.isEmpty()) {
-            List<Integer> catIds = new ArrayList<>();
-            List<String> catSlugs = new ArrayList<>();
-            for (String c : categoryParams) {
-                if (c == null || c.trim().isEmpty() || "all".equalsIgnoreCase(c.trim()) || "0".equals(c.trim())) {
-                    continue;
-                }
-                try {
-                    catIds.add(Integer.parseInt(c.trim()));
-                } catch (NumberFormatException e) {
-                    catSlugs.add(c.trim());
-                }
-            }
-            if (!catIds.isEmpty() || !catSlugs.isEmpty()) {
-                sql.append(" AND (");
-                boolean first = true;
-                if (!catIds.isEmpty()) {
-                    sql.append("p.category_id IN (");
-                    for (int i = 0; i < catIds.size(); i++) {
-                        sql.append(i == 0 ? "?" : ", ?");
-                        params.add(catIds.get(i));
-                    }
-                    sql.append(")");
-                    first = false;
-                }
-                if (!catSlugs.isEmpty()) {
-                    if (!first) {
-                        sql.append(" OR ");
-                    }
-                    sql.append("c.slug IN (");
-                    for (int i = 0; i < catSlugs.size(); i++) {
-                        sql.append(i == 0 ? "?" : ", ?");
-                        params.add(catSlugs.get(i));
-                    }
-                    sql.append(")");
-                }
-                sql.append(") ");
-            }
-        }
-
-        if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) > 0) {
-            sql.append(" AND (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) >= ? ");
-            params.add(minPrice);
-        }
-
-        if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) > 0) {
-            sql.append(" AND (SELECT MIN(price) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) <= ? ");
-            params.add(maxPrice);
-        }
-
-        if (origins != null && !origins.isEmpty()) {
-            sql.append(" AND p.origin IN (");
-            for (int i = 0; i < origins.size(); i++) {
-                sql.append(i == 0 ? "?" : ", ?");
-                params.add(origins.get(i).trim());
-            }
-            sql.append(") ");
-        }
-
-        if (inStockOnly != null && inStockOnly) {
-            sql.append(" AND (SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) > 0 ");
-        }
+        return getFilteredCatalogProducts(keyword, categoryParams, minPrice, maxPrice, minRating, origins, inStockOnly, null, 0, 0).size();
     }
 
     private ProductCardDTO mapProductFromCatalogResultSet(ResultSet rs) throws SQLException {
