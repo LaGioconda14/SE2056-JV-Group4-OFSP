@@ -13,7 +13,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
         <!-- Tailwind CSS (Non-blocking) -->
-        <script src="https://cdn.tailwindcss.com" defer></script>
+        <script src="https://cdn.tailwindcss.com"></script>
         <!-- FontAwesome Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <!-- Google Fonts Inter & Plus Jakarta Sans -->

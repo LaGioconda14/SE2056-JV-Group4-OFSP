@@ -1,17 +1,17 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<c:set var="shopHotline" value="${not empty shop.phone ? shop.phone : '1900 8892'}" />
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${not empty shop.shopName ? shop.shopName : "Gian hàng nông sản"} - Gốc Vườn</title>
+    <title><c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng nông sản'}"/> - Gốc Vườn</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
-    <!-- Tailwind CSS CDN (Non-blocking) -->
-    <script src="https://cdn.tailwindcss.com" defer></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- FontAwesome 6 -->
@@ -119,7 +119,7 @@
                         <span id="followText">Theo Dõi Shop</span>
                     </button>
 
-                    <button type="button" onclick="if(window.showToast){ showToast('Hotline hỗ trợ trực tiếp của nhà vườn: ${not empty shop.phone ? shop.phone : \"1900 8892\"}', 'info'); } else { alert('Hotline hỗ trợ trực tiếp của nhà vườn: ${not empty shop.phone ? shop.phone : \"1900 8892\"}'); }" 
+                    <button type="button" onclick="contactShop()" 
                             class="flex-1 lg:flex-none px-6 py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md hover:shadow-lg cursor-pointer">
                         <i class="fa-solid fa-phone text-base"></i>
                         <span>Liên Hệ Nhà Vườn</span>
@@ -359,6 +359,14 @@
                 btn.classList.add('bg-white', 'text-gray-800');
                 icon.className = 'fa-regular fa-bookmark text-sm';
                 text.textContent = 'Theo Dõi Shop';
+            }
+        function contactShop() {
+            const hotline = '<c:out value="${shopHotline}"/>';
+            const msg = 'Hotline hỗ trợ trực tiếp của nhà vườn: ' + hotline;
+            if (window.showToast) {
+                showToast(msg, 'info');
+            } else {
+                alert(msg);
             }
         }
     </script>

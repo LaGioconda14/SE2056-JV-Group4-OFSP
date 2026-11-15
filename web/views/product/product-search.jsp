@@ -17,7 +17,7 @@
         <!-- Custom Search CSS -->
         <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/search-products.css">
         <!-- Tailwind CSS (Non-blocking) -->
-        <script src="https://cdn.tailwindcss.com" defer></script>
+        <script src="https://cdn.tailwindcss.com"></script>
         <!-- Custom Search JS (Tailwind config) -->
         <script src="${pageContext.request.contextPath}/assets/js/search-products.js" defer></script>
     </head>
