@@ -1,14 +1,19 @@
 package controller.shop;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.servlet.http.Part;
 import model.entity.product.Category;
 import model.dto.product.ProductDetailDTO;
 import model.entity.user.User;
@@ -16,6 +21,11 @@ import service.IProductService;
 import service.impl.ProductServiceImpl;
 
 @WebServlet(name="ShopEditProductServlet", urlPatterns={"/shop/product/edit"})
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
+    maxFileSize = 1024 * 1024 * 10,       // 10MB tối đa cho 1 file ảnh
+    maxRequestSize = 1024 * 1024 * 50     // 50MB tổng request
+)
 public class ShopEditProductServlet extends HttpServlet {
     private final IProductService productService = new ProductServiceImpl();
 
@@ -117,21 +127,52 @@ public class ShopEditProductServlet extends HttpServlet {
             String certification = request.getParameter("certification");
             String description = request.getParameter("description");
             String isActiveStr = request.getParameter("isActive");
-            String coverImageUrl = request.getParameter("coverImageUrl");
 
-            // Lấy thêm 4 ảnh phụ từ form
-            String detailImage1 = request.getParameter("detailImage1");
-            String detailImage2 = request.getParameter("detailImage2");
-            String detailImage3 = request.getParameter("detailImage3");
-            String detailImage4 = request.getParameter("detailImage4");
+            // --- 1. XỬ LÝ ẢNH CHÍNH (Ô 0): File upload ưu tiên trước, nếu không lấy URL text hoặc giữ ảnh cũ ---
+            String coverImageUrl = "";
+            Part filePart0 = request.getPart("imageFile0");
+            if (filePart0 != null && filePart0.getSize() > 0) {
+                coverImageUrl = saveUploadedFile(filePart0, request);
+            } else {
+                String urlInput0 = request.getParameter("coverImageUrl");
+                if (urlInput0 != null && !urlInput0.trim().isEmpty() && !urlInput0.startsWith("Đã chọn:")) {
+                    coverImageUrl = urlInput0.trim();
+                }
+            }
+
+            // Nếu người dùng không upload ảnh mới và cũng không đổi URL, giữ nguyên ảnh cũ từ CSDL
+            if (coverImageUrl.isEmpty()) {
+                ProductDetailDTO currentProd = productService.getShopProductForEdit(productId, shopId);
+                if (currentProd != null && currentProd.getImage() != null) {
+                    coverImageUrl = currentProd.getImage();
+                }
+            }
+
+            // --- 2. XỬ LÝ 4 ẢNH PHỤ (Ô 1 đến 4): File upload hoặc URL tương ứng ---
+            List<String> detailImages = new ArrayList<>();
+            for (int i = 1; i <= 4; i++) {
+                String imgPath = "";
+                Part filePart = request.getPart("imageFile" + i);
+                if (filePart != null && filePart.getSize() > 0) {
+                    imgPath = saveUploadedFile(filePart, request);
+                } else {
+                    String urlInput = request.getParameter("detailImage" + i);
+                    if (urlInput != null && !urlInput.trim().isEmpty() && !urlInput.startsWith("Đã chọn:")) {
+                        imgPath = urlInput.trim();
+                    }
+                }
+                if (!imgPath.isEmpty()) {
+                    detailImages.add(imgPath);
+                }
+            }
 
             int categoryId = (categoryIdStr != null && !categoryIdStr.trim().isEmpty()) ? Integer.parseInt(categoryIdStr.trim()) : 0;
             boolean isActive = "true".equalsIgnoreCase(isActiveStr) || "on".equalsIgnoreCase(isActiveStr);
 
-            // Gọi Service cập nhật thông tin chính
+            // Gọi Service cập nhật thông tin chính và toàn bộ ảnh
             boolean success = productService.updateFullProduct(
                 shopId, productId, name, categoryId, origin, storageTemp,
-                certification, description, isActive, coverImageUrl
+                certification, description, isActive, coverImageUrl, detailImages
             );
 
             if (success) {
@@ -140,7 +181,12 @@ public class ShopEditProductServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/shop/products");
             } else {
                 session.setAttribute("errorMessage", "Cập nhật thông tin nông sản thất bại. Vui lòng kiểm tra lại dữ liệu!");
-                reloadFormOnFailure(request, response, productId, shopId, detailImage1, detailImage2, detailImage3, detailImage4);
+                reloadFormOnFailure(request, response, productId, shopId,
+                    request.getParameter("detailImage1"),
+                    request.getParameter("detailImage2"),
+                    request.getParameter("detailImage3"),
+                    request.getParameter("detailImage4")
+                );
             }
 
         } catch (Exception e) {
@@ -153,6 +199,42 @@ public class ShopEditProductServlet extends HttpServlet {
                 request.getParameter("detailImage4")
             );
         }
+    }
+
+    // Hàm phụ trợ lưu file ảnh vào thư mục assets/images/products của server
+    private String saveUploadedFile(Part filePart, HttpServletRequest request) throws IOException {
+        String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+        String ext = ".jpg";
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            ext = fileName.substring(dotIndex).toLowerCase();
+        }
+        String uniqueFileName = "prod_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + ext;
+
+        String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/products");
+        File uploadDir = new File(uploadDirRealPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        String savedFilePath = uploadDirRealPath + File.separator + uniqueFileName;
+        filePart.write(savedFilePath);
+
+        // Đồng bộ sang thư mục source web để khi Clean & Build không bị xóa mất ảnh
+        try {
+            String devDirRealPath = uploadDirRealPath.replace(File.separator + "build" + File.separator + "web", File.separator + "web");
+            File devDir = new File(devDirRealPath);
+            if (devDir.exists() || devDir.mkdirs()) {
+                java.nio.file.Files.copy(
+                    Paths.get(savedFilePath),
+                    Paths.get(devDirRealPath, uniqueFileName),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                );
+            }
+        } catch (Exception ignored) {
+        }
+
+        return request.getContextPath() + "/assets/images/products/" + uniqueFileName;
     }
 
     private void loadDropdownData(HttpServletRequest request) {

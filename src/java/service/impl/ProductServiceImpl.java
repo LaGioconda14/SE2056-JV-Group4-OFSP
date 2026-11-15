@@ -295,16 +295,20 @@ public class ProductServiceImpl implements IProductService {
     public boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
                                      String storageTemp, String certification, String description,
                                      boolean isActive, String coverImageUrl) {
-        
-        // 1. Validate dữ liệu đầu vào cơ bản
+        return updateFullProduct(shopId, productId, name, categoryId, origin, storageTemp, certification, description, isActive, coverImageUrl, null);
+    }
+
+    @Override
+    public boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
+                                     String storageTemp, String certification, String description,
+                                     boolean isActive, String coverImageUrl, List<String> detailImageUrls) {
         if (productId <= 0 || shopId <= 0) {
             return false;
         }
         if (name == null || name.trim().isEmpty()) {
             return false;
         }
-        // 2. Gọi DAO thực thi sau khi đã qua cửa kiểm duyệt
-        return productDAO.updateFullProduct(shopId, productId, name, categoryId, origin, storageTemp, certification, description, isActive, coverImageUrl);
+        return productDAO.updateFullProduct(shopId, productId, name, categoryId, origin, storageTemp, certification, description, isActive, coverImageUrl, detailImageUrls);
     }
 
     @Override

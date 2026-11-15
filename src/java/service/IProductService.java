@@ -52,6 +52,9 @@ public interface IProductService {
     boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
                               String storageTemp, String certification, String description,
                               boolean isActive, String coverImageUrl);
+    boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
+                              String storageTemp, String certification, String description,
+                              boolean isActive, String coverImageUrl, List<String> detailImageUrls);
     
     /**
      * Lấy danh sách sản phẩm nổi bật hiển thị trên trang chủ.

@@ -42,9 +42,7 @@ public class SearchServlet extends HttpServlet {
 
         // 1. Keyword tìm kiếm
         String query = request.getParameter("query");
-        if (query == null || query.trim().isEmpty()) {
-            query = request.getParameter("keyword");
-        }
+        
         if (query != null) {
             query = query.trim();
         }

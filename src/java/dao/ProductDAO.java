@@ -2657,11 +2657,18 @@ public class ProductDAO extends DBContext {
 
     public boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
             String storageTemp, String certification, String description, boolean isActive, String coverImageUrl) {
+        return updateFullProduct(shopId, productId, name, categoryId, origin, storageTemp, certification, description, isActive, coverImageUrl, null);
+    }
+
+    public boolean updateFullProduct(long shopId, long productId, String name, int categoryId, String origin,
+            String storageTemp, String certification, String description, boolean isActive, String coverImageUrl, List<String> detailImageUrls) {
         String sqlProduct = "UPDATE products SET name = ?, category_id = ?, origin = ?, storage_temp = ?, "
                 + "certification = ?, description = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP "
                 + "WHERE product_id = ? AND shop_id = ?";
         String sqlUpdateImage = "UPDATE product_images SET image_url = ? WHERE product_id = ? AND is_thumbnail = 1";
         String sqlInsertImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) VALUES (?, ?, 1, 1, CURRENT_TIMESTAMP)";
+        String sqlDeleteDetailImages = "DELETE FROM product_images WHERE product_id = ? AND is_thumbnail = 0";
+        String sqlInsertDetailImage = "INSERT INTO product_images (product_id, image_url, is_thumbnail, display_order, created_at) VALUES (?, ?, 0, ?, CURRENT_TIMESTAMP)";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -2696,6 +2703,23 @@ public class ProductDAO extends DBContext {
                             ps.setLong(1, productId);
                             ps.setString(2, coverImageUrl.trim());
                             ps.executeUpdate();
+                        }
+                    }
+                }
+                if (detailImageUrls != null) {
+                    try (PreparedStatement ps = conn.prepareStatement(sqlDeleteDetailImages)) {
+                        ps.setLong(1, productId);
+                        ps.executeUpdate();
+                    }
+                    int order = 2;
+                    for (String dImg : detailImageUrls) {
+                        if (dImg != null && !dImg.trim().isEmpty()) {
+                            try (PreparedStatement ps = conn.prepareStatement(sqlInsertDetailImage)) {
+                                ps.setLong(1, productId);
+                                ps.setString(2, dImg.trim());
+                                ps.setInt(3, order++);
+                                ps.executeUpdate();
+                            }
                         }
                     }
                 }

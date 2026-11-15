@@ -4,14 +4,18 @@
  */
 package controller.shop;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,23 +29,19 @@ import service.impl.ProductServiceImpl;
  * @author ADMIN
  */
 @WebServlet(name = "ShopAddProductServlet", urlPatterns = {"/shop/product/add"})
+@MultipartConfig(
+    fileSizeThreshold = 1024 * 1024 * 2,  // 2MB
+    maxFileSize = 1024 * 1024 * 10,       // 10MB tối đa cho 1 file ảnh
+    maxRequestSize = 1024 * 1024 * 50     // 50MB tổng request
+)
 public class ShopAddProductServlet extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     private final IProductService productService = new ProductServiceImpl();
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
@@ -54,15 +54,6 @@ public class ShopAddProductServlet extends HttpServlet {
         }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -77,16 +68,12 @@ public class ShopAddProductServlet extends HttpServlet {
             return;
         }
         try {
-            // Lấy danh mục quả đổ ra dropdown
             List<Category> categories = productService.getAllCategories();
             request.setAttribute("categories", categories);
-            // Lấy danh sách chứng nhận động từ database
             List<String> certifications = productService.getAllCertifications();
             request.setAttribute("certifications", certifications);
-            // 3. Lấy danh sách nhiệt độ bảo quản gợi ý từ DB
             List<String> storageTemps = productService.getAllStorageTemps();
             request.setAttribute("storageTemps", storageTemps);
-            //Lấy unit
             List<String> units = productService.getAllUnits();
             request.setAttribute("units", units);
         } catch (Exception e) {
@@ -96,14 +83,6 @@ public class ShopAddProductServlet extends HttpServlet {
         request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -133,26 +112,52 @@ public class ShopAddProductServlet extends HttpServlet {
             String variantName = request.getParameter("variantName");
             String unit = request.getParameter("unit");
 
-            BigDecimal price = new BigDecimal(request.getParameter("price"));
-            BigDecimal originalPrice = request.getParameter("originalPrice") != null && !request.getParameter("originalPrice").trim().isEmpty() 
-                    ? new BigDecimal(request.getParameter("originalPrice")) : null;
+            // AN TOÀN TUYỆT ĐỐI: Kiểm tra null/trống trước khi khởi tạo BigDecimal để tránh lỗi toCharArray()
+            String priceStr = request.getParameter("price");
+            BigDecimal price = (priceStr != null && !priceStr.trim().isEmpty()) 
+                    ? new BigDecimal(priceStr.trim()) : BigDecimal.ZERO;
+
+            String origPriceStr = request.getParameter("originalPrice");
+            BigDecimal originalPrice = (origPriceStr != null && !origPriceStr.trim().isEmpty()) 
+                    ? new BigDecimal(origPriceStr.trim()) : null;
             
             int stockQuantity = request.getParameter("stockQuantity") != null && !request.getParameter("stockQuantity").isEmpty() 
                     ? Integer.parseInt(request.getParameter("stockQuantity")) : 0;
             
             boolean isActive = request.getParameter("isActive") != null;
 
-            // Lấy danh sách 5 hình ảnh
-            String coverImageUrl = request.getParameter("coverImageUrl");
-            List<String> detailImages = new ArrayList<>();
-            for (int i = 1; i <= 4; i++) {
-                String imgUrl = request.getParameter("detailImage" + i);
-                if (imgUrl != null && !imgUrl.trim().isEmpty()) {
-                    detailImages.add(imgUrl.trim());
+            // --- XỬ LÝ ẢNH CHÍNH (Ô 0): Kiểm tra file upload trước, nếu không có lấy URL text ---
+            String coverImageUrl = "";
+            Part filePart0 = request.getPart("imageFile0");
+            if (filePart0 != null && filePart0.getSize() > 0) {
+                coverImageUrl = saveUploadedFile(filePart0, request);
+            } else {
+                String urlInput0 = request.getParameter("coverImageUrl");
+                if (urlInput0 != null && !urlInput0.trim().isEmpty() && !urlInput0.startsWith("Đã chọn:")) {
+                    coverImageUrl = urlInput0.trim();
                 }
             }
 
-            // Gọi Service thực thi (Service đã đảm nhận toàn bộ việc Validate)
+            // --- XỬ LÝ 4 ẢNH PHỤ (Ô 1 đến 4): Kiểm tra file upload hoặc URL tương ứng ---
+            List<String> detailImages = new ArrayList<>();
+            for (int i = 1; i <= 4; i++) {
+                String imgPath = "";
+                Part filePart = request.getPart("imageFile" + i);
+                if (filePart != null && filePart.getSize() > 0) {
+                    imgPath = saveUploadedFile(filePart, request);
+                } else {
+                    String urlInput = request.getParameter("detailImage" + i);
+                    if (urlInput != null && !urlInput.trim().isEmpty() && !urlInput.startsWith("Đã chọn:")) {
+                        imgPath = urlInput.trim();
+                    }
+                }
+                
+                if (!imgPath.isEmpty()) {
+                    detailImages.add(imgPath);
+                }
+            }
+
+            // Gọi Service thực thi
             long newProductId = productService.insertFullProduct(
                     shopId, name, categoryId, origin, storageTemp, certification, description,
                     sku, variantName, unit, price, originalPrice, stockQuantity, 10,
@@ -169,7 +174,6 @@ public class ShopAddProductServlet extends HttpServlet {
             }
 
         } catch (IllegalArgumentException e) {
-            // Bắt lỗi do Service validate ném ra (VD: trùng SKU, giá <= 0, trống tên...)
             request.setAttribute("errorMessage", e.getMessage());
             reloadFormData(request);
             request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
@@ -180,7 +184,43 @@ public class ShopAddProductServlet extends HttpServlet {
             request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
         }
     }
-    // Hàm phụ trợ nạp lại dữ liệu cho form khi forward báo lỗi
+
+    // Hàm phụ trợ lưu file ảnh vào thư mục assets/images/products của server
+    private String saveUploadedFile(Part filePart, HttpServletRequest request) throws IOException {
+        String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+        String ext = ".jpg";
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex > 0) {
+            ext = fileName.substring(dotIndex).toLowerCase();
+        }
+        String uniqueFileName = "prod_" + System.currentTimeMillis() + "_" + java.util.UUID.randomUUID().toString().substring(0, 8) + ext;
+
+        String uploadDirRealPath = request.getServletContext().getRealPath("/assets/images/products");
+        File uploadDir = new File(uploadDirRealPath);
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+
+        String savedFilePath = uploadDirRealPath + File.separator + uniqueFileName;
+        filePart.write(savedFilePath);
+
+        // Đồng bộ sang thư mục source (web/assets/images/products) để khi Clean & Build không bị mất ảnh
+        try {
+            String devDirRealPath = uploadDirRealPath.replace(File.separator + "build" + File.separator + "web", File.separator + "web");
+            File devDir = new File(devDirRealPath);
+            if (devDir.exists() || devDir.mkdirs()) {
+                java.nio.file.Files.copy(
+                    Paths.get(savedFilePath),
+                    Paths.get(devDirRealPath, uniqueFileName),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING
+                );
+            }
+        } catch (Exception ignored) {
+        }
+
+        return request.getContextPath() + "/assets/images/products/" + uniqueFileName;
+    }
+
     private void reloadFormData(HttpServletRequest request) {
         try {
             request.setAttribute("categories", productService.getAllCategories());
@@ -190,14 +230,8 @@ public class ShopAddProductServlet extends HttpServlet {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
         return "Short description";
-    }// </editor-fold>
-
+    }
 }
