@@ -16,6 +16,8 @@ public class SubOrder implements Serializable {
     private String subOrderCode;
     private long orderId;
     private long shopId;
+    private java.time.LocalDate deliveryDate;
+    private Integer deliverySlotId;
     private String deliverySlot;
     private String note;
     private BigDecimal shopSubtotal = BigDecimal.ZERO;
@@ -64,6 +66,22 @@ public class SubOrder implements Serializable {
 
     public void setShopId(long shopId) {
         this.shopId = shopId;
+    }
+
+    public java.time.LocalDate getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(java.time.LocalDate deliveryDate) {
+        this.deliveryDate = deliveryDate;
+    }
+
+    public Integer getDeliverySlotId() {
+        return deliverySlotId;
+    }
+
+    public void setDeliverySlotId(Integer deliverySlotId) {
+        this.deliverySlotId = deliverySlotId;
     }
 
     public String getDeliverySlot() {

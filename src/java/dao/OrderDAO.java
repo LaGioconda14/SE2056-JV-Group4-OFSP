@@ -47,6 +47,7 @@ public class OrderDAO extends DBContext {
     private final CouponDAO couponDAO = new CouponDAO();
     private final PromotionDAO promotionDAO = new PromotionDAO();
     private static volatile Boolean HAS_ORDER_ITEM_PROMOTION_COLS = null;
+    private static final java.time.format.DateTimeFormatter DATE_FMT = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /**
      * @deprecated Cột note hiện đã là cột chuẩn trong dbo.sub_orders.
@@ -399,8 +400,9 @@ public class OrderDAO extends DBContext {
     private long createOrderInternal(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress, boolean consumeCart) throws Exception {
         String insertOrderSql = "INSERT INTO orders (order_code, customer_id, coupon_id, total_goods_amount, "
-                + "total_shipping_fee, platform_discount, final_amount, payment_status, payment_method, order_status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "total_shipping_fee, platform_discount, final_amount, payment_status, payment_method, order_status, "
+                + "delivery_date, delivery_slot_id) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String insertAddressSql = "INSERT INTO order_shipping_addresses "
                 + "(order_id, recipient_name, recipient_phone, street_address, ward, district, city) "
@@ -434,9 +436,9 @@ public class OrderDAO extends DBContext {
         }
         boolean hasPromoCols = checkHasOrderItemPromotionCols(conn);
         String insertSubOrderSql = "INSERT INTO sub_orders "
-                + "(sub_order_code, order_id, shop_id, delivery_slot, note, shop_subtotal, shop_shipping_fee, "
+                + "(sub_order_code, order_id, shop_id, delivery_date, delivery_slot_id, note, shop_subtotal, shop_shipping_fee, "
                 + "shop_discount, shop_total, commission_rate, commission_amount, status) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String insertOrderItemSql = hasPromoCols
                 ? "INSERT INTO order_items "
                 + "(sub_order_id, variant_id, product_name_snapshot, variant_name_snapshot, "
@@ -525,6 +527,16 @@ public class OrderDAO extends DBContext {
                         ? paymentMethod : PaymentMethod.COD.name());
                 ps.setString(10, order.getOrderStatus() != null
                         ? order.getOrderStatus() : OrderStatus.PROCESSING.name());
+                if (order.getDeliveryDate() != null) {
+                    ps.setDate(11, java.sql.Date.valueOf(order.getDeliveryDate()));
+                } else {
+                    ps.setDate(11, java.sql.Date.valueOf(java.time.LocalDate.now()));
+                }
+                if (order.getDeliverySlotId() != null) {
+                    ps.setInt(12, order.getDeliverySlotId());
+                } else {
+                    ps.setInt(12, 1);
+                }
 
                 ps.executeUpdate();
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -562,7 +574,16 @@ public class OrderDAO extends DBContext {
                     ps.setString(pIdx++, subCode);
                     ps.setLong(pIdx++, orderId);
                     ps.setLong(pIdx++, sub.getShopId());
-                    ps.setString(pIdx++, sub.getDeliverySlot());
+                    if (sub.getDeliveryDate() != null) {
+                        ps.setDate(pIdx++, java.sql.Date.valueOf(sub.getDeliveryDate()));
+                    } else {
+                        ps.setDate(pIdx++, java.sql.Date.valueOf(java.time.LocalDate.now()));
+                    }
+                    if (sub.getDeliverySlotId() != null) {
+                        ps.setInt(pIdx++, sub.getDeliverySlotId());
+                    } else {
+                        ps.setInt(pIdx++, 1);
+                    }
                     ps.setString(pIdx++, sub.getNote());
                     ps.setBigDecimal(pIdx++, sub.getShopSubtotal());
                     ps.setBigDecimal(pIdx++, sub.getShopShippingFee());
@@ -869,11 +890,12 @@ public class OrderDAO extends DBContext {
         if (conn == null) return null;
 
         String sqlSub = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, s.shop_name, "
-                + "so.delivery_slot, so.note, "
+                + "so.delivery_date, so.delivery_slot_id, dts.display_label as slot_display, so.note, "
                 + "so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, "
                 + "so.shop_total, so.status, so.created_at "
                 + "FROM sub_orders so "
                 + "INNER JOIN shops s ON so.shop_id = s.shop_id "
+                + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
                 + "WHERE so.order_id = ?";
 
         String sqlItems = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
@@ -931,7 +953,15 @@ public class OrderDAO extends DBContext {
                             sub.setOrderId(orderId);
                             sub.setShopId(rsSub.getLong("shop_id"));
                             sub.setShopName(rsSub.getString("shop_name"));
-                            sub.setDeliverySlot(rsSub.getString("delivery_slot"));
+                            java.sql.Date dDate = rsSub.getDate("delivery_date");
+                            if (dDate != null) sub.setDeliveryDate(dDate.toLocalDate());
+                            int sId = rsSub.getInt("delivery_slot_id");
+                            if (!rsSub.wasNull()) sub.setDeliverySlotId(sId);
+                            String slotDisplay = rsSub.getString("slot_display");
+                            String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+                            String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                                    + (dateStr != null ? " (" + dateStr + ")" : "");
+                            sub.setDeliverySlot(finalSlotLabel);
                             sub.setNote(rsSub.getString("note"));
                             sub.setShopSubtotal(rsSub.getBigDecimal("shop_subtotal"));
                             sub.setShopShippingFee(rsSub.getBigDecimal("shop_shipping_fee"));
@@ -989,7 +1019,7 @@ public class OrderDAO extends DBContext {
         }
 
         String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, o.order_code, o.customer_id, "
-                   + "       so.shop_id, sh.shop_name, sh.logo_url, so.delivery_slot, so.note, "
+                   + "       so.shop_id, sh.shop_name, sh.logo_url, so.delivery_date, so.delivery_slot_id, dts.display_label as slot_display, so.note, "
                    + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                    + "       so.status AS sub_order_status, so.cancel_reason, so.cancelled_by, so.cancelled_at, "
                    + "       COALESCE(so.created_at, o.created_at) AS created_at, so.updated_at, "
@@ -1000,6 +1030,7 @@ public class OrderDAO extends DBContext {
                    + "FROM sub_orders so "
                    + "JOIN orders o ON so.order_id = o.order_id "
                    + "JOIN shops sh ON so.shop_id = sh.shop_id "
+                   + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
                    + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
                    + "LEFT JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
                    + "LEFT JOIN users drv ON d.driver_id = drv.user_id "
@@ -1024,7 +1055,15 @@ public class OrderDAO extends DBContext {
                     so.setShopId(rs.getLong("shop_id"));
                     so.setShopName(rs.getString("shop_name"));
                     so.setShopLogoUrl(rs.getString("logo_url"));
-                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    java.sql.Date dDate = rs.getDate("delivery_date");
+                    if (dDate != null) so.setDeliveryDate(dDate.toLocalDate());
+                    int sId = rs.getInt("delivery_slot_id");
+                    if (!rs.wasNull()) so.setDeliverySlotId(sId);
+                    String slotDisplay = rs.getString("slot_display");
+                    String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+                    String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                            + (dateStr != null ? " (" + dateStr + ")" : "");
+                    so.setDeliverySlot(finalSlotLabel);
                     so.setNote(rs.getString("note"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));

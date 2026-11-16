@@ -570,20 +570,27 @@ public class OrderServiceImpl implements IOrderService {
         String formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
         // Chuẩn hóa khung giờ giao hàng
+        int slotId = 1;
         String slotText = "08:00 - 10:00";
         if (deliverySlot != null && !deliverySlot.trim().isEmpty()) {
             String trimmed = deliverySlot.trim();
-            if ("MORNING".equalsIgnoreCase(trimmed) || "M1".equalsIgnoreCase(trimmed)) {
+            if ("MORNING".equalsIgnoreCase(trimmed) || "M1".equalsIgnoreCase(trimmed) || "08:00 - 10:00".equalsIgnoreCase(trimmed)) {
+                slotId = 1;
                 slotText = "08:00 - 10:00";
-            } else if ("M2".equalsIgnoreCase(trimmed)) {
+            } else if ("M2".equalsIgnoreCase(trimmed) || "10:00 - 12:00".equalsIgnoreCase(trimmed)) {
+                slotId = 2;
                 slotText = "10:00 - 12:00";
-            } else if ("AFTERNOON".equalsIgnoreCase(trimmed) || "A1".equalsIgnoreCase(trimmed)) {
+            } else if ("AFTERNOON".equalsIgnoreCase(trimmed) || "A1".equalsIgnoreCase(trimmed) || "13:00 - 15:00".equalsIgnoreCase(trimmed)) {
+                slotId = 3;
                 slotText = "13:00 - 15:00";
-            } else if ("A2".equalsIgnoreCase(trimmed)) {
+            } else if ("A2".equalsIgnoreCase(trimmed) || "15:00 - 17:00".equalsIgnoreCase(trimmed)) {
+                slotId = 4;
                 slotText = "15:00 - 17:00";
-            } else if ("EVENING".equalsIgnoreCase(trimmed) || "E1".equalsIgnoreCase(trimmed)) {
+            } else if ("EVENING".equalsIgnoreCase(trimmed) || "E1".equalsIgnoreCase(trimmed) || "17:00 - 19:00".equalsIgnoreCase(trimmed)) {
+                slotId = 5;
                 slotText = "17:00 - 19:00";
-            } else if ("E2".equalsIgnoreCase(trimmed)) {
+            } else if ("E2".equalsIgnoreCase(trimmed) || "19:00 - 21:00".equalsIgnoreCase(trimmed)) {
+                slotId = 6;
                 slotText = "19:00 - 21:00";
             } else {
                 slotText = trimmed;
@@ -591,9 +598,13 @@ public class OrderServiceImpl implements IOrderService {
         }
 
         String slotLabel = slotText + " (" + formattedDate + ")";
+        order.setDeliveryDate(selectedDate);
+        order.setDeliverySlotId(slotId);
 
         for (SubOrderDTO sub : order.getSubOrders()) {
             String note = shopNotes != null ? shopNotes.get(sub.getShopId()) : null;
+            sub.setDeliveryDate(selectedDate);
+            sub.setDeliverySlotId(slotId);
             sub.setDeliverySlot(slotLabel);
             if (note != null && !note.trim().isEmpty()) {
                 sub.setNote(note.trim());

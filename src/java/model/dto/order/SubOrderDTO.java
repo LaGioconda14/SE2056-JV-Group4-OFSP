@@ -23,6 +23,7 @@ public class SubOrderDTO implements Serializable {
     private long orderId;
     private long shopId;
     private LocalDate deliveryDate;
+    private Integer deliverySlotId;
     private String deliverySlot;
     private String note;
     private BigDecimal shopSubtotal = BigDecimal.ZERO;
@@ -89,6 +90,14 @@ public class SubOrderDTO implements Serializable {
 
     public void setDeliveryDate(LocalDate deliveryDate) {
         this.deliveryDate = deliveryDate;
+    }
+
+    public Integer getDeliverySlotId() {
+        return deliverySlotId;
+    }
+
+    public void setDeliverySlotId(Integer deliverySlotId) {
+        this.deliverySlotId = deliverySlotId;
     }
 
     public String getDeliverySlot() {

@@ -734,13 +734,14 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
             // 4. Fetch Vendor Orders (if Shop Owner)
             List<Map<String, Object>> vendorOrders = new ArrayList<>();
             if (shopMap != null) {
-                String vendorOrderSql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.delivery_slot, so.note, "
+                String vendorOrderSql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.delivery_date, so.delivery_slot_id, dts.display_label as slot_display, so.note, "
                                       + "       so.shop_total, so.commission_rate, so.commission_amount, so.status, so.created_at, "
                                       + "       u.full_name as buyer_name, u.phone as buyer_phone "
                                       + "FROM sub_orders so "
                                       + "JOIN shops s ON so.shop_id = s.shop_id "
                                       + "JOIN orders o ON so.order_id = o.order_id "
                                       + "JOIN users u ON o.customer_id = u.user_id "
+                                      + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
                                       + "WHERE s.owner_id = ? "
                                       + "ORDER BY so.created_at DESC";
 
@@ -752,7 +753,12 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                             vo.put("subOrderId", rs.getLong("sub_order_id"));
                             vo.put("subOrderCode", rs.getString("sub_order_code"));
                             vo.put("orderId", rs.getLong("order_id"));
-                            vo.put("deliverySlot", rs.getString("delivery_slot"));
+                            java.sql.Date dDate = rs.getDate("delivery_date");
+                            String slotDisplay = rs.getString("slot_display");
+                            String dateStr = (dDate != null) ? DATE_FORMAT.format(dDate) : null;
+                            String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                                    + (dateStr != null ? " (" + dateStr + ")" : "");
+                            vo.put("deliverySlot", finalSlotLabel);
                             vo.put("note", rs.getString("note"));
                             double shopTotal = rs.getDouble("shop_total");
                             vo.put("shopTotalFormatted", CURRENCY_FORMAT.format(shopTotal));
@@ -1829,7 +1835,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                    + "       d.status, d.resolution_decision, d.resolution_note, d.resolved_by, d.resolved_at, d.created_at, "
                    + "       u.user_id as customer_id, u.full_name as customer_name, u.phone as customer_phone, u.email as customer_email, "
                    + "       s.shop_id, s.shop_name, s.rating as shop_rating, s.phone as shop_phone, s.address as shop_address, "
-                   + "       so.sub_order_id, so.sub_order_code, so.shop_total, so.status as sub_order_status, so.delivery_slot, "
+                   + "       so.sub_order_id, so.sub_order_code, so.shop_total, so.status as sub_order_status, "
                    + "       o.order_id, o.order_code, "
                    + "       del.tracking_number, del.delivery_status, del.proof_image_url as driver_proof_image, "
                    + "       drv.full_name as driver_name, drv.phone as driver_phone "
@@ -2485,12 +2491,13 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
             }
 
             // 2. Fetch Sub-Orders for this Master Order
-            String subSql = "SELECT so.sub_order_id, so.sub_order_code, so.shop_id, so.delivery_slot, so.note, "
+            String subSql = "SELECT so.sub_order_id, so.sub_order_code, so.shop_id, so.delivery_date, so.delivery_slot_id, dts.display_label as slot_display, so.note, "
                           + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                           + "       so.commission_rate, so.commission_amount, so.status, so.created_at, "
                           + "       s.shop_name, s.phone as shop_phone, s.address as shop_address, s.province as shop_province "
                           + "FROM sub_orders so "
                           + "JOIN shops s ON so.shop_id = s.shop_id "
+                          + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
                           + "WHERE so.order_id = ? "
                           + "ORDER BY so.sub_order_id ASC";
 
@@ -2508,8 +2515,12 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                         sub.put("shopPhone", rsSub.getString("shop_phone"));
                         sub.put("shopAddress", rsSub.getString("shop_address"));
                         sub.put("shopProvince", rsSub.getString("shop_province"));
-                        String slot = rsSub.getString("delivery_slot");
-                        sub.put("deliverySlot", slot != null ? slot : "Tiêu chuẩn");
+                        java.sql.Date dDate = rsSub.getDate("delivery_date");
+                        String slotDisplay = rsSub.getString("slot_display");
+                        String dateStr = (dDate != null) ? DATE_FORMAT.format(dDate) : null;
+                        String finalSlotLabel = (slotDisplay != null ? slotDisplay : "Tiêu chuẩn")
+                                + (dateStr != null ? " (" + dateStr + ")" : "");
+                        sub.put("deliverySlot", finalSlotLabel);
                         sub.put("note", rsSub.getString("note"));
 
                         sub.put("subtotalFormatted", CURRENCY_FORMAT.format(rsSub.getDouble("shop_subtotal")));
@@ -2687,7 +2698,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT del.delivery_id, del.sub_order_id, del.driver_id, del.tracking_number, ")
            .append("       del.delivery_status, del.proof_image_url, del.failure_reason, del.assigned_at, del.delivered_at, ")
-           .append("       so.sub_order_code, so.shop_total, so.delivery_slot, so.note, ")
+           .append("       so.sub_order_code, so.shop_total, so.delivery_date, so.delivery_slot_id, dts.display_label as slot_display, so.note, ")
            .append("       o.order_id, o.order_code, ")
            .append("       s.shop_id, s.shop_name, s.phone as shop_phone, s.province as shop_province, ")
            .append("       uCust.full_name as customer_name, uCust.phone as customer_phone, ")
@@ -2698,6 +2709,7 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
            .append("JOIN orders o ON so.order_id = o.order_id ")
            .append("JOIN shops s ON so.shop_id = s.shop_id ")
            .append("JOIN users uCust ON o.customer_id = uCust.user_id ")
+           .append("LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id ")
            .append("LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id ")
            .append("LEFT JOIN users uDrv ON del.driver_id = uDrv.user_id ");
 
@@ -2743,8 +2755,12 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
                     item.put("orderCode", rs.getString("order_code"));
                     item.put("trackingNumber", rs.getString("tracking_number"));
                     item.put("shopTotalFormatted", CURRENCY_FORMAT.format(rs.getDouble("shop_total")));
-                    String slot = rs.getString("delivery_slot");
-                    item.put("deliverySlot", slot != null ? slot : "Tiêu chuẩn");
+                    java.sql.Date dDate = rs.getDate("delivery_date");
+                    String slotDisplay = rs.getString("slot_display");
+                    String dateStr = (dDate != null) ? DATE_FORMAT.format(dDate) : null;
+                    String finalSlotLabel = (slotDisplay != null ? slotDisplay : "Tiêu chuẩn")
+                            + (dateStr != null ? " (" + dateStr + ")" : "");
+                    item.put("deliverySlot", finalSlotLabel);
                     item.put("note", rs.getString("note"));
 
                     String dStatus = rs.getString("delivery_status");

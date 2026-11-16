@@ -22,6 +22,7 @@ import util.DBContext;
 public class DeliveryDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(DeliveryDAO.class.getName());
+    private static final java.time.format.DateTimeFormatter DATE_FMT = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /**
      * Get list of deliveries assigned to a driver with status filter and keyword search
@@ -34,7 +35,7 @@ public class DeliveryDAO extends DBContext {
         StringBuilder sql = new StringBuilder(
             "SELECT d.delivery_id, d.sub_order_id, d.driver_id, d.tracking_number, d.delivery_status, "
             + "       d.proof_image_url, d.failure_reason, d.assigned_at, d.delivered_at, "
-            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_slot, so.note, "
+            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_date, so.delivery_slot_id, dts.display_label AS slot_display, so.note, "
             + "       so.status AS sub_order_status, "
             + "       s.shop_name, s.phone AS shop_phone, s.address AS shop_address, s.province AS shop_province, "
             + "       o.payment_method, o.payment_status, "
@@ -42,6 +43,7 @@ public class DeliveryDAO extends DBContext {
             + "FROM deliveries d "
             + "JOIN sub_orders so ON d.sub_order_id = so.sub_order_id "
             + "JOIN orders o ON so.order_id = o.order_id "
+            + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
             + "LEFT JOIN shops s ON so.shop_id = s.shop_id "
             + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
             + "WHERE d.driver_id = ? "
@@ -100,7 +102,7 @@ public class DeliveryDAO extends DBContext {
 
         String sql = "SELECT d.delivery_id, d.sub_order_id, d.driver_id, d.tracking_number, d.delivery_status, "
             + "       d.proof_image_url, d.failure_reason, d.assigned_at, d.delivered_at, "
-            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_slot, so.note, "
+            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_date, so.delivery_slot_id, dts.display_label AS slot_display, so.note, "
             + "       so.status AS sub_order_status, "
             + "       s.shop_name, s.phone AS shop_phone, s.address AS shop_address, s.province AS shop_province, "
             + "       o.payment_method, o.payment_status, "
@@ -108,6 +110,7 @@ public class DeliveryDAO extends DBContext {
             + "FROM deliveries d "
             + "JOIN sub_orders so ON d.sub_order_id = so.sub_order_id "
             + "JOIN orders o ON so.order_id = o.order_id "
+            + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
             + "LEFT JOIN shops s ON so.shop_id = s.shop_id "
             + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
             + "WHERE d.delivery_id = ? AND d.driver_id = ?";
@@ -368,7 +371,13 @@ public class DeliveryDAO extends DBContext {
         del.setShopAddress(rs.getString("shop_address"));
         del.setShopProvince(rs.getString("shop_province"));
         del.setShopTotal(rs.getBigDecimal("shop_total"));
-        del.setDeliverySlot(rs.getString("delivery_slot"));
+
+        java.sql.Date dDate = rs.getDate("delivery_date");
+        String slotDisplay = rs.getString("slot_display");
+        String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+        String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                + (dateStr != null ? " (" + dateStr + ")" : "");
+        del.setDeliverySlot(finalSlotLabel);
         del.setDeliveryNote(rs.getString("note"));
         del.setNote(rs.getString("note"));
 

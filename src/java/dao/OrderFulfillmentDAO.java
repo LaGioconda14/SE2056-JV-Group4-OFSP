@@ -23,6 +23,7 @@ import util.DBContext;
 public class OrderFulfillmentDAO extends DBContext {
 
     private static final Logger LOGGER = Logger.getLogger(OrderFulfillmentDAO.class.getName());
+    private static final java.time.format.DateTimeFormatter DATE_FMT = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private final PromotionDAO promotionDAO = new PromotionDAO();
 
     public SubOrderDetailDTO getSubOrderDetails(String subOrderCode) {
@@ -31,7 +32,8 @@ public class OrderFulfillmentDAO extends DBContext {
             return null;
         }
 
-        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, so.note, "
+        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, "
+                + "       so.delivery_date, so.delivery_slot_id, dts.display_label AS slot_display, so.note, "
                 + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                 + "       so.status, so.cancel_reason, so.cancelled_at, so.created_at, so.updated_at, "
                 + "       s.shop_name, "
@@ -44,6 +46,7 @@ public class OrderFulfillmentDAO extends DBContext {
                 + "       dp.vehicle_plate AS driver_vehicle_plate, dp.vehicle_type AS driver_vehicle_type "
                 + "FROM sub_orders so "
                 + "JOIN orders o ON so.order_id = o.order_id "
+                + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
                 + "LEFT JOIN shops s ON so.shop_id = s.shop_id "
                 + "LEFT JOIN users u ON o.customer_id = u.user_id "
                 + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
@@ -63,7 +66,15 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setOrderCode(rs.getString("order_code"));
                     so.setShopId(rs.getLong("shop_id"));
                     so.setShopName(rs.getString("shop_name"));
-                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    java.sql.Date dDate = rs.getDate("delivery_date");
+                    if (dDate != null) so.setDeliveryDate(dDate.toLocalDate());
+                    int sId = rs.getInt("delivery_slot_id");
+                    if (!rs.wasNull()) so.setDeliverySlotId(sId);
+                    String slotDisplay = rs.getString("slot_display");
+                    String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+                    String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                            + (dateStr != null ? " (" + dateStr + ")" : "");
+                    so.setDeliverySlot(finalSlotLabel);
                     so.setNote(rs.getString("note"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
@@ -229,13 +240,15 @@ public class OrderFulfillmentDAO extends DBContext {
             return list;
 
         StringBuilder sql = new StringBuilder(
-                "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, so.delivery_slot, so.note, "
+                "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, "
+                        + "       so.delivery_date, so.delivery_slot_id, dts.display_label AS slot_display, so.note, "
                         + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
                         + "       so.status, so.cancel_reason, so.created_at, so.updated_at, "
                         + "       o.order_code, o.payment_status, o.payment_method, "
                         + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city "
                         + "FROM sub_orders so "
                         + "JOIN orders o ON so.order_id = o.order_id "
+                        + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
                         + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
                         + "WHERE 1=1 ");
         if (shopId > 0) {
@@ -273,7 +286,15 @@ public class OrderFulfillmentDAO extends DBContext {
                     so.setOrderId(rs.getLong("order_id"));
                     so.setOrderCode(rs.getString("order_code"));
                     so.setShopId(rs.getLong("shop_id"));
-                    so.setDeliverySlot(rs.getString("delivery_slot"));
+                    java.sql.Date dDate = rs.getDate("delivery_date");
+                    if (dDate != null) so.setDeliveryDate(dDate.toLocalDate());
+                    int sId = rs.getInt("delivery_slot_id");
+                    if (!rs.wasNull()) so.setDeliverySlotId(sId);
+                    String slotDisplay = rs.getString("slot_display");
+                    String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+                    String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                            + (dateStr != null ? " (" + dateStr + ")" : "");
+                    so.setDeliverySlot(finalSlotLabel);
                     so.setNote(rs.getString("note"));
                     so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
                     so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));

@@ -27,6 +27,8 @@ public class OrderDetailDTO implements Serializable {
     private String paymentStatus = PaymentStatus.PENDING.name();
     private String paymentMethod = PaymentMethod.COD.name();
     private String orderStatus = OrderStatus.PROCESSING.name();
+    private java.time.LocalDate deliveryDate;
+    private Integer deliverySlotId;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
@@ -149,6 +151,22 @@ public class OrderDetailDTO implements Serializable {
 
     public void setOrderStatus(OrderStatus orderStatus) {
         this.orderStatus = orderStatus != null ? orderStatus.name() : OrderStatus.PROCESSING.name();
+    }
+
+    public java.time.LocalDate getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(java.time.LocalDate deliveryDate) {
+        this.deliveryDate = deliveryDate;
+    }
+
+    public Integer getDeliverySlotId() {
+        return deliverySlotId;
+    }
+
+    public void setDeliverySlotId(Integer deliverySlotId) {
+        this.deliverySlotId = deliverySlotId;
     }
 
     public Timestamp getCreatedAt() {
