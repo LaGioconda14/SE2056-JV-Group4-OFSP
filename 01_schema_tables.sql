@@ -1,0 +1,835 @@
+-- ============================================================
+-- ONLINE FRUIT SHOPPING PLATFORM (OFSP) - DDL SCHEMA SCRIPT
+-- FILE 1: CẤU TRÚC BẢNG & RÀNG BUỘC (TABLES, CONSTRAINTS, INDEXES)
+-- Target DBMS: Microsoft SQL Server 2016+
+-- Encoding: UTF-8 / Unicode (NVARCHAR)
+-- Đã tinh giản: Loại bỏ các bảng và cột không còn sử dụng trong dự án
+-- ============================================================
+
+-- 1. TẠO HOẶC CHỌN DATABASE
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'OnlineFruitShop')
+BEGIN
+    CREATE DATABASE [OnlineFruitShop] COLLATE Vietnamese_CI_AS;
+END
+GO
+
+USE [OnlineFruitShop];
+GO
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+
+-- ============================================================
+-- 2. XÓA BẢNG CŨ THEO THỨ TỰ RÀNG BUỘC (DROP OLD TABLES)
+-- ============================================================
+-- Tự động xóa toàn bộ Foreign Key Constraints trước để tránh lỗi ràng buộc khóa ngoại khi DROP
+DECLARE @dropFkSql NVARCHAR(MAX) = N'';
+SELECT @dropFkSql += N'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + N'.' + QUOTENAME(OBJECT_NAME(parent_object_id)) + 
+                     N' DROP CONSTRAINT ' + QUOTENAME(name) + N';' + CHAR(13)
+FROM sys.foreign_keys;
+IF @dropFkSql <> N'' EXEC sp_executesql @dropFkSql;
+GO
+IF OBJECT_ID(N'dbo.notifications', N'U') IS NOT NULL DROP TABLE [dbo].[notifications];
+IF OBJECT_ID(N'dbo.reviews', N'U') IS NOT NULL DROP TABLE [dbo].[reviews];
+IF OBJECT_ID(N'dbo.disputes', N'U') IS NOT NULL DROP TABLE [dbo].[disputes];
+IF OBJECT_ID(N'dbo.deliveries', N'U') IS NOT NULL DROP TABLE [dbo].[deliveries];
+IF OBJECT_ID(N'dbo.driver_profiles', N'U') IS NOT NULL DROP TABLE [dbo].[driver_profiles];
+IF OBJECT_ID(N'dbo.vendor_payouts', N'U') IS NOT NULL DROP TABLE [dbo].[vendor_payouts];
+IF OBJECT_ID(N'dbo.payments', N'U') IS NOT NULL DROP TABLE [dbo].[payments];
+IF OBJECT_ID(N'dbo.order_items', N'U') IS NOT NULL DROP TABLE [dbo].[order_items];
+IF OBJECT_ID(N'dbo.sub_orders', N'U') IS NOT NULL DROP TABLE [dbo].[sub_orders];
+IF OBJECT_ID(N'dbo.order_shipping_addresses', N'U') IS NOT NULL DROP TABLE [dbo].[order_shipping_addresses];
+IF OBJECT_ID(N'dbo.orders', N'U') IS NOT NULL DROP TABLE [dbo].[orders];
+IF OBJECT_ID(N'dbo.wishlists', N'U') IS NOT NULL DROP TABLE [dbo].[wishlists];
+IF OBJECT_ID(N'dbo.cart_items', N'U') IS NOT NULL DROP TABLE [dbo].[cart_items];
+IF OBJECT_ID(N'dbo.carts', N'U') IS NOT NULL DROP TABLE [dbo].[carts];
+IF OBJECT_ID(N'dbo.coupon_usages', N'U') IS NOT NULL DROP TABLE [dbo].[coupon_usages];
+IF OBJECT_ID(N'dbo.coupon_products', N'U') IS NOT NULL DROP TABLE [dbo].[coupon_products];
+IF OBJECT_ID(N'dbo.coupons', N'U') IS NOT NULL DROP TABLE [dbo].[coupons];
+IF OBJECT_ID(N'dbo.promotion_products', N'U') IS NOT NULL DROP TABLE [dbo].[promotion_products];
+IF OBJECT_ID(N'dbo.promotions', N'U') IS NOT NULL DROP TABLE [dbo].[promotions];
+IF OBJECT_ID(N'dbo.product_images', N'U') IS NOT NULL DROP TABLE [dbo].[product_images];
+IF OBJECT_ID(N'dbo.inventory_transactions', N'U') IS NOT NULL DROP TABLE [dbo].[inventory_transactions];
+IF OBJECT_ID(N'dbo.product_batches', N'U') IS NOT NULL DROP TABLE [dbo].[product_batches];
+IF OBJECT_ID(N'dbo.product_variants', N'U') IS NOT NULL DROP TABLE [dbo].[product_variants];
+IF OBJECT_ID(N'dbo.products', N'U') IS NOT NULL DROP TABLE [dbo].[products];
+IF OBJECT_ID(N'dbo.categories', N'U') IS NOT NULL DROP TABLE [dbo].[categories];
+IF OBJECT_ID(N'dbo.shops', N'U') IS NOT NULL DROP TABLE [dbo].[shops];
+IF OBJECT_ID(N'dbo.shop_requests', N'U') IS NOT NULL DROP TABLE [dbo].[shop_requests];
+IF OBJECT_ID(N'dbo.customer_addresses', N'U') IS NOT NULL DROP TABLE [dbo].[customer_addresses];
+IF OBJECT_ID(N'dbo.user_status_logs', N'U') IS NOT NULL DROP TABLE [dbo].[user_status_logs];
+IF OBJECT_ID(N'dbo.user_roles', N'U') IS NOT NULL DROP TABLE [dbo].[user_roles];
+IF OBJECT_ID(N'dbo.users', N'U') IS NOT NULL DROP TABLE [dbo].[users];
+IF OBJECT_ID(N'dbo.roles', N'U') IS NOT NULL DROP TABLE [dbo].[roles];
+
+-- Xóa các bảng thừa / không dùng từ các phiên bản cũ nếu có
+IF OBJECT_ID(N'dbo.chat_messages', N'U') IS NOT NULL DROP TABLE [dbo].[chat_messages];
+IF OBJECT_ID(N'dbo.chat_conversations', N'U') IS NOT NULL DROP TABLE [dbo].[chat_conversations];
+IF OBJECT_ID(N'dbo.review_images', N'U') IS NOT NULL DROP TABLE [dbo].[review_images];
+IF OBJECT_ID(N'dbo.loyalty_transactions', N'U') IS NOT NULL DROP TABLE [dbo].[loyalty_transactions];
+IF OBJECT_ID(N'dbo.loyalty_accounts', N'U') IS NOT NULL DROP TABLE [dbo].[loyalty_accounts];
+IF OBJECT_ID(N'dbo.delivery_slot_capacity', N'U') IS NOT NULL DROP TABLE [dbo].[delivery_slot_capacity];
+IF OBJECT_ID(N'dbo.delivery_time_slots', N'U') IS NOT NULL DROP TABLE [dbo].[delivery_time_slots];
+GO
+
+-- ============================================================
+-- 3. KHỞI TẠO CÁC BẢNG HỆ THỐNG
+-- ============================================================
+
+-- 3.1. Phân quyền và người dùng (Roles & Users)
+CREATE TABLE [dbo].[roles] (
+    [role_id]       INT IDENTITY(1,1) NOT NULL,
+    [role_name]     VARCHAR(50) NOT NULL,
+    [description]   NVARCHAR(255) NULL,
+    CONSTRAINT [PK_roles] PRIMARY KEY ([role_id]),
+    CONSTRAINT [UQ_roles_role_name] UNIQUE ([role_name])
+);
+GO
+
+CREATE TABLE [dbo].[users] (
+    [user_id]       BIGINT IDENTITY(1,1) NOT NULL,
+    [email]         VARCHAR(100) NOT NULL,
+    [phone]         VARCHAR(20) NULL,
+    [password_hash] VARCHAR(255) NOT NULL,
+    [full_name]     NVARCHAR(100) NOT NULL,
+    [avatar_url]    VARCHAR(500) NULL,
+    [gender]        VARCHAR(10) NULL, -- 'FEMALE', 'MALE', 'OTHER'
+    [birth_date]    DATE NULL,
+    [status]        VARCHAR(30) NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, INACTIVE, BLOCKED
+    [created_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_users] PRIMARY KEY ([user_id]),
+    CONSTRAINT [UQ_users_email] UNIQUE ([email])
+);
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [UQ_users_phone] ON [dbo].[users] ([phone]) WHERE ([phone] IS NOT NULL);
+GO
+
+CREATE TABLE [dbo].[user_roles] (
+    [user_id]       BIGINT NOT NULL,
+    [role_id]       INT NOT NULL,
+    CONSTRAINT [PK_user_roles] PRIMARY KEY ([user_id], [role_id]),
+    CONSTRAINT [FK_user_roles_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_user_roles_role] FOREIGN KEY ([role_id]) REFERENCES [dbo].[roles] ([role_id]) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE [dbo].[user_status_logs] (
+    [log_id]          BIGINT IDENTITY(1,1) NOT NULL,
+    [user_id]         BIGINT NOT NULL,
+    [old_status]      VARCHAR(30) NULL,
+    [new_status]      VARCHAR(30) NOT NULL,
+    [decision_reason] NVARCHAR(500) NOT NULL,
+    [changed_by]      VARCHAR(100) NULL,
+    [created_at]      DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_user_status_logs] PRIMARY KEY ([log_id]),
+    CONSTRAINT [FK_user_status_logs_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE [dbo].[customer_addresses] (
+    [address_id]      BIGINT IDENTITY(1,1) NOT NULL,
+    [user_id]         BIGINT NOT NULL,
+    [recipient_name]  NVARCHAR(100) NOT NULL,
+    [recipient_phone] VARCHAR(20) NOT NULL,
+    [street_address]  NVARCHAR(255) NOT NULL,
+    [ward]            NVARCHAR(100) NOT NULL,
+    [district]        NVARCHAR(100) NOT NULL,
+    [city]            NVARCHAR(100) NOT NULL,
+    [is_default]      BIT NOT NULL DEFAULT 0,
+    [created_at]      DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]      DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_customer_addresses] PRIMARY KEY ([address_id]),
+    CONSTRAINT [FK_addresses_users] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE
+);
+GO
+
+-- 3.2. Quản lý gian hàng (Shop & KYC Requests)
+CREATE TABLE [dbo].[shops] (
+    [shop_id]            BIGINT IDENTITY(1,1) NOT NULL,
+    [owner_id]           BIGINT NOT NULL,
+    [shop_name]          NVARCHAR(150) NOT NULL,
+    [slug]               VARCHAR(160) NOT NULL,
+    [business_type]      NVARCHAR(50) NOT NULL DEFAULT N'Nhà vườn',
+    [description]        NVARCHAR(MAX) NULL,
+    [logo_url]           VARCHAR(500) NULL,
+    [banner_url]         VARCHAR(500) NULL,
+    [phone]              VARCHAR(20) NULL,
+    [address]            NVARCHAR(255) NULL,
+    [province]           NVARCHAR(100) NULL,
+    [certification_name] NVARCHAR(100) NULL,
+    [commission_rate]    DECIMAL(5, 2) NOT NULL DEFAULT 8.00,
+    [rating]             DECIMAL(3, 2) NOT NULL DEFAULT 5.00,
+    [total_sales_amount] DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [total_orders_count] INT NOT NULL DEFAULT 0,
+    [status]             VARCHAR(30) NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, INACTIVE, SUSPENDED, PENDING_KYC
+    [created_at]         DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]         DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_shops] PRIMARY KEY ([shop_id]),
+    CONSTRAINT [FK_shops_owner] FOREIGN KEY ([owner_id]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [UQ_shops_slug] UNIQUE ([slug])
+);
+GO
+
+CREATE TABLE [dbo].[shop_requests] (
+    [request_id]            BIGINT IDENTITY(1,1) NOT NULL,
+    [user_id]               BIGINT NOT NULL,
+    [shop_name]             NVARCHAR(150) NOT NULL,
+    [business_type]         NVARCHAR(50) NOT NULL,
+    [province]              NVARCHAR(100) NOT NULL,
+    [district]              NVARCHAR(100) NULL,
+    [ward]                  NVARCHAR(100) NULL,
+    [street_address]        NVARCHAR(255) NULL,
+    [farm_address]          NVARCHAR(255) NULL,
+    [pickup_address]        NVARCHAR(500) NULL,
+    [return_address]        NVARCHAR(500) NULL,
+    [id_card_number]        VARCHAR(20) NOT NULL,
+    [tax_code]              VARCHAR(20) NULL,
+    [id_card_front_url]     VARCHAR(500) NULL,
+    [id_card_back_url]      VARCHAR(500) NULL,
+    [shop_description]      NVARCHAR(MAX) NULL,
+    [shop_logo_url]         VARCHAR(500) NULL,
+    [shop_banner_url]       VARCHAR(500) NULL,
+    [produce_specialty]     NVARCHAR(200) NULL,
+    [certification_name]    NVARCHAR(100) NULL,
+    [bank_name]             VARCHAR(100) NULL,
+    [bank_account_number]   VARCHAR(50) NULL,
+    [bank_account_holder]   NVARCHAR(100) NULL,
+    [reason]                NVARCHAR(MAX) NULL,
+    [status]                VARCHAR(30) NOT NULL DEFAULT 'PENDING', -- PENDING, APPROVED, REJECTED
+    [reviewed_by]           BIGINT NULL,
+    [reviewed_at]           DATETIME NULL,
+    [created_at]            DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_shop_requests] PRIMARY KEY ([request_id]),
+    CONSTRAINT [FK_shop_requests_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [FK_shop_requests_reviewer] FOREIGN KEY ([reviewed_by]) REFERENCES [dbo].[users] ([user_id])
+);
+GO
+CREATE UNIQUE INDEX [UX_shop_requests_one_pending] ON [dbo].[shop_requests] ([user_id]) WHERE [status] IN ('PENDING', 'PENDING_KYC');
+GO
+
+-- 3.3. Danh mục & Sản phẩm (Categories, Products & SKUs)
+CREATE TABLE [dbo].[categories] (
+    [category_id]   INT IDENTITY(1,1) NOT NULL,
+    [parent_id]     INT NULL,
+    [category_name] NVARCHAR(100) NOT NULL,
+    [slug]          VARCHAR(120) NOT NULL,
+    [description]   NVARCHAR(255) NULL,
+    [icon_class]    VARCHAR(50) NULL,
+    [is_active]     BIT NOT NULL DEFAULT 1,
+    CONSTRAINT [PK_categories] PRIMARY KEY ([category_id]),
+    CONSTRAINT [FK_categories_parent] FOREIGN KEY ([parent_id]) REFERENCES [dbo].[categories] ([category_id]),
+    CONSTRAINT [UQ_categories_slug] UNIQUE ([slug])
+);
+GO
+
+CREATE TABLE [dbo].[products] (
+    [product_id]    BIGINT IDENTITY(1,1) NOT NULL,
+    [shop_id]       BIGINT NOT NULL,
+    [category_id]   INT NULL,
+    [name]          NVARCHAR(200) NOT NULL,
+    [slug]          VARCHAR(220) NOT NULL,
+    [origin]        NVARCHAR(100) NULL,
+    [storage_temp]  NVARCHAR(50) NULL,
+    [certification] NVARCHAR(100) NULL,
+    [description]   NVARCHAR(MAX) NULL,
+    [is_featured]   BIT NOT NULL DEFAULT 0,
+    [is_active]     BIT NOT NULL DEFAULT 1,
+    [created_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_products] PRIMARY KEY ([product_id]),
+    CONSTRAINT [FK_products_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_products_category] FOREIGN KEY ([category_id]) REFERENCES [dbo].[categories] ([category_id]) ON DELETE SET NULL
+);
+GO
+CREATE INDEX [IX_products_shop] ON [dbo].[products] ([shop_id], [is_active]);
+CREATE INDEX [IX_products_category] ON [dbo].[products] ([category_id]);
+GO
+
+CREATE TABLE [dbo].[product_variants] (
+    [variant_id]          BIGINT IDENTITY(1,1) NOT NULL,
+    [product_id]          BIGINT NOT NULL,
+    [sku]                 VARCHAR(50) NOT NULL,
+    [variant_name]        NVARCHAR(100) NOT NULL,
+    [unit]                NVARCHAR(30) NOT NULL DEFAULT N'kg',
+    [weight_kg]           DECIMAL(8, 3) NULL,
+    [price]               DECIMAL(18, 2) NOT NULL,
+    [original_price]      DECIMAL(18, 2) NULL,
+    [stock_quantity]      INT NOT NULL DEFAULT 0,
+    [low_stock_threshold] INT NOT NULL DEFAULT 10,
+    [is_active]           BIT NOT NULL DEFAULT 1,
+    [created_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_product_variants] PRIMARY KEY ([variant_id]),
+    CONSTRAINT [FK_variants_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[products] ([product_id]) ON DELETE CASCADE,
+    CONSTRAINT [UQ_variants_sku] UNIQUE ([sku])
+);
+GO
+
+CREATE TABLE [dbo].[product_batches] (
+    [batch_id]             BIGINT IDENTITY(1,1) NOT NULL,
+    [batch_code]           VARCHAR(50) NOT NULL,
+    [variant_id]           BIGINT NOT NULL,
+    [harvest_date]         DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [expiry_date]          DATETIME NOT NULL,
+    [initial_quantity]     INT NOT NULL DEFAULT 0,
+    [current_quantity]     INT NOT NULL DEFAULT 0,
+    [status]               VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
+    [created_at]           DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]           DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_product_batches] PRIMARY KEY ([batch_id]),
+    CONSTRAINT [FK_product_batches_variants] FOREIGN KEY ([variant_id]) REFERENCES [dbo].[product_variants] ([variant_id]) ON DELETE CASCADE,
+    CONSTRAINT [CHK_ProductBatches_Status] CHECK ([status] IN ('ACTIVE', 'EXPIRED', 'DEPLETED', 'INACTIVE'))
+);
+GO
+CREATE INDEX [IX_product_batches_expiry] ON [dbo].[product_batches] ([variant_id], [expiry_date]);
+GO
+
+CREATE TABLE [dbo].[inventory_transactions] (
+    [transaction_id]   BIGINT IDENTITY(1,1) NOT NULL,
+    [batch_id]         BIGINT NULL,
+    [variant_id]       BIGINT NOT NULL,
+    [shop_id]          BIGINT NOT NULL,
+    [user_id]          BIGINT NOT NULL,
+    [sub_order_id]     BIGINT NULL,
+    [transaction_type] VARCHAR(30) NOT NULL, -- RESTOCK, SALE, DAMAGED, EXPIRED, STORAGE_ISSUE, LOST, DISPOSAL, QC_PACKING, TRANSIT_DAMAGE
+    [waste_stage]      VARCHAR(50) NULL,     -- WAREHOUSE_EXPIRED, QC_PACKING, TRANSIT_DAMAGE
+    [quantity_changed] INT NOT NULL,
+    [previous_stock]   INT NOT NULL,
+    [new_stock]        INT NOT NULL,
+    [cost_price]       DECIMAL(18, 2) NULL,
+    [estimated_loss]   DECIMAL(18, 2) NULL,
+    [reason]           NVARCHAR(500) NULL,
+    [created_at]       DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_inventory_transactions] PRIMARY KEY ([transaction_id]),
+    CONSTRAINT [FK_inv_trans_batch] FOREIGN KEY ([batch_id]) REFERENCES [dbo].[product_batches] ([batch_id]) ON DELETE SET NULL,
+    CONSTRAINT [FK_inv_trans_variant] FOREIGN KEY ([variant_id]) REFERENCES [dbo].[product_variants] ([variant_id]),
+    CONSTRAINT [FK_inv_trans_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [FK_inv_trans_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id])
+);
+GO
+CREATE INDEX [IX_inventory_transactions_shop] ON [dbo].[inventory_transactions] ([shop_id], [created_at] DESC);
+GO
+
+CREATE TABLE [dbo].[product_images] (
+    [image_id]      BIGINT IDENTITY(1,1) NOT NULL,
+    [product_id]    BIGINT NOT NULL,
+    [image_url]     VARCHAR(500) NOT NULL,
+    [is_thumbnail]  BIT NOT NULL DEFAULT 0,
+    [display_order] INT NOT NULL DEFAULT 1,
+    [created_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_product_images] PRIMARY KEY ([image_id]),
+    CONSTRAINT [FK_images_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[products] ([product_id]) ON DELETE CASCADE
+);
+GO
+
+-- 3.4. Khuyến mãi & Giảm giá (Promotions & Coupons)
+CREATE TABLE [dbo].[promotions] (
+    [promotion_id]        BIGINT IDENTITY(1,1) NOT NULL,
+    [shop_id]             BIGINT NOT NULL,
+    [name]                NVARCHAR(150) NOT NULL,
+    [description]         NVARCHAR(MAX) NULL,
+    [promotion_type]      VARCHAR(50) NOT NULL,
+    [discount_value]      DECIMAL(18, 2) NOT NULL,
+    [max_discount_amount] DECIMAL(18, 2) NULL,
+    [min_quantity]        INT NULL,
+    [quota]               INT NULL,
+    [sold_quantity]       INT NOT NULL DEFAULT 0,
+    [active_days]         VARCHAR(50) NULL,
+    [daily_start_time]    TIME NULL,
+    [daily_end_time]      TIME NULL,
+    [start_date]          DATETIME NOT NULL,
+    [end_date]            DATETIME NOT NULL,
+    [is_active]           BIT NOT NULL DEFAULT 1,
+    [terminated_at]       DATETIME NULL,
+    [created_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_promotions] PRIMARY KEY ([promotion_id]),
+    CONSTRAINT [FK_promotions_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [CK_promotions_type] CHECK ([promotion_type] IN (
+        'FIXED_PRICE', 'BUY_X_GET_Y', 'VOLUME', 'TIME_WINDOW', 'PERCENTAGE', 'FIXED_AMOUNT'
+    ))
+);
+GO
+CREATE INDEX [IX_promotions_shop] ON [dbo].[promotions] ([shop_id], [start_date], [end_date]);
+GO
+
+CREATE TABLE [dbo].[promotion_products] (
+    [promotion_product_id] BIGINT IDENTITY(1,1) NOT NULL,
+    [promotion_id]         BIGINT NOT NULL,
+    [product_id]           BIGINT NOT NULL,
+    [variant_id]           BIGINT NULL,
+    CONSTRAINT [PK_promotion_products] PRIMARY KEY CLUSTERED ([promotion_product_id]),
+    CONSTRAINT [FK_pp_promotion] FOREIGN KEY ([promotion_id]) REFERENCES [dbo].[promotions] ([promotion_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_pp_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[products] ([product_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_pp_variant] FOREIGN KEY ([variant_id]) REFERENCES [dbo].[product_variants] ([variant_id])
+);
+GO
+CREATE UNIQUE INDEX [UX_pp_product_target] ON [dbo].[promotion_products] ([promotion_id], [product_id]) WHERE [variant_id] IS NULL;
+CREATE UNIQUE INDEX [UX_pp_variant_target] ON [dbo].[promotion_products] ([promotion_id], [variant_id]) WHERE [variant_id] IS NOT NULL;
+CREATE INDEX [IX_promo_products_product] ON [dbo].[promotion_products] ([product_id]);
+GO
+
+CREATE TABLE [dbo].[coupons] (
+    [coupon_id]           INT IDENTITY(1,1) NOT NULL,
+    [shop_id]             BIGINT NULL, -- NULL = Toàn sàn
+    [code]                VARCHAR(50) NOT NULL,
+    [title]               NVARCHAR(150) NOT NULL,
+    [discount_type]       VARCHAR(20) NOT NULL, -- PERCENTAGE, FIXED_AMOUNT, FREESHIP
+    [discount_value]      DECIMAL(18, 2) NOT NULL,
+    [min_order_value]     DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [max_discount_amount] DECIMAL(18, 2) NULL,
+    [usage_limit]         INT NOT NULL DEFAULT 100,
+    [used_count]          INT NOT NULL DEFAULT 0,
+    [sponsor_type]        VARCHAR(30) NOT NULL DEFAULT 'PLATFORM', -- PLATFORM, VENDOR
+    [start_date]          DATETIME NOT NULL,
+    [end_date]            DATETIME NOT NULL,
+    [is_active]           BIT NOT NULL DEFAULT 1,
+    [created_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [per_user_limit]      INT NOT NULL DEFAULT 1,
+    [applies_to]          VARCHAR(30) NOT NULL DEFAULT 'ALL',
+    [description]         NVARCHAR(500) NULL,
+    [terminated_at]       DATETIME NULL,
+    [updated_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_coupons] PRIMARY KEY ([coupon_id]),
+    CONSTRAINT [FK_coupons_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]) ON DELETE SET NULL,
+    CONSTRAINT [UQ_coupons_code] UNIQUE ([code])
+);
+GO
+
+CREATE TABLE [dbo].[coupon_products] (
+    [coupon_id]  INT NOT NULL,
+    [product_id] BIGINT NOT NULL,
+    CONSTRAINT [PK_coupon_products] PRIMARY KEY ([coupon_id], [product_id]),
+    CONSTRAINT [FK_coupon_products_coupon] FOREIGN KEY ([coupon_id]) REFERENCES [dbo].[coupons] ([coupon_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_coupon_products_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[products] ([product_id]) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE [dbo].[coupon_usages] (
+    [usage_id]        BIGINT IDENTITY(1,1) NOT NULL,
+    [coupon_id]       INT NOT NULL,
+    [order_id]        BIGINT NULL,
+    [customer_id]     BIGINT NOT NULL,
+    [discount_amount] DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [used_at]         DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_coupon_usages] PRIMARY KEY ([usage_id]),
+    CONSTRAINT [FK_coupon_usages_coupon] FOREIGN KEY ([coupon_id]) REFERENCES [dbo].[coupons] ([coupon_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_coupon_usages_user] FOREIGN KEY ([customer_id]) REFERENCES [dbo].[users] ([user_id])
+);
+GO
+CREATE INDEX [IX_coupon_usages_coupon] ON [dbo].[coupon_usages] ([coupon_id], [used_at] DESC);
+CREATE INDEX [IX_coupon_usages_customer] ON [dbo].[coupon_usages] ([customer_id], [coupon_id]);
+GO
+
+-- 3.5. Giỏ hàng & Danh sách yêu thích (Carts & Wishlists)
+CREATE TABLE [dbo].[carts] (
+    [cart_id]     BIGINT IDENTITY(1,1) NOT NULL,
+    [customer_id] BIGINT NOT NULL,
+    [created_at]  DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]  DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_carts] PRIMARY KEY ([cart_id]),
+    CONSTRAINT [FK_carts_customer] FOREIGN KEY ([customer_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE,
+    CONSTRAINT [UQ_carts_customer] UNIQUE ([customer_id])
+);
+GO
+
+CREATE TABLE [dbo].[cart_items] (
+    [cart_item_id] BIGINT IDENTITY(1,1) NOT NULL,
+    [cart_id]      BIGINT NOT NULL,
+    [variant_id]   BIGINT NOT NULL,
+    [quantity]     INT NOT NULL DEFAULT 1,
+    [note]         NVARCHAR(500) NULL,
+    [created_at]   DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]   DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_cart_items] PRIMARY KEY ([cart_item_id]),
+    CONSTRAINT [FK_cart_items_cart] FOREIGN KEY ([cart_id]) REFERENCES [dbo].[carts] ([cart_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_cart_items_variant] FOREIGN KEY ([variant_id]) REFERENCES [dbo].[product_variants] ([variant_id]) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE [dbo].[wishlists] (
+    [wishlist_id] BIGINT IDENTITY(1,1) NOT NULL,
+    [user_id]     BIGINT NOT NULL,
+    [product_id]  BIGINT NOT NULL,
+    [created_at]  DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_wishlists] PRIMARY KEY ([wishlist_id]),
+    CONSTRAINT [FK_wishlists_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_wishlists_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[products] ([product_id]) ON DELETE CASCADE,
+    CONSTRAINT [UQ_wishlists_user_product] UNIQUE ([user_id], [product_id])
+);
+GO
+CREATE INDEX [IX_wishlists_user] ON [dbo].[wishlists] ([user_id], [created_at] DESC);
+GO
+
+-- 3.6. Khung giờ giao hàng & Sức chứa (Delivery Time Slots & Slot Capacity)
+CREATE TABLE [dbo].[delivery_time_slots] (
+    [slot_id]       INT IDENTITY(1,1) NOT NULL,
+    [slot_code]     VARCHAR(20) NOT NULL,
+    [period]        VARCHAR(20) NOT NULL,
+    [start_time]    TIME NOT NULL,
+    [end_time]      TIME NOT NULL,
+    [display_label] NVARCHAR(50) NOT NULL,
+    [is_active]     BIT NOT NULL DEFAULT 1,
+    [display_order] INT NOT NULL DEFAULT 0,
+    CONSTRAINT [PK_delivery_time_slots] PRIMARY KEY CLUSTERED ([slot_id] ASC),
+    CONSTRAINT [UQ_delivery_time_slots_code] UNIQUE ([slot_code])
+);
+GO
+
+CREATE TABLE [dbo].[delivery_slot_capacity] (
+    [capacity_id]   BIGINT IDENTITY(1,1) NOT NULL,
+    [shop_id]       BIGINT NOT NULL,
+    [slot_id]       INT NOT NULL,
+    [delivery_date] DATE NOT NULL,
+    [max_orders]    INT NOT NULL DEFAULT 10,
+    [booked_orders] INT NOT NULL DEFAULT 0,
+    [created_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_delivery_slot_capacity] PRIMARY KEY CLUSTERED ([capacity_id] ASC),
+    CONSTRAINT [FK_capacity_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [FK_capacity_slot] FOREIGN KEY ([slot_id]) REFERENCES [dbo].[delivery_time_slots] ([slot_id]),
+    CONSTRAINT [UQ_shop_slot_date] UNIQUE ([shop_id], [slot_id], [delivery_date])
+);
+GO
+
+-- 3.7. Đơn hàng (Orders, Sub-orders & Order Items)
+CREATE TABLE [dbo].[orders] (
+    [order_id]           BIGINT IDENTITY(1,1) NOT NULL,
+    [order_code]         VARCHAR(30) NOT NULL,
+    [customer_id]        BIGINT NOT NULL,
+    [coupon_id]          INT NULL,
+    [total_goods_amount] DECIMAL(18, 2) NOT NULL,
+    [total_shipping_fee] DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [platform_discount]  DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [final_amount]       DECIMAL(18, 2) NOT NULL,
+    [payment_status]     VARCHAR(30) NOT NULL DEFAULT 'PENDING', -- PENDING, PAID, FAILED, REFUNDED
+    [payment_method]     VARCHAR(50) NOT NULL DEFAULT 'COD',     -- COD, VNPAY, MOMO
+    [order_status]       VARCHAR(30) NOT NULL DEFAULT 'CONFIRMED', -- PENDING, CONFIRMED, PROCESSING, COMPLETED, CANCELLED
+    [created_at]         DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]         DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [delivery_date]      DATE NULL,
+    [delivery_slot_id]   INT NULL,
+    CONSTRAINT [PK_orders] PRIMARY KEY ([order_id]),
+    CONSTRAINT [FK_orders_customer] FOREIGN KEY ([customer_id]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [FK_orders_coupon] FOREIGN KEY ([coupon_id]) REFERENCES [dbo].[coupons] ([coupon_id]) ON DELETE SET NULL,
+    CONSTRAINT [FK_orders_slot] FOREIGN KEY ([delivery_slot_id]) REFERENCES [dbo].[delivery_time_slots] ([slot_id]),
+    CONSTRAINT [UQ_orders_order_code] UNIQUE ([order_code])
+);
+GO
+CREATE INDEX [IX_orders_created_at] ON [dbo].[orders] ([created_at] DESC);
+CREATE INDEX [IX_orders_customer] ON [dbo].[orders] ([customer_id]);
+GO
+
+CREATE TABLE [dbo].[order_shipping_addresses] (
+    [order_id]        BIGINT NOT NULL,
+    [recipient_name]  NVARCHAR(100) NOT NULL,
+    [recipient_phone] VARCHAR(20) NOT NULL,
+    [street_address]  NVARCHAR(255) NOT NULL,
+    [ward]            NVARCHAR(100) NOT NULL,
+    [district]        NVARCHAR(100) NOT NULL,
+    [city]            NVARCHAR(100) NOT NULL,
+    CONSTRAINT [PK_order_shipping_addresses] PRIMARY KEY ([order_id]),
+    CONSTRAINT [FK_shipping_orders] FOREIGN KEY ([order_id]) REFERENCES [dbo].[orders] ([order_id]) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE [dbo].[sub_orders] (
+    [sub_order_id]      BIGINT IDENTITY(1,1) NOT NULL,
+    [sub_order_code]    VARCHAR(30) NOT NULL,
+    [order_id]          BIGINT NOT NULL,
+    [shop_id]           BIGINT NOT NULL,
+    [note]              NVARCHAR(500) NULL,
+    [shop_subtotal]     DECIMAL(18, 2) NOT NULL,
+    [shop_shipping_fee] DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [shop_discount]     DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [shop_total]        DECIMAL(18, 2) NOT NULL,
+    [commission_rate]   DECIMAL(5, 2) NOT NULL DEFAULT 8.00,
+    [commission_amount] DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [status]            VARCHAR(30) NOT NULL DEFAULT 'NEW', -- NEW, CONFIRMED, PACKING, SHIPPING, DELIVERED, CANCELLED, REFUNDED
+    [cancel_reason]     NVARCHAR(255) NULL,
+    [cancelled_by]      BIGINT NULL,
+    [cancelled_at]      DATETIME NULL,
+    [created_at]        DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]        DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [delivery_date]     DATE NULL,
+    [delivery_slot_id]  INT NULL,
+    CONSTRAINT [PK_sub_orders] PRIMARY KEY ([sub_order_id]),
+    CONSTRAINT [FK_sub_orders_order] FOREIGN KEY ([order_id]) REFERENCES [dbo].[orders] ([order_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_sub_orders_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [FK_sub_orders_canceller] FOREIGN KEY ([cancelled_by]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [FK_suborders_slot] FOREIGN KEY ([delivery_slot_id]) REFERENCES [dbo].[delivery_time_slots] ([slot_id]),
+    CONSTRAINT [UQ_sub_orders_code] UNIQUE ([sub_order_code])
+);
+GO
+CREATE INDEX [IX_sub_orders_shop] ON [dbo].[sub_orders] ([shop_id], [status]);
+CREATE INDEX [IX_sub_orders_created_at] ON [dbo].[sub_orders] ([created_at] DESC);
+GO
+
+-- Thêm khóa ngoại cho coupon_usages sau khi tạo orders
+IF NOT EXISTS (
+    SELECT 1 FROM sys.foreign_keys WHERE name = N'FK_coupon_usages_order'
+)
+BEGIN
+    ALTER TABLE [dbo].[coupon_usages]
+        ADD CONSTRAINT [FK_coupon_usages_order]
+        FOREIGN KEY ([order_id]) REFERENCES [dbo].[orders] ([order_id]) ON DELETE SET NULL;
+END
+GO
+
+CREATE TABLE [dbo].[order_items] (
+    [order_item_id]         BIGINT IDENTITY(1,1) NOT NULL,
+    [sub_order_id]          BIGINT NOT NULL,
+    [variant_id]            BIGINT NULL,
+    [product_name_snapshot] NVARCHAR(200) NOT NULL,
+    [variant_name_snapshot] NVARCHAR(100) NOT NULL,
+    [sku_snapshot]          VARCHAR(50) NOT NULL,
+    [unit]                  NVARCHAR(30) NOT NULL,
+    [unit_price]            DECIMAL(18, 2) NOT NULL,
+    [quantity]              INT NOT NULL,
+    [total_price]           DECIMAL(18, 2) NOT NULL,
+    [promotion_id]          BIGINT NULL,
+    [promotion_discount]    DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [promotion_units]       INT NOT NULL DEFAULT 0,
+    CONSTRAINT [PK_order_items] PRIMARY KEY ([order_item_id]),
+    CONSTRAINT [FK_order_items_sub_order] FOREIGN KEY ([sub_order_id]) REFERENCES [dbo].[sub_orders] ([sub_order_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_order_items_variant] FOREIGN KEY ([variant_id]) REFERENCES [dbo].[product_variants] ([variant_id]),
+    CONSTRAINT [FK_order_items_promotion] FOREIGN KEY ([promotion_id]) REFERENCES [dbo].[promotions] ([promotion_id])
+);
+GO
+
+-- 3.7. Ràng buộc khóa ngoại giữa inventory_transactions và sub_orders
+ALTER TABLE [dbo].[inventory_transactions]
+ADD CONSTRAINT [FK_inv_trans_sub_order] FOREIGN KEY ([sub_order_id]) REFERENCES [dbo].[sub_orders] ([sub_order_id]);
+GO
+
+-- 3.8. Thanh toán & Giao vận (Payments & Deliveries)
+CREATE TABLE [dbo].[payments] (
+    [payment_id]       BIGINT IDENTITY(1,1) NOT NULL,
+    [order_id]         BIGINT NOT NULL,
+    [payment_provider] VARCHAR(50) NOT NULL, -- COD, VNPAY, MOMO, BANK_TRANSFER
+    [payment_type]     VARCHAR(50) NOT NULL, -- ONLINE, CASH
+    [transaction_code] VARCHAR(100) NULL,
+    [amount]           DECIMAL(18, 2) NOT NULL,
+    [payment_status]   VARCHAR(30) NOT NULL DEFAULT 'PENDING', -- PENDING, SUCCESS, FAILED
+    [failure_reason]   NVARCHAR(500) NULL,
+    [created_at]       DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [paid_at]          DATETIME NULL,
+    CONSTRAINT [PK_payments] PRIMARY KEY ([payment_id]),
+    CONSTRAINT [FK_payments_order] FOREIGN KEY ([order_id]) REFERENCES [dbo].[orders] ([order_id]) ON DELETE CASCADE
+);
+GO
+
+CREATE TABLE [dbo].[driver_profiles] (
+    [driver_id]           BIGINT IDENTITY(1,1) NOT NULL,
+    [user_id]             BIGINT NOT NULL,
+    [shop_id]             BIGINT NULL,
+    [license_number]      NVARCHAR(50) NULL,
+    [vehicle_type]        NVARCHAR(100) NULL,
+    [vehicle_plate]       NVARCHAR(50) NULL,
+    [cold_storage_type]   NVARCHAR(100) NULL,
+    [operating_city]      NVARCHAR(100) NULL,
+    [operating_districts] NVARCHAR(255) NULL,
+    [hub_name]            NVARCHAR(100) NULL,
+    [approval_status]     VARCHAR(20) NOT NULL DEFAULT 'APPROVED',
+    [availability_status] VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    [reviewed_by]         BIGINT NULL,
+    [reviewed_at]         DATETIME NULL,
+    [rejection_reason]    NVARCHAR(255) NULL,
+    [rating]              DECIMAL(3, 2) NOT NULL DEFAULT 5.00,
+    [total_trips]         INT NOT NULL DEFAULT 0,
+    [max_capacity_orders] INT NOT NULL DEFAULT 5,
+    [created_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_driver_profiles] PRIMARY KEY ([driver_id]),
+    CONSTRAINT [FK_driver_profiles_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_driver_profiles_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [FK_driver_profiles_reviewer] FOREIGN KEY ([reviewed_by]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [UQ_driver_profiles_user] UNIQUE ([user_id])
+);
+GO
+
+CREATE TABLE [dbo].[deliveries] (
+    [delivery_id]     BIGINT IDENTITY(1,1) NOT NULL,
+    [sub_order_id]    BIGINT NOT NULL,
+    [driver_id]       BIGINT NULL,
+    [tracking_number] VARCHAR(50) NULL,
+    [delivery_status] VARCHAR(30) NOT NULL DEFAULT 'ASSIGNING', -- ASSIGNING, ASSIGNED, PICKED_UP, DELIVERING, DELIVERED, FAILED
+    [proof_image_url] VARCHAR(500) NULL,
+    [failure_reason]  NVARCHAR(255) NULL,
+    [assigned_at]     DATETIME NULL,
+    [delivered_at]    DATETIME NULL,
+    CONSTRAINT [PK_deliveries] PRIMARY KEY ([delivery_id]),
+    CONSTRAINT [FK_deliveries_sub_order] FOREIGN KEY ([sub_order_id]) REFERENCES [dbo].[sub_orders] ([sub_order_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_deliveries_driver] FOREIGN KEY ([driver_id]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [UQ_deliveries_sub_order] UNIQUE ([sub_order_id])
+);
+GO
+
+-- 3.9. Xử lý Tranh chấp sàn (Disputes & Arbitration)
+CREATE TABLE [dbo].[disputes] (
+    [dispute_id]          BIGINT IDENTITY(1,1) NOT NULL,
+    [dispute_code]        VARCHAR(30) NOT NULL,
+    [sub_order_id]        BIGINT NOT NULL,
+    [customer_id]         BIGINT NOT NULL,
+    [shop_id]             BIGINT NOT NULL,
+    [reason_category]     NVARCHAR(100) NOT NULL,
+    [complaint_text]      NVARCHAR(MAX) NOT NULL,
+    [claim_amount]        DECIMAL(18, 2) NOT NULL,
+    [evidence_image_url]  VARCHAR(500) NULL,
+    [status]              VARCHAR(30) NOT NULL DEFAULT 'OPEN', -- OPEN, MEDIATING, REFUNDED_BUYER, REJECTED, RESOLVED
+    [resolution_decision] VARCHAR(50) NULL, -- REFUND_BUYER, REJECT_CLAIM, PARTIAL_REFUND
+    [resolution_note]     NVARCHAR(MAX) NULL,
+    [resolved_by]         BIGINT NULL,
+    [resolved_at]         DATETIME NULL,
+    [created_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_disputes] PRIMARY KEY ([dispute_id]),
+    CONSTRAINT [FK_disputes_sub_order] FOREIGN KEY ([sub_order_id]) REFERENCES [dbo].[sub_orders] ([sub_order_id]),
+    CONSTRAINT [FK_disputes_customer] FOREIGN KEY ([customer_id]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [FK_disputes_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [FK_disputes_resolver] FOREIGN KEY ([resolved_by]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [UQ_disputes_code] UNIQUE ([dispute_code])
+);
+GO
+CREATE INDEX [IX_disputes_status] ON [dbo].[disputes] ([status]);
+GO
+
+-- 3.10. Quyết toán doanh thu gian hàng (Vendor Payouts)
+CREATE TABLE [dbo].[vendor_payouts] (
+    [payout_id]           BIGINT IDENTITY(1,1) NOT NULL,
+    [payout_code]         VARCHAR(30) NOT NULL,
+    [shop_id]             BIGINT NOT NULL,
+    [cycle_name]          NVARCHAR(100) NOT NULL,
+    [period_start]        DATETIME NOT NULL,
+    [period_end]          DATETIME NOT NULL,
+    [gross_sales]         DECIMAL(18, 2) NOT NULL,
+    [total_orders_count]  INT NOT NULL DEFAULT 0,
+    [commission_rate]     DECIMAL(5, 2) NOT NULL DEFAULT 8.00,
+    [commission_withheld] DECIMAL(18, 2) NOT NULL,
+    [dispute_deductions]  DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    [net_payout]          DECIMAL(18, 2) NOT NULL,
+    [bank_account_number] VARCHAR(50) NULL,
+    [bank_name]           NVARCHAR(100) NULL,
+    [status]              VARCHAR(30) NOT NULL DEFAULT 'PROCESSING', -- PROCESSING, COMPLETED, ON_HOLD
+    [processed_by]        BIGINT NULL,
+    [paid_at]             DATETIME NULL,
+    [created_at]          DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_vendor_payouts] PRIMARY KEY ([payout_id]),
+    CONSTRAINT [FK_payouts_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [FK_payouts_processor] FOREIGN KEY ([processed_by]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [UQ_vendor_payouts_code] UNIQUE ([payout_code])
+);
+GO
+CREATE INDEX [IX_vendor_payouts_shop] ON [dbo].[vendor_payouts] ([shop_id], [status]);
+GO
+
+-- 3.11. Đánh giá chất lượng (Reviews)
+CREATE TABLE [dbo].[reviews] (
+    [review_id]     BIGINT IDENTITY(1,1) NOT NULL,
+    [order_item_id] BIGINT NOT NULL,
+    [customer_id]   BIGINT NOT NULL,
+    [shop_id]       BIGINT NOT NULL,
+    [rating]        INT NOT NULL CHECK ([rating] >= 1 AND [rating] <= 5),
+    [comment]       NVARCHAR(MAX) NULL,
+    [reply_comment] NVARCHAR(MAX) NULL,
+    [status]        VARCHAR(30) NOT NULL DEFAULT 'APPROVED', -- PENDING, APPROVED, HIDDEN
+    [created_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]    DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_reviews] PRIMARY KEY ([review_id]),
+    CONSTRAINT [FK_reviews_order_item] FOREIGN KEY ([order_item_id]) REFERENCES [dbo].[order_items] ([order_item_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_reviews_customer] FOREIGN KEY ([customer_id]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [FK_reviews_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id])
+);
+GO
+
+CREATE TABLE [dbo].[review_images] (
+    [image_id]   BIGINT IDENTITY(1,1) NOT NULL,
+    [review_id]  BIGINT NOT NULL,
+    [image_url]  VARCHAR(500) NOT NULL,
+    [created_at] DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_review_images] PRIMARY KEY ([image_id]),
+    CONSTRAINT [FK_review_images_review] FOREIGN KEY ([review_id]) REFERENCES [dbo].[reviews] ([review_id]) ON DELETE CASCADE
+);
+GO
+
+-- 3.12. Điểm thưởng & Khách hàng thân thiết (Loyalty Accounts & Transactions)
+CREATE TABLE [dbo].[loyalty_accounts] (
+    [account_id]      BIGINT IDENTITY(1,1) NOT NULL,
+    [customer_id]     BIGINT NOT NULL,
+    [current_points]  INT NOT NULL DEFAULT 0,
+    [membership_tier] VARCHAR(30) NOT NULL DEFAULT 'BRONZE',
+    [created_at]      DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [updated_at]      DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_loyalty_accounts] PRIMARY KEY ([account_id]),
+    CONSTRAINT [FK_loyalty_customer] FOREIGN KEY ([customer_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE,
+    CONSTRAINT [UQ_loyalty_customer] UNIQUE ([customer_id])
+);
+GO
+
+CREATE TABLE [dbo].[loyalty_transactions] (
+    [transaction_id] BIGINT IDENTITY(1,1) NOT NULL,
+    [account_id]     BIGINT NOT NULL,
+    [order_id]       BIGINT NULL,
+    [points_delta]   INT NOT NULL,
+    [description]    NVARCHAR(255) NULL,
+    [created_at]     DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_loyalty_transactions] PRIMARY KEY ([transaction_id]),
+    CONSTRAINT [FK_loyalty_trans_account] FOREIGN KEY ([account_id]) REFERENCES [dbo].[loyalty_accounts] ([account_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_loyalty_trans_order] FOREIGN KEY ([order_id]) REFERENCES [dbo].[orders] ([order_id])
+);
+GO
+
+-- 3.13. Thông báo hệ thống (Notifications)
+CREATE TABLE [dbo].[notifications] (
+    [notification_id] BIGINT IDENTITY(1,1) NOT NULL,
+    [user_id]         BIGINT NOT NULL,
+    [title]           NVARCHAR(150) NOT NULL,
+    [message]         NVARCHAR(MAX) NOT NULL,
+    [type]            VARCHAR(50) NOT NULL DEFAULT 'SYSTEM', -- ORDER, DISPUTE, SETTLEMENT, KYC, PROMOTION, SHOP_SUSPENDED
+    [reference_type]  VARCHAR(50) NULL,
+    [reference_id]    BIGINT NULL,
+    [is_read]         BIT NOT NULL DEFAULT 0,
+    [created_at]      DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_notifications] PRIMARY KEY ([notification_id]),
+    CONSTRAINT [FK_notifications_user] FOREIGN KEY ([user_id]) REFERENCES [dbo].[users] ([user_id]) ON DELETE CASCADE
+);
+GO
+
+-- 3.14. Hội thoại & Tin nhắn tư vấn (Chat & Messaging)
+CREATE TABLE [dbo].[chat_conversations] (
+    [conversation_id]       BIGINT IDENTITY(1,1) NOT NULL,
+    [customer_id]           BIGINT NOT NULL,
+    [shop_id]               BIGINT NOT NULL,
+    [last_message]          NVARCHAR(1000) NULL,
+    [last_message_at]       DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    [customer_unread_count] INT NOT NULL DEFAULT 0,
+    [shop_unread_count]     INT NOT NULL DEFAULT 0,
+    [created_at]            DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_chat_conversations] PRIMARY KEY ([conversation_id]),
+    CONSTRAINT [FK_chat_conv_customer] FOREIGN KEY ([customer_id]) REFERENCES [dbo].[users] ([user_id]),
+    CONSTRAINT [FK_chat_conv_shop] FOREIGN KEY ([shop_id]) REFERENCES [dbo].[shops] ([shop_id]),
+    CONSTRAINT [UQ_chat_customer_shop] UNIQUE ([customer_id], [shop_id])
+);
+GO
+
+CREATE TABLE [dbo].[chat_messages] (
+    [message_id]      BIGINT IDENTITY(1,1) NOT NULL,
+    [conversation_id] BIGINT NOT NULL,
+    [sender_type]     VARCHAR(20) NOT NULL,
+    [sender_id]       BIGINT NOT NULL,
+    [message_text]    NVARCHAR(MAX) NOT NULL,
+    [product_id]      BIGINT NULL,
+    [order_id]        BIGINT NULL,
+    [is_read]         BIT NOT NULL DEFAULT 0,
+    [created_at]      DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT [PK_chat_messages] PRIMARY KEY ([message_id]),
+    CONSTRAINT [FK_chat_msg_conv] FOREIGN KEY ([conversation_id]) REFERENCES [dbo].[chat_conversations] ([conversation_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_chat_msg_order] FOREIGN KEY ([order_id]) REFERENCES [dbo].[orders] ([order_id]),
+    CONSTRAINT [FK_chat_msg_product] FOREIGN KEY ([product_id]) REFERENCES [dbo].[products] ([product_id]),
+    CONSTRAINT [FK_chat_msg_sender] FOREIGN KEY ([sender_id]) REFERENCES [dbo].[users] ([user_id])
+);
+GO
+
+PRINT N'==========================================================';
+PRINT N'ĐÃ TẠO XONG FILE SCHEMA DDL TOÀN BỘ CÁC BẢNG HỢP LỆ CHO HỆ THỐNG!';
+PRINT N'==========================================================';

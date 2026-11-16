@@ -26,7 +26,7 @@
 
             <jsp:include page="/views/shop/components/common/flash-message.jsp" />
 
-            
+            <%-- ==================== 1. THANH ĐIỀU HƯỚNG & TIÊU ĐỀ TRANG ==================== --%>
             <div class="flex flex-col gap-2 mb-6">
                 <nav class="flex items-center gap-2 text-xs text-slate-500 font-medium">
                     <span>Kênh Người Bán</span>
@@ -50,6 +50,7 @@
                         </p>
                     </div>
 
+                    <%-- Nút mở Modal báo hủy hoa quả trực tiếp tại kho --%>
                     <div class="flex items-center gap-3">
                         <button type="button" id="btnOpenManualWasteModal" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition shadow-sm cursor-pointer">
                             <i class="fa-solid fa-trash-can"></i>
@@ -59,9 +60,10 @@
                 </div>
             </div>
 
-
+            <%-- ==================== 2. KHỐI 4 THẺ THỐNG KÊ CHỈ SỐ KPI HAO HỤT ==================== --%>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 
+                <%-- Thẻ 1: Tổng khối lượng hoa quả đã tiêu hủy (kg/hộp) --%>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
                     <div class="flex items-start justify-between">
                         <div>
@@ -80,7 +82,7 @@
                     </div>
                 </div>
 
-                
+                <%-- Thẻ 2: Tổng giá trị thiệt hại tài chính ước tính (VNĐ) --%>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
                     <div class="flex items-start justify-between">
                         <div>
@@ -99,7 +101,7 @@
                     </div>
                 </div>
 
-                
+                <%-- Thẻ 3: Tỷ lệ hao hụt (%) so với ngưỡng kiểm định: <3% Chuẩn tươi, 3-7% Cảnh báo, >7% Nguy cấp --%>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
                     <div class="flex items-start justify-between">
                         <div>
@@ -138,7 +140,7 @@
                     </div>
                 </div>
 
-                
+                <%-- Thẻ 4: Tổng số lượng biên bản/phiếu tiêu hủy đã lưu vết --%>
                 <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
                     <div class="flex items-start justify-between">
                         <div>
@@ -158,9 +160,10 @@
                 </div>
             </div>
 
-
+            <%-- ==================== 3. BỘ LỌC GIAI ĐOẠN HAO HỤT & THANH TÌM KIẾM ==================== --%>
             <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs mb-4 flex flex-col md:flex-row items-center justify-between gap-4">
                 
+                <%-- Tabs lọc theo giai đoạn: Tất cả | Khâu đóng gói QC | Vận chuyển giao hàng | Kho lưu trữ --%>
                 <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 text-xs font-bold">
                     <a href="?stage=ALL${not empty keyword ? '&keyword=' += keyword : ''}" 
                        class="px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 whitespace-nowrap ${currentStage eq 'ALL' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">
@@ -183,7 +186,7 @@
                     </a>
                 </div>
 
-                
+                <%-- Form tìm kiếm theo từ khóa (Tên quả, SKU, mã đơn con) --%>
                 <form action="${pageContext.request.contextPath}/shop/waste" method="GET" class="w-full md:w-80 flex items-center gap-2">
                     <input type="hidden" name="stage" value="${currentStage}">
                     <div class="relative flex-1">
@@ -197,7 +200,7 @@
                 </form>
             </div>
 
-
+            <%-- ==================== 4. BẢNG DANH SÁCH LỊCH SỬ TIÊU HỦY NÔNG SẢN ==================== --%>
             <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden mb-6">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
@@ -218,6 +221,7 @@
                                     <c:forEach items="${wasteLogs}" var="log">
                                         <tr class="hover:bg-slate-50/70 transition-colors">
                                             
+                                            <%-- Cột 1: Mã phiếu tiêu hủy & Ngày giờ phát sinh --%>
                                             <td class="py-3.5 px-4">
                                                 <div class="font-extrabold text-slate-900">#HHL-${log.wasteId}</div>
                                                 <div class="text-[11px] text-slate-400 mt-0.5">
@@ -225,7 +229,7 @@
                                                 </div>
                                             </td>
 
-                                            
+                                            <%-- Cột 2: Tên quả, biến thể, SKU và Mã Lô Hàng (Batch Code) --%>
                                             <td class="py-3.5 px-4">
                                                 <div class="flex items-center gap-2.5">
                                                     <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 font-bold overflow-hidden border border-slate-200">
@@ -247,7 +251,7 @@
                                                 </div>
                                             </td>
 
-                                            
+                                            <%-- Cột 3: Số lượng tiêu hủy (kg/hộp) --%>
                                             <td class="py-3.5 px-4">
                                                 <span class="inline-flex items-center gap-1 font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200/60">
                                                     <i class="fa-solid fa-arrow-down text-[10px]"></i>
@@ -255,7 +259,7 @@
                                                 </span>
                                             </td>
 
-                                            
+                                            <%-- Cột 4: Tổng số tiền thiệt hại & Đơn giá vốn --%>
                                             <td class="py-3.5 px-4">
                                                 <div class="font-black text-slate-900">
                                                     <fmt:formatNumber value="${log.estimatedLoss}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
@@ -265,7 +269,7 @@
                                                 </div>
                                             </td>
 
-                                            
+                                            <%-- Cột 5: Giai đoạn hỏng (Đóng gói / Vận chuyển / Kho) & Lý do chi tiết --%>
                                             <td class="py-3.5 px-4">
                                                 <div>
                                                     <c:choose>
@@ -291,7 +295,7 @@
                                                 </div>
                                             </td>
 
-                                            
+                                            <%-- Cột 6: Liên kết đơn hàng con (nếu hỏng từ đơn khách) hoặc 'Hủy tại kho' --%>
                                             <td class="py-3.5 px-4">
                                                 <c:choose>
                                                     <c:when test="${not empty log.subOrderCode}">
@@ -306,7 +310,7 @@
                                                 </c:choose>
                                             </td>
 
-                                            
+                                            <%-- Cột 7: Người lập biên bản tiêu hủy --%>
                                             <td class="py-3.5 px-4">
                                                 <div class="font-semibold text-slate-800">
                                                     ${not empty log.loggedByName ? log.loggedByName : 'Chủ gian hàng'}
@@ -332,7 +336,7 @@
                     </table>
                 </div>
 
-                
+                <%-- Phân trang danh sách phiếu hao hụt --%>
                 <c:if test="${totalPages > 1}">
                     <div class="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                         <span>Hiển thị trang <b>${currentPage}</b> / <b>${totalPages}</b> (Tổng số ${totalItems} bản ghi)</span>
@@ -361,7 +365,7 @@
         </div>
     </main>
 
-
+    <%-- ==================== 5. MODAL POPUP: BÁO TIÊU HỦY NÔNG SẢN THỦ CÔNG TẠI KHO ==================== --%>
     <div id="modalManualWaste" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 hidden transition-opacity">
         <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden animate-scaleIn">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -382,7 +386,7 @@
             <form action="${pageContext.request.contextPath}/shop/waste" method="POST" class="p-5 space-y-4">
                 <input type="hidden" name="action" value="manual_waste">
 
-                
+                <%-- Bước 1: Chọn sản phẩm trong kho (chỉ hiển thị các quả shop đang có) --%>
                 <div>
                     <label for="selectVariantWaste" class="block text-xs font-bold text-slate-700 mb-1.5">
                         1. Chọn nông sản / biến thể cần tiêu hủy: <span class="text-rose-500">*</span>
@@ -397,7 +401,7 @@
                     </select>
                 </div>
 
-                
+                <%-- Bước 2: Số lượng tiêu hủy và hiển thị tồn kho tối đa khả dụng --%>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label for="inputWasteQuantity" class="block text-xs font-bold text-slate-700 mb-1.5">
@@ -419,7 +423,7 @@
                     </div>
                 </div>
 
-                
+                <%-- Bước 3: Giai đoạn xảy ra hư hỏng --%>
                 <div>
                     <label for="selectWasteStage" class="block text-xs font-bold text-slate-700 mb-1.5">
                         3. Giai đoạn phát sinh hao hụt: <span class="text-rose-500">*</span>
@@ -431,7 +435,7 @@
                     </select>
                 </div>
 
-                
+                <%-- Bước 4: Nguyên nhân đặc thù nông sản --%>
                 <div>
                     <label for="selectReasonCategory" class="block text-xs font-bold text-slate-700 mb-1.5">
                         4. Nguyên nhân chính: <span class="text-rose-500">*</span>
@@ -446,7 +450,7 @@
                     </select>
                 </div>
 
-                
+                <%-- Bước 5: Ghi chú tình trạng quả thực tế --%>
                 <div>
                     <label for="textareaReasonNote" class="block text-xs font-bold text-slate-700 mb-1">
                         5. Ghi chú chi tiết tình trạng quả:
@@ -467,11 +471,10 @@
         </div>
     </div>
 
-
-    
+    <%-- ==================== 6. JAVASCRIPT: ĐÓNG MỞ MODAL & RÀNG BUỘC TỒN KHO ==================== --%>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Xử lý Modal 1: Báo Tiêu Hủy Nông Sản Kho ---
+            // --- Xử lý Modal: Báo Tiêu Hủy Nông Sản Kho ---
             const modalManualWaste = document.getElementById('modalManualWaste');
             const btnOpenManualWasteModal = document.getElementById('btnOpenManualWasteModal');
             const btnCloseManualWasteModal = document.getElementById('btnCloseManualWasteModal');
@@ -481,6 +484,7 @@
             const textUnitLabel = document.getElementById('textUnitLabel');
             const textAvailableStock = document.getElementById('textAvailableStock');
 
+            // Hàm mở/đóng modal bằng class hidden
             function openManualModal() {
                 modalManualWaste.classList.remove('hidden');
             }
@@ -492,6 +496,7 @@
             if (btnCloseManualWasteModal) btnCloseManualWasteModal.addEventListener('click', closeManualModal);
             if (btnDismissManualWasteModal) btnDismissManualWasteModal.addEventListener('click', closeManualModal);
 
+            // Tự động đọc tồn kho từ dropdown khi shop chọn loại quả
             if (selectVariantWaste) {
                 selectVariantWaste.addEventListener('change', function() {
                     const opt = this.options[this.selectedIndex];
@@ -500,6 +505,8 @@
                         const unit = opt.getAttribute('data-unit') || 'kg';
                         textAvailableStock.textContent = stock + ' ' + unit;
                         textUnitLabel.textContent = unit;
+                        
+                        // Chặn không cho nhập số lượng hủy vượt quá số tồn kho hiện có
                         inputWasteQuantity.max = stock;
                         inputWasteQuantity.placeholder = 'Tối đa ' + stock;
                     } else {
@@ -511,7 +518,7 @@
                 });
             }
 
-            // Tự động tắt flash messages sau 4 giây
+            // Tự động tắt flash messages thông báo sau 4 giây
             setTimeout(function() {
                 const msg = document.getElementById('flashMsg');
                 if (msg) msg.remove();

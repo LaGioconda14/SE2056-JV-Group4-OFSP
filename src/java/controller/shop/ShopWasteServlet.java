@@ -35,6 +35,10 @@ public class ShopWasteServlet extends HttpServlet {
     private final IProductService productService = new ProductServiceImpl();
     private final IShopProductService shopProductService = new ShopProductServiceImpl();
 
+    /**
+     * doGet: Tải màn hình Quản lý Hao hụt & Tiêu hủy Nông sản của Gian hàng
+     * Bao gồm: Thống kê thiệt hại, Danh sách biên bản tiêu hủy, Lọc theo giai đoạn, và Danh sách hàng hoàn chờ xử lý
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -45,11 +49,13 @@ public class ShopWasteServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
 
+        // 1. Kiểm tra xác thực & phân quyền: Chỉ dành cho SHOP_OWNER
         if (user == null || !"SHOP_OWNER".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
+        // 2. Lấy shopId của chủ gian hàng hiện tại
         Long shopId = (Long) session.getAttribute("shopId");
         if (shopId == null || shopId <= 0) {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
@@ -62,6 +68,7 @@ public class ShopWasteServlet extends HttpServlet {
         }
 
         try {
+            // 3. Đọc bộ lọc theo giai đoạn (ALL, QC_PACKING, TRANSIT_DAMAGE, WAREHOUSE_EXPIRED)
             String stage = request.getParameter("stage");
             if (stage == null || stage.trim().isEmpty()) {
                 stage = "ALL";
@@ -69,11 +76,13 @@ public class ShopWasteServlet extends HttpServlet {
                 stage = stage.trim().toUpperCase();
             }
 
+            // 4. Đọc từ khóa tìm kiếm
             String keyword = request.getParameter("keyword");
             if (keyword != null) {
                 keyword = keyword.trim();
             }
 
+            // 5. Phân trang
             int page = 1;
             try {
                 String p = request.getParameter("page");
@@ -84,6 +93,7 @@ public class ShopWasteServlet extends HttpServlet {
                 page = 1;
             }
 
+            // 6. Lấy dữ liệu nghiệp vụ từ tầng Service
             List<InventoryWasteLog> logs = wasteService.getWasteLogsByShop(shopId, stage, keyword, page, DEFAULT_PAGE_SIZE);
             int totalItems = wasteService.countWasteLogsByShop(shopId, stage, keyword);
             int totalPages = (int) Math.ceil((double) totalItems / DEFAULT_PAGE_SIZE);
@@ -95,6 +105,7 @@ public class ShopWasteServlet extends HttpServlet {
             List<ProductVariantStockDTO> variants = productService.getVariantsByShopId(shopId);
             List<SubOrderDTO> pendingReturnedOrders = wasteService.getPendingReturnedOrdersByShop(shopId);
 
+            // 7. Đẩy dữ liệu ra Request Scope để JSP kết xuất giao diện
             request.setAttribute("wasteLogs", logs);
             request.setAttribute("stats", stats);
             request.setAttribute("variants", variants);

@@ -16,10 +16,14 @@ target/
 # Local database scripts (keep local)
 database.sql
 *.sql
+!01_schema_tables.sql
+!02_seed_data.sql
+!database/*.sql
 
 # Logs and temporary files
 *.log
 *.tmp
+scratch/
 
 # Uploaded user avatars
 web/assets/images/avatars/*
