@@ -122,7 +122,7 @@
                                         <button type="button" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-500 flex items-center justify-center transition-transform" id="icon-v-${variantId}">
                                             <i class="fa-solid fa-chevron-down text-xs"></i>
                                         </button>
-                                        <div class="w-11 h-11 rounded-xl bg-emerald-50 border border-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
+                                         <div class="w-11 h-11 rounded-xl bg-emerald-50 border border-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                                             <c:choose>
                                                 <c:when test="${not empty firstBatch.imageUrl}">
                                                     <img src="${firstBatch.imageUrl}" alt="Product" class="w-full h-full object-cover">
