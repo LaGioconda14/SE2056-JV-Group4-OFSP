@@ -863,6 +863,92 @@ private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/
         }
     }
 
+    /**
+     * Update user role in user_roles table.
+     */
+    public boolean updateUserRole(long userId, String newRole) {
+        if (newRole == null || newRole.trim().isEmpty()) {
+            return false;
+        }
+        String sql = "IF EXISTS (SELECT 1 FROM [dbo].[user_roles] WHERE user_id = ?) "
+                   + "    UPDATE [dbo].[user_roles] "
+                   + "    SET role_id = (SELECT role_id FROM [dbo].[roles] WHERE UPPER(role_name) = UPPER(?)) "
+                   + "    WHERE user_id = ?; "
+                   + "ELSE "
+                   + "    INSERT INTO [dbo].[user_roles] (user_id, role_id) "
+                   + "    SELECT ?, role_id FROM [dbo].[roles] WHERE UPPER(role_name) = UPPER(?);";
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, userId);
+            ps.setString(2, newRole.trim().toUpperCase());
+            ps.setLong(3, userId);
+            ps.setLong(4, userId);
+            ps.setString(5, newRole.trim().toUpperCase());
+            ps.executeUpdate();
+            return true;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error updating role for user_id=" + userId, ex);
+            return false;
+        }
+    }
+
+    /**
+     * Invite / create a new Admin or Staff user.
+     */
+    public boolean inviteUser(String fullName, String email, String roleCode) {
+        if (email == null || email.trim().isEmpty() || fullName == null || fullName.trim().isEmpty()) {
+            return false;
+        }
+        String defaultHashedPassword = util.PasswordUtil.hashPassword("Password@123");
+        String sqlCheck = "SELECT 1 FROM [dbo].[users] WHERE LOWER(email) = LOWER(?)";
+        String sqlUser = "INSERT INTO [dbo].[users] (email, password_hash, full_name, status, created_at, updated_at) "
+                       + "VALUES (?, ?, ?, 'ACTIVE', GETDATE(), GETDATE())";
+        String sqlRole = "INSERT INTO [dbo].[user_roles] (user_id, role_id) "
+                       + "SELECT ?, role_id FROM [dbo].[roles] WHERE UPPER(role_name) = UPPER(?)";
+
+        try (Connection conn = getConnection()) {
+            try (PreparedStatement psCheck = conn.prepareStatement(sqlCheck)) {
+                psCheck.setString(1, email.trim().toLowerCase());
+                try (ResultSet rs = psCheck.executeQuery()) {
+                    if (rs.next()) {
+                        return false;
+                    }
+                }
+            }
+
+            conn.setAutoCommit(false);
+            long newUserId = -1;
+            try (PreparedStatement psUser = conn.prepareStatement(sqlUser, Statement.RETURN_GENERATED_KEYS)) {
+                psUser.setString(1, email.trim().toLowerCase());
+                psUser.setString(2, defaultHashedPassword);
+                psUser.setString(3, fullName.trim());
+                psUser.executeUpdate();
+                try (ResultSet rs = psUser.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        newUserId = rs.getLong(1);
+                    }
+                }
+            }
+
+            if (newUserId > 0) {
+                try (PreparedStatement psRole = conn.prepareStatement(sqlRole)) {
+                    psRole.setLong(1, newUserId);
+                    psRole.setString(2, roleCode != null ? roleCode.trim().toUpperCase() : "STAFF");
+                    psRole.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            } else {
+                conn.rollback();
+                return false;
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error inviting user: " + email, ex);
+            return false;
+        }
+    }
+
     // -------------------------------------------------------------------------
     // 3. CATEGORIES
     // -------------------------------------------------------------------------

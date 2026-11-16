@@ -7,6 +7,7 @@ import enums.SubOrderStatus;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import model.entity.order.ShippingAddress;
@@ -21,6 +22,7 @@ public class SubOrderDTO implements Serializable {
     private String subOrderCode;
     private long orderId;
     private long shopId;
+    private LocalDate deliveryDate;
     private String deliverySlot;
     private String note;
     private BigDecimal shopSubtotal = BigDecimal.ZERO;
@@ -79,6 +81,14 @@ public class SubOrderDTO implements Serializable {
 
     public void setShopId(long shopId) {
         this.shopId = shopId;
+    }
+
+    public LocalDate getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(LocalDate deliveryDate) {
+        this.deliveryDate = deliveryDate;
     }
 
     public String getDeliverySlot() {

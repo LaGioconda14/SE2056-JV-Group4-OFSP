@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.entity.user.User;
 
-@WebServlet(name = "AdminUserServlet", urlPatterns = {"/admin/users"})
+@WebServlet(name = "AdminUserServlet", urlPatterns = {"/admin/users", "/admin/users/assign-role", "/admin/users/invite"})
 public class AdminUserServlet extends HttpServlet {
     private final AdminManagementDAO dao = new AdminManagementDAO();
 
@@ -73,11 +73,63 @@ public class AdminUserServlet extends HttpServlet {
         String action = request.getParameter("action");
         HttpSession session = request.getSession();
 
+        String servletPath = request.getServletPath();
+        if (action == null || action.trim().isEmpty()) {
+            if ("/admin/users/assign-role".equalsIgnoreCase(servletPath)) {
+                action = "assignRole";
+            } else if ("/admin/users/invite".equalsIgnoreCase(servletPath)) {
+                action = "invite";
+            }
+        }
+
         String redirectRole = request.getParameter("currentRole");
         String redirectStatus = request.getParameter("currentStatus");
         String redirectSearch = request.getParameter("currentSearch");
 
-        if ("changeStatus".equalsIgnoreCase(action) || "toggleStatus".equalsIgnoreCase(action)) {
+        if ("assignRole".equalsIgnoreCase(action)) {
+            String userIdStr = request.getParameter("userId");
+            String newRole = request.getParameter("newRole");
+
+            if (userIdStr == null || userIdStr.trim().isEmpty()) {
+                session.setAttribute("errorMessage", "Mã người dùng không hợp lệ!");
+            } else if (newRole == null || newRole.trim().isEmpty()) {
+                session.setAttribute("errorMessage", "Vui lòng chọn vai trò hệ thống!");
+            } else {
+                try {
+                    long userId = Long.parseLong(userIdStr.trim());
+                    User currentUser = (User) session.getAttribute("user");
+                    Long currentUserId = (currentUser != null) ? currentUser.getUserId() : null;
+
+                    if (currentUserId != null && currentUserId == userId && !"ADMIN".equalsIgnoreCase(newRole)) {
+                        session.setAttribute("errorMessage", "Bạn không thể tự hạ quyền vai trò của chính mình!");
+                    } else {
+                        boolean updated = dao.updateUserRole(userId, newRole);
+                        if (updated) {
+                            session.setAttribute("successMessage", "Cập nhật quyền thành công! Tài khoản ID #" + userId + " hiện có vai trò: " + newRole.toUpperCase());
+                        } else {
+                            session.setAttribute("errorMessage", "Không thể cập nhật quyền người dùng. Vui lòng thử lại!");
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    session.setAttribute("errorMessage", "Định dạng mã người dùng không đúng!");
+                }
+            }
+        } else if ("invite".equalsIgnoreCase(action)) {
+            String fullName = request.getParameter("fullName");
+            String email = request.getParameter("email");
+            String roleCode = request.getParameter("roleCode");
+
+            if (fullName == null || fullName.trim().isEmpty() || email == null || email.trim().isEmpty()) {
+                session.setAttribute("errorMessage", "Vui lòng nhập đầy đủ họ tên và email hợp lệ!");
+            } else {
+                boolean created = dao.inviteUser(fullName, email, roleCode);
+                if (created) {
+                    session.setAttribute("successMessage", "Thêm nhân sự mới thành công (" + email.trim() + ") với vai trò: " + (roleCode != null ? roleCode.toUpperCase() : "STAFF") + ". Mật khẩu mặc định: Password@123");
+                } else {
+                    session.setAttribute("errorMessage", "Không thể tạo tài khoản (Email có thể đã tồn tại trong hệ thống)!");
+                }
+            }
+        } else if ("changeStatus".equalsIgnoreCase(action) || "toggleStatus".equalsIgnoreCase(action)) {
             String userIdStr = request.getParameter("userId");
             String newStatus = request.getParameter("newStatus");
             String decisionReason = request.getParameter("decisionReason");
