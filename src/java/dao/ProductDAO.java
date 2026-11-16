@@ -1320,91 +1320,113 @@ public class ProductDAO extends DBContext {
     }
 
     public List<ProductCardDTO> getHomeProducts() {
-    List<ProductCardDTO> list = new ArrayList<>();
-    
-    // Đã bỏ phần reviews / rating để tối ưu tối đa tốc độ truy vấn
-    String query = "SELECT "
-            + "    p.product_id, p.name, p.category_id, "
-            + "    COALESCE(c.category_name, N'Trái Cây Tươi') AS category_name, "
-            + "    c.slug AS category_slug, "
-            + "    p.origin, p.certification, p.storage_temp, "
-            + "    pi.image_url, "
-            + "    dv.variant_id AS default_variant_id, "
-            + "    COALESCE(v_stat.min_price, 100000) AS price, "
-            + "    v_stat.unit, "
-            + "    COALESCE(v_stat.total_stock, 0) AS total_stock "
-            + "FROM products p "
-            + "LEFT JOIN categories c ON p.category_id = c.category_id "
-            // Gom nhóm giá, đơn vị tính, tổng tồn kho của biến thể trong 1 lần quét
-            + "LEFT JOIN ( "
-            + "    SELECT product_id, "
-            + "           MIN(price) AS min_price, "
-            + "           MAX(unit) AS unit, "
-            + "           SUM(stock_quantity) AS total_stock "
-            + "    FROM product_variants "
-            + "    WHERE is_active = 1 "
-            + "    GROUP BY product_id "
-            + ") v_stat ON v_stat.product_id = p.product_id "
-            // Lấy 1 ảnh đại diện thumbnail
-            + "OUTER APPLY ( "
-            + "    SELECT TOP 1 image_url "
-            + "    FROM product_images "
-            + "    WHERE product_id = p.product_id "
-            + "    ORDER BY is_thumbnail DESC, display_order ASC "
-            + ") pi "
-            // Lấy biến thể mặc định ưu tiên còn hàng và giá rẻ nhất
-            + "OUTER APPLY ( "
-            + "    SELECT TOP 1 variant_id "
-            + "    FROM product_variants "
-            + "    WHERE product_id = p.product_id AND is_active = 1 AND stock_quantity > 0 "
-            + "    ORDER BY price ASC, variant_id ASC "
-            + ") dv "
-            + "WHERE p.is_active = 1 "
-            + "ORDER BY p.is_featured DESC, p.product_id DESC";
 
-    try (Connection conn = getConnection(); 
-         PreparedStatement ps = conn.prepareStatement(query); 
-         ResultSet rs = ps.executeQuery()) {
+        List<ProductCardDTO> list = new ArrayList<>();
 
-        while (rs.next()) {
-            long id = rs.getLong("product_id");
-            String name = rs.getString("name");
-            String categoryName = rs.getString("category_name");
-            String categorySlug = rs.getString("category_slug");
+        String query = "SELECT "
+                + "    p.product_id, p.name, p.category_id, "
+                + "    COALESCE(c.category_name, N'Trái Cây Tươi') AS category_name, "
+                + "    c.slug AS category_slug, "
+                + "    p.origin, p.certification, p.storage_temp, "
+                + "    pi.image_url, "
+                + "    dv.variant_id AS default_variant_id, "
+                + "    COALESCE(v_stat.min_price, 100000) AS price, "
+                + "    v_stat.unit, "
+                + "    COALESCE(v_stat.total_stock, 0) AS total_stock "
+                + "FROM products p "
+                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+                // Gom nhóm giá, đơn vị tính, tổng tồn kho của biến thể trong 1 lần quét
+                + "LEFT JOIN ( "
+                + "    SELECT product_id, "
+                + "           MIN(price) AS min_price, "
+                + "           MAX(unit) AS unit, "
+                + "           SUM(stock_quantity) AS total_stock "
+                + "    FROM product_variants "
+                + "    WHERE is_active = 1 "
+                + "    GROUP BY product_id "
+                + ") v_stat ON v_stat.product_id = p.product_id "
+                // Lấy 1 ảnh đại diện thumbnail
+                + "OUTER APPLY ( "
+                + "    SELECT TOP 1 image_url "
+                + "    FROM product_images "
+                + "    WHERE product_id = p.product_id "
+                + "    ORDER BY is_thumbnail DESC, display_order ASC "
+                + ") pi "
+                // Lấy biến thể mặc định ưu tiên còn hàng và giá rẻ nhất
+                + "OUTER APPLY ( "
+                + "    SELECT TOP 1 variant_id "
+                + "    FROM product_variants "
+                + "    WHERE product_id = p.product_id AND is_active = 1 AND stock_quantity > 0 "
+                + "    ORDER BY price ASC, variant_id ASC "
+                + ") dv "
+                + "WHERE p.is_active = 1 AND COALESCE(v_stat.total_stock, 0) > 0 "
+                + "ORDER BY p.is_featured DESC, p.product_id DESC";
 
-            String image = rs.getString("image_url");
-            if (image == null || image.trim().isEmpty()) {
-                image = getDefaultFruitImage(name);
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(query); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+
+                long id = rs.getLong("product_id");
+
+                String name = rs.getString("name");
+
+                String categoryName = rs.getString("category_name");
+
+                String categorySlug = rs.getString("category_slug");
+
+                String image = rs.getString("image_url");
+
+                if (image == null || image.trim().isEmpty()) {
+
+                    image = getDefaultFruitImage(name);
+
+                }
+
+                BigDecimal price = rs.getBigDecimal("price");
+
+                int totalStock = rs.getInt("total_stock");
+
+                // Mặc định rating = 5.0, reviewsCount = 0
+                ProductCardDTO p = new ProductCardDTO(id, name, categoryName, image, price, price, 0, 5.0, 0);
+
+                p.setCategoryId(rs.getInt("category_id"));
+
+                p.setCategorySlug(categorySlug);
+
+                p.setOrigin(rs.getString("origin"));
+
+                p.setCertification(rs.getString("certification"));
+
+                p.setStorageTemp(rs.getString("storage_temp"));
+
+                p.setDefaultVariantId(rs.getLong("default_variant_id"));
+
+                p.setUnit(rs.getString("unit"));
+
+                p.setStockQuantity(totalStock);
+
+                p.setInStock(totalStock > 0);
+
+                list.add(p);
+
             }
 
-            BigDecimal price = rs.getBigDecimal("price");
-            int totalStock = rs.getInt("total_stock");
+        } catch (Exception e) {
 
-            // Mặc định rating = 5.0, reviewsCount = 0
-            ProductCardDTO p = new ProductCardDTO(id, name, categoryName, image, price, price, 0, 5.0, 0);
-            p.setCategoryId(rs.getInt("category_id"));
-            p.setCategorySlug(categorySlug);
-            p.setOrigin(rs.getString("origin"));
-            p.setCertification(rs.getString("certification"));
-            p.setStorageTemp(rs.getString("storage_temp"));
-            p.setDefaultVariantId(rs.getLong("default_variant_id"));
-            p.setUnit(rs.getString("unit"));
-            p.setStockQuantity(totalStock);
-            p.setInStock(totalStock > 0);
+            LOGGER.log(Level.SEVERE, "Lỗi khi lấy sản phẩm trang chủ", e);
 
-            list.add(p);
         }
-    } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, "Lỗi khi lấy sản phẩm trang chủ", e);
+
+        // Áp dụng khuyến mãi Flash Sale (nếu có)
+        if (!list.isEmpty()) {
+
+            util.PromotionPricing.applyToProducts(list);
+
+        }
+
+        return list;
+
     }
-    
-    // Áp dụng khuyến mãi Flash Sale (nếu có)
-    if (!list.isEmpty()) {
-        util.PromotionPricing.applyToProducts(list);
-    }
-    
-    return list;
-}
 
     // 9. Lấy danh sách sản phẩm theo category slug (Dùng cho trang danh mục sản phẩm)
     public List<ProductCardDTO> getProductsByCategorySlug(String categorySlug) {
@@ -1476,7 +1498,8 @@ public class ProductDAO extends DBContext {
     }
 
     /**
-     * Lấy danh sách sản phẩm liên quan theo categoryId có giới hạn TOP trực tiếp từ SQL (tối ưu hiệu năng).
+     * Lấy danh sách sản phẩm liên quan theo categoryId có giới hạn TOP trực
+     * tiếp từ SQL (tối ưu hiệu năng).
      */
     public List<ProductCardDTO> getRelatedProducts(int categoryId, long excludeProductId, int limit) {
         List<ProductCardDTO> list = new ArrayList<>();
@@ -1643,10 +1666,10 @@ public class ProductDAO extends DBContext {
     }
 
     // 2. Lấy danh sách biến thể (variants) khớp chuẩn model ProductVariant
-        // 2. Lấy danh sách biến thể (variants) của sản phẩm - Đã tối ưu, loại bỏ các JOIN thừa
+    // 2. Lấy danh sách biến thể (variants) của sản phẩm - Đã tối ưu, loại bỏ các JOIN thừa
     public List<ProductVariantDetailDTO> getVariantsByProductId(long productId) {
         List<ProductVariantDetailDTO> list = new ArrayList<>();
-        
+
         // Chỉ select trực tiếp từ bảng product_variants, không JOIN thừa thãi vào products, categories, product_images
         String sql = "SELECT variant_id, product_id, sku, variant_name, unit, "
                 + "       weight_kg, price, original_price, stock_quantity, is_active "
@@ -1665,7 +1688,7 @@ public class ProductDAO extends DBContext {
                     v.setSku(rs.getString("sku"));
                     v.setVariantName(rs.getString("variant_name"));
                     v.setPrice(rs.getBigDecimal("price"));
-                    v.setOriginalPrice(rs.getBigDecimal("original_price") != null 
+                    v.setOriginalPrice(rs.getBigDecimal("original_price") != null
                             ? rs.getBigDecimal("original_price") : rs.getBigDecimal("price"));
                     v.setWeightKg(rs.getBigDecimal("weight_kg"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
@@ -1888,26 +1911,26 @@ public class ProductDAO extends DBContext {
 
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT p.product_id, p.name, p.category_id, c.category_name, c.slug AS category_slug, ")
-           .append("p.origin, p.certification, p.storage_temp, pi.image_url, ")
-           .append("dv.variant_id AS default_variant_id, dv.price, dv.original_price, dv.unit, ")
-           .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
-           .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
-           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
-           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
-           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
-           .append("(SELECT COUNT(*) FROM reviews r ")
-           .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
-           .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
-           .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
-           .append("FROM products p ")
-           .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
-           .append("OUTER APPLY ( ")
-           .append("    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC ")
-           .append(") pi ")
-           .append("OUTER APPLY ( ")
-           .append("    SELECT TOP 1 variant_id, price, original_price, unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY (CASE WHEN stock_quantity > 0 THEN 0 ELSE 1 END), price ASC, variant_id ASC ")
-           .append(") dv ")
-           .append("WHERE p.is_active = 1");
+                .append("p.origin, p.certification, p.storage_temp, pi.image_url, ")
+                .append("dv.variant_id AS default_variant_id, dv.price, dv.original_price, dv.unit, ")
+                .append("(SELECT SUM(stock_quantity) FROM product_variants WHERE product_id = p.product_id AND is_active = 1) AS total_stock, ")
+                .append("(SELECT COALESCE(AVG(CAST(r.rating AS DECIMAL(5,2))), 0.0) FROM reviews r ")
+                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS avg_rating, ")
+                .append("(SELECT COUNT(*) FROM reviews r ")
+                .append(" JOIN order_items oi ON oi.order_item_id = r.order_item_id ")
+                .append(" JOIN product_variants rv ON rv.variant_id = oi.variant_id ")
+                .append(" WHERE rv.product_id = p.product_id AND r.status = 'APPROVED') AS reviews_count ")
+                .append("FROM products p ")
+                .append("LEFT JOIN categories c ON p.category_id = c.category_id ")
+                .append("OUTER APPLY ( ")
+                .append("    SELECT TOP 1 image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_thumbnail DESC, display_order ASC ")
+                .append(") pi ")
+                .append("OUTER APPLY ( ")
+                .append("    SELECT TOP 1 variant_id, price, original_price, unit FROM product_variants WHERE product_id = p.product_id AND is_active = 1 ORDER BY (CASE WHEN stock_quantity > 0 THEN 0 ELSE 1 END), price ASC, variant_id ASC ")
+                .append(") dv ")
+                .append("WHERE p.is_active = 1");
 
         // 1. Tìm theo từ khóa (tên, xuất xứ, danh mục)
         if (keyword != null && !keyword.isBlank()) {
@@ -1923,7 +1946,9 @@ public class ProductDAO extends DBContext {
             List<Integer> ids = new ArrayList<>();
             List<String> slugs = new ArrayList<>();
             for (String c : categoryParams) {
-                if (c == null || c.trim().isEmpty() || "all".equalsIgnoreCase(c) || "0".equals(c)) continue;
+                if (c == null || c.trim().isEmpty() || "all".equalsIgnoreCase(c) || "0".equals(c)) {
+                    continue;
+                }
                 try {
                     ids.add(Integer.parseInt(c.trim()));
                 } catch (Exception e) {
@@ -1941,7 +1966,9 @@ public class ProductDAO extends DBContext {
                     sql.append(")");
                 }
                 if (!slugs.isEmpty()) {
-                    if (!ids.isEmpty()) sql.append(" OR ");
+                    if (!ids.isEmpty()) {
+                        sql.append(" OR ");
+                    }
                     sql.append("c.slug IN (");
                     for (int i = 0; i < slugs.size(); i++) {
                         sql.append(i == 0 ? "?" : ", ?");
@@ -1971,10 +1998,18 @@ public class ProductDAO extends DBContext {
 
         // 5. Sắp xếp
         switch (sortBy != null ? sortBy.toLowerCase() : "") {
-            case "price_asc":  sql.append(" ORDER BY dv.price ASC, p.product_id DESC"); break;
-            case "price_desc": sql.append(" ORDER BY dv.price DESC, p.product_id DESC"); break;
-            case "newest":     sql.append(" ORDER BY p.product_id DESC"); break;
-            default:           sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC"); break;
+            case "price_asc":
+                sql.append(" ORDER BY dv.price ASC, p.product_id DESC");
+                break;
+            case "price_desc":
+                sql.append(" ORDER BY dv.price DESC, p.product_id DESC");
+                break;
+            case "newest":
+                sql.append(" ORDER BY p.product_id DESC");
+                break;
+            default:
+                sql.append(" ORDER BY p.is_featured DESC, p.product_id DESC");
+                break;
         }
 
         // 6. Phân trang (nếu có tham số page > 0 và pageSize > 0)
