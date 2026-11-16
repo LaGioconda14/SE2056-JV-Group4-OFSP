@@ -8,10 +8,6 @@ import service.IUserService;
 import util.EmailUtil;
 import util.PasswordUtil;
 
-/**
- * Implementation of IUserService for business logic and validation.
- */
-
 public class UserServiceImpl implements IUserService {
 
     private final UserDAO userDAO;
@@ -26,13 +22,11 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public User login(String emailOrPhone, String rawPassword) throws Exception {
-        if (emailOrPhone == null || emailOrPhone.trim().isEmpty() || rawPassword == null || rawPassword.trim().isEmpty()) {
+        if (emailOrPhone == null || emailOrPhone.isBlank() || rawPassword == null || rawPassword.isBlank()) {
             throw new Exception("Vui lòng nhập đầy đủ Email / Số điện thoại và Mật khẩu!");
         }
 
-        String identifier = emailOrPhone.trim();
-        User user = userDAO.findByEmailOrPhone(identifier);
-
+        User user = userDAO.findByEmailOrPhone(emailOrPhone.trim());
         if (user == null || !PasswordUtil.verifyPassword(rawPassword, user.getPassword())) {
             throw new Exception("Email / Số điện thoại hoặc mật khẩu không chính xác!");
         }
@@ -41,22 +35,11 @@ public class UserServiceImpl implements IUserService {
             throw new Exception("Tài khoản của bạn đang bị khóa. Vui lòng liên hệ hỗ trợ!");
         }
 
-        // Auto-upgrade legacy password (plain text or legacy SHA-256) to PBKDF2WithHmacSHA256
-        if (PasswordUtil.needsUpgrade(user.getPassword())) {
-            try {
-                userDAO.updatePassword(user.getId(), rawPassword);
-                user.setPassword(PasswordUtil.hashPassword(rawPassword));
-            } catch (Exception ignored) {
-                // Non-blocking: allow user login even if upgrade update fails
-            }
-        }
-
         return user;
     }
 
     @Override
     public void register(String fullName, String email, String phone, String password, String confirmPassword) throws Exception {
-        // 1. Validation - Required fields
         if (fullName == null || fullName.trim().isEmpty() ||
             email == null || email.trim().isEmpty() ||
             password == null || password.trim().isEmpty() ||
@@ -68,18 +51,15 @@ public class UserServiceImpl implements IUserService {
         email = email.trim();
         phone = (phone != null) ? phone.trim() : "";
 
-        // 2. Validation - Full Name length
         if (fullName.length() < 2 || fullName.length() > 100) {
             throw new Exception("Họ và tên phải từ 2 đến 100 ký tự!");
         }
 
-        // 3. Validation - Email format
         String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$";
         if (!email.matches(emailRegex)) {
             throw new Exception("Định dạng Email không hợp lệ (Ví dụ: user@example.com)!");
         }
 
-        // 4. Validation - Phone format & uniqueness
         if (!phone.isEmpty()) {
             phone = phone.replaceAll("[\\s.-]", "");
             String phoneRegex = "^(0[3|5|7|8|9])[0-9]{8}$";
@@ -91,28 +71,24 @@ public class UserServiceImpl implements IUserService {
             }
         }
 
-        // 5. Validation - Password length
         if (password.length() < 6) {
             throw new Exception("Mật khẩu phải chứa ít nhất 6 ký tự!");
         }
 
-        // 6. Validation - Password confirmation
         if (!password.equals(confirmPassword)) {
             throw new Exception("Mật khẩu xác nhận không trùng khớp!");
         }
 
-        // 7. Check if Email already exists
         if (userDAO.isEmailExists(email)) {
             throw new Exception("Địa chỉ Email này đã được đăng ký. Vui lòng chọn Email khác hoặc Đăng nhập!");
         }
 
-        // 8. Create new User entity with SHA-256 hashed password
         User newUser = new User();
         newUser.setFullName(fullName);
         newUser.setEmail(email.toLowerCase());
         newUser.setPhone(phone.isEmpty() ? null : phone);
         newUser.setPassword(PasswordUtil.hashPassword(password));
-        newUser.setStatus(1); // ACTIVE
+        newUser.setStatus(1);
 
         boolean registered = userDAO.register(newUser);
         if (!registered) {
@@ -262,7 +238,6 @@ public class UserServiceImpl implements IUserService {
         User user = userDAO.findByEmail(googleEmail);
 
         if (user == null) {
-            // Tự động đăng ký tài khoản khách hàng mới cho lần đầu đăng nhập Google
             User newUser = new User();
             newUser.setEmail(googleEmail);
 
@@ -271,12 +246,10 @@ public class UserServiceImpl implements IUserService {
                 name = googleEmail.split("@")[0];
             }
             newUser.setFullName(name);
-
-            // Mật khẩu ngẫu nhiên cho tài khoản OAuth
             newUser.setPassword(PasswordUtil.hashPassword(UUID.randomUUID().toString()));
             newUser.setPhone(null);
             newUser.setRole("CUSTOMER");
-            newUser.setStatus(1); // ACTIVE
+            newUser.setStatus(1);
             if (googleAccount.getPicture() != null && !googleAccount.getPicture().trim().isEmpty()) {
                 newUser.setAvatarUrl(googleAccount.getPicture().trim());
             }
@@ -291,14 +264,12 @@ public class UserServiceImpl implements IUserService {
                 throw new Exception("Không thể tải thông tin tài khoản vừa tạo từ Google!");
             }
         } else {
-            // Nếu người dùng cũ chưa có avatar và Google có avatar -> cập nhật avatar
             if ((user.getAvatarUrl() == null || user.getAvatarUrl().trim().isEmpty())
                     && googleAccount.getPicture() != null && !googleAccount.getPicture().trim().isEmpty()) {
                 try {
                     userDAO.updateAvatar(user.getId(), googleAccount.getPicture().trim());
                     user.setAvatarUrl(googleAccount.getPicture().trim());
                 } catch (Exception ex) {
-                    // Không để lỗi avatar chặn tiến trình đăng nhập
                 }
             }
         }
