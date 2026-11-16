@@ -220,9 +220,9 @@
                                     <!-- Nút 2: Khóa / Mở khóa tài khoản (Soft Delete) -->
                                     <c:choose>
                                         <c:when test="${isSelf}">
-                                            <button type="button" class="btn-action-lock me-1" disabled
+                                            <button type="button" class="btn-action-lock me-1"
                                                     title="Bạn không thể tự khóa tài khoản của chính mình"
-                                                    style="cursor: not-allowed; pointer-events: auto;">
+                                                    onclick="openToggleStatusModal('${u.userId}', '${fn:escapeXml(u.fullName)}', '${fn:escapeXml(u.email)}', 'BLOCKED', '${fn:escapeXml(u.decisionReason)}')">
                                                 <i class="bi bi-slash-circle"></i> Khóa
                                             </button>
                                         </c:when>
@@ -640,7 +640,11 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="${pageContext.request.contextPath}/admin/users/invite" method="post">
+            <form action="${pageContext.request.contextPath}/admin/users" method="post">
+                <input type="hidden" name="action" value="invite">
+                <input type="hidden" name="currentRole" value="${selectedRole}">
+                <input type="hidden" name="currentStatus" value="${selectedStatus}">
+                <input type="hidden" name="currentSearch" value="<c:out value='${searchKeyword}'/>">
                 <div class="modal-body" style="padding: 1.25rem 1.4rem;">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Họ Và Tên Thành Viên <span class="text-danger">*</span></label>
@@ -681,8 +685,12 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="${pageContext.request.contextPath}/admin/users/assign-role" method="post">
+            <form action="${pageContext.request.contextPath}/admin/users" method="post">
+                <input type="hidden" name="action" value="assignRole">
                 <input type="hidden" name="userId" id="modalUserId" value="">
+                <input type="hidden" name="currentRole" value="${selectedRole}">
+                <input type="hidden" name="currentStatus" value="${selectedStatus}">
+                <input type="hidden" name="currentSearch" value="<c:out value='${searchKeyword}'/>">
                 <div class="modal-body" style="padding: 1.25rem 1.4rem;">
                     <div class="p-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
                         <div class="small text-muted mb-1">Thành viên được chọn:</div>
@@ -711,7 +719,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=16"></script>
-<script src="${pageContext.request.contextPath}/assets/js/admin-users.js?v=2"></script>
+<script src="${pageContext.request.contextPath}/assets/js/admin.js?v=17"></script>
+<script src="${pageContext.request.contextPath}/assets/js/admin-users.js?v=3"></script>
 </body>
 </html>

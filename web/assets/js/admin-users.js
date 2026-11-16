@@ -55,6 +55,23 @@ function openToggleStatusModal(userId, fullName, email, targetStatus, currentRea
 }
 
 // -------------------------------------------------------------------------
+// Function: Mở Modal Phân Quyền Vai Trò (Assign Role)
+// -------------------------------------------------------------------------
+function openAssignRoleModal(userId, userName, currentRole) {
+    const idInput = document.getElementById('modalUserId');
+    const nameDisplay = document.getElementById('modalUserNameDisplay');
+    const roleSelect = document.getElementById('modalUserRoleSelect');
+    if (idInput) idInput.value = userId;
+    if (nameDisplay) nameDisplay.textContent = userName + ' (ID: #' + userId + ')';
+    if (roleSelect) roleSelect.value = currentRole;
+
+    const modalEl = document.getElementById('assignRoleModal');
+    if (modalEl && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+}
+
+// -------------------------------------------------------------------------
 // Validate chặn submit tự khóa chính mình từ toggleStatusForm
 // -------------------------------------------------------------------------
 document.addEventListener('DOMContentLoaded', function () {

@@ -605,6 +605,10 @@ function openAssignRoleModal(userId, userName, currentRole) {
     if (nameDisplay) nameDisplay.textContent = userName + ' (ID: #' + userId + ')';
     if (roleSelect) roleSelect.value = currentRole;
     
+    const modalEl = document.getElementById('assignRoleModal');
+    if (modalEl && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
 }
 
 // Global context path resolver for Admin modules
