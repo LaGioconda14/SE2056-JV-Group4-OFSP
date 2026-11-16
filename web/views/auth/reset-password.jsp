@@ -108,7 +108,11 @@
                 <div class="field-group">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <label class="field-label mb-0" for="otp">Mã xác thực OTP (6 chữ số) *</label>
-                        <a href="${pageContext.request.contextPath}/forgot-password" class="small text-decoration-none" style="font-size: 12px; color: var(--primary-green); font-weight: 600;">Gửi lại mã OTP?</a>
+                        <button type="submit" name="action" value="resend" formnovalidate
+                                class="small text-decoration-none border-0 bg-transparent p-0"
+                                style="font-size: 12px; color: var(--primary-green); font-weight: 600;">
+                            Gửi lại mã OTP?
+                        </button>
                     </div>
                     <div class="input-box-wrapper">
                         <i class="bi bi-shield-check leading-icon"></i>

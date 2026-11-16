@@ -137,6 +137,10 @@ public class UserServiceImpl implements IUserService {
             throw new Exception("Tài khoản này đang bị khóa. Vui lòng liên hệ quản trị viên!");
         }
 
+        if (!EmailUtil.isConfigured()) {
+            throw new Exception("Hệ thống chưa cấu hình email gửi OTP. Vui lòng cấu hình SMTP trong mail.properties rồi thử lại!");
+        }
+
         String otp = EmailUtil.generateOTP();
         boolean isSent = EmailUtil.sendOtpEmail(email, user.getFullName(), otp);
 

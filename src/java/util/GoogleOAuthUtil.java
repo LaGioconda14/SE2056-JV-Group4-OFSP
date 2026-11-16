@@ -24,10 +24,9 @@ public class GoogleOAuthUtil {
     public static final String DEFAULT_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
     public static final String DEFAULT_CLIENT_SECRET = "YOUR_GOOGLE_CLIENT_SECRET";
 
-    public static final String GOOGLE_REDIRECT_URI = "http://localhost:8080/SE2056-JV-Group4-OFSP/login-google";
     public static final String GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth";
     public static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-    public static final String GOOGLE_USER_INFO_URL = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=";
+    public static final String GOOGLE_USER_INFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
     private static final Gson gson = new Gson();
     private static Properties oauthProps = null;
@@ -84,20 +83,33 @@ public class GoogleOAuthUtil {
                 && secret != null && !secret.contains("YOUR_GOOGLE_CLIENT_SECRET");
     }
 
-    public static String getGoogleLoginUrl() {
-        return GOOGLE_AUTH_URL
-                + "?scope=email%20profile"
-                + "&redirect_uri=" + URLEncoder.encode(GOOGLE_REDIRECT_URI, StandardCharsets.UTF_8)
-                + "&response_type=code"
-                + "&client_id=" + URLEncoder.encode(getClientId(), StandardCharsets.UTF_8)
-                + "&approval_prompt=force";
+    public static String getConfiguredRedirectUri() {
+        if (oauthProps != null) {
+            String value = oauthProps.getProperty("google.redirect_uri");
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+        }
+        String envRedirectUri = System.getenv("GOOGLE_REDIRECT_URI");
+        return envRedirectUri == null || envRedirectUri.trim().isEmpty()
+                ? null : envRedirectUri.trim();
     }
 
-    public static String getToken(String code) throws IOException {
-        String params = "code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
-                + "&client_id=" + URLEncoder.encode(getClientId(), StandardCharsets.UTF_8)
-                + "&client_secret=" + URLEncoder.encode(getClientSecret(), StandardCharsets.UTF_8)
-                + "&redirect_uri=" + URLEncoder.encode(GOOGLE_REDIRECT_URI, StandardCharsets.UTF_8)
+    public static String getGoogleLoginUrl(String redirectUri, String state) {
+        return GOOGLE_AUTH_URL
+                + "?scope=email%20profile"
+                + "&redirect_uri=" + encode(redirectUri)
+                + "&response_type=code"
+                + "&client_id=" + encode(getClientId())
+                + "&state=" + encode(state)
+                + "&prompt=select_account";
+    }
+
+    public static String getToken(String code, String redirectUri) throws IOException {
+        String params = "code=" + encode(code)
+                + "&client_id=" + encode(getClientId())
+                + "&client_secret=" + encode(getClientSecret())
+                + "&redirect_uri=" + encode(redirectUri)
                 + "&grant_type=authorization_code";
 
         URL url = URI.create(GOOGLE_TOKEN_URL).toURL();
@@ -143,10 +155,11 @@ public class GoogleOAuthUtil {
     }
 
     public static GoogleAccount getUserInfo(String accessToken) throws IOException {
-        URL url = URI.create(GOOGLE_USER_INFO_URL + accessToken).toURL();
+        URL url = URI.create(GOOGLE_USER_INFO_URL).toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
         conn.setRequestProperty("Accept", "application/json");
+        conn.setRequestProperty("Authorization", "Bearer " + accessToken);
         conn.setConnectTimeout(10000);
         conn.setReadTimeout(10000);
 
@@ -171,5 +184,9 @@ public class GoogleOAuthUtil {
         }
 
         return gson.fromJson(response.toString(), GoogleAccount.class);
+    }
+
+    private static String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }

@@ -33,6 +33,11 @@ src/java/oauth.properties
 *oauth.properties
 !*oauth.properties.example
 
+# SMTP private credentials (keep secret)
+*mail.properties
+!*mail.properties.example
+!src/java/mail.properties
+
 # Database configuration credentials (keep secret)
 *db.properties
 !*db.properties.example

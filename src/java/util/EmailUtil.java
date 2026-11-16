@@ -1,6 +1,9 @@
 package util;
 
 import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -18,11 +21,13 @@ public class EmailUtil {
 
     private static final Logger LOGGER = Logger.getLogger(EmailUtil.class.getName());
 
-    private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final String SMTP_PORT = "587";
-    private static final String SENDER_EMAIL = "your_email@gmail.com";
-    private static final String SENDER_PASSWORD = "your_app_password_here";
-    private static final String SENDER_NAME = "Online Fruit Shop";
+    private static final Properties CONFIG = loadConfiguration();
+    private static final String SMTP_HOST = getConfig("mail.smtp.host", "SMTP_HOST", "smtp.gmail.com");
+    private static final String SMTP_PORT = getConfig("mail.smtp.port", "SMTP_PORT", "587");
+    private static final String SMTP_USERNAME = getConfig("mail.smtp.username", "SMTP_USERNAME", "");
+    private static final String SMTP_PASSWORD = getConfig("mail.smtp.password", "SMTP_PASSWORD", "");
+    private static final String SENDER_EMAIL = getConfig("mail.from.email", "SMTP_FROM_EMAIL", SMTP_USERNAME);
+    private static final String SENDER_NAME = getConfig("mail.from.name", "SMTP_FROM_NAME", "Gốc Vườn");
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -31,14 +36,14 @@ public class EmailUtil {
         return String.valueOf(otp);
     }
 
+    public static boolean isConfigured() {
+        return !SMTP_USERNAME.isBlank() && !SMTP_PASSWORD.isBlank() && !SENDER_EMAIL.isBlank();
+    }
+
     public static boolean sendOtpEmail(String recipientEmail, String recipientName, String otp) {
-        if ("your_email@gmail.com".equals(SENDER_EMAIL) || "your_app_password_here".equals(SENDER_PASSWORD)) {
-            LOGGER.warning("=== [EmailUtil DEV MODE] ===");
-            LOGGER.warning("Gmail sender email or App Password has NOT been configured yet in EmailUtil.java!");
-            LOGGER.warning("OTP for " + recipientEmail + " is: [" + otp + "]");
-            LOGGER.warning("Dev mode: Simulating successful OTP email sending. Use the OTP above to proceed.");
-            LOGGER.warning("==============================");
-            return true;
+        if (!isConfigured()) {
+            LOGGER.severe("SMTP is not configured. Set SMTP_USERNAME and SMTP_PASSWORD or create mail.properties.");
+            return false;
         }
 
         Properties props = new Properties();
@@ -47,22 +52,22 @@ public class EmailUtil {
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.ssl.protocols", "TLSv1.2");
-        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+        props.put("mail.smtp.ssl.trust", SMTP_HOST);
         props.put("mail.smtp.connectiontimeout", "10000");
         props.put("mail.smtp.timeout", "10000");
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD);
+                return new PasswordAuthentication(SMTP_USERNAME, SMTP_PASSWORD);
             }
         });
 
         try {
-            Message message = new MimeMessage(session);
+            MimeMessage message = new MimeMessage(session);
             message.setFrom(new InternetAddress(SENDER_EMAIL, SENDER_NAME, "UTF-8"));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
-            message.setSubject("Mã xác thực đặt lại mật khẩu - Online Fruit Shop");
+            message.setSubject("Mã xác thực đặt lại mật khẩu - Online Fruit Shop", "UTF-8");
 
             String displayName = (recipientName != null && !recipientName.trim().isEmpty()) ? recipientName : "Quý khách";
             String htmlContent = "<!DOCTYPE html>"
@@ -115,11 +120,8 @@ public class EmailUtil {
         }
         new Thread(() -> {
             try {
-                if ("your_email@gmail.com".equals(SENDER_EMAIL) || "your_app_password_here".equals(SENDER_PASSWORD)) {
-                    LOGGER.info("=== [EmailUtil DEV MODE Notification] ===");
-                    LOGGER.info("Simulated email to: " + recipientEmail);
-                    LOGGER.info("Subject: " + subject);
-                    LOGGER.info("=========================================");
+                if (!isConfigured()) {
+                    LOGGER.warning("Notification email skipped because SMTP is not configured.");
                     return;
                 }
                 Properties props = new Properties();
@@ -128,26 +130,48 @@ public class EmailUtil {
                 props.put("mail.smtp.auth", "true");
                 props.put("mail.smtp.starttls.enable", "true");
                 props.put("mail.smtp.ssl.protocols", "TLSv1.2");
-                props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+                props.put("mail.smtp.ssl.trust", SMTP_HOST);
                 props.put("mail.smtp.connectiontimeout", "10000");
                 props.put("mail.smtp.timeout", "10000");
 
                 Session session = Session.getInstance(props, new Authenticator() {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD);
+                        return new PasswordAuthentication(SMTP_USERNAME, SMTP_PASSWORD);
                     }
                 });
 
-                Message message = new MimeMessage(session);
+                MimeMessage message = new MimeMessage(session);
                 message.setFrom(new InternetAddress(SENDER_EMAIL, SENDER_NAME, "UTF-8"));
                 message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
-                message.setSubject(subject);
+                message.setSubject(subject, "UTF-8");
                 message.setContent(htmlContent, "text/html; charset=UTF-8");
                 Transport.send(message);
             } catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Failed to send notification email to " + recipientEmail, ex);
             }
         }).start();
+    }
+
+    private static Properties loadConfiguration() {
+        Properties properties = new Properties();
+        try (InputStream input = EmailUtil.class.getClassLoader().getResourceAsStream("mail.properties")) {
+            if (input != null) {
+                properties.load(new InputStreamReader(input, StandardCharsets.UTF_8));
+                LOGGER.info("Successfully loaded SMTP configuration from mail.properties");
+            }
+        } catch (Exception ex) {
+            LOGGER.log(Level.WARNING, "Could not load mail.properties", ex);
+        }
+        return properties;
+    }
+
+    private static String getConfig(String propertyName, String environmentName, String defaultValue) {
+        String environmentValue = System.getenv(environmentName);
+        if (environmentValue != null && !environmentValue.isBlank()) {
+            return environmentValue.trim();
+        }
+        String propertyValue = CONFIG.getProperty(propertyName);
+        return propertyValue == null || propertyValue.isBlank() ? defaultValue : propertyValue.trim();
     }
 }

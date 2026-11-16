@@ -51,6 +51,18 @@
 
 
         <section id="featured" class="max-w-7xl mx-auto px-4 py-8">
+            <c:if test="${not empty successMessage}">
+                <div class="mb-5 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-800" role="status">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                    <c:out value="${successMessage}"/>
+                </div>
+            </c:if>
+            <c:if test="${not empty errorMessage}">
+                <div class="mb-5 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700" role="alert">
+                    <i class="fa-solid fa-circle-exclamation text-red-600"></i>
+                    <c:out value="${errorMessage}"/>
+                </div>
+            </c:if>
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h2 class="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight">Sản Phẩm Tươi Ngon Theo Danh Mục</h2>
@@ -116,6 +128,7 @@
                                         <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
                                         <input type="hidden" name="variantId" value="${p.defaultVariantId}" />
                                         <input type="hidden" name="quantity" value="1" />
+                                        <input type="hidden" name="returnUrl" value="/home" />
                                         <button type="submit" class="btn-add-cart" title="${p.defaultVariantId gt 0 ? 'Thêm vào giỏ hàng' : 'Sản phẩm đã hết hàng'}" ${p.defaultVariantId le 0 ? 'disabled' : ''}>
                                             <i class="fa-solid fa-cart-plus"></i>
                                         </button>

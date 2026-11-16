@@ -1,6 +1,7 @@
 package controller.auth;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jakarta.servlet.ServletException;
@@ -21,6 +22,8 @@ import util.SellerSessionUtil;
 public class LoginGoogleServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(LoginGoogleServlet.class.getName());
+    private static final String OAUTH_STATE = "googleOAuthState";
+    private static final String OAUTH_REDIRECT_URI = "googleOAuthRedirectUri";
     private final IUserService userService = new UserServiceImpl();
     private final UserDAO userDAO = new UserDAO();
 
@@ -29,13 +32,6 @@ public class LoginGoogleServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(true);
-
-        String error = request.getParameter("error");
-        if (error != null) {
-            session.setAttribute("errorMessage", "Đăng nhập Google bị hủy hoặc gặp lỗi: " + error);
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
 
         if (session.getAttribute("user") != null) {
             User loggedUser = (User) session.getAttribute("user");
@@ -46,18 +42,39 @@ public class LoginGoogleServlet extends HttpServlet {
         String code = request.getParameter("code");
 
         if (code == null || code.trim().isEmpty()) {
+            String error = request.getParameter("error");
+            if (error != null) {
+                clearOAuthSession(session);
+                session.setAttribute("errorMessage", "Đăng nhập Google đã bị hủy hoặc không được cấp quyền.");
+                response.sendRedirect(request.getContextPath() + "/login");
+                return;
+            }
             if (!GoogleOAuthUtil.isConfigured()) {
-                session.setAttribute("errorMessage", "Tính năng đăng nhập Google chưa được cấu hình Client ID & Secret từ Google Cloud!");
+                session.setAttribute("errorMessage", "Đăng nhập Google chưa được cấu hình. Hãy tạo src/java/oauth.properties từ file oauth.properties.example.");
                 response.sendRedirect(request.getContextPath() + "/login");
                 return;
             }
 
-            response.sendRedirect(GoogleOAuthUtil.getGoogleLoginUrl());
+            String redirectUri = resolveRedirectUri(request);
+            String state = UUID.randomUUID().toString();
+            session.setAttribute(OAUTH_STATE, state);
+            session.setAttribute(OAUTH_REDIRECT_URI, redirectUri);
+            response.sendRedirect(GoogleOAuthUtil.getGoogleLoginUrl(redirectUri, state));
             return;
         }
 
         try {
-            String accessToken = GoogleOAuthUtil.getToken(code);
+            String expectedState = (String) session.getAttribute(OAUTH_STATE);
+            String returnedState = request.getParameter("state");
+            if (expectedState == null || !expectedState.equals(returnedState)) {
+                throw new SecurityException("Phiên xác thực Google không hợp lệ hoặc đã hết hạn.");
+            }
+            String redirectUri = (String) session.getAttribute(OAUTH_REDIRECT_URI);
+            if (redirectUri == null || redirectUri.isBlank()) {
+                throw new SecurityException("Không tìm thấy URL callback của phiên đăng nhập Google.");
+            }
+
+            String accessToken = GoogleOAuthUtil.getToken(code, redirectUri);
             GoogleAccount googleUser = GoogleOAuthUtil.getUserInfo(accessToken);
 
             // Tài khoản Google chưa có trong hệ thống sẽ được tự tạo -> sau đó cho chọn vai trò
@@ -66,7 +83,12 @@ public class LoginGoogleServlet extends HttpServlet {
 
             User user = userService.processGoogleLogin(googleUser);
 
+            request.changeSessionId();
+            clearOAuthSession(session);
             session.setAttribute("user", user);
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("userfullname", user.getFullName());
+            session.setAttribute("email", user.getEmail());
             if (googleUser.getPicture() != null && !googleUser.getPicture().trim().isEmpty()) {
                 session.setAttribute("avatarUrl", googleUser.getPicture());
             } else if (user.getAvatarUrl() != null && !user.getAvatarUrl().trim().isEmpty()) {
@@ -85,9 +107,23 @@ public class LoginGoogleServlet extends HttpServlet {
             redirectAfterLogin(user, isNewAccount, session, request, response);
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Google Authentication Error", ex);
-            session.setAttribute("errorMessage", "Lỗi trong quá trình xác thực Google: " + ex.getMessage());
+            clearOAuthSession(session);
+            session.setAttribute("errorMessage", "Không thể xác thực tài khoản Google. Vui lòng thử lại.");
             response.sendRedirect(request.getContextPath() + "/login");
         }
+    }
+
+    private String resolveRedirectUri(HttpServletRequest request) {
+        String configuredRedirectUri = GoogleOAuthUtil.getConfiguredRedirectUri();
+        if (configuredRedirectUri != null) {
+            return configuredRedirectUri;
+        }
+        return request.getRequestURL().toString();
+    }
+
+    private void clearOAuthSession(HttpSession session) {
+        session.removeAttribute(OAUTH_STATE);
+        session.removeAttribute(OAUTH_REDIRECT_URI);
     }
 
     private void redirectAfterLogin(User user, boolean isNewAccount, HttpSession session,

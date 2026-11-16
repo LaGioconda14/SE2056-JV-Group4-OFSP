@@ -102,7 +102,21 @@ public class HomeServlet extends HttpServlet {
         request.setAttribute("wishlistIds", wishlistIds);
         request.setAttribute("wishlistCount", wishlistIds.size());
 
+        if (session != null) {
+            transferFlashMessage(session, request, "cartSuccess", "successMessage");
+            transferFlashMessage(session, request, "cartError", "errorMessage");
+        }
+
         request.getRequestDispatcher("/views/home.jsp").forward(request, response);
+    }
+
+    private void transferFlashMessage(HttpSession session, HttpServletRequest request,
+            String sessionKey, String requestKey) {
+        Object message = session.getAttribute(sessionKey);
+        if (message != null) {
+            request.setAttribute(requestKey, message);
+            session.removeAttribute(sessionKey);
+        }
     }
 
     @Override

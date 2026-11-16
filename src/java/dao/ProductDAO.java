@@ -1332,9 +1332,10 @@ public class ProductDAO extends DBContext {
                 + "    dv.variant_id AS default_variant_id, "
                 + "    COALESCE(v_stat.min_price, 100000) AS price, "
                 + "    v_stat.unit, "
-                + "    COALESCE(v_stat.total_stock, 0) AS total_stock "
-                + "FROM products p "
-                + "LEFT JOIN categories c ON p.category_id = c.category_id "
+            + "    COALESCE(v_stat.total_stock, 0) AS total_stock "
+            + "FROM products p "
+            + "INNER JOIN shops s ON s.shop_id = p.shop_id AND s.status = 'ACTIVE' "
+            + "LEFT JOIN categories c ON p.category_id = c.category_id "
                 // Gom nhóm giá, đơn vị tính, tổng tồn kho của biến thể trong 1 lần quét
                 + "LEFT JOIN ( "
                 + "    SELECT product_id, "

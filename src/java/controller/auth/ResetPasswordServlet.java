@@ -13,6 +13,8 @@ import service.impl.UserServiceImpl;
 @WebServlet(name = "ResetPasswordServlet", urlPatterns = {"/reset-password"})
 public class ResetPasswordServlet extends HttpServlet {
 
+    private static final long OTP_EXPIRY_MILLIS = 5 * 60 * 1000L;
+    private static final long RESEND_COOLDOWN_MILLIS = 30 * 1000L;
     private final IUserService userService = new UserServiceImpl();
 
     @Override
@@ -44,6 +46,11 @@ public class ResetPasswordServlet extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
+
+        if ("resend".equals(request.getParameter("action"))) {
+            resendOtp(request, response);
+            return;
+        }
 
         String email = request.getParameter("email");
         String otp = request.getParameter("otp");
@@ -102,6 +109,7 @@ public class ResetPasswordServlet extends HttpServlet {
             session.removeAttribute("resetEmail");
             session.removeAttribute("resetOtp");
             session.removeAttribute("otpExpiryTime");
+            session.removeAttribute("otpLastSentTime");
 
             session.setAttribute("successMessage", "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.");
             response.sendRedirect(request.getContextPath() + "/login");
@@ -109,5 +117,34 @@ public class ResetPasswordServlet extends HttpServlet {
             request.setAttribute("errorMessage", ex.getMessage());
             request.getRequestDispatcher("/views/auth/reset-password.jsp").forward(request, response);
         }
+    }
+
+    private void resendOtp(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("resetEmail") == null) {
+            response.sendRedirect(request.getContextPath() + "/forgot-password");
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        Long lastSentTime = (Long) session.getAttribute("otpLastSentTime");
+        if (lastSentTime != null && now - lastSentTime < RESEND_COOLDOWN_MILLIS) {
+            long remainingSeconds = (RESEND_COOLDOWN_MILLIS - (now - lastSentTime) + 999) / 1000;
+            session.setAttribute("errorMessage", "Vui lòng đợi " + remainingSeconds + " giây trước khi gửi lại mã OTP.");
+            response.sendRedirect(request.getContextPath() + "/reset-password");
+            return;
+        }
+
+        String email = (String) session.getAttribute("resetEmail");
+        try {
+            String otp = userService.sendForgotPasswordOtp(email);
+            session.setAttribute("resetOtp", otp);
+            session.setAttribute("otpExpiryTime", now + OTP_EXPIRY_MILLIS);
+            session.setAttribute("otpLastSentTime", now);
+            session.setAttribute("successMessage", "Mã OTP mới đã được gửi đến email: " + email + ".");
+        } catch (Exception ex) {
+            session.setAttribute("errorMessage", ex.getMessage());
+        }
+        response.sendRedirect(request.getContextPath() + "/reset-password");
     }
 }

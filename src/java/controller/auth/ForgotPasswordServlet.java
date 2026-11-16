@@ -41,6 +41,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             session.setAttribute("resetEmail", email);
             session.setAttribute("resetOtp", otp);
             session.setAttribute("otpExpiryTime", expiryTime);
+            session.setAttribute("otpLastSentTime", System.currentTimeMillis());
             session.setAttribute("successMessage", "Mã xác thực OTP đã được gửi đến email: " + email + ". Mã có hiệu lực trong 5 phút!");
 
             response.sendRedirect(request.getContextPath() + "/reset-password");

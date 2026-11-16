@@ -1,0 +1,8 @@
+# Copy this file to src/java/mail.properties and keep the real credentials out of Git.
+# For Gmail, enable 2-Step Verification and use a 16-character App Password.
+mail.smtp.host=smtp.gmail.com
+mail.smtp.port=587
+mail.smtp.username=your_email@gmail.com
+mail.smtp.password=your_16_character_app_password
+mail.from.email=your_email@gmail.com
+mail.from.name=Gốc Vườn

@@ -66,6 +66,18 @@ function initPasswordMatchCheck() {
 function initSocialLogin() {
 }
 
+function initForgotPasswordForm() {
+    const form = document.getElementById('forgotForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function () {
+        const button = form.querySelector('button[type="submit"]');
+        if (!button || !form.checkValidity()) return;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span><span>Đang gửi mã OTP...</span>';
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const emailInput = document.getElementById('email');
     if (emailInput && emailInput.value) {
@@ -74,4 +86,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initPasswordMatchCheck();
     initSocialLogin();
+    initForgotPasswordForm();
 });
