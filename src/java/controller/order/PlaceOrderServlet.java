@@ -174,6 +174,8 @@ public class PlaceOrderServlet extends HttpServlet {
             session.removeAttribute("checkoutCouponCode");
             session.removeAttribute("checkoutShopCoupons");
             session.removeAttribute("checkoutFormDraft");
+            // Các mặt hàng vừa đặt đã bị xóa khỏi DB; buộc badge đọc lại số lượng còn lại.
+            session.removeAttribute("cartSize");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
             // Gửi thông báo đặt hàng thành công
             try {
