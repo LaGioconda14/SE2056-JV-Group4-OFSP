@@ -76,7 +76,7 @@ public class ShopStorefrontServlet extends HttpServlet {
         request.setAttribute("totalProductsCount", totalProductsCount);
         request.setAttribute("selectedSort", sort);
 
-        request.getRequestDispatcher("/views/shop/shop-storefront.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/dashboard/storefront.jsp").forward(request, response);
     }
 
     @Override

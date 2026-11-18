@@ -43,10 +43,11 @@ public class ShopOrdersServlet extends HttpServlet {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
             }
+        }
+        if (shopId == null || shopId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
         }
 
         String statusTab = request.getParameter("status");
@@ -84,6 +85,6 @@ public class ShopOrdersServlet extends HttpServlet {
         request.setAttribute("countCancelled", countCancelled);
         request.setAttribute("activeMenu", "orders");
 
-        request.getRequestDispatcher("/views/shop/shop-orders.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/orders/list.jsp").forward(request, response);
     }
 }

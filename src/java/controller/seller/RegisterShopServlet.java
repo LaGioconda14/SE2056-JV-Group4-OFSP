@@ -85,7 +85,7 @@ public class RegisterShopServlet extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("/views/shop/register-shop.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/onboarding/register.jsp").forward(request, response);
     }
 
     @Override
@@ -158,13 +158,13 @@ public class RegisterShopServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/seller/status?submitted=1");
             } else {
                 request.setAttribute("errorMessage", "Đã xảy ra lỗi khi lưu vào cơ sở dữ liệu. Vui lòng thử lại!");
-                request.getRequestDispatcher("/views/shop/register-shop.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/shop/onboarding/register.jsp").forward(request, response);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
-            request.getRequestDispatcher("/views/shop/register-shop.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/onboarding/register.jsp").forward(request, response);
         }
     }
 }

@@ -50,10 +50,11 @@ public class ShopReviewsServlet extends HttpServlet {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
             }
+        }
+        if (shopId == null || shopId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
         }
 
         // Filters
@@ -123,11 +124,11 @@ public class ShopReviewsServlet extends HttpServlet {
             request.setAttribute("selectedStatus", statusParam);
             request.setAttribute("keyword", keyword != null ? keyword : "");
 
-            request.getRequestDispatcher("/views/shop/shop-reviews.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/marketing/reviews.jsp").forward(request, response);
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, "Error loading shop reviews", ex);
             request.setAttribute("errorMessage", "Không thể tải danh sách đánh giá: " + ex.getMessage());
-            request.getRequestDispatcher("/views/shop/shop-reviews.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/marketing/reviews.jsp").forward(request, response);
         }
     }
 
@@ -151,10 +152,11 @@ public class ShopReviewsServlet extends HttpServlet {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
             }
+        }
+        if (shopId == null || shopId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
         }
 
         String action = request.getParameter("action");

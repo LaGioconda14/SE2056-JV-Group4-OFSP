@@ -162,7 +162,7 @@ public class ShopDashboardServlet extends HttpServlet {
         request.setAttribute("rangeLabel", rangeLabel);
         request.setAttribute("fromDate", java.sql.Date.valueOf(from));
         request.setAttribute("toDate", java.sql.Date.valueOf(today));
-        request.getRequestDispatcher("/views/shop/shop-dashboard.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/dashboard/index.jsp").forward(request, response);
     }
 
     /** % thay đổi so với kỳ trước; null nếu kỳ trước = 0 (không so sánh được). */

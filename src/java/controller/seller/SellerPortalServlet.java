@@ -80,6 +80,6 @@ public class SellerPortalServlet extends HttpServlet {
 
         request.setAttribute("sellerState", state);
         request.setAttribute("shopRequest", latest);
-        request.getRequestDispatcher("/views/shop/seller-status.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/onboarding/status.jsp").forward(request, response);
     }
 }

@@ -56,7 +56,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
                 request.setAttribute("voucher", v);
                 request.setAttribute("usageStats", voucherService.getUsageStats(id));
                 request.setAttribute("usageList", voucherService.getUsageHistory(id, 200));
-                request.getRequestDispatcher("/views/shop/shop-voucher-usage.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/shop/marketing/voucher-usage.jsp").forward(request, response);
                 return;
             }
             if (v.getTerminatedAt() != null) {
@@ -80,7 +80,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
         request.setAttribute("summary", voucherService.getShopSummary(shopId));
         request.setAttribute("tab", tab);
         request.setAttribute("q", q == null ? "" : q);
-        request.getRequestDispatcher("/views/shop/shop-vouchers.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/marketing/vouchers.jsp").forward(request, response);
     }
 
     @Override
@@ -168,7 +168,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
         request.setAttribute("voucher", v);
         request.setAttribute("mode", mode);
         request.setAttribute("pickerProducts", promotionService.getShopProductsForPicker(shopId));
-        request.getRequestDispatcher("/views/shop/shop-voucher-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/marketing/voucher-form.jsp").forward(request, response);
     }
 
     private Voucher readForm(HttpServletRequest req, Voucher existing) {

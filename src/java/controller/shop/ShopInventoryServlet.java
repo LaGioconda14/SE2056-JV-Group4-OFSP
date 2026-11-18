@@ -13,16 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import dao.ShopDAO;
 import model.dto.inventory.InventoryBatchItem;
-import model.entity.inventory.InventoryWasteLog;
-import model.dto.product.ProductVariantStockDTO;
 import model.entity.user.User;
-import model.dto.inventory.WasteStatisticDTO;
 import service.IInventoryService;
-import service.IInventoryWasteService;
 import service.IProductService;
 import service.IShopProductService;
 import service.impl.InventoryServiceImpl;
-import service.impl.InventoryWasteServiceImpl;
 import service.impl.ProductServiceImpl;
 import service.impl.ShopProductServiceImpl;
 
@@ -33,7 +28,6 @@ public class ShopInventoryServlet extends HttpServlet {
     private static final int DEFAULT_PAGE_SIZE = 15;
 
     private final IInventoryService inventoryService = new InventoryServiceImpl();
-    private final IInventoryWasteService wasteService = new InventoryWasteServiceImpl();
     private final IShopProductService shopProductService = new ShopProductServiceImpl();
     private final IProductService productService = new ProductServiceImpl();
     private final ShopDAO shopDAO = new ShopDAO();
@@ -63,8 +57,8 @@ public class ShopInventoryServlet extends HttpServlet {
             }
         }
         if (shopId == null || shopId <= 0) {
-            shopId = 1L;
-            session.setAttribute("shopId", shopId);
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
         }
 
         try {
@@ -83,108 +77,62 @@ public class ShopInventoryServlet extends HttpServlet {
             request.setAttribute("viewTab", viewTab);
             request.setAttribute("activeMenu", "inventory");
 
-            if ("waste".equals(viewTab)) {
-                // --- Xử lý tab Hao hụt nông sản (Waste log) ---
-                String stage = request.getParameter("stage");
-                if (stage == null || stage.trim().isEmpty()) {
-                    stage = "ALL";
-                } else {
-                    stage = stage.trim().toUpperCase();
-                }
-
-                String keyword = request.getParameter("keyword");
-                if (keyword != null) {
-                    keyword = keyword.trim();
-                }
-
-                int page = 1;
-                try {
-                    String p = request.getParameter("page");
-                    if (p != null && !p.trim().isEmpty()) {
-                        page = Math.max(1, Integer.parseInt(p.trim()));
-                    }
-                } catch (NumberFormatException ignored) {
-                    page = 1;
-                }
-
-                List<InventoryWasteLog> logs = wasteService.getWasteLogsByShop(shopId, stage, keyword, page, DEFAULT_PAGE_SIZE);
-                int totalItems = wasteService.countWasteLogsByShop(shopId, stage, keyword);
-                int totalPages = (int) Math.ceil((double) totalItems / DEFAULT_PAGE_SIZE);
-
-                int lowStockCount = shopDAO.getLowStockCountByShopId(shopId);
-                session.setAttribute("lowStockCount", lowStockCount);
-                request.setAttribute("lowStockCount", lowStockCount);
-
-                WasteStatisticDTO stats = wasteService.getWasteStatisticsByShop(shopId);
-                List<ProductVariantStockDTO> variants = productService.getVariantsByShopId(shopId);
-
-                request.setAttribute("wasteLogs", logs);
-                request.setAttribute("stats", stats);
-                request.setAttribute("variants", variants);
-                request.setAttribute("currentStage", stage);
-                request.setAttribute("keyword", keyword != null ? keyword : "");
-                request.setAttribute("currentPage", page);
-                request.setAttribute("totalPages", Math.max(1, totalPages));
-                request.setAttribute("totalItems", totalItems);
-
-            } else {
-                // --- Xử lý tab Tồn kho & Cảnh báo độ tươi ---
-                String keyword = request.getParameter("keyword");
-                if (keyword != null) {
-                    keyword = keyword.trim();
-                }
-
-                String riskLevel = request.getParameter("riskLevel");
-                String sortBy = request.getParameter("sortBy");
-                if (sortBy == null || sortBy.trim().isEmpty()) {
-                    sortBy = "stock_asc";
-                }
-
-                int page = 1;
-                int pageSize = 10;
-                try {
-                    String p = request.getParameter("page");
-                    if (p != null && !p.trim().isEmpty()) {
-                        page = Math.max(1, Integer.parseInt(p.trim()));
-                    }
-                } catch (NumberFormatException ignored) {
-                    page = 1;
-                }
-
-                List<InventoryBatchItem> inventoryList = inventoryService.getInventoryAlertItems(shopId, keyword, riskLevel, sortBy, viewTab, page, pageSize);
-
-                int totalCount = inventoryService.countInventoryAlertItems(shopId, keyword, riskLevel, viewTab);
-                int totalPages = (int) Math.ceil((double) totalCount / pageSize);
-                if (totalPages < 1) totalPages = 1;
-
-                int criticalStockCount = inventoryService.getCriticalStockCount(shopId);
-                String criticalNames = inventoryService.getCriticalItemNames(shopId);
-                int expiringFreshnessCount = inventoryService.getExpiringFreshnessCount(shopId);
-                BigDecimal totalInventoryValue = inventoryService.getTotalInventoryValue(shopId);
-                int totalSkus = productService.countVariantsByShopId(shopId);
-
-                request.setAttribute("inventoryList", inventoryList);
-                request.setAttribute("keyword", keyword != null ? keyword : "");
-                request.setAttribute("riskLevel", riskLevel);
-                request.setAttribute("sortBy", sortBy);
-                request.setAttribute("page", page);
-                request.setAttribute("pageSize", pageSize);
-                request.setAttribute("totalCount", totalCount);
-                request.setAttribute("totalPages", totalPages);
-
-                request.setAttribute("criticalStockCount", criticalStockCount);
-                request.setAttribute("criticalNames", criticalNames);
-                request.setAttribute("expiringFreshnessCount", expiringFreshnessCount);
-                request.setAttribute("totalInventoryValue", totalInventoryValue);
-                request.setAttribute("totalSkus", totalSkus);
+            // --- Xử lý tab Tồn kho & Cảnh báo độ tươi ---
+            String keyword = request.getParameter("keyword");
+            if (keyword != null) {
+                keyword = keyword.trim();
             }
+
+            String riskLevel = request.getParameter("riskLevel");
+            String sortBy = request.getParameter("sortBy");
+            if (sortBy == null || sortBy.trim().isEmpty()) {
+                sortBy = "stock_asc";
+            }
+
+            int page = 1;
+            int pageSize = 10;
+            try {
+                String p = request.getParameter("page");
+                if (p != null && !p.trim().isEmpty()) {
+                    page = Math.max(1, Integer.parseInt(p.trim()));
+                }
+            } catch (NumberFormatException ignored) {
+                page = 1;
+            }
+
+            List<InventoryBatchItem> inventoryList = inventoryService.getInventoryAlertItems(shopId, keyword, riskLevel, sortBy, viewTab, page, pageSize);
+
+            int totalCount = inventoryService.countInventoryAlertItems(shopId, keyword, riskLevel, viewTab);
+            int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+            if (totalPages < 1) totalPages = 1;
+
+            int criticalStockCount = inventoryService.getCriticalStockCount(shopId);
+            String criticalNames = inventoryService.getCriticalItemNames(shopId);
+            int expiringFreshnessCount = inventoryService.getExpiringFreshnessCount(shopId);
+            BigDecimal totalInventoryValue = inventoryService.getTotalInventoryValue(shopId);
+            int totalSkus = productService.countVariantsByShopId(shopId);
+
+            request.setAttribute("inventoryList", inventoryList);
+            request.setAttribute("keyword", keyword != null ? keyword : "");
+            request.setAttribute("riskLevel", riskLevel);
+            request.setAttribute("sortBy", sortBy);
+            request.setAttribute("page", page);
+            request.setAttribute("pageSize", pageSize);
+            request.setAttribute("totalCount", totalCount);
+            request.setAttribute("totalPages", totalPages);
+
+            request.setAttribute("criticalStockCount", criticalStockCount);
+            request.setAttribute("criticalNames", criticalNames);
+            request.setAttribute("expiringFreshnessCount", expiringFreshnessCount);
+            request.setAttribute("totalInventoryValue", totalInventoryValue);
+            request.setAttribute("totalSkus", totalSkus);
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi tải quản lý tồn kho", e);
             request.setAttribute("errorMessage", "Lỗi tải quản lý tồn kho: " + e.getMessage());
         }
 
-        request.getRequestDispatcher("/views/shop/shop-inventory.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/inventory/batches.jsp").forward(request, response);
     }
 
     @Override
@@ -207,7 +155,8 @@ public class ShopInventoryServlet extends HttpServlet {
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
             } else {
-                shopId = 1L;
+                response.sendRedirect(request.getContextPath() + "/register-shop");
+                return;
             }
         }
 
@@ -232,26 +181,6 @@ public class ShopInventoryServlet extends HttpServlet {
                 shopProductService.toggleVariantStatus(variantId, shopId);
                 session.setAttribute("successMessage", "Đã thay đổi trạng thái ẩn/hiện sản phẩm thành công!");
                 redirectTab = "all";
-            } else if ("manual_waste".equalsIgnoreCase(action)) {
-                long variantId = Long.parseLong(request.getParameter("variantId"));
-                int quantity = Integer.parseInt(request.getParameter("quantity"));
-                String reason = request.getParameter("reasonNote");
-
-                if (quantity <= 0 || reason == null || reason.trim().isEmpty()) {
-                    session.setAttribute("errorMessage", "Thông tin tiêu hủy không hợp lệ!");
-                    redirectTab = "waste";
-                    response.sendRedirect(request.getContextPath() + "/shop/inventory?viewTab=" + redirectTab);
-                    return;
-                }
-
-                Long loggedBy = (long) user.getId();
-                boolean ok = wasteService.recordManualWaste(shopId, variantId, quantity, reason.trim(), loggedBy);
-                if (ok) {
-                    session.setAttribute("successMessage", "Ghi nhận tiêu hủy " + quantity + " đơn vị thành công!");
-                } else {
-                    session.setAttribute("errorMessage", "Số lượng tiêu hủy vượt quá tồn kho hiện tại!");
-                }
-                redirectTab = "waste";
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Lỗi thao tác tồn kho trong doPost", e);

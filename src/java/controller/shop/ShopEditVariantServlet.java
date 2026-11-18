@@ -35,7 +35,7 @@ public class ShopEditVariantServlet extends HttpServlet {
             return;
         }
         request.setAttribute("variant", variant);
-        request.getRequestDispatcher("/views/shop/shop-product-editvariant.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/products/variant-edit.jsp").forward(request, response);
     }
 
     @Override
@@ -73,7 +73,7 @@ public class ShopEditVariantServlet extends HttpServlet {
                 return;
             }
             request.setAttribute("variant", variant);
-            request.getRequestDispatcher("/views/shop/shop-product-editvariant.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/products/variant-edit.jsp").forward(request, response);
         }
     }
 

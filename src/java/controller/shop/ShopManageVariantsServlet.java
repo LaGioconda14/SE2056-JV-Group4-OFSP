@@ -50,7 +50,7 @@ public class ShopManageVariantsServlet extends HttpServlet {
             request.setAttribute("variants", variants);
             request.setAttribute("successMessage", session.getAttribute("successMessage"));
             session.removeAttribute("successMessage");
-            request.getRequestDispatcher("/views/shop/shop-product-variants.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/products/variants.jsp").forward(request, response);
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/shop/products");
         }

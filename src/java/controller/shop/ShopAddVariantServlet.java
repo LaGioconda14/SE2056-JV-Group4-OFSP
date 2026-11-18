@@ -28,7 +28,7 @@ public class ShopAddVariantServlet extends HttpServlet {
             return;
         }
         request.setAttribute("productSummary", productSummary);
-        request.getRequestDispatcher("/views/shop/shop-product-addvariant.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/products/variant-add.jsp").forward(request, response);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class ShopAddVariantServlet extends HttpServlet {
         } catch (IllegalArgumentException e) {
             request.setAttribute("errorMessage", e.getMessage());
             request.setAttribute("productSummary", productSummary);
-            request.getRequestDispatcher("/views/shop/shop-product-addvariant.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/products/variant-add.jsp").forward(request, response);
         }
     }
 

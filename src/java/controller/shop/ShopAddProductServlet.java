@@ -6,7 +6,6 @@ package controller.shop;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Paths;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -38,22 +37,6 @@ public class ShopAddProductServlet extends HttpServlet {
 
     private final IProductService productService = new ProductServiceImpl();
 
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet ShopAddProductServlet</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet ShopAddProductServlet at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    }
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -80,7 +63,7 @@ public class ShopAddProductServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/products/add.jsp").forward(request, response);
     }
 
     @Override
@@ -170,18 +153,18 @@ public class ShopAddProductServlet extends HttpServlet {
             } else {
                 request.setAttribute("errorMessage", "Thêm sản phẩm thất bại, vui lòng kiểm tra lại thông tin!");
                 reloadFormData(request);
-                request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+                request.getRequestDispatcher("/views/shop/products/add.jsp").forward(request, response);
             }
 
         } catch (IllegalArgumentException e) {
             request.setAttribute("errorMessage", e.getMessage());
             reloadFormData(request);
-            request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/products/add.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("errorMessage", "Lỗi hệ thống: " + e.getMessage());
             reloadFormData(request);
-            request.getRequestDispatcher("/views/shop/shop-add-product.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/products/add.jsp").forward(request, response);
         }
     }
 
@@ -228,10 +211,5 @@ public class ShopAddProductServlet extends HttpServlet {
             request.setAttribute("storageTemps", productService.getAllStorageTemps());
             request.setAttribute("units", productService.getAllUnits());
         } catch (Exception ignored) {}
-    }
-
-    @Override
-    public String getServletInfo() {
-        return "Short description";
     }
 }

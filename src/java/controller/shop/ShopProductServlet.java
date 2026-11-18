@@ -48,6 +48,10 @@ public class ShopProductServlet extends HttpServlet {
                 session.setAttribute("shop", shop);
             }
         }
+        if (shopId == null || shopId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
+        }
 
         // 3. Xử lý thông báo chuyển tiếp (Flash message) nếu có
         String message = request.getParameter("message");
@@ -68,50 +72,48 @@ public class ShopProductServlet extends HttpServlet {
         }
 
         // 4. Lấy danh sách sản phẩm và biến thể của shop
-        if (shopId != null) {
-            // Lấy danh sách tóm tắt Product (kèm biến thể count, giá min-max, tổng tồn kho)
-            List<ProductCardDTO> products = productService.getProductSummariesByShopId(shopId);
-            request.setAttribute("products", products);
-            request.setAttribute("totalProductsCount", productService.countProductsByShopId(shopId));
+        // Lấy danh sách tóm tắt Product (kèm biến thể count, giá min-max, tổng tồn kho)
+        List<ProductCardDTO> products = productService.getProductSummariesByShopId(shopId);
+        request.setAttribute("products", products);
+        int totalProducts = productService.countProductsByShopId(shopId);
+        request.setAttribute("totalProductsCount", totalProducts);
+        request.setAttribute("totalProducts", totalProducts);
 
-            request.setAttribute("tabAllProductCount", productService.countProductsByStatusTab(shopId, "all"));
-            request.setAttribute("tabActiveProductCount", productService.countProductsByStatusTab(shopId, "active"));
-            request.setAttribute("tabVietgapProductCount", productService.countProductsByStatusTab(shopId, "vietgap"));
-            request.setAttribute("tabHiddenProductCount", productService.countProductsByStatusTab(shopId, "hidden"));
-            request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
+        request.setAttribute("tabAllProductCount", productService.countProductsByStatusTab(shopId, "all"));
+        request.setAttribute("tabActiveProductCount", productService.countProductsByStatusTab(shopId, "active"));
+        request.setAttribute("tabVietgapProductCount", productService.countProductsByStatusTab(shopId, "vietgap"));
+        request.setAttribute("tabHiddenProductCount", productService.countProductsByStatusTab(shopId, "hidden"));
+        request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
 
-            // Hỗ trợ tương thích ngược cho các tab variant
-            List<ProductVariantStockDTO> listVariants = productService.getVariantsByShopId(shopId);
-            request.setAttribute("listVariants", listVariants);
-            request.setAttribute("totalVariantsCount", listVariants != null ? listVariants.size() : 0);
-            int totalProducts = productService.countProductsByShopId(shopId);
-            int totalSkus = productService.countVariantsByShopId(shopId);
-            request.setAttribute("totalProducts", totalProducts);
-            request.setAttribute("totalSkus", totalSkus);
+        // Hỗ trợ tương thích ngược cho các tab variant
+        List<ProductVariantStockDTO> listVariants = productService.getVariantsByShopId(shopId);
+        request.setAttribute("listVariants", listVariants);
+        request.setAttribute("totalVariantsCount", listVariants != null ? listVariants.size() : 0);
+        int totalSkus = productService.countVariantsByShopId(shopId);
+        request.setAttribute("totalSkus", totalSkus);
 
-            int tabAllCount = productService.countVariantsByStatusTab(shopId, "all");
-            int tabActiveCount = productService.countVariantsByStatusTab(shopId, "active");
-            int tabVietgapCount = productService.countVariantsByStatusTab(shopId, "vietgap");
-            int tabHiddenCount = productService.countVariantsByStatusTab(shopId, "hidden");
-            int tabWarningCount = productService.countVariantsByStatusTab(shopId, "warning");
+        int tabAllCount = productService.countVariantsByStatusTab(shopId, "all");
+        int tabActiveCount = productService.countVariantsByStatusTab(shopId, "active");
+        int tabVietgapCount = productService.countVariantsByStatusTab(shopId, "vietgap");
+        int tabHiddenCount = productService.countVariantsByStatusTab(shopId, "hidden");
+        int tabWarningCount = productService.countVariantsByStatusTab(shopId, "warning");
 
-            request.setAttribute("tabAllCount", tabAllCount);
-            request.setAttribute("tabActiveCount", tabActiveCount);
-            request.setAttribute("tabVietgapCount", tabVietgapCount);
-            request.setAttribute("tabHiddenCount", tabHiddenCount);
-            request.setAttribute("tabWarningCount", tabWarningCount);
+        request.setAttribute("tabAllCount", tabAllCount);
+        request.setAttribute("tabActiveCount", tabActiveCount);
+        request.setAttribute("tabVietgapCount", tabVietgapCount);
+        request.setAttribute("tabHiddenCount", tabHiddenCount);
+        request.setAttribute("tabWarningCount", tabWarningCount);
 
-            int shopSubOrdersCount = fulfillmentService.countSubOrdersByShop(shopId, null);
-            session.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
-            request.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
+        int shopSubOrdersCount = fulfillmentService.countSubOrdersByShop(shopId, null);
+        session.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
+        request.setAttribute("shopSubOrdersCount", shopSubOrdersCount);
 
-            int lowStockCount = shopDAO.getLowStockCountByShopId(shopId);
-            session.setAttribute("lowStockCount", lowStockCount);
-            request.setAttribute("lowStockCount", lowStockCount);
-        }
+        int lowStockCount = shopDAO.getLowStockCountByShopId(shopId);
+        session.setAttribute("lowStockCount", lowStockCount);
+        request.setAttribute("lowStockCount", lowStockCount);
 
         // 5. Forward sang trang JSP
-        request.getRequestDispatcher("/views/shop/shop-products.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/products/list.jsp").forward(request, response);
     }
 
     @Override

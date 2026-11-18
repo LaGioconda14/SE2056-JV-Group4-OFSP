@@ -61,10 +61,11 @@ public class ShopWasteServlet extends HttpServlet {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
             }
+        }
+        if (shopId == null || shopId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
         }
 
         try {
@@ -122,7 +123,7 @@ public class ShopWasteServlet extends HttpServlet {
             request.setAttribute("errorMessage", "Lỗi tải quản lý hao hụt: " + e.getMessage());
         }
 
-        request.getRequestDispatcher("/views/shop/shop-waste.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/inventory/waste.jsp").forward(request, response);
     }
 
     @Override
@@ -146,7 +147,8 @@ public class ShopWasteServlet extends HttpServlet {
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
             } else {
-                shopId = 1L;
+                response.sendRedirect(request.getContextPath() + "/register-shop");
+                return;
             }
         }
 

@@ -77,7 +77,7 @@ public class ShopOrderDetailServlet extends HttpServlet {
 
         request.setAttribute("subOrder", subOrder);
         request.setAttribute("activeMenu", "orders");
-        request.getRequestDispatcher("/views/shop/shop-order-detail.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/orders/detail.jsp").forward(request, response);
     }
 
     @Override
@@ -86,7 +86,6 @@ public class ShopOrderDetailServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html; charset=UTF-8");
 
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;

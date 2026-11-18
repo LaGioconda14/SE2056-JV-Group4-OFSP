@@ -31,7 +31,6 @@ public class ShopShippersServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html; charset=UTF-8");
 
         HttpSession session = request.getSession();
         User user = (session != null) ? (User) session.getAttribute("user") : null;
@@ -46,10 +45,11 @@ public class ShopShippersServlet extends HttpServlet {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
             }
+        }
+        if (shopId == null || shopId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
         }
 
         List<DriverProfile> drivers = driverService.getDriversByShopId(shopId, null, null);
@@ -57,7 +57,7 @@ public class ShopShippersServlet extends HttpServlet {
         request.setAttribute("drivers", drivers);
         request.setAttribute("activeMenu", "shippers");
 
-        request.getRequestDispatcher("/views/shop/shop-shippers.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/orders/shippers.jsp").forward(request, response);
     }
 
     @Override
@@ -66,7 +66,6 @@ public class ShopShippersServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
-        response.setContentType("text/html; charset=UTF-8");
 
         HttpSession session = request.getSession();
         User user = (session != null) ? (User) session.getAttribute("user") : null;
@@ -81,10 +80,11 @@ public class ShopShippersServlet extends HttpServlet {
             shopId = shopProductService.getShopIDByOwnerID(user.getId());
             if (shopId != null && shopId > 0) {
                 session.setAttribute("shopId", shopId);
-            } else {
-                shopId = 1L;
-                session.setAttribute("shopId", shopId);
             }
+        }
+        if (shopId == null || shopId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/register-shop");
+            return;
         }
 
         String action = request.getParameter("action");

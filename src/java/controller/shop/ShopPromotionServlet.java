@@ -72,7 +72,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         request.setAttribute("summary", promotionService.getShopSummary(shopId));
         request.setAttribute("tab", tab);
         request.setAttribute("q", q == null ? "" : q);
-        request.getRequestDispatcher("/views/shop/shop-promotions.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/marketing/promotions.jsp").forward(request, response);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class ShopPromotionServlet extends BaseShopServlet {
         request.setAttribute("variantPickerEnabled", Boolean.TRUE);
         request.setAttribute("selectedVariantIds", p.getVariantIds());
         request.setAttribute("pickerProducts", promotionService.getShopProductsForPicker(shopId));
-        request.getRequestDispatcher("/views/shop/shop-promotion-form.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/marketing/promotion-form.jsp").forward(request, response);
     }
 
     private Promotion readForm(HttpServletRequest req, long shopId, long id) {

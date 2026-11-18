@@ -55,7 +55,7 @@ public class ShopProfileServlet extends HttpServlet {
         User owner = shopProfileService.getOwnerById(user.getId());
         request.setAttribute("owner", owner != null ? owner : user);
 
-        request.getRequestDispatcher("/views/shop/shop-profile.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/dashboard/profile.jsp").forward(request, response);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class ShopProfileServlet extends HttpServlet {
             if (refreshed != null) {
                 session.setAttribute("shopObj", refreshed);
                 session.setAttribute("shopLogo", refreshed.getLogoUrl());
-                session.setAttribute("shop", refreshed.getStatus());
+                session.setAttribute("shopStatus", refreshed.getStatus());
             }
             if (shopName != null && !shopName.trim().isEmpty()) {
                 session.setAttribute("shopName", shopName.trim());

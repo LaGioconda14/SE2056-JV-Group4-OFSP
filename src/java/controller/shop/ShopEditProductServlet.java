@@ -93,7 +93,7 @@ public class ShopEditProductServlet extends HttpServlet {
             return;
         }
 
-        request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/products/edit.jsp").forward(request, response);
     } 
 
     @Override
@@ -258,11 +258,6 @@ public class ShopEditProductServlet extends HttpServlet {
         request.setAttribute("detailImage3", img3);
         request.setAttribute("detailImage4", img4);
         loadDropdownData(request);
-        request.getRequestDispatcher("/views/shop/shop-edit-product.jsp").forward(request, response);
-    }
-
-    @Override
-    public String getServletInfo() {
-        return "ShopEditProductServlet";
+        request.getRequestDispatcher("/views/shop/products/edit.jsp").forward(request, response);
     }
 }
