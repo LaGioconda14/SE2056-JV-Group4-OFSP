@@ -72,7 +72,7 @@
                     </div>
                 </div>
 
-                <!-- STATUS TABS -->
+                <!-- STATUS TABS CHUẨN HÓA THEO PRODUCT_STATUS -->
                 <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
                     <a href="${ctx}/shop/products?statusTab=all"
                        class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${empty statusTab || statusTab == 'all' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
@@ -83,25 +83,25 @@
                     <a href="${ctx}/shop/products?statusTab=active"
                        class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'active' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
                         <span>Đang mở bán</span>
-                        <span class="px-2 py-0.5 rounded-md text-[10px] ${statusTab == 'active' ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600'}">${not empty tabActiveProductCount ? tabActiveProductCount : 0}</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] ${statusTab == 'active' ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-800 font-extrabold'}">${not empty tabActiveProductCount ? tabActiveProductCount : 0}</span>
                     </a>
 
-                    <a href="${ctx}/shop/products?statusTab=vietgap"
-                       class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'vietgap' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
-                        <span>Chờ duyệt VietGAP</span>
-                        <span class="px-2 py-0.5 rounded-md text-[10px] bg-amber-100 text-amber-800 font-extrabold">${not empty tabVietgapProductCount ? tabVietgapProductCount : 0}</span>
+                    <a href="${ctx}/shop/products?statusTab=low_stock"
+                       class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'low_stock' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
+                        <span>Sắp hết hàng</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] bg-amber-100 text-amber-800 font-extrabold">${not empty tabLowStockProductCount ? tabLowStockProductCount : 0}</span>
+                    </a>
+
+                    <a href="${ctx}/shop/products?statusTab=out_of_stock"
+                       class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'out_of_stock' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
+                        <span>Hết hàng</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] bg-rose-100 text-rose-700 font-extrabold">${not empty tabOutOfStockProductCount ? tabOutOfStockProductCount : 0}</span>
                     </a>
 
                     <a href="${ctx}/shop/products?statusTab=hidden"
                        class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'hidden' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
-                        <span>Hết hàng / Tạm ẩn</span>
-                        <span class="px-2 py-0.5 rounded-md text-[10px] bg-rose-100 text-rose-700 font-extrabold">${not empty tabHiddenProductCount ? tabHiddenProductCount : 0}</span>
-                    </a>
-
-                    <a href="${ctx}/shop/products?statusTab=warning"
-                       class="px-4 py-2 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap shadow-2xs ${statusTab == 'warning' ? 'bg-emerald-700 text-white shadow-emerald-700/20' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">
-                        <span>Vi phạm / Cảnh báo</span>
-                        <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 text-slate-600">${not empty tabWarningProductCount ? tabWarningProductCount : 0}</span>
+                        <span>Tạm ẩn</span>
+                        <span class="px-2 py-0.5 rounded-md text-[10px] bg-slate-100 text-slate-600">${not empty tabHiddenProductCount ? tabHiddenProductCount : 0}</span>
                     </a>
                 </div>
 
@@ -246,21 +246,26 @@
                                                 </div>
                                             </td>
 
-                                            <!-- Cột Trạng thái -->
+                                            <!-- Cột Trạng thái chuẩn hóa theo ProductStatus -->
                                             <td class="py-4 px-3 align-middle whitespace-nowrap">
                                                 <div class="flex flex-col items-start gap-1">
                                                     <c:choose>
-                                                        <c:when test="${product.active && product.stockQuantity > 0}">
+                                                        <c:when test="${product.productStatus == 'ACTIVE'}">
                                                             <span class="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold flex items-center gap-1">
                                                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Đang mở bán
                                                             </span>
                                                         </c:when>
-                                                        <c:when test="${product.active}">
-                                                            <span class="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-extrabold">Hết hàng</span>
+                                                        <c:when test="${product.productStatus == 'LOW_STOCK'}">
+                                                            <span class="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-700 text-[10px] font-extrabold flex items-center gap-1">
+                                                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Sắp hết hàng
+                                                            </span>
+                                                        </c:when>
+                                                        <c:when test="${product.productStatus == 'OUT_OF_STOCK'}">
+                                                            <span class="px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold">Hết hàng</span>
                                                         </c:when>
                                                         <c:otherwise>
-                                                            <span class="px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold flex items-center gap-1">
-                                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Đã ẩn / Tạm ngưng
+                                                            <span class="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-extrabold flex items-center gap-1">
+                                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Tạm ẩn
                                                             </span>
                                                         </c:otherwise>
                                                     </c:choose>

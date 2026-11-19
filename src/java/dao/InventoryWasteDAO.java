@@ -18,6 +18,8 @@ import model.dto.inventory.WasteStatisticDTO;
 import model.dto.order.SubOrderDTO;
 import model.entity.order.ShippingAddress;
 import util.DBContext;
+import enums.WasteStage;
+import enums.TransactionType;
 
 public class InventoryWasteDAO extends DBContext {
 
@@ -29,7 +31,7 @@ public class InventoryWasteDAO extends DBContext {
 
 
     public boolean recordManualWaste(long shopId, long variantId, int quantity, String reasonNote, Long loggedBy) {
-        return recordManualWaste(shopId, variantId, "WAREHOUSE_EXPIRED", quantity, reasonNote, loggedBy);
+        return recordManualWaste(shopId, variantId, WasteStage.WAREHOUSE_EXPIRED.name(), quantity, reasonNote, loggedBy);
     }
 
     public boolean recordManualWaste(long shopId, long variantId, String wasteStage, int quantity, String reasonNote, Long loggedBy) {
@@ -88,7 +90,7 @@ public class InventoryWasteDAO extends DBContext {
             }
 
             // 3. Ghi log tiêu hủy trực tiếp vào bảng duy nhất inventory_transactions
-            String stage = (wasteStage != null && !wasteStage.isBlank()) ? wasteStage.trim() : "WAREHOUSE_EXPIRED";
+            String stage = (wasteStage != null && !wasteStage.isBlank()) ? wasteStage.trim() : WasteStage.WAREHOUSE_EXPIRED.name();
             BigDecimal totalLoss = price.multiply(BigDecimal.valueOf(quantity));
             String insertSql = "INSERT INTO inventory_transactions (shop_id, variant_id, batch_id, sub_order_id, user_id, "
                     + "transaction_type, waste_stage, quantity_changed, previous_stock, new_stock, cost_price, estimated_loss, reason, created_at) "
@@ -445,7 +447,7 @@ public class InventoryWasteDAO extends DBContext {
         StringBuilder sql = new StringBuilder(
                 "SELECT it.transaction_id AS waste_id, it.shop_id, it.variant_id, it.batch_id, it.sub_order_id, "
                 + "COALESCE(it.waste_stage, 'WAREHOUSE_EXPIRED') AS waste_stage, ABS(it.quantity_changed) AS quantity, "
-                + "pv.unit, it.cost_price, it.estimated_loss, it.reason AS reason_note, it.user_id AS logged_by, it.created_at, "
+                + "pv.unit, COALESCE(it.cost_price, pv.price) AS cost_price, COALESCE(it.estimated_loss, pv.price * ABS(it.quantity_changed)) AS estimated_loss, it.reason AS reason_note, it.user_id AS logged_by, it.created_at, "
                 + "p.name AS product_name, pv.variant_name, pv.sku, pb.batch_code, so.sub_order_code, u.full_name AS logged_by_name "
                 + "FROM inventory_transactions it "
                 + "JOIN product_variants pv ON it.variant_id = pv.variant_id "
@@ -454,7 +456,7 @@ public class InventoryWasteDAO extends DBContext {
                 + "LEFT JOIN sub_orders so ON it.sub_order_id = so.sub_order_id "
                 + "LEFT JOIN users u ON it.user_id = u.user_id "
                 + "WHERE it.shop_id = ? "
-                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
+                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'QUALITY_FAIL', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
         );
 
         if (stageFilter != null && !stageFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(stageFilter)) {
@@ -541,7 +543,7 @@ public class InventoryWasteDAO extends DBContext {
                 + "LEFT JOIN product_batches pb ON it.batch_id = pb.batch_id "
                 + "LEFT JOIN sub_orders so ON it.sub_order_id = so.sub_order_id "
                 + "WHERE it.shop_id = ? "
-                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
+                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'QUALITY_FAIL', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
         );
 
         if (stageFilter != null && !stageFilter.trim().isEmpty() && !"ALL".equalsIgnoreCase(stageFilter)) {
@@ -588,10 +590,11 @@ public class InventoryWasteDAO extends DBContext {
     public WasteStatisticDTO getWasteStatisticsByShop(long shopId) {
         WasteStatisticDTO dto = new WasteStatisticDTO();
         String summarySql = "SELECT ISNULL(SUM(ABS(it.quantity_changed)), 0) AS total_qty, "
-                + "ISNULL(SUM(it.estimated_loss), 0) AS total_loss, COUNT(*) AS total_count "
+                + "ISNULL(SUM(COALESCE(it.estimated_loss, pv.price * ABS(it.quantity_changed))), 0) AS total_loss, COUNT(*) AS total_count "
                 + "FROM inventory_transactions it "
+                + "JOIN product_variants pv ON it.variant_id = pv.variant_id "
                 + "WHERE it.shop_id = ? "
-                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE'))";
+                + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'QUALITY_FAIL', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE'))";
 
         Connection conn = getConnection();
         if (conn == null) {
@@ -611,12 +614,12 @@ public class InventoryWasteDAO extends DBContext {
             }
 
             String topSql = "SELECT TOP 5 pv.variant_id, p.name AS product_name, pv.variant_name, pv.unit, "
-                    + "SUM(ABS(it.quantity_changed)) AS qty, SUM(it.estimated_loss) AS loss "
+                    + "SUM(ABS(it.quantity_changed)) AS qty, SUM(COALESCE(it.estimated_loss, pv.price * ABS(it.quantity_changed))) AS loss "
                     + "FROM inventory_transactions it "
                     + "JOIN product_variants pv ON it.variant_id = pv.variant_id "
                     + "JOIN products p ON pv.product_id = p.product_id "
                     + "WHERE it.shop_id = ? "
-                    + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
+                    + "  AND (it.waste_stage IS NOT NULL OR it.transaction_type IN ('DAMAGED', 'EXPIRED', 'STORAGE_ISSUE', 'QUALITY_FAIL', 'LOST', 'DISPOSAL', 'QC_PACKING', 'TRANSIT_DAMAGE')) "
                     + "GROUP BY pv.variant_id, p.name, pv.variant_name, pv.unit "
                     + "ORDER BY loss DESC";
 

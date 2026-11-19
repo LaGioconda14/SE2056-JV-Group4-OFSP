@@ -12,6 +12,8 @@ import model.entity.inventory.InventoryTransaction;
 import model.entity.inventory.ProductBatch;
 import java.sql.SQLException;
 import java.util.*;
+import enums.TransactionType;
+import enums.WasteStage;
 import util.DBContext;
 
 public class InventoryDAO extends DBContext {
@@ -659,7 +661,7 @@ public class InventoryDAO extends DBContext {
         }
     }
 
-    public boolean adjustBatch(long batchId, long variantId, long shopId, long userId, int deductQuantity, String transactionType, String reason) {
+    public long adjustBatch(long batchId, long variantId, long shopId, long userId, int deductQuantity, String transactionType, String reason) {
         String sqlGetBatch = "SELECT pb.current_quantity, pb.batch_code, pb.status, pv.price "
                 + "FROM product_batches pb "
                 + "JOIN product_variants pv ON pb.variant_id = pv.variant_id "
@@ -687,14 +689,14 @@ public class InventoryDAO extends DBContext {
                         batchCode = rs.getString("batch_code");
                         price = rs.getBigDecimal("price");
                     } else {
-                        return false;
+                        return -1;
                     }
                 }
             }
 
             // Kiểm tra tồn kho lô
             if (currentQty < deductQuantity) {
-                return false; // Không đủ hàng -> trả về false, KHÔNG NÉM LỖI
+                return -1; // Không đủ hàng -> trả về -1
             }
 
             int newQty = currentQty - deductQuantity;
@@ -716,21 +718,33 @@ public class InventoryDAO extends DBContext {
             }
 
             // 3. Ghi trực tiếp vào bảng duy nhất inventory_transactions (phục vụ cả thẻ kho và báo cáo hao hụt)
-            boolean isWaste = "DAMAGED".equalsIgnoreCase(transactionType)
-                    || "EXPIRED".equalsIgnoreCase(transactionType)
-                    || "STORAGE_ISSUE".equalsIgnoreCase(transactionType)
-                    || "LOST".equalsIgnoreCase(transactionType);
+            TransactionType type = TransactionType.from(transactionType);
+            boolean isWaste = type == TransactionType.DAMAGED
+                    || type == TransactionType.EXPIRED
+                    || type == TransactionType.STORAGE_ISSUE
+                    || type == TransactionType.QUALITY_FAIL
+                    || type == TransactionType.LOST;
             java.math.BigDecimal totalLoss = (isWaste && price != null)
                     ? price.multiply(java.math.BigDecimal.valueOf(deductQuantity)) : null;
             java.math.BigDecimal costPrice = isWaste ? price : null;
-            String wasteStage = isWaste ? "WAREHOUSE_EXPIRED" : null;
+            String wasteStage = null;
+            if (isWaste) {
+                if (type == TransactionType.DAMAGED || type == TransactionType.QUALITY_FAIL) {
+                    wasteStage = WasteStage.QC_PACKING.name(); // Dập nát khi sơ chế / phân loại đóng gói
+                } else if ("TRANSIT_DAMAGE".equalsIgnoreCase(transactionType)) {
+                    wasteStage = WasteStage.TRANSIT_DAMAGE.name();
+                } else {
+                    wasteStage = WasteStage.WAREHOUSE_EXPIRED.name(); // Hết hạn / Sự cố kho mát / Thất thoát
+                }
+            }
 
-            String transReason = (reason != null && !reason.trim().isEmpty()) ? reason : "Trừ hao kho thủ công";
+            String transReason = buildReasonText(transactionType, reason);
             if (batchCode != null && !batchCode.isBlank()) {
                 transReason = "[Lô " + batchCode + "] " + transReason;
             }
 
-            try (PreparedStatement psTrans = conn.prepareStatement(sqlInsertTrans)) {
+            long generatedTransId = -1;
+            try (PreparedStatement psTrans = conn.prepareStatement(sqlInsertTrans, java.sql.Statement.RETURN_GENERATED_KEYS)) {
                 psTrans.setLong(1, batchId);
                 psTrans.setLong(2, variantId);
                 psTrans.setLong(3, shopId);
@@ -756,10 +770,16 @@ public class InventoryDAO extends DBContext {
                     psTrans.setNull(12, java.sql.Types.VARCHAR);
                 }
                 psTrans.executeUpdate();
+
+                try (ResultSet rsGen = psTrans.getGeneratedKeys()) {
+                    if (rsGen.next()) {
+                        generatedTransId = rsGen.getLong(1);
+                    }
+                }
             }
 
             conn.commit();
-            return true; // Thành công
+            return generatedTransId > 0 ? generatedTransId : 1; // Thành công
         } catch (SQLException e) {
             if (conn != null) {
                 try {
@@ -769,7 +789,7 @@ public class InventoryDAO extends DBContext {
                 }
             }
             e.printStackTrace();
-            return false; // Lỗi SQL xảy ra -> tự catch, rollback và trả về false, KHÔNG NÉM LỖI RA NGOÀI
+            return -1;
         } finally {
             if (conn != null) {
                 try {

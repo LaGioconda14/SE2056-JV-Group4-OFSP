@@ -656,6 +656,10 @@ public class OrderDAO extends DBContext {
                                         + "Vui lÃ²ng quay láº¡i giá» hÃ ng Ä‘á»ƒ kiá»ƒm tra!");
                             }
                         }
+
+                        // E2. TRỪ TỒN KHO LÔ HÀNG THEO CHUẨN FEFO & GHI BIẾN ĐỘNG KHO
+                        deductBatchStock(conn, subOrderId, sub.getShopId(), order.getCustomerId(),
+                                item.getVariantId(), item.getQuantity(), subCode, item.getUnitPrice());
                     }
                 }
             }
@@ -1246,6 +1250,7 @@ public class OrderDAO extends DBContext {
                     psStock.setLong(1, matchedSubOrderId);
                     psStock.executeUpdate();
                 }
+                restoreBatchStockBySubOrder(conn, matchedSubOrderId); // Hoàn tồn kho lô hàng
                 promotionDAO.releaseQuotaBySubOrder(conn, matchedSubOrderId); // hoàn suất khuyến mãi
 
                 String cancelSubSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
@@ -1285,6 +1290,7 @@ public class OrderDAO extends DBContext {
                     psStock.setLong(1, matchedOrderId);
                     psStock.executeUpdate();
                 }
+                restoreBatchStockByOrder(conn, matchedOrderId); // Hoàn tồn kho lô hàng
                 promotionDAO.releaseQuotaByOrder(conn, matchedOrderId); // hoàn suất khuyến mãi
 
                 String cancelSubsSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
@@ -1466,6 +1472,190 @@ public class OrderDAO extends DBContext {
             } catch (SQLException cEx) {
                 LOGGER.log(Level.SEVERE, "Error closing connection", cEx);
             }
+        }
+    }
+
+    // =========================================================================
+    // QUẢN LÝ TỒN KHO LÔ HÀNG (PRODUCT BATCHES) THEO CHUẨN FEFO & SỔ KHO
+    // =========================================================================
+
+    private record BatchDeductInfo(long batchId, String batchCode, int currentQty, int deductQty) {}
+    private record BatchRestoreInfo(long batchId, long variantId, long shopId, long userId, int qty, BigDecimal costPrice, int curQty, String batchCode) {}
+
+    /**
+     * Trừ tồn kho lô hàng theo nguyên tắc FEFO (First Expired, First Out - hết hạn sớm nhất xuất trước)
+     * và ghi nhận giao dịch xuất bán vào bảng inventory_transactions.
+     */
+    private void deductBatchStock(Connection conn, long subOrderId, long shopId, long customerId,
+                                  long variantId, int quantityToDeduct, String subOrderCode,
+                                  BigDecimal unitPrice) throws SQLException {
+        String queryBatchesSql = "SELECT batch_id, batch_code, current_quantity "
+                + "FROM product_batches "
+                + "WHERE variant_id = ? AND status = 'ACTIVE' AND current_quantity > 0 "
+                + "ORDER BY expiry_date ASC, batch_id ASC";
+
+        String updateBatchSql = "UPDATE product_batches "
+                + "SET current_quantity = ?, "
+                + "    status = CASE WHEN ? <= 0 THEN 'DEPLETED' ELSE status END, "
+                + "    updated_at = CURRENT_TIMESTAMP "
+                + "WHERE batch_id = ?";
+
+        String insertTransSql = "INSERT INTO inventory_transactions "
+                + "(batch_id, variant_id, shop_id, user_id, sub_order_id, transaction_type, "
+                + " quantity_changed, previous_stock, new_stock, cost_price, reason, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, 'SALE', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        int remainingQty = quantityToDeduct;
+        List<BatchDeductInfo> batchesToDeduct = new ArrayList<>();
+
+        try (PreparedStatement psQuery = conn.prepareStatement(queryBatchesSql)) {
+            psQuery.setLong(1, variantId);
+            try (ResultSet rs = psQuery.executeQuery()) {
+                while (rs.next() && remainingQty > 0) {
+                    long bId = rs.getLong("batch_id");
+                    String bCode = rs.getString("batch_code");
+                    int curQty = rs.getInt("current_quantity");
+                    int deduct = Math.min(curQty, remainingQty);
+                    batchesToDeduct.add(new BatchDeductInfo(bId, bCode, curQty, deduct));
+                    remainingQty -= deduct;
+                }
+            }
+        }
+
+        // Cập nhật từng lô theo thứ tự FEFO
+        for (BatchDeductInfo b : batchesToDeduct) {
+            int newQty = b.currentQty() - b.deductQty();
+            try (PreparedStatement psUpBatch = conn.prepareStatement(updateBatchSql)) {
+                psUpBatch.setInt(1, newQty);
+                psUpBatch.setInt(2, newQty);
+                psUpBatch.setLong(3, b.batchId());
+                psUpBatch.executeUpdate();
+            }
+
+            try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
+                psTrans.setLong(1, b.batchId());
+                psTrans.setLong(2, variantId);
+                psTrans.setLong(3, shopId);
+                psTrans.setLong(4, customerId);
+                psTrans.setLong(5, subOrderId);
+                psTrans.setInt(6, -b.deductQty());
+                psTrans.setInt(7, b.currentQty());
+                psTrans.setInt(8, newQty);
+                if (unitPrice != null) {
+                    psTrans.setBigDecimal(9, unitPrice);
+                } else {
+                    psTrans.setNull(9, Types.DECIMAL);
+                }
+                psTrans.setString(10, "Xuất kho bán hàng [Lô " + b.batchCode() + "] - Đơn " + subOrderCode);
+                psTrans.executeUpdate();
+            }
+        }
+
+        // Nếu còn dư số lượng chưa trừ hết từ lô (do chưa tạo lô hoặc lô hết hàng)
+        if (remainingQty > 0) {
+            try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
+                psTrans.setNull(1, Types.BIGINT);
+                psTrans.setLong(2, variantId);
+                psTrans.setLong(3, shopId);
+                psTrans.setLong(4, customerId);
+                psTrans.setLong(5, subOrderId);
+                psTrans.setInt(6, -remainingQty);
+                psTrans.setInt(7, 0);
+                psTrans.setInt(8, 0);
+                if (unitPrice != null) {
+                    psTrans.setBigDecimal(9, unitPrice);
+                } else {
+                    psTrans.setNull(9, Types.DECIMAL);
+                }
+                psTrans.setString(10, "Xuất kho bán hàng - Đơn " + subOrderCode);
+                psTrans.executeUpdate();
+            }
+        }
+    }
+
+    /**
+     * Hoàn trả tồn kho lô hàng khi đơn hàng con (SubOrder) bị hủy hoặc từ chối.
+     */
+    public static void restoreBatchStockBySubOrder(Connection conn, long subOrderId) throws SQLException {
+        String findDeductedBatchesSql = "SELECT it.batch_id, it.variant_id, it.shop_id, it.user_id, "
+                + "       ABS(it.quantity_changed) AS qty, it.cost_price, ISNULL(pb.current_quantity, 0) AS current_quantity, pb.batch_code "
+                + "FROM inventory_transactions it "
+                + "LEFT JOIN product_batches pb ON it.batch_id = pb.batch_id "
+                + "WHERE it.sub_order_id = ? AND it.transaction_type = 'SALE' AND it.batch_id IS NOT NULL";
+
+        String restoreBatchSql = "UPDATE product_batches "
+                + "SET current_quantity = current_quantity + ?, "
+                + "    status = 'ACTIVE', "
+                + "    updated_at = CURRENT_TIMESTAMP "
+                + "WHERE batch_id = ?";
+
+        String insertTransSql = "INSERT INTO inventory_transactions "
+                + "(batch_id, variant_id, shop_id, user_id, sub_order_id, transaction_type, "
+                + " quantity_changed, previous_stock, new_stock, cost_price, reason, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, 'RESTOCK', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        List<BatchRestoreInfo> list = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(findDeductedBatchesSql)) {
+            ps.setLong(1, subOrderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long bId = rs.getLong("batch_id");
+                    long vId = rs.getLong("variant_id");
+                    long sId = rs.getLong("shop_id");
+                    long uId = rs.getLong("user_id");
+                    int qty = rs.getInt("qty");
+                    BigDecimal cost = rs.getBigDecimal("cost_price");
+                    int curQty = rs.getInt("current_quantity");
+                    String bCode = rs.getString("batch_code");
+                    list.add(new BatchRestoreInfo(bId, vId, sId, uId, qty, cost, curQty, bCode));
+                }
+            }
+        }
+
+        for (BatchRestoreInfo r : list) {
+            try (PreparedStatement psUp = conn.prepareStatement(restoreBatchSql)) {
+                psUp.setInt(1, r.qty());
+                psUp.setLong(2, r.batchId());
+                psUp.executeUpdate();
+            }
+
+            int newStock = r.curQty() + r.qty();
+            try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
+                psTrans.setLong(1, r.batchId());
+                psTrans.setLong(2, r.variantId());
+                psTrans.setLong(3, r.shopId());
+                psTrans.setLong(4, r.userId());
+                psTrans.setLong(5, subOrderId);
+                psTrans.setInt(6, r.qty());
+                psTrans.setInt(7, r.curQty());
+                psTrans.setInt(8, newStock);
+                if (r.costPrice() != null) {
+                    psTrans.setBigDecimal(9, r.costPrice());
+                } else {
+                    psTrans.setNull(9, Types.DECIMAL);
+                }
+                psTrans.setString(10, "Hoàn kho do hủy đơn hàng [Lô " + (r.batchCode() != null ? r.batchCode() : "") + "] - SubOrder #" + subOrderId);
+                psTrans.executeUpdate();
+            }
+        }
+    }
+
+    /**
+     * Hoàn trả tồn kho lô hàng cho tất cả đơn con của đơn hàng cha khi bị hủy.
+     */
+    public static void restoreBatchStockByOrder(Connection conn, long orderId) throws SQLException {
+        String findSubOrdersSql = "SELECT sub_order_id FROM sub_orders WHERE order_id = ?";
+        List<Long> subOrderIds = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(findSubOrdersSql)) {
+            ps.setLong(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    subOrderIds.add(rs.getLong("sub_order_id"));
+                }
+            }
+        }
+        for (Long subId : subOrderIds) {
+            restoreBatchStockBySubOrder(conn, subId);
         }
     }
 }

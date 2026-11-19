@@ -72,18 +72,35 @@ public class ShopProductServlet extends HttpServlet {
         }
 
         // 4. Lấy danh sách sản phẩm và biến thể của shop
-        // Lấy danh sách tóm tắt Product (kèm biến thể count, giá min-max, tổng tồn kho)
-        List<ProductCardDTO> products = productService.getProductSummariesByShopId(shopId);
+        String statusTab = request.getParameter("statusTab");
+        if (statusTab == null || statusTab.trim().isEmpty()) {
+            statusTab = "all";
+        }
+        statusTab = statusTab.trim().toLowerCase();
+        request.setAttribute("statusTab", statusTab);
+
+        // Lấy danh sách tóm tắt Product đã lọc theo Tab (kèm biến thể count, giá min-max, tổng tồn kho)
+        List<ProductCardDTO> products = productService.getProductSummariesByShopId(shopId, statusTab);
         request.setAttribute("products", products);
         int totalProducts = productService.countProductsByShopId(shopId);
         request.setAttribute("totalProductsCount", totalProducts);
         request.setAttribute("totalProducts", totalProducts);
 
-        request.setAttribute("tabAllProductCount", productService.countProductsByStatusTab(shopId, "all"));
-        request.setAttribute("tabActiveProductCount", productService.countProductsByStatusTab(shopId, "active"));
+        int tabAllCount = productService.countProductsByStatusTab(shopId, "all");
+        int tabActiveCount = productService.countProductsByStatusTab(shopId, "active");
+        int tabLowStockCount = productService.countProductsByStatusTab(shopId, "low_stock");
+        int tabOutOfStockCount = productService.countProductsByStatusTab(shopId, "out_of_stock");
+        int tabHiddenCount = productService.countProductsByStatusTab(shopId, "hidden");
+
+        request.setAttribute("tabAllProductCount", tabAllCount);
+        request.setAttribute("tabActiveProductCount", tabActiveCount);
+        request.setAttribute("tabLowStockProductCount", tabLowStockCount);
+        request.setAttribute("tabOutOfStockProductCount", tabOutOfStockCount);
+        request.setAttribute("tabHiddenProductCount", tabHiddenCount);
+
+        // Tương thích ngược cho các biến cũ
+        request.setAttribute("tabWarningProductCount", tabLowStockCount);
         request.setAttribute("tabVietgapProductCount", productService.countProductsByStatusTab(shopId, "vietgap"));
-        request.setAttribute("tabHiddenProductCount", productService.countProductsByStatusTab(shopId, "hidden"));
-        request.setAttribute("tabWarningProductCount", productService.countProductsByStatusTab(shopId, "warning"));
 
         // Hỗ trợ tương thích ngược cho các tab variant
         List<ProductVariantStockDTO> listVariants = productService.getVariantsByShopId(shopId);
@@ -92,17 +109,13 @@ public class ShopProductServlet extends HttpServlet {
         int totalSkus = productService.countVariantsByShopId(shopId);
         request.setAttribute("totalSkus", totalSkus);
 
-        int tabAllCount = productService.countVariantsByStatusTab(shopId, "all");
-        int tabActiveCount = productService.countVariantsByStatusTab(shopId, "active");
-        int tabVietgapCount = productService.countVariantsByStatusTab(shopId, "vietgap");
-        int tabHiddenCount = productService.countVariantsByStatusTab(shopId, "hidden");
-        int tabWarningCount = productService.countVariantsByStatusTab(shopId, "warning");
-
         request.setAttribute("tabAllCount", tabAllCount);
         request.setAttribute("tabActiveCount", tabActiveCount);
-        request.setAttribute("tabVietgapCount", tabVietgapCount);
+        request.setAttribute("tabLowStockCount", tabLowStockCount);
+        request.setAttribute("tabOutOfStockCount", tabOutOfStockCount);
         request.setAttribute("tabHiddenCount", tabHiddenCount);
-        request.setAttribute("tabWarningCount", tabWarningCount);
+        request.setAttribute("tabWarningCount", tabLowStockCount);
+        request.setAttribute("tabVietgapCount", productService.countProductsByStatusTab(shopId, "vietgap"));
 
         int shopSubOrdersCount = fulfillmentService.countSubOrdersByShop(shopId, null);
         session.setAttribute("shopSubOrdersCount", shopSubOrdersCount);

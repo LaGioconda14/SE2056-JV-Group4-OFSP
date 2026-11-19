@@ -199,4 +199,21 @@ public class ProductCardDTO implements Serializable {
     public void setPromotionType(String promotionType) { this.promotionType = promotionType; }
 
     public boolean isOnPromotion() { return promotionId > 0; }
+
+    public enums.ProductStatus getProductStatus() {
+        if (!active) {
+            return enums.ProductStatus.HIDDEN;
+        }
+        if (stockQuantity <= 0) {
+            return enums.ProductStatus.OUT_OF_STOCK;
+        }
+        if (stockQuantity <= 5) {
+            return enums.ProductStatus.LOW_STOCK;
+        }
+        return enums.ProductStatus.ACTIVE;
+    }
+
+    public String getStatusName() {
+        return getProductStatus().name();
+    }
 }

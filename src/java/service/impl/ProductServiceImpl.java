@@ -44,6 +44,11 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
+    public List<ProductCardDTO> getProductSummariesByShopId(long shopId, String statusTab) {
+        return productDAO.getProductSummariesByShopId(shopId, statusTab);
+    }
+
+    @Override
     public int countProductsByShopId(long shopId) {
         return productDAO.countProductsByShopId(shopId);
     }

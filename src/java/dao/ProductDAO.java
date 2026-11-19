@@ -2185,8 +2185,12 @@ public class ProductDAO extends DBContext {
     // =========================================================================
     // Return one summary per product with totals derived from its variants.
     public List<ProductCardDTO> getProductSummariesByShopId(long shopId) {
+        return getProductSummariesByShopId(shopId, null);
+    }
+
+    public List<ProductCardDTO> getProductSummariesByShopId(long shopId, String statusTab) {
         List<ProductCardDTO> products = new ArrayList<>();
-        String sql = "SELECT p.product_id, p.name, p.origin, p.certification, "
+        StringBuilder sql = new StringBuilder("SELECT p.product_id, p.name, p.origin, p.certification, "
                 + "p.storage_temp, p.description, c.category_name, p.is_active, "
                 + "pi.image_url AS image_url, "
                 + "COALESCE(stats.min_price, 0) AS min_price, "
@@ -2209,10 +2213,25 @@ public class ProductDAO extends DBContext {
                 + "    FROM product_variants "
                 + "    WHERE product_id = p.product_id"
                 + ") stats "
-                + "WHERE p.shop_id = ? "
-                + "ORDER BY p.product_id DESC";
+                + "WHERE p.shop_id = ? ");
 
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        if (statusTab != null && !statusTab.trim().isEmpty() && !statusTab.equalsIgnoreCase("all")) {
+            if ("active".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND p.is_active = 1 AND COALESCE(stats.total_stock, 0) > 5 ");
+            } else if ("low_stock".equalsIgnoreCase(statusTab) || "warning".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND p.is_active = 1 AND COALESCE(stats.total_stock, 0) > 0 AND COALESCE(stats.total_stock, 0) <= 5 ");
+            } else if ("out_of_stock".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND p.is_active = 1 AND COALESCE(stats.total_stock, 0) = 0 ");
+            } else if ("hidden".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND p.is_active = 0 ");
+            } else if ("vietgap".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND (p.certification LIKE '%VietGAP%' OR p.certification LIKE '%OCOP%') ");
+            }
+        }
+
+        sql.append(" ORDER BY p.product_id DESC");
+
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -2289,17 +2308,24 @@ public class ProductDAO extends DBContext {
 
     // Count products matching a status tab in shop management.
     public int countProductsByStatusTab(long shopId, String statusTab) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT p.product_id) FROM products p WHERE p.shop_id = ?");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(DISTINCT p.product_id) FROM products p "
+                + "OUTER APPLY ("
+                + "    SELECT SUM(CASE WHEN is_active = 1 THEN stock_quantity ELSE 0 END) AS total_stock "
+                + "    FROM product_variants WHERE product_id = p.product_id"
+                + ") stats "
+                + "WHERE p.shop_id = ?");
 
         if (statusTab != null && !statusTab.trim().isEmpty() && !statusTab.equalsIgnoreCase("all")) {
             if ("active".equalsIgnoreCase(statusTab)) {
-                sql.append(" AND p.is_active = 1 AND EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity > 0)");
-            } else if ("vietgap".equalsIgnoreCase(statusTab)) {
-                sql.append(" AND (p.certification LIKE '%VietGAP%' OR p.certification LIKE '%OCOP%')");
+                sql.append(" AND p.is_active = 1 AND COALESCE(stats.total_stock, 0) > 5 ");
+            } else if ("low_stock".equalsIgnoreCase(statusTab) || "warning".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND p.is_active = 1 AND COALESCE(stats.total_stock, 0) > 0 AND COALESCE(stats.total_stock, 0) <= 5 ");
+            } else if ("out_of_stock".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND p.is_active = 1 AND COALESCE(stats.total_stock, 0) = 0 ");
             } else if ("hidden".equalsIgnoreCase(statusTab)) {
-                sql.append(" AND (p.is_active = 0 OR NOT EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity > 0))");
-            } else if ("warning".equalsIgnoreCase(statusTab)) {
-                sql.append(" AND EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id AND pv.is_active = 1 AND pv.stock_quantity <= 5)");
+                sql.append(" AND p.is_active = 0 ");
+            } else if ("vietgap".equalsIgnoreCase(statusTab)) {
+                sql.append(" AND (p.certification LIKE '%VietGAP%' OR p.certification LIKE '%OCOP%') ");
             }
         }
 

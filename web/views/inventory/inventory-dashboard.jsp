@@ -41,8 +41,17 @@
                         <c:remove var="inventoryRestockSuccess" scope="session" />
                     </c:if>
                     <c:if test="${not empty inventoryAdjustMessage}">
-                        <div class="px-4 py-3 rounded-xl text-sm font-semibold ${inventoryAdjustSuccess ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
-                            <c:out value="${inventoryAdjustMessage}" />
+                        <div class="px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-between gap-3 ${inventoryAdjustSuccess ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid ${inventoryAdjustSuccess ? 'fa-circle-check text-emerald-600' : 'fa-triangle-exclamation text-rose-600'}"></i>
+                                <span><c:out value="${inventoryAdjustMessage}" /></span>
+                            </div>
+                            <c:if test="${inventoryAdjustSuccess}">
+                                <a href="${pageContext.request.contextPath}/shop/waste" class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition text-decoration-none shrink-0 shadow-xs">
+                                    <span>Xem sổ hao hụt</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </a>
+                            </c:if>
                         </div>
                         <c:remove var="inventoryAdjustMessage" scope="session" />
                         <c:remove var="inventoryAdjustSuccess" scope="session" />
@@ -55,7 +64,10 @@
                             <p class="text-xs text-slate-500 font-medium mt-1">Theo dõi tồn kho theo thời gian thực, hạn sử dụng và lịch sử biến động lô hàng.</p>
                         </div>
                         <div class="flex items-center flex-wrap gap-2.5">
-                            <button type="button" onclick="openModal('modalAdjust')" class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all"><i class="fa-solid fa-minus text-rose-500"></i>Trừ hàng hỏng / Dập</button>
+                            <a href="${pageContext.request.contextPath}/shop/waste" class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-rose-50 hover:text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all text-decoration-none">
+                                <i class="fa-solid fa-clipboard-list text-rose-500"></i>Sổ Hao Hụt & Tiêu Hủy
+                            </a>
+                            <button type="button" onclick="openAdjustModal(null)" class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-amber-50 hover:text-amber-700 rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all"><i class="fa-solid fa-minus text-amber-500"></i>Trừ hàng hỏng / Dập</button>
                             <button type="button" onclick="openRestockModal(null)" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all"><i class="fa-solid fa-plus"></i>Nhập Kho Lô Mới</button>
                         </div>
                     </div>
@@ -114,6 +126,10 @@
                             <c:set var="variantId" value="${entry.key}" />
                             <c:set var="batches" value="${entry.value}" />
                             <c:set var="firstBatch" value="${batches[0]}" />
+                            <c:set var="variantTotalStock" value="0" />
+                            <c:forEach var="b" items="${batches}">
+                                <c:set var="variantTotalStock" value="${variantTotalStock + b.currentQuantity}" />
+                            </c:forEach>
 
                             <div class="variant-card">
                                 <!-- Header Biến thể -->
@@ -133,11 +149,16 @@
                                             </c:choose>
                                         </div>
                                         <div>
-                                            <div class="flex items-center gap-2">
+                                            <div class="flex items-center gap-2 flex-wrap">
                                                 <h3 class="font-extrabold text-sm text-slate-900">${firstBatch.productName}</h3>
+                                                <c:if test="${not empty firstBatch.variantName}">
+                                                    <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">${firstBatch.variantName}</span>
+                                                </c:if>
                                                 <span class="px-2 py-0.5 rounded bg-slate-200/60 text-slate-600 text-[10px] font-mono font-bold">${firstBatch.sku}</span>
                                             </div>
                                             <div class="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-2">
+                                                <span class="font-bold text-slate-800">Tồn kho hiện tại: <span class="text-emerald-700 font-black">${variantTotalStock}</span></span>
+                                                <span>•</span>
                                                 <span>${batches.size()} lô hàng</span>
                                             </div>
                                         </div>
@@ -296,7 +317,19 @@
                 </div>
                 <form action="${pageContext.request.contextPath}/shop/inventory/restock" method="POST" class="p-6 space-y-4">
                     <input type="hidden" name="variantId" id="restockVariantId">
-                    <div>
+                    <div id="restockVariantSelectBox" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">CHỌN MẶT HÀNG / BIẾN THỂ CẦN NHẬP</label>
+                        <select id="restockVariantDropdown" onchange="onRestockVariantSelectChange(this)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <option value="">-- Chọn mặt hàng nông sản --</option>
+                            <c:forEach var="entry" items="${variantBatchMap}">
+                                <c:set var="firstBatch" value="${entry.value[0]}" />
+                                <option value="${entry.key}" data-product-name="${firstBatch.productName} (${firstBatch.variantName} - ${firstBatch.sku})">
+                                    ${firstBatch.productName} - ${firstBatch.variantName} (${firstBatch.sku})
+                                </option>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div id="restockVariantInfoBox">
                         <label class="block text-xs font-bold text-slate-700 mb-1.5">SẢN PHẨM / BIẾN THỂ</label>
                         <input type="text" id="restockProductName" readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 cursor-not-allowed">
                     </div>
@@ -345,14 +378,36 @@
                 <form action="${pageContext.request.contextPath}/shop/inventory/adjust" method="POST" class="p-6 space-y-4">
                     <input type="hidden" name="variantId" id="adjustVariantId">
                     <input type="hidden" name="batchId" id="adjustBatchId">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">SẢN PHẨM</label>
-                            <input type="text" id="adjustProductName" readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 cursor-not-allowed">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5">MÃ LÔ HÀNG</label>
-                            <input type="text" id="adjustBatchCode" readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 cursor-not-allowed">
+                    <div id="adjustBatchSelectBox" class="hidden">
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">CHỌN LÔ HÀNG CẦN TRỪ HAO HỤT</label>
+                        <select id="adjustBatchDropdown" onchange="onAdjustBatchSelectChange(this)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500">
+                            <option value="">-- Chọn lô hàng (Mặt hàng - Lô - Tồn kho) --</option>
+                            <c:forEach var="entry" items="${variantBatchMap}">
+                                <c:forEach var="b" items="${entry.value}">
+                                    <c:if test="${b.currentQuantity > 0}">
+                                        <option value="${b.batchId}"
+                                                data-variant-id="${entry.key}"
+                                                data-product-name="${b.productName} (${b.variantName})"
+                                                data-sku="${b.sku}"
+                                                data-batch-code="${b.batchCode}"
+                                                data-current-qty="${b.currentQuantity}">
+                                            ${b.productName} [${b.variantName}] - Lô ${b.batchCode} (Còn: ${b.currentQuantity})
+                                        </option>
+                                    </c:if>
+                                </c:forEach>
+                            </c:forEach>
+                        </select>
+                    </div>
+                    <div id="adjustBatchInfoBox">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">SẢN PHẨM</label>
+                                <input type="text" id="adjustProductName" readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5">MÃ LÔ HÀNG</label>
+                                <input type="text" id="adjustBatchCode" readonly class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 cursor-not-allowed">
+                            </div>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -520,7 +575,11 @@
 
             // Hàm mở Modal Trừ hàng
             function openAdjustModal(btn) {
+                const selectBox = document.getElementById('adjustBatchSelectBox');
+                const infoBox = document.getElementById('adjustBatchInfoBox');
                 if (btn && btn.dataset) {
+                    if (selectBox) selectBox.classList.add('hidden');
+                    if (infoBox) infoBox.classList.remove('hidden');
                     document.getElementById('adjustVariantId').value = btn.dataset.variantId || '';
                     document.getElementById('adjustBatchId').value = btn.dataset.batchId || '';
                     document.getElementById('adjustProductName').value = (btn.dataset.productName || '') + ' (' + (btn.dataset.sku || '') + ')';
@@ -532,8 +591,45 @@
                         deductInput.max = btn.dataset.currentQty || '';
                         deductInput.value = '';
                     }
+                } else {
+                    // Mở từ nút Header -> Hiện dropdown chọn lô
+                    if (selectBox) selectBox.classList.remove('hidden');
+                    if (infoBox) infoBox.classList.add('hidden');
+                    document.getElementById('adjustVariantId').value = '';
+                    document.getElementById('adjustBatchId').value = '';
+                    document.getElementById('adjustProductName').value = '';
+                    document.getElementById('adjustBatchCode').value = '';
+                    document.getElementById('adjustCurrentQty').value = '';
+                    const selectElem = document.getElementById('adjustBatchDropdown');
+                    if (selectElem) selectElem.value = '';
+                    const deductInput = document.getElementById('adjustDeductQty');
+                    if (deductInput) {
+                        deductInput.removeAttribute('max');
+                        deductInput.value = '';
+                    }
                 }
                 openModal('modalAdjust');
+            }
+
+            function onAdjustBatchSelectChange(select) {
+                const opt = select.options[select.selectedIndex];
+                if (opt && opt.value) {
+                    document.getElementById('adjustVariantId').value = opt.dataset.variantId || '';
+                    document.getElementById('adjustBatchId').value = opt.value || '';
+                    document.getElementById('adjustProductName').value = opt.dataset.productName || '';
+                    document.getElementById('adjustBatchCode').value = opt.dataset.batchCode || '';
+                    document.getElementById('adjustCurrentQty').value = (opt.dataset.currentQty || '0') + ' đơn vị';
+                    const deductInput = document.getElementById('adjustDeductQty');
+                    if (deductInput) {
+                        deductInput.max = opt.dataset.currentQty || '';
+                    }
+                } else {
+                    document.getElementById('adjustVariantId').value = '';
+                    document.getElementById('adjustBatchId').value = '';
+                    document.getElementById('adjustProductName').value = '';
+                    document.getElementById('adjustBatchCode').value = '';
+                    document.getElementById('adjustCurrentQty').value = '';
+                }
             }
 
             // Hàm mở Modal Hủy lô
@@ -560,14 +656,33 @@
             }
 
             function openRestockModal(btn) {
+                const selectBox = document.getElementById('restockVariantSelectBox');
+                const infoBox = document.getElementById('restockVariantInfoBox');
                 if (btn && btn.dataset) {
+                    if (selectBox) selectBox.classList.add('hidden');
+                    if (infoBox) infoBox.classList.remove('hidden');
                     document.getElementById('restockVariantId').value = btn.dataset.variantId || '';
                     document.getElementById('restockProductName').value = (btn.dataset.productName || '') + ' (' + (btn.dataset.sku || '') + ')';
+                } else {
+                    if (selectBox) selectBox.classList.remove('hidden');
+                    if (infoBox) infoBox.classList.add('hidden');
+                    document.getElementById('restockVariantId').value = '';
+                    document.getElementById('restockProductName').value = '';
+                    const selectElem = document.getElementById('restockVariantDropdown');
+                    if (selectElem) selectElem.value = '';
+                }
+                openModal('modalRestock');
+            }
+
+            function onRestockVariantSelectChange(select) {
+                const opt = select.options[select.selectedIndex];
+                if (opt && opt.value) {
+                    document.getElementById('restockVariantId').value = opt.value;
+                    document.getElementById('restockProductName').value = opt.dataset.productName || '';
                 } else {
                     document.getElementById('restockVariantId').value = '';
                     document.getElementById('restockProductName').value = '';
                 }
-                openModal('modalRestock');
             }
 
             function filterTable() {

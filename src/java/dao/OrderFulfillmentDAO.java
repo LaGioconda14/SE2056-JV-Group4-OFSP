@@ -467,6 +467,7 @@ public class OrderFulfillmentDAO extends DBContext {
             psRestock.setLong(1, subOrderId);
             psRestock.executeUpdate();
         }
+        OrderDAO.restoreBatchStockBySubOrder(conn, subOrderId);
     }
 
     private void restoreShopCoupon(Connection conn, long parentOrderId, long shopId) throws SQLException {
@@ -568,6 +569,16 @@ public class OrderFulfillmentDAO extends DBContext {
             try (PreparedStatement psRestock = conn.prepareStatement(restockSql)) {
                 psRestock.setString(1, subOrderCode);
                 psRestock.executeUpdate();
+            }
+
+            String findSubIdSql = "SELECT sub_order_id FROM sub_orders WHERE sub_order_code = ?";
+            try (PreparedStatement psFind = conn.prepareStatement(findSubIdSql)) {
+                psFind.setString(1, subOrderCode);
+                try (ResultSet rs = psFind.executeQuery()) {
+                    if (rs.next()) {
+                        OrderDAO.restoreBatchStockBySubOrder(conn, rs.getLong("sub_order_id"));
+                    }
+                }
             }
 
             conn.commit();

@@ -113,6 +113,7 @@ public class ShopInventoryServlet extends HttpServlet {
             int totalSkus = productService.countVariantsByShopId(shopId);
 
             request.setAttribute("inventoryList", inventoryList);
+            request.setAttribute("listItems", inventoryList);
             request.setAttribute("keyword", keyword != null ? keyword : "");
             request.setAttribute("riskLevel", riskLevel);
             request.setAttribute("sortBy", sortBy);

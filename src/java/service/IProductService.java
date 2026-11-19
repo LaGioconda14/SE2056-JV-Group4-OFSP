@@ -14,6 +14,7 @@ import model.entity.review.Review;
 public interface IProductService {
     //lấy danh sách sản phẩm theo shopID
     List<ProductCardDTO> getProductSummariesByShopId(long shopId);
+    List<ProductCardDTO> getProductSummariesByShopId(long shopId, String statusTab);
     int countProductsByShopId(long shopId);
     int countVariantsByShopId(long shopId);
     int countVariantsByStatusTab(long shopId, String tab);

@@ -96,7 +96,7 @@ public class InventoryServiceImpl implements IInventoryService {
     }
 
     @Override
-    public boolean adjustBatch(int batchId, int variantId, int shopId, int userId,
+    public long adjustBatch(int batchId, int variantId, int shopId, int userId,
             int deductQuantity, String transactionType, String reason) throws Exception {
 
         if (batchId <= 0 || variantId <= 0 || shopId <= 0 || userId <= 0) {
@@ -115,13 +115,13 @@ public class InventoryServiceImpl implements IInventoryService {
             throw new IllegalArgumentException("Loại giao dịch trừ hao không hợp lệ.");
         }
 
-        boolean isSuccess = inventoryDAO.adjustBatch(batchId, variantId, shopId, userId, deductQuantity, transactionType, reason);
+        long transId = inventoryDAO.adjustBatch(batchId, variantId, shopId, userId, deductQuantity, transactionType, reason);
 
-        if (!isSuccess) {
+        if (transId <= 0) {
             throw new Exception("Trừ hao kho thất bại! Có thể do số lượng trừ vượt quá tồn kho hiện tại của lô hoặc xảy ra lỗi kết nối cơ sở dữ liệu.");
         }
 
-        return true;
+        return transId;
     }
 
     @Override

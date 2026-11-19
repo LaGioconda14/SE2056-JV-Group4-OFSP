@@ -31,7 +31,7 @@ public interface IInventoryService {
     
     boolean restockBatch(long variantId, long shopId, long userId, int quantity, String expiryDate, String note) throws Exception;
     
-    boolean adjustBatch(int batchId, int variantId, int shopId, int userId, int deductQuantity,
+    long adjustBatch(int batchId, int variantId, int shopId, int userId, int deductQuantity,
             String transactionType, String reason) throws Exception;
 
     boolean disposeBatch(long batchId, long variantId, long shopId, long userId, String reasonCode, String description) throws Exception;

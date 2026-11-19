@@ -4,6 +4,7 @@
  */
 package controller.shopinventory;
 
+import enums.TransactionType;
 import java.io.IOException;
 import java.io.PrintWriter;
 import jakarta.servlet.ServletException;
@@ -97,13 +98,16 @@ public class InventoryAdjustServlet extends HttpServlet {
             int batchId = Integer.parseInt(request.getParameter("batchId"));
             int variantId = Integer.parseInt(request.getParameter("variantId"));
             int deductQuantity = Integer.parseInt(request.getParameter("deductQuantity"));
-            String transactionType = request.getParameter("reason"); // Giá trị từ select: DAMAGED, EXPIRED, LOST...
+            String reasonParam = request.getParameter("reason");
+            TransactionType type = TransactionType.from(reasonParam);
+            String transactionType = type != null ? type.name() : (reasonParam != null ? reasonParam.trim() : "DAMAGED");
             String description = request.getParameter("description");   // Chi tiết mô tả từ textarea
-            boolean success = inventoryService.adjustBatch(batchId, variantId, Math.toIntExact(shopId), user.getId(), deductQuantity, transactionType, description);
+            long transId = inventoryService.adjustBatch(batchId, variantId, Math.toIntExact(shopId), user.getId(), deductQuantity, transactionType, description);
 
-            if (success) {
+            if (transId > 0) {
                 session.setAttribute("inventoryAdjustSuccess", Boolean.TRUE);
-                session.setAttribute("inventoryAdjustMessage", "Trừ hao thành công.");
+                session.setAttribute("inventoryAdjustMessage", "Đã trừ kho và lập biên bản tiêu hủy #HHL-" + transId + " thành công!");
+                session.setAttribute("lastWasteId", transId);
             } else {
                 session.setAttribute("inventoryAdjustSuccess", Boolean.FALSE);
                 session.setAttribute("inventoryAdjustMessage", "Không thể điều chỉnh tồn kho.");
@@ -111,7 +115,7 @@ public class InventoryAdjustServlet extends HttpServlet {
         } catch (NumberFormatException | ArithmeticException e) {
             e.printStackTrace();
             session.setAttribute("inventoryAdjustSuccess", Boolean.FALSE);
-            session.setAttribute("inventoryAdjustMessage", "Dữ liệu số nhập vào không hợp lệ.");
+            session.setAttribute("inventoryAdjustMessage", "Vui lòng chọn lô hàng và nhập số lượng trừ hợp lệ.");
         } catch (Exception e) {
             e.printStackTrace();
             session.setAttribute("inventoryAdjustSuccess", Boolean.FALSE);
