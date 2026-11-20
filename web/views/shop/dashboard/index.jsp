@@ -58,7 +58,7 @@
                     <span class="todo-icon bg-sky-50 text-sky-600"><i class="fa-solid fa-truck-fast"></i></span>
                     <span><span class="todo-num">${shippingOrders}</span><span class="todo-label">Đơn đang giao</span></span>
                 </a>
-                <a href="${ctx}/shop/inventory" class="todo-card">
+                <a href="${ctx}/shop/inventory/batches" class="todo-card">
                     <span class="todo-icon bg-red-50 text-red-600"><i class="fa-solid fa-triangle-exclamation"></i></span>
                     <span><span class="todo-num">${lowStockCount}</span><span class="todo-label">SKU sắp hết hàng</span></span>
                 </a>
@@ -345,7 +345,7 @@
                     <div class="panel">
                         <div class="panel-head">
                             <h2>Cảnh báo tồn kho</h2>
-                            <a href="${ctx}/shop/inventory" class="panel-link">Kho <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
+                            <a href="${ctx}/shop/inventory/batches" class="panel-link">Kho <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
                         </div>
                         <c:choose>
                             <c:when test="${not empty lowStockItems}">

@@ -15,7 +15,7 @@ import model.entity.user.User;
 import service.IInventoryService;
 import service.impl.InventoryServiceImpl;
 
-@WebServlet(name = "InventoryDashboardServlet", urlPatterns = {"/shop/inventory/batches", "/shop/batches"})
+@WebServlet(name = "InventoryDashboardServlet", urlPatterns = {"/shop/inventory/batches", "/shop/batches", "/shop/inventory"})
 public class InventoryDashboardServlet extends HttpServlet {
 
     private final ShopDAO shopDAO = new ShopDAO();
@@ -49,16 +49,13 @@ public class InventoryDashboardServlet extends HttpServlet {
             session.setAttribute("shopObj", shop);
         }
 
-        // 1. Lấy danh sách lô từ service có sẵn
+        // 1. Lấy danh sách toàn bộ lô hàng của shop
         List<ProductBatch> allBatches = inventoryService.getBatchesByShopId(shopId);
 
         long totalStock = 0;
         int lowStockCount = 0;
         int totalBatches = 0;
         int nearExpiryCount = 0;
-
-        // 2. Gom nhóm trực tiếp bằng Map: Key là variantId, Value là danh sách ProductBatch của variant đó
-        Map<Long, List<ProductBatch>> variantBatchMap = new LinkedHashMap<>();
 
         if (allBatches != null) {
             totalBatches = allBatches.size();
@@ -71,20 +68,75 @@ public class InventoryDashboardServlet extends HttpServlet {
                 if (batch.getDaysRemaining() <= 7) {
                     nearExpiryCount++;
                 }
-
-                // Gom nhóm các lô chung 1 variant vào chung một danh sách
-                variantBatchMap.computeIfAbsent(batch.getVariantId(), k -> new ArrayList<>()).add(batch);
             }
         }
 
-        // 3. Đẩy thẳng cái Map này sang JSP
+        // 2. Lọc tìm kiếm Server-Side (No-JS Search)
+        String keyword = request.getParameter("keyword");
+        List<ProductBatch> displayBatches = allBatches != null ? new ArrayList<>(allBatches) : new ArrayList<>();
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = keyword.trim().toLowerCase();
+            displayBatches.removeIf(b -> {
+                String pName = b.getProductName() != null ? b.getProductName().toLowerCase() : "";
+                String vName = b.getVariantName() != null ? b.getVariantName().toLowerCase() : "";
+                String sku = b.getSku() != null ? b.getSku().toLowerCase() : "";
+                String bCode = b.getBatchCode() != null ? b.getBatchCode().toLowerCase() : "";
+                return !pName.contains(kw) && !vName.contains(kw) && !sku.contains(kw) && !bCode.contains(kw);
+            });
+        }
+
+        // 3. Gom nhóm theo variantId để hiển thị danh sách accordion
+        Map<Long, List<ProductBatch>> variantBatchMap = new LinkedHashMap<>();
+        for (ProductBatch batch : displayBatches) {
+            variantBatchMap.computeIfAbsent(batch.getVariantId(), k -> new ArrayList<>()).add(batch);
+        }
+
+        // 4. Xử lý nạp dữ liệu Modal qua URL (100% No-JS Server-Rendered Modals)
+        String action = request.getParameter("action");
+        String batchIdParam = request.getParameter("batchId");
+        String variantIdParam = request.getParameter("variantId");
+
+        if (batchIdParam != null && !batchIdParam.trim().isEmpty()) {
+            try {
+                int targetBatchId = Integer.parseInt(batchIdParam.trim());
+                if (allBatches != null) {
+                    for (ProductBatch b : allBatches) {
+                        if (b.getBatchId() == targetBatchId) {
+                            if ("adjust".equalsIgnoreCase(action)) {
+                                request.setAttribute("selectedAdjustBatch", b);
+                            } else if ("dispose".equalsIgnoreCase(action)) {
+                                request.setAttribute("selectedDisposeBatch", b);
+                            }
+                            break;
+                        }
+                    }
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        if (variantIdParam != null && !variantIdParam.trim().isEmpty()) {
+            try {
+                long targetVariantId = Long.parseLong(variantIdParam.trim());
+                if (allBatches != null) {
+                    for (ProductBatch b : allBatches) {
+                        if (b.getVariantId() == targetVariantId) {
+                            request.setAttribute("selectedRestockVariant", b);
+                            break;
+                        }
+                    }
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
         request.setAttribute("variantBatchMap", variantBatchMap);
         request.setAttribute("totalStock", totalStock);
         request.setAttribute("totalBatches", totalBatches);
         request.setAttribute("lowStockCount", lowStockCount);
         request.setAttribute("nearExpiryCount", nearExpiryCount);
 
-        request.getRequestDispatcher("/views/inventory/inventory-dashboard.jsp").forward(request, response);
+        request.getRequestDispatcher("/views/shop/inventory/index.jsp").forward(request, response);
     }
 
     @Override

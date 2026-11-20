@@ -68,7 +68,7 @@ public class InventoryDisposeServlet extends HttpServlet {
             String reasonCode = request.getParameter("reason");
             if (reasonCode == null || !ALLOWED_REASONS.contains(reasonCode)) {
                 flash(session, false, "Lý do hủy lô không hợp lệ.");
-                response.sendRedirect(request.getContextPath() + "/shop/inventory");
+                response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
                 return;
             }
 

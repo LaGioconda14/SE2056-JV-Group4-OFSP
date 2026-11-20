@@ -39,7 +39,7 @@ public class InventoryHistoryServlet extends HttpServlet {
         Long shopId = session.getAttribute("shopId") instanceof Long
                 ? (Long) session.getAttribute("shopId") : null;
         if (shopId == null || shopId <= 0) {
-            response.sendRedirect(request.getContextPath() + "/shop/inventory");
+            response.sendRedirect(request.getContextPath() + "/shop/inventory/batches");
             return;
         }
 
@@ -83,7 +83,7 @@ public class InventoryHistoryServlet extends HttpServlet {
             request.setAttribute("isOpenHistoryModal", true);
 
             // 4. Forward về trang dashboard kho
-            request.getRequestDispatcher("/views/inventory/inventory-dashboard.jsp").forward(request, response);
+            request.getRequestDispatcher("/views/shop/inventory/index.jsp").forward(request, response);
 
         } catch (Exception e) {
             e.printStackTrace();

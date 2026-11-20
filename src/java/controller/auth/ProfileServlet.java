@@ -28,6 +28,8 @@ import service.impl.OrderServiceImpl;
 import service.INotificationService;
 import service.impl.NotificationServiceImpl;
 import service.impl.UserServiceImpl;
+import service.IAddressLookupService;
+import service.impl.AddressLookupServiceImpl;
 
 @WebServlet(name = "ProfileServlet", urlPatterns = { "/profile" })
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 1, maxFileSize = 1024 * 1024 * 5, maxRequestSize = 1024 * 1024 * 10)
@@ -38,6 +40,7 @@ public class ProfileServlet extends HttpServlet {
     private final IOrderService orderService = new OrderServiceImpl();
     private final INotificationService notificationService = new NotificationServiceImpl();
     private final dao.promotion.CouponDAO couponDAO = new dao.promotion.CouponDAO();
+    private final IAddressLookupService addressLookupService = new AddressLookupServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -68,6 +71,12 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("addresses", addresses);
         } catch (Exception ex) {
             request.setAttribute("addresses", Collections.emptyList());
+        }
+
+        try {
+            request.setAttribute("provinces", addressLookupService.getAllProvinces());
+        } catch (Exception ex) {
+            request.setAttribute("provinces", Collections.emptyList());
         }
 
         try {

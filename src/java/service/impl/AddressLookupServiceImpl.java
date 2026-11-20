@@ -5,10 +5,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import model.dto.common.Province;
 import service.IAddressLookupService;
 
 public class AddressLookupServiceImpl implements IAddressLookupService {
@@ -23,71 +27,85 @@ public class AddressLookupServiceImpl implements IAddressLookupService {
             .connectTimeout(Duration.ofSeconds(4))
             .build();
 
+    private static final List<Province> PROVINCE_LIST = new ArrayList<>();
+    static {
+        PROVINCE_LIST.add(new Province(1, "Thành phố Hà Nội"));
+        PROVINCE_LIST.add(new Province(4, "Tỉnh Cao Bằng"));
+        PROVINCE_LIST.add(new Province(8, "Tỉnh Tuyên Quang"));
+        PROVINCE_LIST.add(new Province(11, "Tỉnh Điện Biên"));
+        PROVINCE_LIST.add(new Province(12, "Tỉnh Lai Châu"));
+        PROVINCE_LIST.add(new Province(14, "Tỉnh Sơn La"));
+        PROVINCE_LIST.add(new Province(15, "Tỉnh Lào Cai"));
+        PROVINCE_LIST.add(new Province(19, "Tỉnh Thái Nguyên"));
+        PROVINCE_LIST.add(new Province(20, "Tỉnh Lạng Sơn"));
+        PROVINCE_LIST.add(new Province(22, "Thành phố Quảng Ninh"));
+        PROVINCE_LIST.add(new Province(24, "Thành phố Bắc Ninh"));
+        PROVINCE_LIST.add(new Province(25, "Tỉnh Phú Thọ"));
+        PROVINCE_LIST.add(new Province(31, "Thành phố Hải Phòng"));
+        PROVINCE_LIST.add(new Province(33, "Tỉnh Hưng Yên"));
+        PROVINCE_LIST.add(new Province(37, "Tỉnh Ninh Bình"));
+        PROVINCE_LIST.add(new Province(38, "Tỉnh Thanh Hóa"));
+        PROVINCE_LIST.add(new Province(40, "Tỉnh Nghệ An"));
+        PROVINCE_LIST.add(new Province(42, "Tỉnh Hà Tĩnh"));
+        PROVINCE_LIST.add(new Province(44, "Tỉnh Quảng Trị"));
+        PROVINCE_LIST.add(new Province(46, "Thành phố Huế"));
+        PROVINCE_LIST.add(new Province(48, "Thành phố Đà Nẵng"));
+        PROVINCE_LIST.add(new Province(51, "Tỉnh Quảng Ngãi"));
+        PROVINCE_LIST.add(new Province(52, "Tỉnh Gia Lai"));
+        PROVINCE_LIST.add(new Province(56, "Tỉnh Khánh Hòa"));
+        PROVINCE_LIST.add(new Province(66, "Tỉnh Đắk Lắk"));
+        PROVINCE_LIST.add(new Province(68, "Tỉnh Lâm Đồng"));
+        PROVINCE_LIST.add(new Province(75, "Thành phố Đồng Nai"));
+        PROVINCE_LIST.add(new Province(79, "Thành phố Hồ Chí Minh"));
+        PROVINCE_LIST.add(new Province(80, "Tỉnh Tây Ninh"));
+        PROVINCE_LIST.add(new Province(82, "Tỉnh Đồng Tháp"));
+        PROVINCE_LIST.add(new Province(86, "Tỉnh Vĩnh Long"));
+        PROVINCE_LIST.add(new Province(91, "Tỉnh An Giang"));
+        PROVINCE_LIST.add(new Province(92, "Thành phố Cần Thơ"));
+        PROVINCE_LIST.add(new Province(96, "Tỉnh Cà Mau"));
+    }
+
     private static final String FALLBACK_PROVINCES = "["
             + "{\"name\":\"Thành phố Hà Nội\",\"code\":1},"
-            + "{\"name\":\"Thành phố Hồ Chí Minh\",\"code\":79},"
-            + "{\"name\":\"Thành phố Đà Nẵng\",\"code\":48},"
-            + "{\"name\":\"Thành phố Hải Phòng\",\"code\":31},"
-            + "{\"name\":\"Thành phố Cần Thơ\",\"code\":92},"
-            + "{\"name\":\"Tỉnh An Giang\",\"code\":89},"
-            + "{\"name\":\"Tỉnh Bà Rịa - Vũng Tàu\",\"code\":77},"
-            + "{\"name\":\"Tỉnh Bắc Giang\",\"code\":24},"
-            + "{\"name\":\"Tỉnh Bắc Kạn\",\"code\":6},"
-            + "{\"name\":\"Tỉnh Bạc Liêu\",\"code\":95},"
-            + "{\"name\":\"Tỉnh Bắc Ninh\",\"code\":27},"
-            + "{\"name\":\"Tỉnh Bến Tre\",\"code\":83},"
-            + "{\"name\":\"Tỉnh Bình Định\",\"code\":52},"
-            + "{\"name\":\"Tỉnh Bình Dương\",\"code\":74},"
-            + "{\"name\":\"Tỉnh Bình Phước\",\"code\":70},"
-            + "{\"name\":\"Tỉnh Bình Thuận\",\"code\":60},"
-            + "{\"name\":\"Tỉnh Cà Mau\",\"code\":96},"
             + "{\"name\":\"Tỉnh Cao Bằng\",\"code\":4},"
-            + "{\"name\":\"Tỉnh Đắk Lắk\",\"code\":66},"
-            + "{\"name\":\"Tỉnh Đắk Nông\",\"code\":67},"
-            + "{\"name\":\"Tỉnh Điện Biên\",\"code\":11},"
-            + "{\"name\":\"Tỉnh Đồng Nai\",\"code\":75},"
-            + "{\"name\":\"Tỉnh Đồng Tháp\",\"code\":87},"
-            + "{\"name\":\"Tỉnh Gia Lai\",\"code\":64},"
-            + "{\"name\":\"Tỉnh Hà Giang\",\"code\":2},"
-            + "{\"name\":\"Tỉnh Hà Nam\",\"code\":35},"
-            + "{\"name\":\"Tỉnh Hà Tĩnh\",\"code\":42},"
-            + "{\"name\":\"Tỉnh Hải Dương\",\"code\":30},"
-            + "{\"name\":\"Tỉnh Hậu Giang\",\"code\":93},"
-            + "{\"name\":\"Tỉnh Hòa Bình\",\"code\":17},"
-            + "{\"name\":\"Tỉnh Hưng Yên\",\"code\":33},"
-            + "{\"name\":\"Tỉnh Khánh Hòa\",\"code\":56},"
-            + "{\"name\":\"Tỉnh Kiên Giang\",\"code\":91},"
-            + "{\"name\":\"Tỉnh Kon Tum\",\"code\":62},"
-            + "{\"name\":\"Tỉnh Lai Châu\",\"code\":12},"
-            + "{\"name\":\"Tỉnh Lâm Đồng\",\"code\":68},"
-            + "{\"name\":\"Tỉnh Lạng Sơn\",\"code\":20},"
-            + "{\"name\":\"Tỉnh Lào Cai\",\"code\":10},"
-            + "{\"name\":\"Tỉnh Long An\",\"code\":80},"
-            + "{\"name\":\"Tỉnh Nam Định\",\"code\":36},"
-            + "{\"name\":\"Tỉnh Nghệ An\",\"code\":40},"
-            + "{\"name\":\"Tỉnh Ninh Bình\",\"code\":37},"
-            + "{\"name\":\"Tỉnh Ninh Thuận\",\"code\":58},"
-            + "{\"name\":\"Tỉnh Phú Thọ\",\"code\":25},"
-            + "{\"name\":\"Tỉnh Phú Yên\",\"code\":54},"
-            + "{\"name\":\"Tỉnh Quảng Bình\",\"code\":44},"
-            + "{\"name\":\"Tỉnh Quảng Nam\",\"code\":49},"
-            + "{\"name\":\"Tỉnh Quảng Ngãi\",\"code\":51},"
-            + "{\"name\":\"Tỉnh Quảng Ninh\",\"code\":22},"
-            + "{\"name\":\"Tỉnh Quảng Trị\",\"code\":45},"
-            + "{\"name\":\"Tỉnh Sóc Trăng\",\"code\":94},"
-            + "{\"name\":\"Tỉnh Sơn La\",\"code\":14},"
-            + "{\"name\":\"Tỉnh Tây Ninh\",\"code\":72},"
-            + "{\"name\":\"Tỉnh Thái Bình\",\"code\":34},"
-            + "{\"name\":\"Tỉnh Thái Nguyên\",\"code\":19},"
-            + "{\"name\":\"Tỉnh Thanh Hóa\",\"code\":38},"
-            + "{\"name\":\"Thành phố Huế\",\"code\":46},"
-            + "{\"name\":\"Tỉnh Tiền Giang\",\"code\":82},"
-            + "{\"name\":\"Tỉnh Trà Vinh\",\"code\":84},"
             + "{\"name\":\"Tỉnh Tuyên Quang\",\"code\":8},"
+            + "{\"name\":\"Tỉnh Điện Biên\",\"code\":11},"
+            + "{\"name\":\"Tỉnh Lai Châu\",\"code\":12},"
+            + "{\"name\":\"Tỉnh Sơn La\",\"code\":14},"
+            + "{\"name\":\"Tỉnh Lào Cai\",\"code\":15},"
+            + "{\"name\":\"Tỉnh Thái Nguyên\",\"code\":19},"
+            + "{\"name\":\"Tỉnh Lạng Sơn\",\"code\":20},"
+            + "{\"name\":\"Thành phố Quảng Ninh\",\"code\":22},"
+            + "{\"name\":\"Thành phố Bắc Ninh\",\"code\":24},"
+            + "{\"name\":\"Tỉnh Phú Thọ\",\"code\":25},"
+            + "{\"name\":\"Thành phố Hải Phòng\",\"code\":31},"
+            + "{\"name\":\"Tỉnh Hưng Yên\",\"code\":33},"
+            + "{\"name\":\"Tỉnh Ninh Bình\",\"code\":37},"
+            + "{\"name\":\"Tỉnh Thanh Hóa\",\"code\":38},"
+            + "{\"name\":\"Tỉnh Nghệ An\",\"code\":40},"
+            + "{\"name\":\"Tỉnh Hà Tĩnh\",\"code\":42},"
+            + "{\"name\":\"Tỉnh Quảng Trị\",\"code\":44},"
+            + "{\"name\":\"Thành phố Huế\",\"code\":46},"
+            + "{\"name\":\"Thành phố Đà Nẵng\",\"code\":48},"
+            + "{\"name\":\"Tỉnh Quảng Ngãi\",\"code\":51},"
+            + "{\"name\":\"Tỉnh Gia Lai\",\"code\":52},"
+            + "{\"name\":\"Tỉnh Khánh Hòa\",\"code\":56},"
+            + "{\"name\":\"Tỉnh Đắk Lắk\",\"code\":66},"
+            + "{\"name\":\"Tỉnh Lâm Đồng\",\"code\":68},"
+            + "{\"name\":\"Thành phố Đồng Nai\",\"code\":75},"
+            + "{\"name\":\"Thành phố Hồ Chí Minh\",\"code\":79},"
+            + "{\"name\":\"Tỉnh Tây Ninh\",\"code\":80},"
+            + "{\"name\":\"Tỉnh Đồng Tháp\",\"code\":82},"
             + "{\"name\":\"Tỉnh Vĩnh Long\",\"code\":86},"
-            + "{\"name\":\"Tỉnh Vĩnh Phúc\",\"code\":26},"
-            + "{\"name\":\"Tỉnh Yên Bái\",\"code\":15}"
+            + "{\"name\":\"Tỉnh An Giang\",\"code\":91},"
+            + "{\"name\":\"Thành phố Cần Thơ\",\"code\":92},"
+            + "{\"name\":\"Tỉnh Cà Mau\",\"code\":96}"
             + "]";
+
+    @Override
+    public List<Province> getAllProvinces() {
+        return Collections.unmodifiableList(PROVINCE_LIST);
+    }
 
     @Override
     public String getProvincesJson() {

@@ -39,7 +39,10 @@
                                 Tỉnh / Thành phố <span class="text-danger">*</span>
                             </label>
                             <select class="form-select" id="citySelect" name="city" required>
-                                <option value="" selected disabled>Đang tải Tỉnh / Thành phố...</option>
+                                <option value="" selected disabled>Chọn Tỉnh / Thành phố</option>
+                                <c:forEach items="${provinces}" var="p">
+                                    <option value="${p.name}" data-code="${p.code}">${p.name}</option>
+                                </c:forEach>
                             </select>
                         </div>
                         <div class="col-md-6">
