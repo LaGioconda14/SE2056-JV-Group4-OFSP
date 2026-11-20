@@ -37,7 +37,7 @@ public class ProfileServlet extends HttpServlet {
     private final ICustomerAddressService addressService = new CustomerAddressServiceImpl();
     private final IOrderService orderService = new OrderServiceImpl();
     private final INotificationService notificationService = new NotificationServiceImpl();
-    private final dao.CouponDAO couponDAO = new dao.CouponDAO();
+    private final dao.promotion.CouponDAO couponDAO = new dao.promotion.CouponDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)

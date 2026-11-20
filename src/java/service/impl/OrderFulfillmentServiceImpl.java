@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.OrderFulfillmentDAO;
+import dao.order.OrderFulfillmentDAO;
 import java.util.List;
 import model.dto.order.SubOrderDTO;
 import model.dto.order.SubOrderDetailDTO;

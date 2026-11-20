@@ -1,0 +1,441 @@
+package dao.delivery;
+
+import dao.product.ProductDAO;
+
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import model.entity.delivery.Delivery;
+import enums.DeliveryStatus;
+import enums.OrderStatus;
+import enums.PaymentMethod;
+import enums.PaymentTransactionStatus;
+import enums.SubOrderStatus;
+import enums.PaymentStatus;
+import model.dto.order.OrderItemFulfillmentDTO;
+import util.DBContext;
+
+public class DeliveryDAO extends DBContext {
+
+    private static final Logger LOGGER = Logger.getLogger(DeliveryDAO.class.getName());
+    private static final java.time.format.DateTimeFormatter DATE_FMT = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    /**
+     * Get list of deliveries assigned to a driver with status filter and keyword search
+     */
+    public List<Delivery> getDeliveriesByDriver(long driverId, String statusFilter, String keyword) {
+        List<Delivery> list = new ArrayList<>();
+        Connection conn = getConnection();
+        if (conn == null) return list;
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT d.delivery_id, d.sub_order_id, d.driver_id, d.tracking_number, d.delivery_status, "
+            + "       d.proof_image_url, d.failure_reason, d.assigned_at, d.delivered_at, "
+            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_date, so.delivery_slot_id, dts.display_label AS slot_display, so.note, "
+            + "       so.status AS sub_order_status, "
+            + "       s.shop_name, s.phone AS shop_phone, s.address AS shop_address, s.province AS shop_province, "
+            + "       o.payment_method, o.payment_status, "
+            + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city "
+            + "FROM deliveries d "
+            + "JOIN sub_orders so ON d.sub_order_id = so.sub_order_id "
+            + "JOIN orders o ON so.order_id = o.order_id "
+            + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
+            + "LEFT JOIN shops s ON so.shop_id = s.shop_id "
+            + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
+            + "WHERE d.driver_id = ? "
+        );
+
+        if (statusFilter != null && !statusFilter.trim().isEmpty() && !"all".equalsIgnoreCase(statusFilter)) {
+            if ("pickup".equalsIgnoreCase(statusFilter)) {
+                sql.append(" AND d.delivery_status IN ('ASSIGNING', 'ASSIGNED') ");
+            } else if ("delivering".equalsIgnoreCase(statusFilter)) {
+                sql.append(" AND d.delivery_status IN ('DELIVERING', 'IN_TRANSIT', 'PICKED_UP') ");
+            } else if ("completed".equalsIgnoreCase(statusFilter)) {
+                sql.append(" AND d.delivery_status = 'DELIVERED' ");
+            } else if ("failed".equalsIgnoreCase(statusFilter)) {
+                sql.append(" AND d.delivery_status IN ('FAILED', 'CANCELLED') ");
+            }
+        }
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            sql.append(" AND (d.tracking_number LIKE ? OR so.sub_order_code LIKE ? OR osa.recipient_name LIKE ? OR osa.recipient_phone LIKE ? OR s.shop_name LIKE ?) ");
+        }
+
+        sql.append(" ORDER BY d.delivery_id DESC");
+
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int idx = 1;
+            ps.setLong(idx++, driverId);
+
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                String kw = "%" + keyword.trim() + "%";
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Delivery del = extractDeliveryFromResultSet(rs);
+                    loadDeliveryItems(del);
+                    list.add(del);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting deliveries for driver " + driverId, ex);
+        }
+        return list;
+    }
+
+    /**
+     * Get single delivery details by ID
+     */
+    public Delivery getDeliveryById(long deliveryId, long driverId) {
+        Connection conn = getConnection();
+        if (conn == null) return null;
+
+        String sql = "SELECT d.delivery_id, d.sub_order_id, d.driver_id, d.tracking_number, d.delivery_status, "
+            + "       d.proof_image_url, d.failure_reason, d.assigned_at, d.delivered_at, "
+            + "       so.sub_order_code, so.shop_id, so.shop_total, so.delivery_date, so.delivery_slot_id, dts.display_label AS slot_display, so.note, "
+            + "       so.status AS sub_order_status, "
+            + "       s.shop_name, s.phone AS shop_phone, s.address AS shop_address, s.province AS shop_province, "
+            + "       o.payment_method, o.payment_status, "
+            + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city "
+            + "FROM deliveries d "
+            + "JOIN sub_orders so ON d.sub_order_id = so.sub_order_id "
+            + "JOIN orders o ON so.order_id = o.order_id "
+            + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
+            + "LEFT JOIN shops s ON so.shop_id = s.shop_id "
+            + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
+            + "WHERE d.delivery_id = ? AND d.driver_id = ?";
+
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, deliveryId);
+            ps.setLong(2, driverId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Delivery del = extractDeliveryFromResultSet(rs);
+                    loadDeliveryItems(del);
+                    return del;
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting delivery details " + deliveryId, ex);
+        }
+        return null;
+    }
+
+    /**
+     * Driver confirms package pickup at the Shop (Confirm Package Pickup -> status='DELIVERING')
+     */
+    public boolean confirmPickup(long deliveryId, long driverId) {
+        String updateDel = "UPDATE deliveries SET delivery_status = '" + DeliveryStatus.DELIVERING.name() + "' WHERE delivery_id = ? AND driver_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) return false;
+
+        try (conn; PreparedStatement ps = conn.prepareStatement(updateDel)) {
+            ps.setLong(1, deliveryId);
+            ps.setLong(2, driverId);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                // Update sub_order and order to SHIPPING
+                String syncSubOrder = "UPDATE so SET so.status = '" + SubOrderStatus.SHIPPING.name() + "', so.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM sub_orders so JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                    + "WHERE d.delivery_id = ?";
+                try (PreparedStatement psSub = conn.prepareStatement(syncSubOrder)) {
+                    psSub.setLong(1, deliveryId);
+                    psSub.executeUpdate();
+                }
+
+                String syncOrder = "UPDATE o SET o.order_status = '" + OrderStatus.SHIPPING.name()
+                    + "', o.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM orders o "
+                    + "JOIN sub_orders so ON o.order_id = so.order_id "
+                    + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                    + "WHERE d.delivery_id = ?";
+                try (PreparedStatement psOrd = conn.prepareStatement(syncOrder)) {
+                    psOrd.setLong(1, deliveryId);
+                    psOrd.executeUpdate();
+                }
+                return true;
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error confirming package pickup for delivery " + deliveryId, ex);
+        }
+        return false;
+    }
+
+    /**
+     * Driver completes delivery successfully, collects cash if COD, and uploads PoD
+     */
+    public boolean completeDelivery(long deliveryId, long driverId, String proofImageUrl) {
+        String updateDel = "UPDATE deliveries SET delivery_status = '" + DeliveryStatus.DELIVERED.name() + "', proof_image_url = ?, delivered_at = CURRENT_TIMESTAMP "
+            + "WHERE delivery_id = ? AND driver_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) return false;
+
+        try {
+            conn.setAutoCommit(false);
+            int rows;
+            try (PreparedStatement ps = conn.prepareStatement(updateDel)) {
+                ps.setString(1, proofImageUrl != null && !proofImageUrl.trim().isEmpty()
+                        ? proofImageUrl.trim()
+                        : "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600");
+                ps.setLong(2, deliveryId);
+                ps.setLong(3, driverId);
+                rows = ps.executeUpdate();
+            }
+            if (rows > 0) {
+                // Update sub_orders to DELIVERED
+                String syncSub = "UPDATE so SET so.status = '" + SubOrderStatus.DELIVERED.name() + "', so.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM sub_orders so JOIN deliveries d ON so.sub_order_id = d.sub_order_id WHERE d.delivery_id = ?";
+                try (PreparedStatement psSub = conn.prepareStatement(syncSub)) {
+                    psSub.setLong(1, deliveryId);
+                    psSub.executeUpdate();
+                }
+
+                // Increment total_trips in driver_profiles
+                String incTrips = "UPDATE driver_profiles SET total_trips = total_trips + 1 WHERE driver_id = ?";
+                try (PreparedStatement psTrip = conn.prepareStatement(incTrips)) {
+                    psTrip.setLong(1, driverId);
+                    psTrip.executeUpdate();
+                }
+
+                // If all sub_orders of order are DELIVERED, set order to COMPLETED
+                String syncOrd = "UPDATE o SET o.order_status = '" + OrderStatus.COMPLETED.name()
+                    + "', o.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM orders o "
+                    + "JOIN sub_orders so ON o.order_id = so.order_id "
+                    + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                    + "WHERE d.delivery_id = ? "
+                    + "  AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id AND other.status <> '" + SubOrderStatus.DELIVERED.name() + "')";
+                try (PreparedStatement psOrd = conn.prepareStatement(syncOrd)) {
+                    psOrd.setLong(1, deliveryId);
+                    psOrd.executeUpdate();
+                }
+
+                // If payment method is COD, mark payment as PAID
+                String syncPayment = "UPDATE o SET o.payment_status = '" + PaymentStatus.PAID.name() + "' "
+                    + "FROM orders o "
+                    + "JOIN sub_orders so ON o.order_id = so.order_id "
+                    + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                    + "WHERE d.delivery_id = ? AND o.payment_method = '" + PaymentMethod.COD.name() + "' "
+                    + "AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id "
+                    + "AND other.status <> '" + SubOrderStatus.DELIVERED.name() + "')";
+                try (PreparedStatement psPay = conn.prepareStatement(syncPayment)) {
+                    psPay.setLong(1, deliveryId);
+                    psPay.executeUpdate();
+                }
+
+                String syncPaymentTransaction = "UPDATE p SET p.payment_status = '"
+                    + PaymentTransactionStatus.SUCCESS.name() + "', p.paid_at = CURRENT_TIMESTAMP "
+                    + "FROM payments p "
+                    + "JOIN orders o ON p.order_id = o.order_id "
+                    + "JOIN sub_orders so ON o.order_id = so.order_id "
+                    + "JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                    + "WHERE d.delivery_id = ? AND o.payment_method = '" + PaymentMethod.COD.name() + "' "
+                    + "AND NOT EXISTS (SELECT 1 FROM sub_orders other WHERE other.order_id = o.order_id "
+                    + "AND other.status <> '" + SubOrderStatus.DELIVERED.name() + "')";
+                try (PreparedStatement psPay = conn.prepareStatement(syncPaymentTransaction)) {
+                    psPay.setLong(1, deliveryId);
+                    psPay.executeUpdate();
+                }
+                conn.commit();
+                return true;
+            }
+        } catch (SQLException ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException rollbackEx) {
+                ex.addSuppressed(rollbackEx);
+            }
+            LOGGER.log(Level.SEVERE, "Error completing delivery " + deliveryId, ex);
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException closeEx) {
+                LOGGER.log(Level.WARNING, "Error closing delivery connection", closeEx);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Driver reports failed delivery / rejection by customer (Record Failed Delivery)
+     * Triggers Return and Refund flow
+     */
+    public boolean recordFailedDelivery(long deliveryId, long driverId, String failureReason) {
+        String updateDel = "UPDATE deliveries SET delivery_status = '" + DeliveryStatus.FAILED.name() + "', failure_reason = ?, delivered_at = CURRENT_TIMESTAMP "
+            + "WHERE delivery_id = ? AND driver_id = ?";
+        Connection conn = getConnection();
+        if (conn == null) return false;
+
+        try (conn; PreparedStatement ps = conn.prepareStatement(updateDel)) {
+            ps.setNString(1, failureReason != null ? failureReason : "Giao hàng không thành công");
+            ps.setLong(2, deliveryId);
+            ps.setLong(3, driverId);
+            int rows = ps.executeUpdate();
+            if (rows > 0) {
+                // Update sub_order to FAILED with cancel_reason
+                String syncSub = "UPDATE so SET so.status = '" + SubOrderStatus.FAILED.name() + "', so.cancel_reason = ?, so.updated_at = CURRENT_TIMESTAMP "
+                    + "FROM sub_orders so JOIN deliveries d ON so.sub_order_id = d.sub_order_id WHERE d.delivery_id = ?";
+                try (PreparedStatement psSub = conn.prepareStatement(syncSub)) {
+                    psSub.setNString(1, failureReason);
+                    psSub.setLong(2, deliveryId);
+                    psSub.executeUpdate();
+                }
+                return true;
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error recording failed delivery " + deliveryId, ex);
+        }
+        return false;
+    }
+
+    /**
+     * Count deliveries by Driver and Status
+     */
+    public int countDeliveries(long driverId, String statusFilter) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS total FROM deliveries d WHERE d.driver_id = ? ");
+        if ("pickup".equalsIgnoreCase(statusFilter)) {
+            sql.append(" AND d.delivery_status IN ('ASSIGNING', 'ASSIGNED') ");
+        } else if ("delivering".equalsIgnoreCase(statusFilter)) {
+            sql.append(" AND d.delivery_status IN ('DELIVERING', 'IN_TRANSIT', 'PICKED_UP') ");
+        } else if ("completed".equalsIgnoreCase(statusFilter)) {
+            sql.append(" AND d.delivery_status = 'DELIVERED' ");
+        } else if ("failed".equalsIgnoreCase(statusFilter)) {
+            sql.append(" AND d.delivery_status IN ('FAILED', 'CANCELLED') ");
+        }
+
+        Connection conn = getConnection();
+        if (conn == null) return 0;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            ps.setLong(1, driverId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt("total");
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error counting deliveries for driver " + driverId, ex);
+        }
+        return 0;
+    }
+
+    /**
+     * Calculate total COD cash collected by driver for completed deliveries
+     */
+    public BigDecimal getTotalCodCollected(long driverId) {
+        String sql = "SELECT SUM(so.shop_total) AS total_cod "
+            + "FROM deliveries d "
+            + "JOIN sub_orders so ON d.sub_order_id = so.sub_order_id "
+            + "JOIN orders o ON so.order_id = o.order_id "
+            + "WHERE d.driver_id = ? AND d.delivery_status = '" + DeliveryStatus.DELIVERED.name()
+            + "' AND o.payment_method = '" + PaymentMethod.COD.name() + "'";
+        Connection conn = getConnection();
+        if (conn == null) return BigDecimal.ZERO;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, driverId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal total = rs.getBigDecimal("total_cod");
+                    return total != null ? total : BigDecimal.ZERO;
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting total COD for driver " + driverId, ex);
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private Delivery extractDeliveryFromResultSet(ResultSet rs) throws SQLException {
+        Delivery del = new Delivery();
+        del.setDeliveryId(rs.getLong("delivery_id"));
+        del.setSubOrderId(rs.getLong("sub_order_id"));
+        del.setDriverId(rs.getLong("driver_id"));
+        del.setTrackingNumber(rs.getString("tracking_number"));
+        del.setDeliveryStatus(rs.getString("delivery_status"));
+        del.setProofImageUrl(rs.getString("proof_image_url"));
+        del.setFailureReason(rs.getString("failure_reason"));
+        del.setAssignedAt(rs.getTimestamp("assigned_at"));
+        del.setDeliveredAt(rs.getTimestamp("delivered_at"));
+
+        del.setSubOrderCode(rs.getString("sub_order_code"));
+        del.setShopId(rs.getLong("shop_id"));
+        del.setShopName(rs.getString("shop_name"));
+        del.setShopPhone(rs.getString("shop_phone"));
+        del.setShopAddress(rs.getString("shop_address"));
+        del.setShopProvince(rs.getString("shop_province"));
+        del.setShopTotal(rs.getBigDecimal("shop_total"));
+
+        java.sql.Date dDate = rs.getDate("delivery_date");
+        String slotDisplay = rs.getString("slot_display");
+        String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+        String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                + (dateStr != null ? " (" + dateStr + ")" : "");
+        del.setDeliverySlot(finalSlotLabel);
+        del.setDeliveryNote(rs.getString("note"));
+        del.setNote(rs.getString("note"));
+
+        del.setPaymentMethod(rs.getString("payment_method"));
+        del.setPaymentStatus(rs.getString("payment_status"));
+
+        del.setRecipientName(rs.getString("recipient_name"));
+        del.setRecipientPhone(rs.getString("recipient_phone"));
+        del.setStreetAddress(rs.getString("street_address"));
+        del.setWard(rs.getString("ward"));
+        del.setDistrict(rs.getString("district"));
+        del.setCity(rs.getString("city"));
+        return del;
+    }
+
+    private void loadDeliveryItems(Delivery del) {
+        if (del == null || del.getSubOrderId() <= 0) return;
+        String sql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, oi.product_name_snapshot, "
+            + "       oi.variant_name_snapshot, oi.sku_snapshot, oi.unit, oi.unit_price, oi.quantity, oi.total_price, "
+            + "       p.storage_temp, "
+            + "       (SELECT TOP 1 pi.image_url FROM product_images pi WHERE pi.product_id = p.product_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS image_url "
+            + "FROM order_items oi "
+            + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
+            + "LEFT JOIN products p ON pv.product_id = p.product_id "
+            + "WHERE oi.sub_order_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) return;
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, del.getSubOrderId());
+            try (ResultSet rs = ps.executeQuery()) {
+                List<OrderItemFulfillmentDTO> items = new ArrayList<>();
+                while (rs.next()) {
+                    OrderItemFulfillmentDTO it = new OrderItemFulfillmentDTO();
+                    it.setOrderItemId(rs.getLong("order_item_id"));
+                    it.setSubOrderId(rs.getLong("sub_order_id"));
+                    it.setVariantId(rs.getObject("variant_id") != null ? rs.getLong("variant_id") : null);
+                    it.setProductNameSnapshot(rs.getString("product_name_snapshot"));
+                    it.setVariantNameSnapshot(rs.getString("variant_name_snapshot"));
+                    it.setSkuSnapshot(rs.getString("sku_snapshot"));
+                    it.setUnit(rs.getString("unit"));
+                    it.setUnitPrice(rs.getBigDecimal("unit_price"));
+                    it.setQuantity(rs.getInt("quantity"));
+                    it.setTotalPrice(rs.getBigDecimal("total_price"));
+                    it.setStorageTemp(rs.getString("storage_temp"));
+                    String dImg = rs.getString("image_url");
+                    if (dImg == null || dImg.trim().isEmpty()) {
+                        dImg = ProductDAO.getDefaultFruitImage(it.getProductNameSnapshot());
+                    }
+                    it.setImageUrl(dImg);
+                    items.add(it);
+                }
+                del.setItems(items);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error loading items for delivery " + del.getDeliveryId(), ex);
+        }
+    }
+}

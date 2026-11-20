@@ -48,7 +48,7 @@ public class InventoryDisposeServlet extends HttpServlet {
             model.entity.user.User user = (model.entity.user.User) session.getAttribute("user");
             if (user != null) {
                 userIdObj = (long) user.getId();
-                dao.ShopDAO sDao = new dao.ShopDAO();
+                dao.shop.ShopDAO sDao = new dao.shop.ShopDAO();
                 shopIdObj = sDao.getShopIdByOwnerId(userIdObj);
             }
         }

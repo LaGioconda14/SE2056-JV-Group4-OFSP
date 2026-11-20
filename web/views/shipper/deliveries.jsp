@@ -119,6 +119,58 @@
         </div>
     </div>
 
+    <!-- WORK STATUS TABS -->
+    <div class="d-flex align-items-center gap-2 overflow-auto pb-2 mb-3">
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=all${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="btn btn-sm ${empty statusFilter || statusFilter eq 'all' ? 'btn-success text-white' : 'btn-outline-secondary bg-white'} rounded-pill px-3 py-1.5 fw-bold text-nowrap shadow-xs">
+            Tất cả <span class="badge ${empty statusFilter || statusFilter eq 'all' ? 'bg-white text-success' : 'bg-secondary text-white'} ms-1">${countAll != null ? countAll : 0}</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=delivering${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="btn btn-sm ${statusFilter eq 'delivering' ? 'btn-primary text-white' : 'btn-outline-primary bg-white'} rounded-pill px-3 py-1.5 fw-bold text-nowrap shadow-xs">
+            <i class="bi bi-truck me-1"></i> Đang đi giao <span class="badge ${statusFilter eq 'delivering' ? 'bg-white text-primary' : 'bg-primary text-white'} ms-1">${countDelivering != null ? countDelivering : 0}</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=pickup${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="btn btn-sm ${statusFilter eq 'pickup' ? 'btn-warning text-dark' : 'btn-outline-warning text-dark bg-white'} rounded-pill px-3 py-1.5 fw-bold text-nowrap shadow-xs">
+            <i class="bi bi-box-seam me-1"></i> Chờ lấy hàng <span class="badge ${statusFilter eq 'pickup' ? 'bg-dark text-warning' : 'bg-warning text-dark'} ms-1">${countPickup != null ? countPickup : 0}</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=completed${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="btn btn-sm ${statusFilter eq 'completed' ? 'btn-success text-white' : 'btn-outline-success bg-white'} rounded-pill px-3 py-1.5 fw-bold text-nowrap shadow-xs">
+            <i class="bi bi-check-circle me-1"></i> Đã giao <span class="badge ${statusFilter eq 'completed' ? 'bg-white text-success' : 'bg-success text-white'} ms-1">${countCompleted != null ? countCompleted : 0}</span>
+        </a>
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=failed${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="btn btn-sm ${statusFilter eq 'failed' ? 'btn-danger text-white' : 'btn-outline-danger bg-white'} rounded-pill px-3 py-1.5 fw-bold text-nowrap shadow-xs">
+            <i class="bi bi-x-circle me-1"></i> Sự cố / Thất bại <span class="badge ${statusFilter eq 'failed' ? 'bg-white text-danger' : 'bg-danger text-white'} ms-1">${countFailed != null ? countFailed : 0}</span>
+        </a>
+    </div>
+
+    <!-- SEARCH TOOLBAR -->
+    <form method="get" action="${pageContext.request.contextPath}/shipper/deliveries" class="mb-3">
+        <input type="hidden" name="statusFilter" value="${not empty statusFilter ? statusFilter : 'all'}">
+        <div class="input-group shadow-xs rounded-pill overflow-hidden bg-white border">
+            <span class="input-group-text bg-white border-0 ps-3 text-muted">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" name="keyword" value="${keyword}" class="form-control border-0 py-2 fs-7" 
+                   placeholder="Tìm theo mã vận đơn FFX-COLD, mã đơn, tên/SĐT khách, tên shop...">
+            <c:if test="${not empty keyword}">
+                <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}" class="btn btn-link text-muted border-0 pe-2 d-flex align-items-center" title="Xóa tìm kiếm">
+                    <i class="bi bi-x-circle-fill"></i>
+                </a>
+            </c:if>
+            <button type="submit" class="btn btn-success px-4 fw-bold">Tìm kiếm</button>
+        </div>
+    </form>
+
+    <!-- SORT INFO BANNER -->
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-1">
+        <div class="text-muted small">
+            <i class="bi bi-sort-down text-primary me-1"></i> 
+            Sắp xếp: <strong>Đơn mới nhận nhất lên đầu (Mới &rarr; Cũ)</strong>
+        </div>
+        <div class="text-muted small">
+            Đang hiển thị: <strong class="text-dark">${not empty deliveries ? deliveries.size() : 0}</strong> chuyến giao
+        </div>
+    </div>
 
     <!-- Deliveries List -->
     <c:choose>
@@ -160,17 +212,17 @@
                                 </div>
 
                                 <!-- Cold Chain Temp Requirement & Delivery Scope Badge -->
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="d-flex gap-2 align-items-center">
+                                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                                    <div class="d-flex gap-2 align-items-center flex-wrap">
                                         <span class="temp-guarantee-pill">
                                             <i class="bi bi-snow"></i> Chuỗi lạnh: ${del.storageTemp}
                                         </span>
                                         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small py-1 px-2">
-                                            <i class="bi bi-truck me-1"></i> Giao hàng tiêu chuẩn
+                                            <i class="bi bi-truck me-1"></i> Xe lạnh bảo ôn
                                         </span>
                                     </div>
-                                    <span class="text-muted small">
-                                        <i class="bi bi-clock me-1"></i> Slot: ${not empty del.deliverySlot ? del.deliverySlot : 'Hỏa tốc trong ngày'}
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2.5 py-1 rounded-pill small fw-bold">
+                                        <i class="bi bi-clock-history me-1"></i> Hạn giao: ${not empty del.deliverySlot ? del.deliverySlot : 'Hỏa tốc trong ngày'}
                                     </span>
                                 </div>
 

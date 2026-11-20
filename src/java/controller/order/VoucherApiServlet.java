@@ -1,7 +1,7 @@
 package controller.order;
 
 import com.google.gson.Gson;
-import dao.VoucherDAO;
+import dao.promotion.VoucherDAO;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;

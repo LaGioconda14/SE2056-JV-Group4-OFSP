@@ -1,8 +1,8 @@
 package service.impl;
 
-import dao.ShopDAO;
-import dao.ShopRequestDAO;
-import dao.UserDAO;
+import dao.shop.ShopDAO;
+import dao.shop.ShopRequestDAO;
+import dao.user.UserDAO;
 import model.entity.shop.Shop;
 import model.entity.shop.ShopRequest;
 import model.entity.user.User;

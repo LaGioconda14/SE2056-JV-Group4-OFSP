@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.DeliveryDAO;
+import dao.delivery.DeliveryDAO;
 import java.math.BigDecimal;
 import java.util.List;
 import model.entity.delivery.Delivery;

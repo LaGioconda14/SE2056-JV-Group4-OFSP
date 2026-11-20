@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.InventoryWasteDAO;
+import dao.inventory.InventoryWasteDAO;
 import java.util.List;
 import java.util.Map;
 import model.entity.inventory.InventoryWasteLog;
@@ -25,11 +25,6 @@ public class InventoryWasteServiceImpl implements IInventoryWasteService {
     @Override
     public WasteStatisticDTO getWasteStatisticsByShop(long shopId) {
         return wasteDAO.getWasteStatisticsByShop(shopId);
-    }
-
-    @Override
-    public boolean recordManualWaste(long shopId, long variantId, int quantity, String reasonNote, Long loggedBy) {
-        return wasteDAO.recordManualWaste(shopId, variantId, quantity, reasonNote, loggedBy);
     }
 
     @Override

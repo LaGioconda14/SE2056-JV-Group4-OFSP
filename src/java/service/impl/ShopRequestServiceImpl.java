@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.ShopRequestDAO;
+import dao.shop.ShopRequestDAO;
 import model.entity.shop.ShopRequest;
 import service.IShopRequestService;
 

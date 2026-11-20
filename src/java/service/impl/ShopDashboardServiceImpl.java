@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.ShopDashboardDAO;
+import dao.shop.ShopDashboardDAO;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;

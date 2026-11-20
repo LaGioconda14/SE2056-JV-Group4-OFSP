@@ -1,7 +1,7 @@
 package controller.shop;
 
-import dao.ProductDAO;
-import dao.ShopDAO;
+import dao.product.ProductDAO;
+import dao.shop.ShopDAO;
 import java.io.IOException;
 import java.util.List;
 import jakarta.servlet.ServletException;

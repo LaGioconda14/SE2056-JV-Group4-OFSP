@@ -1,6 +1,6 @@
 package controller.shopinventory;
 
-import dao.ShopDAO;
+import dao.shop.ShopDAO;
 import java.io.IOException;
 import java.util.*;
 import jakarta.servlet.ServletException;

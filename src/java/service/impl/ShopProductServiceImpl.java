@@ -1,7 +1,7 @@
 package service.impl;
 
-import dao.ProductDAO;
-import dao.ShopDAO;
+import dao.product.ProductDAO;
+import dao.shop.ShopDAO;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.List;

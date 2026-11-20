@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.VoucherDAO;
+import dao.promotion.VoucherDAO;
 import java.util.List;
 import java.util.Map;
 import model.dto.promotion.Voucher;

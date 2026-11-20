@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.NotificationDAO;
+import dao.common.NotificationDAO;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.List;

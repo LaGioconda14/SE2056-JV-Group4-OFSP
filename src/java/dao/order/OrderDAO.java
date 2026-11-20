@@ -1,0 +1,1553 @@
+package dao.order;
+
+import dao.user.CustomerAddressDAO;
+
+import dao.product.ProductDAO;
+import dao.promotion.PromotionDAO;
+import dao.promotion.CouponDAO;
+import dao.common.NotificationDAO;
+
+import enums.OrderStatus;
+import enums.PaymentMethod;
+import enums.PaymentStatus;
+import enums.PaymentTransactionStatus;
+import enums.PaymentType;
+import enums.SubOrderStatus;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import model.entity.cart.CartItem;
+import model.entity.promotion.Coupon;
+import model.entity.user.CustomerAddress;
+import model.dto.order.DeliveryDTO;
+import model.dto.order.OrderDetailDTO;
+import model.dto.order.OrderItemDetailDTO;
+import model.dto.order.SubOrderDTO;
+import model.dto.product.ProductVariantDetailDTO;
+import model.entity.order.ShippingAddress;
+import util.DBContext;
+
+/**
+ * DAO xử lý truy vấn và thao tác cơ sở dữ liệu cho toàn bộ quy trình đặt hàng:
+ * - Lấy thông tin các item checkout từ giỏ hàng hoặc luồng "Mua ngay".
+ * - Quản lý sổ địa chỉ giao hàng của khách hàng (customer_addresses).
+ * - Tạo đơn hàng cha (orders), địa chỉ giao (order_shipping_addresses), các đơn con theo shop (sub_orders),
+ *   các dòng sản phẩm (order_items) kèm thông tin khuyến mãi snapshot, và thanh toán (payments) trong cùng transaction.
+ * - Trừ tồn kho đồng thời (concurrency safe với stock_quantity >= quantity).
+ * - Khách hàng tra cứu lịch sử đơn hàng và thực hiện hủy đơn (kèm hoàn tồn kho và hoàn lượt voucher).
+ */
+public class OrderDAO extends DBContext {
+
+    private static final Logger LOGGER = Logger.getLogger(OrderDAO.class.getName());
+    private final CouponDAO couponDAO = new CouponDAO();
+    private final PromotionDAO promotionDAO = new PromotionDAO();
+    private static volatile Boolean HAS_ORDER_ITEM_PROMOTION_COLS = null;
+    private static final java.time.format.DateTimeFormatter DATE_FMT = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    /**
+     * Kiểm tra cơ sở dữ liệu có các cột promotion trong bảng order_items hay không
+     * (để tương thích ngược với các phiên bản DB migration khác nhau).
+     */
+    private boolean checkHasOrderItemPromotionCols(Connection conn) {
+        if (HAS_ORDER_ITEM_PROMOTION_COLS != null) {
+            return HAS_ORDER_ITEM_PROMOTION_COLS;
+        }
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery("SELECT COL_LENGTH('dbo.order_items', 'promotion_id')")) {
+            if (rs.next()) {
+                HAS_ORDER_ITEM_PROMOTION_COLS = (rs.getObject(1) != null);
+            } else {
+                HAS_ORDER_ITEM_PROMOTION_COLS = false;
+            }
+        } catch (SQLException ex) {
+            HAS_ORDER_ITEM_PROMOTION_COLS = false;
+        }
+        return HAS_ORDER_ITEM_PROMOTION_COLS;
+    }
+
+    /**
+     * Lấy danh sách các sản phẩm trong giỏ hàng được khách hàng chọn để checkout.
+     * Kèm theo thông tin chi tiết biến thể, sản phẩm, cửa hàng và ảnh đại diện.
+     *
+     * @param customerId  ID khách hàng
+     * @param cartItemIds danh sách ID các dòng giỏ hàng
+     * @return danh sách CartItem
+     */
+    public List<CartItem> getSelectedCartItems(long customerId, List<Long> cartItemIds) {
+        if (cartItemIds == null || cartItemIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < cartItemIds.size(); i++) {
+            if (i > 0) placeholders.append(",");
+            placeholders.append("?");
+        }
+
+        String sql = "SELECT ci.cart_item_id, ci.quantity, "
+                + "       pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "       p.product_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
+                + "       s.shop_id, s.shop_name, s.status AS shop_status, "
+                + "       (SELECT TOP 1 pi2.image_url FROM product_images pi2 "
+                + "        WHERE pi2.product_id = p.product_id AND pi2.is_thumbnail = 1 "
+                + "        ORDER BY pi2.display_order) AS thumbnail_url "
+                + "FROM cart_items ci "
+                + "INNER JOIN carts c ON ci.cart_id = c.cart_id "
+                + "INNER JOIN product_variants pv ON ci.variant_id = pv.variant_id "
+                + "INNER JOIN products p ON pv.product_id = p.product_id "
+                + "INNER JOIN shops s ON p.shop_id = s.shop_id "
+                + "WHERE c.customer_id = ? AND ci.cart_item_id IN (" + placeholders + ") "
+                + "ORDER BY s.shop_id, ci.cart_item_id";
+
+        List<CartItem> items = new ArrayList<>();
+        Connection conn = getConnection();
+        if (conn == null) {
+            LOGGER.severe("Cannot establish DB connection in getSelectedCartItems");
+            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!");
+        }
+
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, customerId);
+            for (int i = 0; i < cartItemIds.size(); i++) {
+                ps.setLong(i + 2, cartItemIds.get(i));
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ProductVariantDetailDTO v = mapCheckoutVariant(rs);
+
+                    CartItem item = new CartItem();
+                    item.setCartItemID(rs.getLong("cart_item_id"));
+                    item.setVariant(v);
+                    item.setQuantity(rs.getInt("quantity"));
+                    items.add(item);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting selected cart items for customer " + customerId, ex);
+            throw new IllegalStateException("Không thể tải sản phẩm thanh toán. Vui lòng thử lại!", ex);
+        }
+        return items;
+    }
+
+    /**
+     * Lấy thông tin biến thể sản phẩm cho chức năng "Mua ngay" (không cần có trong giỏ hàng).
+     *
+     * @param variantId ID biến thể
+     * @param quantity  số lượng mua
+     * @return CartItem đại diện hoặc null nếu không tìm thấy
+     */
+    public CartItem getBuyNowItem(long variantId, int quantity) {
+        String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
+                + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
+                + "       p.product_id, p.name AS product_name, p.origin, p.is_active AS product_active, "
+                + "       s.shop_id, s.shop_name, s.status AS shop_status, "
+                + "       (SELECT TOP 1 pi2.image_url FROM product_images pi2 "
+                + "        WHERE pi2.product_id = p.product_id AND pi2.is_thumbnail = 1 "
+                + "        ORDER BY pi2.display_order) AS thumbnail_url "
+                + "FROM product_variants pv "
+                + "INNER JOIN products p ON pv.product_id = p.product_id "
+                + "INNER JOIN shops s ON p.shop_id = s.shop_id "
+                + "WHERE pv.variant_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new IllegalStateException("Không thể tải sản phẩm mua ngay. Vui lòng thử lại!");
+        }
+        try (conn; PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, variantId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+
+                ProductVariantDetailDTO variant = mapCheckoutVariant(rs);
+                return new CartItem(0, variant, quantity);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting Buy Now item for variant " + variantId, ex);
+            throw new IllegalStateException("Không thể tải sản phẩm mua ngay. Vui lòng thử lại!", ex);
+        }
+    }
+
+    private ProductVariantDetailDTO mapCheckoutVariant(ResultSet rs) throws SQLException {
+        ProductVariantDetailDTO v = new ProductVariantDetailDTO();
+        v.setVariantId(rs.getLong("variant_id"));
+        v.setProductId(rs.getLong("product_id"));
+        v.setProductName(rs.getString("product_name"));
+        v.setOrigin(rs.getString("origin"));
+        v.setProductActive(rs.getBoolean("product_active"));
+        v.setShopId(rs.getLong("shop_id"));
+        v.setShopName(rs.getString("shop_name"));
+        v.setShopStatus(rs.getString("shop_status"));
+        String thumb = rs.getString("thumbnail_url");
+        if (thumb == null || thumb.trim().isEmpty()) {
+            thumb = ProductDAO.getDefaultFruitImage(v.getProductName());
+        }
+        v.setImage(thumb);
+        v.setSku(rs.getString("sku"));
+        v.setVariantName(rs.getString("variant_name"));
+        v.setUnit(rs.getString("unit"));
+        v.setWeightKg(rs.getBigDecimal("weight_kg"));
+        v.setPrice(rs.getBigDecimal("price"));
+        v.setStockQuantity(rs.getInt("stock_quantity"));
+        v.setActive(rs.getBoolean("variant_active"));
+        return v;
+    }
+
+    /**
+     * Lấy địa chỉ giao hàng mặc định của khách hàng.
+     * <p><b>Ủy nhiệm:</b> Chuyển giao xử lý sang CustomerAddressDAO (Single Source of Truth)</p>
+     *
+     * @param customerId ID khách hàng
+     * @return CustomerAddress hoặc null nếu khách chưa lưu địa chỉ nào
+     */
+    public CustomerAddress getDefaultAddress(long customerId) {
+        return new CustomerAddressDAO().getDefaultAddress(customerId);
+    }
+
+    /**
+     * Lấy danh sách toàn bộ các địa chỉ đã lưu trong sổ địa chỉ của khách hàng.
+     * <p><b>Ủy nhiệm:</b> Chuyển giao xử lý sang CustomerAddressDAO (Single Source of Truth)</p>
+     *
+     * @param customerId ID khách hàng
+     * @return danh sách CustomerAddress
+     */
+    public List<CustomerAddress> getCustomerAddresses(long customerId) {
+        return new CustomerAddressDAO().getAddressesByUserId(customerId);
+    }
+
+    /**
+     * Lấy thông tin chi tiết một địa chỉ theo customerId và addressId.
+     * <p><b>Ủy nhiệm:</b> Chuyển giao xử lý sang CustomerAddressDAO (Single Source of Truth)</p>
+     *
+     * @param customerId ID khách hàng
+     * @param addressId  ID địa chỉ
+     * @return CustomerAddress tương ứng hoặc null nếu không tồn tại
+     */
+    public CustomerAddress getCustomerAddressById(long customerId, long addressId) {
+        return new CustomerAddressDAO().getAddressById(addressId, customerId);
+    }
+
+    /**
+     * Tạo đơn hàng hoàn chỉnh từ giỏ hàng (xóa các item đã mua khỏi giỏ trong transaction).
+     *
+     * @param order                 thông tin đơn hàng
+     * @param address               địa chỉ nhận hàng
+     * @param cartItemIdsToDelete   danh sách ID các mục giỏ hàng cần xóa sau khi đặt
+     * @param paymentMethod         phương thức thanh toán
+     * @param saveCustomerAddress   cờ lưu địa chỉ mới vào sổ địa chỉ
+     * @return orderId vừa tạo
+     * @throws Exception nếu xảy ra lỗi trong transaction
+     */
+    public long createOrder(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
+            String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        return createOrderInternal(order, address, cartItemIdsToDelete, paymentMethod,
+                saveCustomerAddress, true);
+    }
+
+    /**
+     * Tạo đơn hàng từ luồng "Mua ngay" (không can thiệp vào giỏ hàng).
+     *
+     * @param order                 thông tin đơn hàng
+     * @param address               địa chỉ nhận hàng
+     * @param paymentMethod         phương thức thanh toán
+     * @param saveCustomerAddress   cờ lưu địa chỉ mới
+     * @return orderId vừa tạo
+     * @throws Exception nếu xảy ra lỗi trong transaction
+     */
+    public long createBuyNowOrder(OrderDetailDTO order, ShippingAddress address,
+            String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        return createOrderInternal(order, address, Collections.emptyList(), paymentMethod,
+                saveCustomerAddress, false);
+    }
+
+    /**
+     * Hàm nội bộ xử lý toàn bộ logic tạo đơn hàng trong một transaction an toàn:
+     * 1. Khóa bi quan và kiểm tra lại tồn kho, giá, trạng thái của các cart item / variant.
+     * 2. Kiểm tra lại tính hợp lệ của mã giảm giá (voucher sàn & shop) và tăng lượt used_count.
+     * 3. Chèn bản ghi đơn hàng chính (orders).
+     * 4. Chèn địa chỉ giao hàng của đơn (order_shipping_addresses).
+     * 5. Lặp qua từng Shop để tạo đơn con (sub_orders):
+     *    - Tính hoa hồng sàn (commission_rate, commission_amount).
+     *    - Chèn từng sản phẩm vào order_items kèm snapshot giá, tên, promotion.
+     *    - Trừ tồn kho sản phẩm (stock_quantity = stock_quantity - ? với điều kiện stock_quantity >= ?).
+     * 6. Nếu là đặt từ giỏ hàng, xóa các item tương ứng khỏi cart_items.
+     * 7. Chèn bản ghi thanh toán (payments).
+     * 8. Lưu địa chỉ vào sổ địa chỉ khách hàng nếu được yêu cầu.
+     */
+    private long createOrderInternal(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
+            String paymentMethod, boolean saveCustomerAddress, boolean consumeCart) throws Exception {
+        String insertOrderSql = "INSERT INTO orders (order_code, customer_id, coupon_id, total_goods_amount, "
+                + "total_shipping_fee, platform_discount, final_amount, payment_status, payment_method, order_status, "
+                + "delivery_date, delivery_slot_id) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        String insertAddressSql = "INSERT INTO order_shipping_addresses "
+                + "(order_id, recipient_name, recipient_phone, street_address, ward, district, city) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+
+        String deductStockSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity - ? "
+                + "FROM product_variants pv "
+                + "INNER JOIN products p ON p.product_id = pv.product_id "
+                + "INNER JOIN shops s ON s.shop_id = p.shop_id "
+                + "WHERE pv.variant_id = ? AND pv.stock_quantity >= ? "
+                + "AND pv.price = ? AND pv.is_active = 1 AND p.is_active = 1 "
+                + "AND s.status = 'ACTIVE'";
+
+        String deleteCartItemsSql = "DELETE ci FROM cart_items ci "
+                + "INNER JOIN carts c ON c.cart_id = ci.cart_id "
+                + "WHERE ci.cart_item_id = ? AND c.customer_id = ?";
+
+        String insertPaymentSql = "INSERT INTO payments "
+                + "(order_id, payment_provider, payment_type, amount, payment_status) "
+                + "VALUES (?, ?, ?, ?, ?)";
+
+        String insertCustomerAddressSql = "INSERT INTO customer_addresses "
+                + "(user_id, recipient_name, recipient_phone, street_address, ward, district, city, is_default) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, CASE WHEN EXISTS "
+                + "(SELECT 1 FROM customer_addresses WHERE user_id = ?) THEN 0 ELSE 1 END)";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new Exception("Không thể kết nối đến cơ sở dữ liệu!");
+        }
+        boolean hasPromoCols = checkHasOrderItemPromotionCols(conn);
+        String insertSubOrderSql = "INSERT INTO sub_orders "
+                + "(sub_order_code, order_id, shop_id, delivery_date, delivery_slot_id, note, shop_subtotal, shop_shipping_fee, "
+                + "shop_discount, shop_total, commission_rate, commission_amount, status) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertOrderItemSql = hasPromoCols
+                ? "INSERT INTO order_items "
+                + "(sub_order_id, variant_id, product_name_snapshot, variant_name_snapshot, "
+                + "sku_snapshot, unit, unit_price, quantity, total_price, "
+                + "promotion_id, promotion_discount, promotion_units) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                : "INSERT INTO order_items "
+                + "(sub_order_id, variant_id, product_name_snapshot, variant_name_snapshot, "
+                + "sku_snapshot, unit, unit_price, quantity, total_price) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try {
+            conn.setAutoCommit(false); // Báº®T Äáº¦U TRANSACTION
+
+            if (consumeCart) {
+                lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
+            }
+
+            if (saveCustomerAddress) {
+                insertCustomerAddress(conn, insertCustomerAddressSql,
+                        order.getCustomerId(), address);
+            }
+
+            // Khóa và kiểm tra lại voucher trong cùng transaction để tránh vượt lượt dùng.
+            BigDecimal totalShopDiscounts = BigDecimal.ZERO;
+            for (SubOrderDTO sub : order.getSubOrders()) {
+                if (sub.getShopCouponId() != null) {
+                    Coupon sc = couponDAO.findByIdForUpdate(conn, sub.getShopCouponId());
+                    couponDAO.assertPerUserLimit(conn, sub.getShopCouponId(), order.getCustomerId());
+                    validateCouponForShop(sc, sub.getShopId(), sub.getShopSubtotal());
+                    BigDecimal eligible = getCouponEligibleAmount(conn, sc, sub.getItems(), sub.getShopSubtotal());
+                    BigDecimal sDiscount = calculateCouponDiscount(
+                            sc, eligible, sub.getShopShippingFee());
+                    sub.setShopDiscount(sDiscount);
+                    sub.setShopTotal(sub.getShopSubtotal().add(sub.getShopShippingFee()).subtract(sDiscount).max(BigDecimal.ZERO));
+                    totalShopDiscounts = totalShopDiscounts.add(sDiscount);
+                } else {
+                    if (sub.getShopDiscount() == null) {
+                        sub.setShopDiscount(BigDecimal.ZERO);
+                    }
+                    totalShopDiscounts = totalShopDiscounts.add(sub.getShopDiscount());
+                }
+            }
+
+            if (order.getCouponId() != null) {
+                Coupon coupon = couponDAO.findByIdForUpdate(conn, order.getCouponId());
+                couponDAO.assertPerUserLimit(conn, order.getCouponId(), order.getCustomerId());
+                validateCouponForOrder(coupon, order.getTotalGoodsAmount());
+                List<OrderItemDetailDTO> allItems = new ArrayList<>();
+                for (SubOrderDTO sub : order.getSubOrders()) allItems.addAll(sub.getItems());
+                BigDecimal eligible = getCouponEligibleAmount(
+                        conn, coupon, allItems, order.getTotalGoodsAmount());
+                BigDecimal discount = calculateCouponDiscount(
+                        coupon, eligible, order.getTotalShippingFee());
+                order.setPlatformDiscount(discount);
+            } else {
+                order.setPlatformDiscount(BigDecimal.ZERO);
+            }
+
+            BigDecimal totalDiscounts = totalShopDiscounts.add(order.getPlatformDiscount());
+            order.setFinalAmount(order.getTotalGoodsAmount()
+                    .add(order.getTotalShippingFee())
+                    .subtract(totalDiscounts)
+                    .max(BigDecimal.ZERO));
+
+            long orderId;
+            String orderCode = "ORD-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 9000 + 1000);
+            order.setOrderCode(orderCode);
+
+            // A. INSERT ORDERS
+            try (PreparedStatement ps = conn.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, orderCode);
+                ps.setLong(2, order.getCustomerId());
+                if (order.getCouponId() != null) {
+                    ps.setInt(3, order.getCouponId());
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setBigDecimal(4, order.getTotalGoodsAmount());
+                ps.setBigDecimal(5, order.getTotalShippingFee());
+                ps.setBigDecimal(6, order.getPlatformDiscount());
+                ps.setBigDecimal(7, order.getFinalAmount());
+                ps.setString(8, order.getPaymentStatus() != null
+                        ? order.getPaymentStatus() : PaymentStatus.PENDING.name());
+                ps.setString(9, paymentMethod != null && !paymentMethod.trim().isEmpty()
+                        ? paymentMethod : PaymentMethod.COD.name());
+                ps.setString(10, order.getOrderStatus() != null
+                        ? order.getOrderStatus() : OrderStatus.PROCESSING.name());
+                if (order.getDeliveryDate() != null) {
+                    ps.setDate(11, java.sql.Date.valueOf(order.getDeliveryDate()));
+                } else {
+                    ps.setDate(11, java.sql.Date.valueOf(java.time.LocalDate.now()));
+                }
+                if (order.getDeliverySlotId() != null) {
+                    ps.setInt(12, order.getDeliverySlotId());
+                } else {
+                    ps.setInt(12, 1);
+                }
+
+                ps.executeUpdate();
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        orderId = rs.getLong(1);
+                        order.setOrderId(orderId);
+                    } else {
+                        throw new SQLException("Tạo hóa đơn thất bại, không nhận được Order ID.");
+                    }
+                }
+            }
+
+            // B. INSERT SHIPPING ADDRESS
+            try (PreparedStatement ps = conn.prepareStatement(insertAddressSql)) {
+                ps.setLong(1, orderId);
+                ps.setString(2, address.getRecipientName());
+                ps.setString(3, address.getRecipientPhone());
+                ps.setString(4, address.getStreetAddress());
+                ps.setString(5, address.getWard());
+                ps.setString(6, address.getDistrict());
+                ps.setString(7, address.getCity());
+                ps.executeUpdate();
+            }
+
+            // C. INSERT SUB_ORDERS & ORDER_ITEMS & DEDUCT STOCK
+            for (SubOrderDTO sub : order.getSubOrders()) {
+                long subOrderId;
+                String subCode = "SUB-" + System.currentTimeMillis() + "-" + sub.getShopId() + "-" + (int) (Math.random() * 900 + 100);
+                sub.setSubOrderCode(subCode);
+                BigDecimal commissionRate = new BigDecimal("8.00");
+                BigDecimal commissionAmount = sub.getShopSubtotal().multiply(new BigDecimal("0.08")).setScale(2, RoundingMode.HALF_UP);
+
+                try (PreparedStatement ps = conn.prepareStatement(insertSubOrderSql, Statement.RETURN_GENERATED_KEYS)) {
+                    int pIdx = 1;
+                    ps.setString(pIdx++, subCode);
+                    ps.setLong(pIdx++, orderId);
+                    ps.setLong(pIdx++, sub.getShopId());
+                    if (sub.getDeliveryDate() != null) {
+                        ps.setDate(pIdx++, java.sql.Date.valueOf(sub.getDeliveryDate()));
+                    } else {
+                        ps.setDate(pIdx++, java.sql.Date.valueOf(java.time.LocalDate.now()));
+                    }
+                    if (sub.getDeliverySlotId() != null) {
+                        ps.setInt(pIdx++, sub.getDeliverySlotId());
+                    } else {
+                        ps.setInt(pIdx++, 1);
+                    }
+                    ps.setString(pIdx++, sub.getNote());
+                    ps.setBigDecimal(pIdx++, sub.getShopSubtotal());
+                    ps.setBigDecimal(pIdx++, sub.getShopShippingFee());
+                    ps.setBigDecimal(pIdx++, sub.getShopDiscount());
+                    ps.setBigDecimal(pIdx++, sub.getShopTotal());
+                    ps.setBigDecimal(pIdx++, commissionRate);
+                    ps.setBigDecimal(pIdx++, commissionAmount);
+                    ps.setString(pIdx++, sub.getStatus() != null
+                            ? sub.getStatus() : SubOrderStatus.NEW.name());
+
+                    ps.executeUpdate();
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            subOrderId = rs.getLong(1);
+                            sub.setSubOrderId(subOrderId);
+                        } else {
+                            throw new SQLException("Tạo Sub-Order thất bại, không nhận được ID.");
+                        }
+                    }
+                }
+
+                // D. INSERT Tá»ªNG ORDER_ITEM
+                for (OrderItemDetailDTO item : sub.getItems()) {
+                    try (PreparedStatement ps = conn.prepareStatement(insertOrderItemSql)) {
+                        ps.setLong(1, subOrderId);
+                        if (item.getVariantId() != null) {
+                            ps.setLong(2, item.getVariantId());
+                        } else {
+                            ps.setNull(2, Types.BIGINT);
+                        }
+                        ps.setString(3, item.getProductNameSnapshot());
+                        ps.setString(4, item.getVariantNameSnapshot());
+                        ps.setString(5, item.getSkuSnapshot());
+                        ps.setString(6, item.getUnit());
+                        ps.setBigDecimal(7, item.getUnitPrice());
+                        ps.setInt(8, item.getQuantity());
+                        ps.setBigDecimal(9, item.getTotalPrice());
+                        if (hasPromoCols) {
+                            if (item.getPromotionId() != null && item.getPromotionUnits() > 0) {
+                                ps.setLong(10, item.getPromotionId());
+                            } else {
+                                ps.setNull(10, Types.BIGINT);
+                            }
+                            ps.setBigDecimal(11, item.getPromotionDiscount());
+                            ps.setInt(12, item.getPromotionUnits());
+                        }
+                        ps.executeUpdate();
+                    }
+
+                    // D2. GIỮ SUẤT KHUYẾN MÃI (cùng transaction): chương trình hết hạn / hết suất thì huỷ cả đơn.
+                    if (item.getPromotionId() != null && item.getPromotionUnits() > 0) {
+                        if (!promotionDAO.reserveQuota(conn, item.getPromotionId(), item.getPromotionUnits())) {
+                            throw new SQLException("Chương trình khuyến mãi của '" + item.getProductNameSnapshot()
+                                    + "' vừa kết thúc hoặc đã hết suất ưu đãi. Vui lòng quay lại giỏ hàng để cập nhật giá!");
+                        }
+                    }
+
+                    // E. TRá»ª Tá»’N KHO NGUYÃŠN Tá»¬
+                    if (item.getVariantId() != null) {
+                        try (PreparedStatement ps = conn.prepareStatement(deductStockSql)) {
+                            ps.setInt(1, item.getQuantity());
+                            ps.setLong(2, item.getVariantId());
+                            ps.setInt(3, item.getQuantity());
+                            ps.setBigDecimal(4, item.getUnitPrice());
+
+                            int updated = ps.executeUpdate();
+                            if (updated == 0) {
+                                throw new SQLException("Sáº£n pháº©m '" + item.getProductNameSnapshot()
+                                        + "' vá»«a háº¿t hÃ ng, Ä‘á»•i giÃ¡ hoáº·c cá»­a hÃ ng Ä‘Ã£ ngá»«ng hoáº¡t Ä‘á»™ng. "
+                                        + "Vui lÃ²ng quay láº¡i giá» hÃ ng Ä‘á»ƒ kiá»ƒm tra!");
+                            }
+                        }
+
+                        // E2. TRỪ TỒN KHO LÔ HÀNG THEO CHUẨN FEFO & GHI BIẾN ĐỘNG KHO
+                        deductBatchStock(conn, subOrderId, sub.getShopId(), order.getCustomerId(),
+                                item.getVariantId(), item.getQuantity(), subCode, item.getUnitPrice());
+                    }
+                }
+            }
+
+            // F. XÃ“A CÃC Sáº¢N PHáº¨M ÄÃƒ MUA KHá»ŽI GIá»Ž HÃ€NG
+            if (consumeCart && cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
+                try (PreparedStatement ps = conn.prepareStatement(deleteCartItemsSql)) {
+                    for (Long itemId : cartItemIdsToDelete) {
+                        ps.setLong(1, itemId);
+                        ps.setLong(2, order.getCustomerId());
+                        ps.addBatch();
+                    }
+                    int[] deletedRows = ps.executeBatch();
+                    for (int deleted : deletedRows) {
+                        if (deleted == 0) {
+                            throw new SQLException("CÃ³ sáº£n pháº©m khÃ´ng cÃ²n thuá»™c giá» hÃ ng cá»§a báº¡n!");
+                        }
+                    }
+                }
+            }
+
+            // Chá»‰ tÄƒng used_count náº¿u má»i bÆ°á»›c táº¡o Ä‘Æ¡n, trá»« kho vÃ  xÃ³a giá» Ä‘á»u thÃ nh cÃ´ng.
+            if (order.getCouponId() != null) {
+                couponDAO.incrementUsage(conn, order.getCouponId());
+                couponDAO.recordUsage(conn, order.getCouponId(), orderId, order.getCustomerId(), order.getPlatformDiscount());
+            }
+            for (SubOrderDTO sub : order.getSubOrders()) {
+                if (sub.getShopCouponId() != null) {
+                    couponDAO.incrementUsage(conn, sub.getShopCouponId());
+                    couponDAO.recordUsage(conn, sub.getShopCouponId(), orderId, order.getCustomerId(), sub.getShopDiscount());
+                }
+            }
+
+            // Ghi nháº­n phÆ°Æ¡ng thá»©c thanh toÃ¡n trong cÃ¹ng transaction.
+            try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
+                ps.setLong(1, orderId);
+                ps.setString(2, paymentMethod);
+                ps.setString(3, PaymentMethod.COD.name().equals(paymentMethod)
+                        ? PaymentType.CASH.name() : PaymentType.ONLINE.name());
+                ps.setBigDecimal(4, order.getFinalAmount());
+                ps.setString(5, PaymentTransactionStatus.PENDING.name());
+                ps.executeUpdate();
+            }
+
+            conn.commit(); // THÃ€NH CÃ”NG -> COMMIT!
+            return orderId;
+
+        } catch (Exception ex) {
+            try {
+                conn.rollback(); // Lá»–I -> HOÃ€N TÃC TOÃ€N Bá»˜!
+            } catch (SQLException rEx) {
+                LOGGER.log(Level.SEVERE, "Rollback failed", rEx);
+            }
+            LOGGER.log(Level.SEVERE, "Create order failed", ex);
+            throw ex;
+        } finally {
+            try {
+                conn.setAutoCommit(true);
+                conn.close();
+            } catch (SQLException cEx) {
+                LOGGER.log(Level.SEVERE, "Close connection failed", cEx);
+            }
+        }
+    }
+
+    private void insertCustomerAddress(Connection conn, String sql, long customerId,
+            ShippingAddress address) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, customerId);
+            ps.setString(2, address.getRecipientName());
+            ps.setString(3, address.getRecipientPhone());
+            ps.setString(4, address.getStreetAddress());
+            ps.setString(5, address.getWard());
+            ps.setString(6, address.getDistrict());
+            ps.setString(7, address.getCity());
+            ps.setLong(8, customerId);
+            ps.executeUpdate();
+        }
+    }
+
+    private void lockAndValidateCartItems(Connection conn, OrderDetailDTO order,
+            List<Long> cartItemIds) throws SQLException {
+        if (cartItemIds == null || cartItemIds.isEmpty()) {
+            throw new SQLException("KhÃ´ng cÃ³ sáº£n pháº©m nÃ o Ä‘Æ°á»£c chá»n Ä‘á»ƒ Ä‘áº·t hÃ ng!");
+        }
+
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < cartItemIds.size(); i++) {
+            if (i > 0) placeholders.append(",");
+            placeholders.append("?");
+        }
+
+        String sql = "SELECT ci.cart_item_id, ci.variant_id, ci.quantity "
+                + "FROM cart_items ci WITH (UPDLOCK, HOLDLOCK) "
+                + "INNER JOIN carts c ON c.cart_id = ci.cart_id "
+                + "WHERE c.customer_id = ? AND ci.cart_item_id IN (" + placeholders + ")";
+
+        Map<Long, Integer> expectedQuantities = new HashMap<>();
+        for (SubOrderDTO sub : order.getSubOrders()) {
+            for (OrderItemDetailDTO item : sub.getItems()) {
+                if (item.getVariantId() != null) {
+                    expectedQuantities.merge(item.getVariantId(), item.getQuantity(), Integer::sum);
+                }
+            }
+        }
+
+        Map<Long, Integer> actualQuantities = new HashMap<>();
+        int rowCount = 0;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, order.getCustomerId());
+            for (int i = 0; i < cartItemIds.size(); i++) {
+                ps.setLong(i + 2, cartItemIds.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    rowCount++;
+                    actualQuantities.merge(rs.getLong("variant_id"),
+                            rs.getInt("quantity"), Integer::sum);
+                }
+            }
+        }
+
+        if (rowCount != cartItemIds.size() || !actualQuantities.equals(expectedQuantities)) {
+            throw new SQLException("Giỏ hàng vừa thay đổi. Vui lòng quay lại giỏ hàng và kiểm tra lại!");
+        }
+    }
+
+    /**
+     * Xác thực voucher của Shop trước khi lưu đơn hàng.
+     */
+    private void validateCouponForShop(Coupon coupon, long shopId, BigDecimal eligibleAmount) throws SQLException {
+        if (coupon == null) {
+            throw new SQLException("Mã giảm giá của cửa hàng không còn tồn tại!");
+        }
+        if (coupon.getShopId() == null || coupon.getShopId() != shopId) {
+            throw new SQLException("Mã giảm giá không thuộc cửa hàng này!");
+        }
+        validateCouponForOrder(coupon, eligibleAmount);
+    }
+
+    /**
+     * Xác thực điều kiện voucher toàn sàn hoặc shop: kiểm tra kích hoạt, hạn dùng, lượt dùng và giá trị tối thiểu.
+     */
+    private void validateCouponForOrder(Coupon coupon, BigDecimal eligibleAmount) throws SQLException {
+        if (coupon == null) {
+            throw new SQLException("Mã giảm giá không còn tồn tại!");
+        }
+        if (!coupon.isActive()) {
+            throw new SQLException("Mã giảm giá hiện không hoạt động!");
+        }
+
+        java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+        if (coupon.getStartDate() == null || now.before(coupon.getStartDate())) {
+            throw new SQLException("Mã giảm giá chưa đến thời gian sử dụng!");
+        }
+        if (coupon.getEndDate() == null || now.after(coupon.getEndDate())) {
+            throw new SQLException("Mã giảm giá đã hết hạn!");
+        }
+        if (coupon.getUsedCount() >= coupon.getUsageLimit()) {
+            throw new SQLException("Mã giảm giá đã hết lượt sử dụng!");
+        }
+
+        BigDecimal minimum = coupon.getMinOrderValue() != null
+                ? coupon.getMinOrderValue() : BigDecimal.ZERO;
+        if (eligibleAmount.compareTo(minimum) < 0) {
+            throw new SQLException("Đơn hàng không còn đủ điều kiện giá trị tối thiểu của mã giảm giá!");
+        }
+    }
+
+    /**
+     * Tính toán số tiền được giảm giá của coupon trong transaction tạo đơn.
+     */
+    private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount,
+            BigDecimal shippingFee)
+            throws SQLException {
+        BigDecimal discount;
+        String type = coupon.getDiscountType() == null
+                ? "" : coupon.getDiscountType().trim().toUpperCase(java.util.Locale.ROOT);
+        BigDecimal value = coupon.getDiscountValue() != null
+                ? coupon.getDiscountValue() : BigDecimal.ZERO;
+
+        if ("PERCENTAGE".equals(type)) {
+            discount = eligibleAmount.multiply(value)
+                    .divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
+        } else if ("FIXED_AMOUNT".equals(type)) {
+            discount = value;
+        } else {
+            throw new SQLException("Loại mã giảm giá không hợp lệ!");
+        }
+
+        if (coupon.getMaxDiscountAmount() != null
+                && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
+            discount = coupon.getMaxDiscountAmount();
+        }
+        return discount.min(eligibleAmount).max(BigDecimal.ZERO)
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal getCouponEligibleAmount(Connection conn, Coupon coupon,
+            List<OrderItemDetailDTO> items, BigDecimal fullSubtotal) throws SQLException {
+        if (!"PRODUCTS".equalsIgnoreCase(coupon.getAppliesTo())) return fullSubtotal;
+        List<Long> productIds = couponDAO.getApplicableProductIds(conn, coupon.getCouponId());
+        BigDecimal eligible = BigDecimal.ZERO;
+        for (OrderItemDetailDTO item : items) {
+            if (item.getProductId() != null && productIds.contains(item.getProductId())) {
+                eligible = eligible.add(item.getTotalPrice());
+            }
+        }
+        if (eligible.signum() <= 0) {
+            throw new SQLException("Đơn hàng không có sản phẩm thuộc diện áp dụng voucher!");
+        }
+        return eligible;
+    }
+
+    /**
+     * Lấy chi tiết đơn hàng hoàn chỉnh theo orderId (kèm thông tin địa chỉ giao hàng,
+     * danh sách đơn hàng con sub_orders và từng dòng sản phẩm order_items).
+     *
+     * @param orderId ID đơn hàng
+     * @return OrderDetailDTO chi tiết hoặc null nếu không tìm thấy
+     */
+    public OrderDetailDTO getOrderById(long orderId) {
+        String sqlOrder = "SELECT o.order_id, o.order_code, o.customer_id, o.coupon_id, o.total_goods_amount, "
+                + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, o.payment_method, "
+                + "o.order_status, o.created_at, o.updated_at, "
+                + "sa.recipient_name, sa.recipient_phone, sa.street_address, sa.ward, sa.district, sa.city "
+                + "FROM orders o "
+                + "LEFT JOIN order_shipping_addresses sa ON o.order_id = sa.order_id "
+                + "WHERE o.order_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) return null;
+
+        String sqlSub = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, so.shop_id, s.shop_name, "
+                + "so.delivery_date, so.delivery_slot_id, dts.display_label as slot_display, so.note, "
+                + "so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, "
+                + "so.shop_total, so.status, so.created_at "
+                + "FROM sub_orders so "
+                + "INNER JOIN shops s ON so.shop_id = s.shop_id "
+                + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
+                + "WHERE so.order_id = ?";
+
+        String sqlItems = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
+                + "COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
+                + "oi.product_name_snapshot, oi.variant_name_snapshot, oi.sku_snapshot, "
+                + "oi.unit, oi.unit_price, oi.quantity, oi.total_price "
+                + "FROM order_items oi "
+                + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
+                + "WHERE oi.sub_order_id = ?";
+
+        try (conn) {
+            OrderDetailDTO order = null;
+            try (PreparedStatement ps = conn.prepareStatement(sqlOrder)) {
+                ps.setLong(1, orderId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        order = new OrderDetailDTO();
+                        order.setOrderId(rs.getLong("order_id"));
+                        order.setOrderCode(rs.getString("order_code"));
+                        order.setCustomerId(rs.getLong("customer_id"));
+                        int cId = rs.getInt("coupon_id");
+                        order.setCouponId(rs.wasNull() ? null : cId);
+                        order.setTotalGoodsAmount(rs.getBigDecimal("total_goods_amount"));
+                        order.setTotalShippingFee(rs.getBigDecimal("total_shipping_fee"));
+                        order.setPlatformDiscount(rs.getBigDecimal("platform_discount"));
+                        order.setFinalAmount(rs.getBigDecimal("final_amount"));
+                        order.setPaymentStatus(rs.getString("payment_status"));
+                        order.setPaymentMethod(rs.getString("payment_method"));
+                        order.setOrderStatus(rs.getString("order_status"));
+                        order.setCreatedAt(rs.getTimestamp("created_at"));
+                        order.setUpdatedAt(rs.getTimestamp("updated_at"));
+
+                        ShippingAddress addr = new ShippingAddress();
+                        addr.setOrderId(orderId);
+                        addr.setRecipientName(rs.getString("recipient_name"));
+                        addr.setRecipientPhone(rs.getString("recipient_phone"));
+                        addr.setStreetAddress(rs.getString("street_address"));
+                        addr.setWard(rs.getString("ward"));
+                        addr.setDistrict(rs.getString("district"));
+                        addr.setCity(rs.getString("city"));
+                        order.setShippingAddress(addr);
+                    }
+                }
+            }
+
+            if (order != null) {
+                // Láº¥y sub_orders
+                try (PreparedStatement psSub = conn.prepareStatement(sqlSub)) {
+                    psSub.setLong(1, orderId);
+                    try (ResultSet rsSub = psSub.executeQuery()) {
+                        while (rsSub.next()) {
+                            SubOrderDTO sub = new SubOrderDTO();
+                            sub.setSubOrderId(rsSub.getLong("sub_order_id"));
+                            sub.setSubOrderCode(rsSub.getString("sub_order_code"));
+                            sub.setOrderId(orderId);
+                            sub.setShopId(rsSub.getLong("shop_id"));
+                            sub.setShopName(rsSub.getString("shop_name"));
+                            java.sql.Date dDate = rsSub.getDate("delivery_date");
+                            if (dDate != null) sub.setDeliveryDate(dDate.toLocalDate());
+                            int sId = rsSub.getInt("delivery_slot_id");
+                            if (!rsSub.wasNull()) sub.setDeliverySlotId(sId);
+                            String slotDisplay = rsSub.getString("slot_display");
+                            String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+                            String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                                    + (dateStr != null ? " (" + dateStr + ")" : "");
+                            sub.setDeliverySlot(finalSlotLabel);
+                            sub.setNote(rsSub.getString("note"));
+                            sub.setShopSubtotal(rsSub.getBigDecimal("shop_subtotal"));
+                            sub.setShopShippingFee(rsSub.getBigDecimal("shop_shipping_fee"));
+                            sub.setShopDiscount(rsSub.getBigDecimal("shop_discount"));
+                            sub.setShopTotal(rsSub.getBigDecimal("shop_total"));
+                            sub.setStatus(rsSub.getString("status"));
+                            sub.setCreatedAt(rsSub.getTimestamp("created_at"));
+
+                            // Láº¥y order_items cá»§a tá»«ng sub_order
+                            try (PreparedStatement psItem = conn.prepareStatement(sqlItems)) {
+                                psItem.setLong(1, sub.getSubOrderId());
+                                try (ResultSet rsItem = psItem.executeQuery()) {
+                                    while (rsItem.next()) {
+                                        OrderItemDetailDTO item = new OrderItemDetailDTO();
+                                        item.setOrderItemId(rsItem.getLong("order_item_id"));
+                                        item.setSubOrderId(sub.getSubOrderId());
+                                        long vId = rsItem.getLong("variant_id");
+                                        item.setVariantId(rsItem.wasNull() ? null : vId);
+                                        item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
+                                        item.setProductNameSnapshot(rsItem.getString("product_name_snapshot"));
+                                        item.setVariantNameSnapshot(rsItem.getString("variant_name_snapshot"));
+                                        item.setSkuSnapshot(rsItem.getString("sku_snapshot"));
+                                        item.setUnit(rsItem.getString("unit"));
+                                        item.setUnitPrice(rsItem.getBigDecimal("unit_price"));
+                                        item.setQuantity(rsItem.getInt("quantity"));
+                                        item.setTotalPrice(rsItem.getBigDecimal("total_price"));
+                                        sub.getItems().add(item);
+                                    }
+                                }
+                            }
+                            order.getSubOrders().add(sub);
+                        }
+                    }
+                }
+            }
+            return order;
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting order by id: " + orderId, ex);
+        }
+        return null;
+    }
+
+    /**
+     * Lấy danh sách các đơn hàng con (sub_orders) của khách hàng để hiển thị trên giao diện lịch sử đơn hàng.
+     * Bao gồm thông tin shop, sản phẩm, địa chỉ giao hàng và thông tin tài xế/vận chuyển.
+     *
+     * @param customerId ID khách hàng
+     * @return danh sách SubOrderDTO
+     */
+    public List<SubOrderDTO> getSubOrdersByCustomerId(long customerId) {
+        List<SubOrderDTO> list = new ArrayList<>();
+        Connection conn = getConnection();
+        if (conn == null) {
+            return list;
+        }
+
+        String sql = "SELECT so.sub_order_id, so.sub_order_code, so.order_id, o.order_code, o.customer_id, "
+                   + "       so.shop_id, sh.shop_name, sh.logo_url, so.delivery_date, so.delivery_slot_id, dts.display_label as slot_display, so.note, "
+                   + "       so.shop_subtotal, so.shop_shipping_fee, so.shop_discount, so.shop_total, "
+                   + "       so.status AS sub_order_status, so.cancel_reason, so.cancelled_by, so.cancelled_at, "
+                   + "       COALESCE(so.created_at, o.created_at) AS created_at, so.updated_at, "
+                   + "       o.payment_method, o.payment_status, o.platform_discount, "
+                   + "       osa.recipient_name, osa.recipient_phone, osa.street_address, osa.ward, osa.district, osa.city, "
+                   + "       d.tracking_number, d.delivery_status, d.failure_reason, "
+                   + "       drv.full_name AS driver_name, drv.phone AS driver_phone "
+                   + "FROM sub_orders so "
+                   + "JOIN orders o ON so.order_id = o.order_id "
+                   + "JOIN shops sh ON so.shop_id = sh.shop_id "
+                   + "LEFT JOIN delivery_time_slots dts ON so.delivery_slot_id = dts.slot_id "
+                   + "LEFT JOIN order_shipping_addresses osa ON o.order_id = osa.order_id "
+                   + "LEFT JOIN deliveries d ON so.sub_order_id = d.sub_order_id "
+                   + "LEFT JOIN users drv ON d.driver_id = drv.user_id "
+                   + "WHERE o.customer_id = ? "
+                   + "ORDER BY COALESCE(so.created_at, o.created_at) DESC, so.sub_order_id DESC";
+
+        try (conn;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                java.util.Set<Long> seenSubOrderIds = new java.util.HashSet<>();
+                while (rs.next()) {
+                    long subOrderId = rs.getLong("sub_order_id");
+                    if (!seenSubOrderIds.add(subOrderId)) {
+                        continue;
+                    }
+                    SubOrderDTO so = new SubOrderDTO();
+                    so.setSubOrderId(subOrderId);
+                    so.setSubOrderCode(rs.getString("sub_order_code"));
+                    so.setOrderId(rs.getLong("order_id"));
+                    so.setOrderCode(rs.getString("order_code"));
+                    so.setShopId(rs.getLong("shop_id"));
+                    so.setShopName(rs.getString("shop_name"));
+                    so.setShopLogoUrl(rs.getString("logo_url"));
+                    java.sql.Date dDate = rs.getDate("delivery_date");
+                    if (dDate != null) so.setDeliveryDate(dDate.toLocalDate());
+                    int sId = rs.getInt("delivery_slot_id");
+                    if (!rs.wasNull()) so.setDeliverySlotId(sId);
+                    String slotDisplay = rs.getString("slot_display");
+                    String dateStr = (dDate != null) ? dDate.toLocalDate().format(DATE_FMT) : null;
+                    String finalSlotLabel = (slotDisplay != null ? slotDisplay : "08:00 - 10:00")
+                            + (dateStr != null ? " (" + dateStr + ")" : "");
+                    so.setDeliverySlot(finalSlotLabel);
+                    so.setNote(rs.getString("note"));
+                    so.setShopSubtotal(rs.getBigDecimal("shop_subtotal"));
+                    so.setShopShippingFee(rs.getBigDecimal("shop_shipping_fee"));
+                    so.setShopDiscount(rs.getBigDecimal("shop_discount"));
+                    so.setShopTotal(rs.getBigDecimal("shop_total"));
+                    so.setStatus(rs.getString("sub_order_status"));
+                    so.setCancelReason(rs.getString("cancel_reason"));
+                    so.setCancelledBy(rs.getObject("cancelled_by") != null ? rs.getLong("cancelled_by") : null);
+                    so.setCancelledAt(rs.getTimestamp("cancelled_at"));
+                    so.setCreatedAt(rs.getTimestamp("created_at"));
+                    so.setUpdatedAt(rs.getTimestamp("updated_at"));
+                    so.setPaymentMethod(rs.getString("payment_method"));
+                    so.setPaymentStatus(rs.getString("payment_status"));
+
+                    DeliveryDTO delivery = new DeliveryDTO();
+                    delivery.setTrackingNumber(rs.getString("tracking_number"));
+                    delivery.setDeliveryStatus(rs.getString("delivery_status"));
+                    delivery.setFailureReason(rs.getString("failure_reason"));
+                    delivery.setDriverName(rs.getString("driver_name"));
+                    delivery.setDriverPhone(rs.getString("driver_phone"));
+                    so.setDelivery(delivery);
+
+                    if (rs.getString("recipient_name") != null) {
+                        ShippingAddress addr = new ShippingAddress(
+                            rs.getLong("order_id"),
+                            rs.getString("recipient_name"),
+                            rs.getString("recipient_phone"),
+                            rs.getString("street_address"),
+                            rs.getString("ward"),
+                            rs.getString("district"),
+                            rs.getString("city")
+                        );
+                        so.setShippingAddress(addr);
+                    }
+
+                    list.add(so);
+                }
+            }
+
+            // Tải chi tiết sản phẩm cho từng subOrder
+            String itemSql = "SELECT oi.order_item_id, oi.sub_order_id, oi.variant_id, "
+                           + "       COALESCE(pv.product_id, (SELECT TOP 1 p.product_id FROM products p WHERE p.name = oi.product_name_snapshot)) AS product_id, "
+                           + "       oi.product_name_snapshot, oi.variant_name_snapshot, oi.unit, oi.unit_price, oi.quantity, "
+                           + "       oi.total_price, "
+                           + "       (SELECT TOP 1 pi.image_url FROM product_images pi "
+                           + "        JOIN product_variants pv2 ON pi.product_id = pv2.product_id "
+                           + "        WHERE pv2.variant_id = oi.variant_id ORDER BY pi.is_thumbnail DESC, pi.display_order ASC) AS product_image "
+                           + "FROM order_items oi "
+                           + "LEFT JOIN product_variants pv ON oi.variant_id = pv.variant_id "
+                           + "WHERE oi.sub_order_id = ?";
+
+            try (PreparedStatement psItem = conn.prepareStatement(itemSql)) {
+                for (SubOrderDTO so : list) {
+                    psItem.setLong(1, so.getSubOrderId());
+                    try (ResultSet rsItem = psItem.executeQuery()) {
+                        List<OrderItemDetailDTO> items = new ArrayList<>();
+                        while (rsItem.next()) {
+                            OrderItemDetailDTO item = new OrderItemDetailDTO();
+                            item.setOrderItemId(rsItem.getLong("order_item_id"));
+                            item.setSubOrderId(rsItem.getLong("sub_order_id"));
+                            item.setVariantId(rsItem.getObject("variant_id") != null ? rsItem.getLong("variant_id") : null);
+                            item.setProductId(rsItem.getObject("product_id") != null ? rsItem.getLong("product_id") : null);
+                            item.setProductNameSnapshot(rsItem.getString("product_name_snapshot"));
+                            item.setVariantNameSnapshot(rsItem.getString("variant_name_snapshot"));
+                            item.setUnit(rsItem.getString("unit"));
+                            item.setUnitPrice(rsItem.getBigDecimal("unit_price"));
+                            item.setQuantity(rsItem.getInt("quantity"));
+                            item.setTotalPrice(rsItem.getBigDecimal("total_price"));
+                            String oImg = rsItem.getString("product_image");
+                            if (oImg == null || oImg.trim().isEmpty()) {
+                                oImg = ProductDAO.getDefaultFruitImage(item.getProductNameSnapshot());
+                            }
+                            item.setImageUrl(oImg);
+                            items.add(item);
+                        }
+                        so.setItems(items);
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error in getSubOrdersByCustomerId for customerId: " + customerId, ex);
+        }
+        return list;
+    }
+
+    /**
+     * Xử lý yêu cầu hủy đơn hàng từ khách hàng trong một transaction an toàn:
+     * - Tìm kiếm đơn hàng theo sub_order_code hoặc order_code.
+     * - Kiểm tra tính hợp lệ về trạng thái: không thể hủy nếu đơn đã hoàn thành, đang vận chuyển, hoặc đã hủy trước đó.
+     * - Hoàn lại số lượng tồn kho (restock) cho các biến thể trong đơn.
+     * - Giảm lượt used_count của coupon nếu đơn có áp dụng voucher.
+     * - Cập nhật trạng thái CANCELLED cho đơn hàng và ghi nhận lý do hủy (cancelReason).
+     *
+     * @param customerId      ID khách hàng thực hiện hủy
+     * @param orderIdentifier mã đơn hàng (orderCode hoặc subOrderCode)
+     * @param cancelReason    lý do hủy do khách nhập
+     * @return true nếu hủy thành công
+     * @throws Exception nếu xảy ra lỗi nghiệp vụ hoặc SQL
+     */
+    public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
+        String findSubSql = "SELECT so.sub_order_id, so.order_id, so.status AS sub_status, o.customer_id, o.coupon_id "
+                          + "FROM sub_orders so "
+                          + "JOIN orders o ON so.order_id = o.order_id "
+                          + "WHERE (so.sub_order_code = ? OR CAST(so.sub_order_id AS VARCHAR) = ?) AND o.customer_id = ?";
+
+        String findOrdSql = "SELECT order_id, order_code, customer_id, coupon_id, order_status "
+                          + "FROM orders "
+                          + "WHERE (order_code = ? OR CAST(order_id AS VARCHAR) = ?) AND customer_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new SQLException("Không thể kết nối đến cơ sở dữ liệu!");
+        }
+
+        try {
+            conn.setAutoCommit(false);
+
+            long matchedSubOrderId = -1;
+            long matchedOrderId = -1;
+            String status = null;
+            Integer couponId = null;
+
+            // 1. Thử tìm theo SubOrder trước
+            try (PreparedStatement psSub = conn.prepareStatement(findSubSql)) {
+                psSub.setString(1, orderIdentifier);
+                psSub.setString(2, orderIdentifier);
+                psSub.setLong(3, customerId);
+                try (ResultSet rsSub = psSub.executeQuery()) {
+                    if (rsSub.next()) {
+                        matchedSubOrderId = rsSub.getLong("sub_order_id");
+                        matchedOrderId = rsSub.getLong("order_id");
+                        status = (rsSub.getString("sub_status") != null ? rsSub.getString("sub_status") : "").toUpperCase();
+                        if (rsSub.getObject("coupon_id") != null) {
+                            couponId = rsSub.getInt("coupon_id");
+                        }
+                    }
+                }
+            }
+
+            // 2. Nếu không tìm thấy SubOrder, thử tìm theo Parent Order
+            if (matchedSubOrderId == -1) {
+                try (PreparedStatement psOrd = conn.prepareStatement(findOrdSql)) {
+                    psOrd.setString(1, orderIdentifier);
+                    psOrd.setString(2, orderIdentifier);
+                    psOrd.setLong(3, customerId);
+                    try (ResultSet rsOrd = psOrd.executeQuery()) {
+                        if (rsOrd.next()) {
+                            matchedOrderId = rsOrd.getLong("order_id");
+                            status = (rsOrd.getString("order_status") != null ? rsOrd.getString("order_status") : "").toUpperCase();
+                            if (rsOrd.getObject("coupon_id") != null) {
+                                couponId = rsOrd.getInt("coupon_id");
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Không tìm thấy đơn hàng hoặc bạn không có quyền hủy đơn này!");
+                        }
+                    }
+                }
+            }
+
+            if ("SHIPPING".equals(status) || "DELIVERING".equals(status) || "IN_TRANSIT".equals(status)) {
+                throw new IllegalStateException("Đơn hàng đang trong quá trình vận chuyển giao hàng, không thể hủy!");
+            }
+            if (OrderStatus.COMPLETED.name().equals(status) || SubOrderStatus.DELIVERED.name().equals(status)) {
+                throw new IllegalStateException("Đơn hàng đã được giao thành công, không thể hủy!");
+            }
+            if ("CANCELLED".equals(status) || "CANCELED".equals(status)) {
+                throw new IllegalStateException("Đơn hàng này đã được hủy trước đó!");
+            }
+
+            String reasonToSave = (cancelReason != null && !cancelReason.trim().isEmpty()) ? cancelReason.trim() : "Người mua hủy đơn trực tiếp";
+
+            if (matchedSubOrderId != -1) {
+                // Hủy cụ thể 1 SubOrder
+                String restoreStockSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, "
+                                       + "       pv.updated_at = CURRENT_TIMESTAMP "
+                                       + "FROM product_variants pv "
+                                       + "INNER JOIN order_items oi ON pv.variant_id = oi.variant_id "
+                                       + "WHERE oi.sub_order_id = ? AND oi.variant_id IS NOT NULL";
+                try (PreparedStatement psStock = conn.prepareStatement(restoreStockSql)) {
+                    psStock.setLong(1, matchedSubOrderId);
+                    psStock.executeUpdate();
+                }
+                restoreBatchStockBySubOrder(conn, matchedSubOrderId); // Hoàn tồn kho lô hàng
+                promotionDAO.releaseQuotaBySubOrder(conn, matchedSubOrderId); // hoàn suất khuyến mãi
+
+                String cancelSubSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
+                                    + "       cancelled_by = ?, cancelled_at = CURRENT_TIMESTAMP, "
+                                    + "       updated_at = CURRENT_TIMESTAMP "
+                                    + "WHERE sub_order_id = ?";
+                try (PreparedStatement psCancelSub = conn.prepareStatement(cancelSubSql)) {
+                    psCancelSub.setNString(1, reasonToSave);
+                    psCancelSub.setLong(2, customerId);
+                    psCancelSub.setLong(3, matchedSubOrderId);
+                    psCancelSub.executeUpdate();
+                }
+
+                // Đồng bộ trạng thái đơn cha nếu tất cả sub_orders đều đã CANCELLED
+                String syncParentSql = "UPDATE o SET o.order_status = '" + OrderStatus.CANCELLED.name()
+                                     + "', o.updated_at = CURRENT_TIMESTAMP "
+                                     + "FROM orders o "
+                                     + "WHERE o.order_id = ? "
+                                     + "  AND NOT EXISTS ( "
+                                     + "      SELECT 1 FROM sub_orders other "
+                                     + "      WHERE other.order_id = o.order_id "
+                                     + "        AND other.status <> 'CANCELLED' "
+                                     + "  )";
+                try (PreparedStatement psSync = conn.prepareStatement(syncParentSql)) {
+                    psSync.setLong(1, matchedOrderId);
+                    psSync.executeUpdate();
+                }
+            } else {
+                // Hủy toàn bộ đơn cha
+                String restoreStockSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity + oi.quantity, "
+                                       + "       pv.updated_at = CURRENT_TIMESTAMP "
+                                       + "FROM product_variants pv "
+                                       + "INNER JOIN order_items oi ON pv.variant_id = oi.variant_id "
+                                       + "INNER JOIN sub_orders so ON oi.sub_order_id = so.sub_order_id "
+                                       + "WHERE so.order_id = ? AND oi.variant_id IS NOT NULL";
+                try (PreparedStatement psStock = conn.prepareStatement(restoreStockSql)) {
+                    psStock.setLong(1, matchedOrderId);
+                    psStock.executeUpdate();
+                }
+                restoreBatchStockByOrder(conn, matchedOrderId); // Hoàn tồn kho lô hàng
+                promotionDAO.releaseQuotaByOrder(conn, matchedOrderId); // hoàn suất khuyến mãi
+
+                String cancelSubsSql = "UPDATE sub_orders SET status = 'CANCELLED', cancel_reason = ?, "
+                                     + "       cancelled_by = ?, cancelled_at = CURRENT_TIMESTAMP, "
+                                     + "       updated_at = CURRENT_TIMESTAMP "
+                                     + "WHERE order_id = ?";
+                try (PreparedStatement psSubs = conn.prepareStatement(cancelSubsSql)) {
+                    psSubs.setNString(1, reasonToSave);
+                    psSubs.setLong(2, customerId);
+                    psSubs.setLong(3, matchedOrderId);
+                    psSubs.executeUpdate();
+                }
+
+                String cancelOrderSql = "UPDATE orders SET order_status = '" + OrderStatus.CANCELLED.name()
+                                      + "', updated_at = CURRENT_TIMESTAMP "
+                                      + "WHERE order_id = ?";
+                try (PreparedStatement psOrder = conn.prepareStatement(cancelOrderSql)) {
+                    psOrder.setLong(1, matchedOrderId);
+                    psOrder.executeUpdate();
+                }
+
+                // Hoàn lượt cho TẤT CẢ voucher của đơn (voucher sàn + voucher shop) rồi xóa lịch sử dùng
+                String restoreUsedSql = "UPDATE c SET c.used_count = CASE WHEN c.used_count > 0 THEN c.used_count - 1 ELSE 0 END "
+                                      + "FROM coupons c INNER JOIN coupon_usages u ON u.coupon_id = c.coupon_id "
+                                      + "WHERE u.order_id = ?";
+                int restored;
+                try (PreparedStatement psRestore = conn.prepareStatement(restoreUsedSql)) {
+                    psRestore.setLong(1, matchedOrderId);
+                    restored = psRestore.executeUpdate();
+                }
+                try (PreparedStatement psDel = conn.prepareStatement("DELETE FROM coupon_usages WHERE order_id = ?")) {
+                    psDel.setLong(1, matchedOrderId);
+                    psDel.executeUpdate();
+                }
+                // Đơn cũ (tạo trước khi có lịch sử dùng voucher): giữ cách hoàn lượt như trước
+                if (restored == 0 && couponId != null) {
+                    String restoreCouponSql = "UPDATE coupons SET used_count = CASE WHEN used_count > 0 THEN used_count - 1 ELSE 0 END "
+                                            + "WHERE coupon_id = ?";
+                    try (PreparedStatement psCoupon = conn.prepareStatement(restoreCouponSql)) {
+                        psCoupon.setInt(1, couponId);
+                        psCoupon.executeUpdate();
+                    }
+                }
+            }
+
+            conn.commit();
+            try {
+                NotificationDAO notiDAO = new NotificationDAO();
+                if (matchedSubOrderId != -1) {
+                    notiDAO.notifyShopSubOrderCancelled(matchedSubOrderId, cancelReason);
+                } else if (matchedOrderId != -1) {
+                    notiDAO.notifyShopsOrderCancelled(matchedOrderId, cancelReason);
+                }
+            } catch (Exception ignored) {}
+            return true;
+        } catch (Exception ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException rEx) {
+                LOGGER.log(Level.SEVERE, "Rollback failed during cancelOrderByCustomer", rEx);
+            }
+            LOGGER.log(Level.SEVERE, "Error in cancelOrderByCustomer for order: " + orderIdentifier, ex);
+            throw ex;
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException cEx) {
+                LOGGER.log(Level.SEVERE, "Error closing connection", cEx);
+            }
+        }
+    }
+
+    public boolean confirmReceivedByCustomer(long customerId, String orderIdentifier) throws Exception {
+        String findSubSql = "SELECT so.sub_order_id, so.order_id, so.status AS sub_status "
+                          + "FROM sub_orders so "
+                          + "JOIN orders o ON so.order_id = o.order_id "
+                          + "WHERE (so.sub_order_code = ? OR CAST(so.sub_order_id AS VARCHAR) = ?) AND o.customer_id = ?";
+
+        String findOrdSql = "SELECT order_id, order_code, order_status "
+                          + "FROM orders "
+                          + "WHERE (order_code = ? OR CAST(order_id AS VARCHAR) = ?) AND customer_id = ?";
+
+        Connection conn = getConnection();
+        if (conn == null) {
+            throw new SQLException("Không thể kết nối đến cơ sở dữ liệu!");
+        }
+
+        try {
+            conn.setAutoCommit(false);
+
+            long matchedSubOrderId = -1;
+            long matchedOrderId = -1;
+
+            try (PreparedStatement psSub = conn.prepareStatement(findSubSql)) {
+                psSub.setString(1, orderIdentifier);
+                psSub.setString(2, orderIdentifier);
+                psSub.setLong(3, customerId);
+                try (ResultSet rsSub = psSub.executeQuery()) {
+                    if (rsSub.next()) {
+                        matchedSubOrderId = rsSub.getLong("sub_order_id");
+                        matchedOrderId = rsSub.getLong("order_id");
+                    }
+                }
+            }
+
+            if (matchedSubOrderId == -1) {
+                try (PreparedStatement psOrd = conn.prepareStatement(findOrdSql)) {
+                    psOrd.setString(1, orderIdentifier);
+                    psOrd.setString(2, orderIdentifier);
+                    psOrd.setLong(3, customerId);
+                    try (ResultSet rsOrd = psOrd.executeQuery()) {
+                        if (rsOrd.next()) {
+                            matchedOrderId = rsOrd.getLong("order_id");
+                        }
+                    }
+                }
+            }
+
+            if (matchedSubOrderId == -1 && matchedOrderId == -1) {
+                conn.rollback();
+                return false;
+            }
+
+            if (matchedSubOrderId != -1) {
+                String updateSub = "UPDATE sub_orders SET status = '" + SubOrderStatus.DELIVERED.name() + "', updated_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
+                try (PreparedStatement psUp = conn.prepareStatement(updateSub)) {
+                    psUp.setLong(1, matchedSubOrderId);
+                    psUp.executeUpdate();
+                }
+
+                String updateDelivery = "UPDATE deliveries SET delivery_status = 'DELIVERED', delivered_at = CURRENT_TIMESTAMP WHERE sub_order_id = ?";
+                try (PreparedStatement psDel = conn.prepareStatement(updateDelivery)) {
+                    psDel.setLong(1, matchedSubOrderId);
+                    psDel.executeUpdate();
+                }
+            } else {
+                String updateAllSubs = "UPDATE sub_orders SET status = '" + SubOrderStatus.DELIVERED.name() + "', updated_at = CURRENT_TIMESTAMP WHERE order_id = ? AND status <> '" + SubOrderStatus.CANCELLED.name() + "'";
+                try (PreparedStatement psUp = conn.prepareStatement(updateAllSubs)) {
+                    psUp.setLong(1, matchedOrderId);
+                    psUp.executeUpdate();
+                }
+
+                String updateDeliveries = "UPDATE d SET d.delivery_status = 'DELIVERED', d.delivered_at = CURRENT_TIMESTAMP FROM deliveries d JOIN sub_orders so ON d.sub_order_id = so.sub_order_id WHERE so.order_id = ?";
+                try (PreparedStatement psDel = conn.prepareStatement(updateDeliveries)) {
+                    psDel.setLong(1, matchedOrderId);
+                    psDel.executeUpdate();
+                }
+            }
+
+            String checkAndCompleteParent = "UPDATE o SET o.order_status = '" + OrderStatus.COMPLETED.name() + "', o.updated_at = CURRENT_TIMESTAMP "
+                + "FROM orders o WHERE o.order_id = ? "
+                + "AND NOT EXISTS (SELECT 1 FROM sub_orders so WHERE so.order_id = o.order_id AND so.status NOT IN ('" + SubOrderStatus.DELIVERED.name() + "', '" + SubOrderStatus.CANCELLED.name() + "'))";
+            try (PreparedStatement psSync = conn.prepareStatement(checkAndCompleteParent)) {
+                psSync.setLong(1, matchedOrderId);
+                psSync.executeUpdate();
+            }
+
+            String syncCodPayment = "UPDATE o SET o.payment_status = '" + PaymentStatus.PAID.name() + "' "
+                + "FROM orders o WHERE o.order_id = ? AND o.payment_method = 'COD' "
+                + "AND NOT EXISTS (SELECT 1 FROM sub_orders so WHERE so.order_id = o.order_id AND so.status NOT IN ('" + SubOrderStatus.DELIVERED.name() + "', '" + SubOrderStatus.CANCELLED.name() + "'))";
+            try (PreparedStatement psPay = conn.prepareStatement(syncCodPayment)) {
+                psPay.setLong(1, matchedOrderId);
+                psPay.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (Exception ex) {
+            try {
+                conn.rollback();
+            } catch (SQLException rEx) {
+                LOGGER.log(Level.SEVERE, "Rollback failed during confirmReceivedByCustomer", rEx);
+            }
+            LOGGER.log(Level.SEVERE, "Error in confirmReceivedByCustomer for order: " + orderIdentifier, ex);
+            throw ex;
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException cEx) {
+                LOGGER.log(Level.SEVERE, "Error closing connection", cEx);
+            }
+        }
+    }
+
+    // =========================================================================
+    // QUẢN LÝ TỒN KHO LÔ HÀNG (PRODUCT BATCHES) THEO CHUẨN FEFO & SỔ KHO
+    // =========================================================================
+
+    private record BatchDeductInfo(long batchId, String batchCode, int currentQty, int deductQty) {}
+    private record BatchRestoreInfo(long batchId, long variantId, long shopId, long userId, int qty, BigDecimal costPrice, int curQty, String batchCode) {}
+
+    /**
+     * Trừ tồn kho lô hàng theo nguyên tắc FEFO (First Expired, First Out - hết hạn sớm nhất xuất trước)
+     * và ghi nhận giao dịch xuất bán vào bảng inventory_transactions.
+     */
+    private void deductBatchStock(Connection conn, long subOrderId, long shopId, long customerId,
+                                  long variantId, int quantityToDeduct, String subOrderCode,
+                                  BigDecimal unitPrice) throws SQLException {
+        String queryBatchesSql = "SELECT batch_id, batch_code, current_quantity "
+                + "FROM product_batches "
+                + "WHERE variant_id = ? AND status = 'ACTIVE' AND current_quantity > 0 "
+                + "ORDER BY expiry_date ASC, batch_id ASC";
+
+        String updateBatchSql = "UPDATE product_batches "
+                + "SET current_quantity = ?, "
+                + "    status = CASE WHEN ? <= 0 THEN 'DEPLETED' ELSE status END, "
+                + "    updated_at = CURRENT_TIMESTAMP "
+                + "WHERE batch_id = ?";
+
+        String insertTransSql = "INSERT INTO inventory_transactions "
+                + "(batch_id, variant_id, shop_id, user_id, sub_order_id, transaction_type, "
+                + " quantity_changed, previous_stock, new_stock, cost_price, reason, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, 'SALE', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        int remainingQty = quantityToDeduct;
+        List<BatchDeductInfo> batchesToDeduct = new ArrayList<>();
+
+        try (PreparedStatement psQuery = conn.prepareStatement(queryBatchesSql)) {
+            psQuery.setLong(1, variantId);
+            try (ResultSet rs = psQuery.executeQuery()) {
+                while (rs.next() && remainingQty > 0) {
+                    long bId = rs.getLong("batch_id");
+                    String bCode = rs.getString("batch_code");
+                    int curQty = rs.getInt("current_quantity");
+                    int deduct = Math.min(curQty, remainingQty);
+                    batchesToDeduct.add(new BatchDeductInfo(bId, bCode, curQty, deduct));
+                    remainingQty -= deduct;
+                }
+            }
+        }
+
+        // Cập nhật từng lô theo thứ tự FEFO
+        for (BatchDeductInfo b : batchesToDeduct) {
+            int newQty = b.currentQty() - b.deductQty();
+            try (PreparedStatement psUpBatch = conn.prepareStatement(updateBatchSql)) {
+                psUpBatch.setInt(1, newQty);
+                psUpBatch.setInt(2, newQty);
+                psUpBatch.setLong(3, b.batchId());
+                psUpBatch.executeUpdate();
+            }
+
+            try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
+                psTrans.setLong(1, b.batchId());
+                psTrans.setLong(2, variantId);
+                psTrans.setLong(3, shopId);
+                psTrans.setLong(4, customerId);
+                psTrans.setLong(5, subOrderId);
+                psTrans.setInt(6, -b.deductQty());
+                psTrans.setInt(7, b.currentQty());
+                psTrans.setInt(8, newQty);
+                if (unitPrice != null) {
+                    psTrans.setBigDecimal(9, unitPrice);
+                } else {
+                    psTrans.setNull(9, Types.DECIMAL);
+                }
+                psTrans.setString(10, "Xuất kho bán hàng [Lô " + b.batchCode() + "] - Đơn " + subOrderCode);
+                psTrans.executeUpdate();
+            }
+        }
+
+        // Nếu còn dư số lượng chưa trừ hết từ lô (do chưa tạo lô hoặc lô hết hàng)
+        if (remainingQty > 0) {
+            try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
+                psTrans.setNull(1, Types.BIGINT);
+                psTrans.setLong(2, variantId);
+                psTrans.setLong(3, shopId);
+                psTrans.setLong(4, customerId);
+                psTrans.setLong(5, subOrderId);
+                psTrans.setInt(6, -remainingQty);
+                psTrans.setInt(7, 0);
+                psTrans.setInt(8, 0);
+                if (unitPrice != null) {
+                    psTrans.setBigDecimal(9, unitPrice);
+                } else {
+                    psTrans.setNull(9, Types.DECIMAL);
+                }
+                psTrans.setString(10, "Xuất kho bán hàng - Đơn " + subOrderCode);
+                psTrans.executeUpdate();
+            }
+        }
+    }
+
+    /**
+     * Hoàn trả tồn kho lô hàng khi đơn hàng con (SubOrder) bị hủy hoặc từ chối.
+     */
+    public static void restoreBatchStockBySubOrder(Connection conn, long subOrderId) throws SQLException {
+        String findDeductedBatchesSql = "SELECT it.batch_id, it.variant_id, it.shop_id, it.user_id, "
+                + "       ABS(it.quantity_changed) AS qty, it.cost_price, ISNULL(pb.current_quantity, 0) AS current_quantity, pb.batch_code "
+                + "FROM inventory_transactions it "
+                + "LEFT JOIN product_batches pb ON it.batch_id = pb.batch_id "
+                + "WHERE it.sub_order_id = ? AND it.transaction_type = 'SALE' AND it.batch_id IS NOT NULL";
+
+        String restoreBatchSql = "UPDATE product_batches "
+                + "SET current_quantity = current_quantity + ?, "
+                + "    status = 'ACTIVE', "
+                + "    updated_at = CURRENT_TIMESTAMP "
+                + "WHERE batch_id = ?";
+
+        String insertTransSql = "INSERT INTO inventory_transactions "
+                + "(batch_id, variant_id, shop_id, user_id, sub_order_id, transaction_type, "
+                + " quantity_changed, previous_stock, new_stock, cost_price, reason, created_at) "
+                + "VALUES (?, ?, ?, ?, ?, 'RESTOCK', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        List<BatchRestoreInfo> list = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(findDeductedBatchesSql)) {
+            ps.setLong(1, subOrderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    long bId = rs.getLong("batch_id");
+                    long vId = rs.getLong("variant_id");
+                    long sId = rs.getLong("shop_id");
+                    long uId = rs.getLong("user_id");
+                    int qty = rs.getInt("qty");
+                    BigDecimal cost = rs.getBigDecimal("cost_price");
+                    int curQty = rs.getInt("current_quantity");
+                    String bCode = rs.getString("batch_code");
+                    list.add(new BatchRestoreInfo(bId, vId, sId, uId, qty, cost, curQty, bCode));
+                }
+            }
+        }
+
+        for (BatchRestoreInfo r : list) {
+            try (PreparedStatement psUp = conn.prepareStatement(restoreBatchSql)) {
+                psUp.setInt(1, r.qty());
+                psUp.setLong(2, r.batchId());
+                psUp.executeUpdate();
+            }
+
+            int newStock = r.curQty() + r.qty();
+            try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
+                psTrans.setLong(1, r.batchId());
+                psTrans.setLong(2, r.variantId());
+                psTrans.setLong(3, r.shopId());
+                psTrans.setLong(4, r.userId());
+                psTrans.setLong(5, subOrderId);
+                psTrans.setInt(6, r.qty());
+                psTrans.setInt(7, r.curQty());
+                psTrans.setInt(8, newStock);
+                if (r.costPrice() != null) {
+                    psTrans.setBigDecimal(9, r.costPrice());
+                } else {
+                    psTrans.setNull(9, Types.DECIMAL);
+                }
+                psTrans.setString(10, "Hoàn kho do hủy đơn hàng [Lô " + (r.batchCode() != null ? r.batchCode() : "") + "] - SubOrder #" + subOrderId);
+                psTrans.executeUpdate();
+            }
+        }
+    }
+
+    /**
+     * Hoàn trả tồn kho lô hàng cho tất cả đơn con của đơn hàng cha khi bị hủy.
+     */
+    private static void restoreBatchStockByOrder(Connection conn, long orderId) throws SQLException {
+        String findSubOrdersSql = "SELECT sub_order_id FROM sub_orders WHERE order_id = ?";
+        List<Long> subOrderIds = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(findSubOrdersSql)) {
+            ps.setLong(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    subOrderIds.add(rs.getLong("sub_order_id"));
+                }
+            }
+        }
+        for (Long subId : subOrderIds) {
+            restoreBatchStockBySubOrder(conn, subId);
+        }
+    }
+}

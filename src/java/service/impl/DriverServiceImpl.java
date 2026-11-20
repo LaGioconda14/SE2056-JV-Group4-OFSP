@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.DriverDAO;
+import dao.delivery.DriverDAO;
 import java.util.List;
 import model.entity.delivery.DriverProfile;
 import service.IDriverService;

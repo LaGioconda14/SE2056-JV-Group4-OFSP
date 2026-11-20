@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import dao.ShopDAO;
+import dao.shop.ShopDAO;
 import model.dto.inventory.InventoryBatchItem;
 import model.entity.user.User;
 import service.IInventoryService;

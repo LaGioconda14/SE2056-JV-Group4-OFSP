@@ -12,7 +12,7 @@ import model.entity.user.User;
 import model.entity.shop.Shop;
 import model.dto.product.ProductCardDTO;
 import model.dto.product.ProductVariantStockDTO;
-import dao.ShopDAO;
+import dao.shop.ShopDAO;
 import service.IOrderFulfillmentService;
 import service.IProductService;
 import service.impl.OrderFulfillmentServiceImpl;

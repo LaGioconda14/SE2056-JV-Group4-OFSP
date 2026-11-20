@@ -67,26 +67,39 @@ public class ShipperDeliveriesServlet extends HttpServlet {
         }
 
 
-        List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId, "all", null);
-
-        int activeOrderCount = 0;
-        if (deliveries != null) {
-            for (Delivery d : deliveries) {
-                if (d.getDeliveryStatus() != null) {
-                    String st = d.getDeliveryStatus().toUpperCase();
-                    if ("ASSIGNING".equals(st) || "ASSIGNED".equals(st) || "DELIVERING".equals(st) || "IN_TRANSIT".equals(st) || "PICKED_UP".equals(st)) {
-                        activeOrderCount++;
-                    }
-                }
-            }
+        String statusFilter = request.getParameter("statusFilter");
+        if (statusFilter == null || statusFilter.trim().isEmpty()) {
+            statusFilter = "all";
+        } else {
+            statusFilter = statusFilter.trim().toLowerCase();
         }
+
+        String keyword = request.getParameter("keyword");
+        if (keyword != null) {
+            keyword = keyword.trim();
+        }
+
+        List<Delivery> deliveries = deliveryService.getDeliveriesByDriver(driverId, statusFilter, keyword);
+
+        int countAll = deliveryService.countDeliveries(driverId, "all");
+        int countDelivering = deliveryService.countDeliveries(driverId, "delivering");
+        int countPickup = deliveryService.countDeliveries(driverId, "pickup");
+        int countCompleted = deliveryService.countDeliveries(driverId, "completed");
+        int countFailed = deliveryService.countDeliveries(driverId, "failed");
 
         BigDecimal totalCod = deliveryService.getTotalCodCollected(driverId);
 
         request.setAttribute("deliveries", deliveries);
         request.setAttribute("driverProfile", driverProfile);
-        request.setAttribute("activeOrderCount", activeOrderCount);
+        request.setAttribute("activeOrderCount", countDelivering + countPickup);
         request.setAttribute("totalCod", totalCod);
+        request.setAttribute("statusFilter", statusFilter);
+        request.setAttribute("keyword", keyword);
+        request.setAttribute("countAll", countAll);
+        request.setAttribute("countDelivering", countDelivering);
+        request.setAttribute("countPickup", countPickup);
+        request.setAttribute("countCompleted", countCompleted);
+        request.setAttribute("countFailed", countFailed);
 
         request.getRequestDispatcher("/views/shipper/deliveries.jsp").forward(request, response);
     }

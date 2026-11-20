@@ -1,7 +1,7 @@
 package service;
 
-import dao.VnpayPaymentDAO;
-import dao.VnpayPaymentDAO.CallbackResult;
+import dao.payment.VnpayPaymentDAO;
+import dao.payment.VnpayPaymentDAO.CallbackResult;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.ZoneId;

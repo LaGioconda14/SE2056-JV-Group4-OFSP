@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.PromotionDAO;
+import dao.promotion.PromotionDAO;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;

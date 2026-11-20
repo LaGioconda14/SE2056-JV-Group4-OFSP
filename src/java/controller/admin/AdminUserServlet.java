@@ -1,6 +1,6 @@
 package controller.admin;
 
-import dao.AdminManagementDAO;
+import dao.admin.AdminManagementDAO;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;

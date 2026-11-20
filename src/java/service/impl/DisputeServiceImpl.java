@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.DisputeDAO;
+import dao.payment.DisputeDAO;
 import java.util.List;
 import model.entity.order.Dispute;
 import service.IDisputeService;

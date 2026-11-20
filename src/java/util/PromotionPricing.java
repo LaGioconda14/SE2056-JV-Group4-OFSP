@@ -1,6 +1,6 @@
 package util;
 
-import dao.PromotionDAO;
+import dao.promotion.PromotionDAO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Collection;

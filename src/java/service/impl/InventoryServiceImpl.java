@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.InventoryDAO;
+import dao.inventory.InventoryDAO;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;

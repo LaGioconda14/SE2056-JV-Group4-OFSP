@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.CustomerAddressDAO;
+import dao.user.CustomerAddressDAO;
 import java.util.List;
 import model.entity.user.CustomerAddress;
 import service.ICustomerAddressService;

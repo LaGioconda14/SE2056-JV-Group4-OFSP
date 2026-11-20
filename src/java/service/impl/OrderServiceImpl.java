@@ -1,8 +1,8 @@
 package service.impl;
 
-import dao.CouponDAO;
-import dao.OrderDAO;
-import dao.ShopDAO;
+import dao.promotion.CouponDAO;
+import dao.order.OrderDAO;
+import dao.shop.ShopDAO;
 import enums.DeliverySlot;
 import enums.PaymentMethod;
 import enums.PaymentStatus;

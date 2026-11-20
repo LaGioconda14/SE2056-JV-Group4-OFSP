@@ -1,7 +1,7 @@
 package controller.admin;
 
 import com.google.gson.Gson;
-import dao.AdminManagementDAO;
+import dao.admin.AdminManagementDAO;
 import model.entity.user.User;
 import java.io.IOException;
 import java.util.List;

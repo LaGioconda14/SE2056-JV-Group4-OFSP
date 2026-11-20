@@ -1,6 +1,6 @@
 package controller.payment;
 
-import dao.VnpayPaymentDAO.CallbackResult;
+import dao.payment.VnpayPaymentDAO.CallbackResult;
 import java.io.IOException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;

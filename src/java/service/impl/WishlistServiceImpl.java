@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.WishlistDAO;
+import dao.product.WishlistDAO;
 import java.util.List;
 import java.util.Set;
 import model.dto.product.ProductCardDTO;

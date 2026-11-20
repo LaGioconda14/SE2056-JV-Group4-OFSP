@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import model.entity.inventory.InventoryTransaction;
 import model.entity.inventory.ProductBatch;
-import dao.ShopDAO;
+import dao.shop.ShopDAO;
 
 @WebServlet(name = "InventoryHistoryServlet", urlPatterns = {"/shop/inventory/history"})
 public class InventoryHistoryServlet extends HttpServlet {

@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.UserDAO;
+import dao.user.UserDAO;
 import java.util.UUID;
 import model.dto.auth.GoogleAccount;
 import model.entity.user.User;

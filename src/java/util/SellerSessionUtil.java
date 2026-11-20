@@ -1,6 +1,6 @@
 package util;
 
-import dao.ShopDAO;
+import dao.shop.ShopDAO;
 import jakarta.servlet.http.HttpSession;
 import model.entity.shop.Shop;
 

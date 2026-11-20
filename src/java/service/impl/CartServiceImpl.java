@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.CartDAO;
+import dao.order.CartDAO;
 import model.entity.cart.Cart;
 import model.entity.cart.CartItem;
 import model.dto.cart.CartMutationResult;

@@ -1,7 +1,7 @@
 package controller.admin;
 
 import com.google.gson.Gson;
-import dao.AdminDashboardDAO;
+import dao.admin.AdminDashboardDAO;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;

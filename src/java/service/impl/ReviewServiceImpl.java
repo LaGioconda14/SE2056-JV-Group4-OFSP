@@ -1,6 +1,6 @@
 package service.impl;
 
-import dao.ReviewDAO;
+import dao.product.ReviewDAO;
 import java.util.List;
 import java.util.Map;
 import model.entity.review.Review;

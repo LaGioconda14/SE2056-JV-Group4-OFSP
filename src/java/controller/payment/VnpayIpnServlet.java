@@ -1,7 +1,7 @@
 package controller.payment;
 
 import com.google.gson.Gson;
-import dao.VnpayPaymentDAO.CallbackResult;
+import dao.payment.VnpayPaymentDAO.CallbackResult;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
