@@ -10,9 +10,6 @@
                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500">
         </div>
         <div class="flex items-center gap-2">
-            <select name="categoryId" class="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700">
-                <option value="">Tất cả danh mục</option>
-            </select>
             <button type="submit" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs">
                 <i class="fa-solid fa-filter text-xs"></i>
                 <span>Tìm kiếm / Lọc</span>

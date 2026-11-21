@@ -68,11 +68,11 @@ public class ShopDeleteVariantServlet extends HttpServlet {
         }
         long productId = variant.getProductId();
 
-        // Thực hiện xóa mềm
-        boolean success = productService.softDeleteVariant(variantId, shopId);
+        // Thực hiện xóa biến thể: Xóa vĩnh viễn nếu chưa có đơn hàng, hoặc xóa mềm (ngưng bán) nếu đã có lịch sử
+        boolean success = productService.deleteVariant(variantId, shopId);
 
         if (success) {
-            session.setAttribute("successMessage", "Đã ẩn / xóa biến thể thành công!");
+            session.setAttribute("successMessage", "Đã xóa / ngưng bán biến thể thành công!");
         } else {
             session.setAttribute("errorMessage", "Xóa biến thể thất bại!");
         }

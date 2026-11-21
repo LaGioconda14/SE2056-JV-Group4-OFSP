@@ -15,14 +15,7 @@
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 <input type="text" id="shopHeaderSearch" name="keyword" value="<c:out value='${param.keyword}'/>"
                        placeholder="Tìm nông sản, SKU hoặc mã đơn... (Ctrl + K)"
-                       class="header-search-input" style="padding-right: 5.75rem;">
-                <div class="absolute right-1.5 top-1/2 -translate-y-1/2">
-                    <select id="shopSearchScope" class="text-[11px] font-bold text-slate-600 bg-slate-200/80 hover:bg-slate-300/80 border-0 rounded-lg px-2 py-1 outline-none cursor-pointer transition">
-                        <option value="auto">Tự động</option>
-                        <option value="products" ${hdSearchAction.contains('products') ? 'selected' : ''}>Sản phẩm</option>
-                        <option value="orders" ${hdSearchAction.contains('orders') ? 'selected' : ''}>Đơn hàng</option>
-                    </select>
-                </div>
+                       class="header-search-input">
             </form>
         </div>
     </div>
@@ -185,11 +178,9 @@
         var input = document.getElementById('shopHeaderSearch');
         var kw = input ? input.value.trim() : '';
         if (!kw) return;
-        var scopeEl = document.getElementById('shopSearchScope');
-        var scope = scopeEl ? scopeEl.value : 'auto';
 
         var isOrder = /^SUB-/i.test(kw) || /^ORD-/i.test(kw) || /^\d{4,}$/.test(kw);
-        if (scope === 'orders' || (scope === 'auto' && isOrder)) {
+        if (isOrder) {
             window.location.href = '${ctx}/shop/orders?keyword=' + encodeURIComponent(kw);
         } else {
             window.location.href = '${ctx}/shop/products?keyword=' + encodeURIComponent(kw);
@@ -253,7 +244,7 @@
     window.markShopNotificationRead = async function(id, redirectUrl, e) {
         if (e) e.stopPropagation();
         try {
-            await fetch('${ctx}/api/notifications/mark-read?id=' + encodeURIComponent(id), { method: 'POST' });
+            await fetch('${ctx}/api/notifications/mark-read?notificationId=' + encodeURIComponent(id) + '&id=' + encodeURIComponent(id), { method: 'POST' });
         } catch (err) {
             console.error(err);
         }
@@ -293,9 +284,11 @@
                 var link = '';
                 if (n.referenceType === 'ORDER' || n.referenceType === 'SUB_ORDER') {
                     link = '${ctx}/shop/orders';
+                } else if (n.referenceType === 'BATCH' || (n.type === 'SYSTEM' && n.title && n.title.indexOf('Lô') !== -1)) {
+                    link = '${ctx}/shop/inventory';
                 }
                 var bgCls = n.isRead ? 'bg-slate-50/70 border-slate-100 hover:bg-slate-100/70' : 'bg-emerald-50/70 border-emerald-100 hover:bg-emerald-100/70';
-                var icon = n.type === 'ORDER' ? 'fa-box-open text-emerald-600' : (n.type === 'PROMOTION' ? 'fa-tags text-amber-500' : 'fa-bell text-blue-500');
+                var icon = n.type === 'ORDER' ? 'fa-box-open text-emerald-600' : (n.type === 'PROMOTION' ? 'fa-tags text-amber-500' : (n.referenceType === 'BATCH' ? 'fa-boxes-stacked text-amber-500' : 'fa-bell text-blue-500'));
                 var unreadDot = !n.isRead ? '<span class="w-2 h-2 rounded-full bg-emerald-600 shrink-0 mt-1"></span>' : '';
                 return '<div onclick="markShopNotificationRead(' + n.notificationId + ', \'' + link + '\', event)" ' +
                        'class="flex items-start gap-3 p-2.5 rounded-xl border ' + bgCls + ' text-xs cursor-pointer transition">' +
@@ -348,6 +341,14 @@
     });
 
     document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            var searchInput = document.getElementById('shopHeaderSearch');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
         if (e.key === 'Escape') {
             var popover = document.getElementById('shop-noti-popover');
             if (popover) popover.classList.add('hidden');

@@ -1384,6 +1384,7 @@ public class OrderDAO extends DBContext {
         String queryBatchesSql = "SELECT batch_id, batch_code, current_quantity "
                 + "FROM product_batches "
                 + "WHERE variant_id = ? AND status = 'ACTIVE' AND current_quantity > 0 "
+                + "  AND expiry_date >= CAST(GETDATE() AS DATE) "
                 + "ORDER BY expiry_date ASC, batch_id ASC";
 
         String updateBatchSql = "UPDATE product_batches "

@@ -143,8 +143,8 @@
 
                         <hr class="border-slate-100">
 
-                        <!-- 3. Giá bán lẻ, Giá gốc & Số lượng kho ban đầu -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <!-- 3. Giá bán lẻ & Giá gốc -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
                                     Giá bán thực tế (VNĐ) <span class="text-rose-500">*</span>
@@ -167,13 +167,8 @@
                                 <p class="text-[11px] text-slate-400 mt-1">Dùng hiện giá gạch ngang.</p>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                                    Số lượng tồn kho <span class="text-rose-500">*</span>
-                                </label>
-                                <input type="number" name="stockQuantity" required min="0" value="50" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-extrabold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                <p class="text-[11px] text-slate-400 mt-1">Số lượng sẵn sàng bán.</p>
-                            </div>
+                            <%-- Tồn kho khởi tạo tự động = 0, nhập hàng qua Quản lý kho kèm HSD --%>
+                            <input type="hidden" name="stockQuantity" value="0">
                         </div>
 
                         <!-- 4. Trạng thái kinh doanh -->

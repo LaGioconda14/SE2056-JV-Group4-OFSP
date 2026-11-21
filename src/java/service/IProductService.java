@@ -38,6 +38,7 @@ public interface IProductService {
                              String price, String originalPrice, String stockQuantity,
                              String lowStockThreshold, boolean isActive) throws IllegalArgumentException;
     
+    boolean deleteVariant(long variantId, long shopId);
     boolean softDeleteVariant(long variantId, long shopId);
     
     boolean softDeleteProductAndVariants(long productId, long shopId);

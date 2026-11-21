@@ -9,17 +9,21 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import model.dto.product.ProductVariantStockDTO;
 import model.entity.inventory.ProductBatch;
 import model.entity.shop.Shop;
 import model.entity.user.User;
 import service.IInventoryService;
+import service.IProductService;
 import service.impl.InventoryServiceImpl;
+import service.impl.ProductServiceImpl;
 
 @WebServlet(name = "InventoryDashboardServlet", urlPatterns = {"/shop/inventory/batches", "/shop/batches", "/shop/inventory"})
 public class InventoryDashboardServlet extends HttpServlet {
 
     private final ShopDAO shopDAO = new ShopDAO();
     private final IInventoryService inventoryService = new InventoryServiceImpl();
+    private final IProductService productService = new ProductServiceImpl();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -52,6 +56,18 @@ public class InventoryDashboardServlet extends HttpServlet {
         // 1. Lấy danh sách toàn bộ lô hàng của shop
         List<ProductBatch> allBatches = inventoryService.getBatchesByShopId(shopId);
 
+        // 2. Lấy toàn bộ biến thể của shop để phục vụ Dropdown nhập kho & Hiển thị biến thể mới tạo
+        List<ProductVariantStockDTO> rawShopVariants = productService.getVariantsByShopId(shopId);
+        List<ProductVariantStockDTO> allShopVariants = new ArrayList<>();
+        if (rawShopVariants != null) {
+            for (ProductVariantStockDTO v : rawShopVariants) {
+                // Chỉ lấy các biến thể đang hoạt động (active), loại trừ các biến thể đã xóa mềm / ngưng bán
+                if (v != null && v.isActive()) {
+                    allShopVariants.add(v);
+                }
+            }
+        }
+
         long totalStock = 0;
         int lowStockCount = 0;
         int totalBatches = 0;
@@ -71,11 +87,12 @@ public class InventoryDashboardServlet extends HttpServlet {
             }
         }
 
-        // 2. Lọc tìm kiếm Server-Side (No-JS Search)
+        // 3. Lọc tìm kiếm Server-Side (No-JS Search)
         String keyword = request.getParameter("keyword");
+        String kw = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim().toLowerCase() : null;
+
         List<ProductBatch> displayBatches = allBatches != null ? new ArrayList<>(allBatches) : new ArrayList<>();
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String kw = keyword.trim().toLowerCase();
+        if (kw != null) {
             displayBatches.removeIf(b -> {
                 String pName = b.getProductName() != null ? b.getProductName().toLowerCase() : "";
                 String vName = b.getVariantName() != null ? b.getVariantName().toLowerCase() : "";
@@ -85,13 +102,41 @@ public class InventoryDashboardServlet extends HttpServlet {
             });
         }
 
-        // 3. Gom nhóm theo variantId để hiển thị danh sách accordion
+        // 4. Gom nhóm theo variantId để hiển thị danh sách accordion
         Map<Long, List<ProductBatch>> variantBatchMap = new LinkedHashMap<>();
         for (ProductBatch batch : displayBatches) {
             variantBatchMap.computeIfAbsent(batch.getVariantId(), k -> new ArrayList<>()).add(batch);
         }
 
-        // 4. Xử lý nạp dữ liệu Modal qua URL (100% No-JS Server-Rendered Modals)
+        // Bổ sung các biến thể đang hoạt động của Shop chưa có lô hàng vào variantBatchMap (để không bị ẩn mất trên trang Kho)
+        for (ProductVariantStockDTO v : allShopVariants) {
+            if (v.getVariantId() > 0 && v.isActive() && !variantBatchMap.containsKey(v.getVariantId())) {
+                if (kw != null) {
+                    String pName = v.getProductName() != null ? v.getProductName().toLowerCase() : "";
+                    String vName = v.getVariantName() != null ? v.getVariantName().toLowerCase() : "";
+                    String sku = v.getSku() != null ? v.getSku().toLowerCase() : "";
+                    if (!pName.contains(kw) && !vName.contains(kw) && !sku.contains(kw)) {
+                        continue;
+                    }
+                }
+                ProductBatch placeholder = new ProductBatch();
+                placeholder.setBatchId(0);
+                placeholder.setVariantId(v.getVariantId());
+                placeholder.setProductName(v.getProductName());
+                placeholder.setVariantName(v.getVariantName());
+                placeholder.setSku(v.getSku());
+                placeholder.setImageUrl(v.getImage());
+                placeholder.setCurrentQuantity(0);
+                placeholder.setInitialQuantity(0);
+                placeholder.setStatus("NO_BATCH");
+
+                List<ProductBatch> placeholderList = new ArrayList<>();
+                placeholderList.add(placeholder);
+                variantBatchMap.put(v.getVariantId(), placeholderList);
+            }
+        }
+
+        // 5. Xử lý nạp dữ liệu Modal qua URL (100% No-JS Server-Rendered Modals)
         String action = request.getParameter("action");
         String batchIdParam = request.getParameter("batchId");
         String variantIdParam = request.getParameter("variantId");
@@ -118,9 +163,26 @@ public class InventoryDashboardServlet extends HttpServlet {
         if (variantIdParam != null && !variantIdParam.trim().isEmpty()) {
             try {
                 long targetVariantId = Long.parseLong(variantIdParam.trim());
+                boolean foundInBatches = false;
                 if (allBatches != null) {
                     for (ProductBatch b : allBatches) {
                         if (b.getVariantId() == targetVariantId) {
+                            request.setAttribute("selectedRestockVariant", b);
+                            foundInBatches = true;
+                            break;
+                        }
+                    }
+                }
+                // Nếu biến thể chưa có lô nào, lấy thông tin từ allShopVariants để điền tên vào modal (Ảnh 3)
+                if (!foundInBatches) {
+                    for (ProductVariantStockDTO v : allShopVariants) {
+                        if (v.getVariantId() == targetVariantId) {
+                            ProductBatch b = new ProductBatch();
+                            b.setVariantId(v.getVariantId());
+                            b.setProductName(v.getProductName());
+                            b.setVariantName(v.getVariantName());
+                            b.setSku(v.getSku());
+                            b.setImageUrl(v.getImage());
                             request.setAttribute("selectedRestockVariant", b);
                             break;
                         }
@@ -130,6 +192,7 @@ public class InventoryDashboardServlet extends HttpServlet {
             }
         }
 
+        request.setAttribute("allShopVariants", allShopVariants);
         request.setAttribute("variantBatchMap", variantBatchMap);
         request.setAttribute("totalStock", totalStock);
         request.setAttribute("totalBatches", totalBatches);

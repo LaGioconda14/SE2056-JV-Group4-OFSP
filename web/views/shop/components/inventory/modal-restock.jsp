@@ -30,17 +30,30 @@
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <%-- Nhập từ nút Header (chọn trong dropdown) --%>
+                        <%-- Nhập từ nút Header (chọn trong dropdown toàn bộ biến thể của shop) --%>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1.5">CHỌN MẶT HÀNG / BIẾN THỂ CẦN NHẬP</label>
                             <select name="variantId" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-500">
                                 <option value="">-- Chọn mặt hàng nông sản --</option>
-                                <c:forEach var="entry" items="${variantBatchMap}">
-                                    <c:set var="firstBatch" value="${entry.value[0]}" />
-                                    <option value="${entry.key}">
-                                        ${firstBatch.productName} - ${firstBatch.variantName} (${firstBatch.sku})
-                                    </option>
-                                </c:forEach>
+                                <c:choose>
+                                    <c:when test="${not empty allShopVariants}">
+                                        <c:forEach var="v" items="${allShopVariants}">
+                                            <c:if test="${v.variantId > 0 and v.active}">
+                                                <option value="${v.variantId}">
+                                                    ${v.productName} - ${v.variantName} (${v.sku})
+                                                </option>
+                                            </c:if>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <c:forEach var="entry" items="${variantBatchMap}">
+                                            <c:set var="firstBatch" value="${entry.value[0]}" />
+                                            <option value="${entry.key}">
+                                                ${firstBatch.productName} - ${firstBatch.variantName} (${firstBatch.sku})
+                                            </option>
+                                        </c:forEach>
+                                    </c:otherwise>
+                                </c:choose>
                             </select>
                         </div>
                     </c:otherwise>

@@ -144,6 +144,9 @@ public class ProductServiceImpl implements IProductService {
         if (variantName == null || variantName.trim().isEmpty()) {
             throw new IllegalArgumentException("Tên biến thể không được để trống.");
         }
+        if (productDAO.isVariantNameExists(productId, variantName.trim())) {
+            throw new IllegalArgumentException("Quy cách '" + variantName.trim() + "' đã tồn tại cho sản phẩm này! Vui lòng vào Quản lý kho để Nhập lô mới thay vì tạo biến thể trùng lặp.");
+        }
         if (unit == null || unit.trim().isEmpty()) {
             throw new IllegalArgumentException("Đơn vị tính không được để trống.");
         }
@@ -218,6 +221,20 @@ public class ProductServiceImpl implements IProductService {
     }
     
     @Override
+    public boolean deleteVariant(long variantId, long shopId) {
+        if (variantId <= 0 || shopId <= 0) {
+            throw new IllegalArgumentException("Mã sản phẩm hoặc cửa hàng không hợp lệ!");
+        }
+        // Thử xóa vĩnh viễn (nếu biến thể mới chưa từng phát sinh đơn hàng hay lô hàng)
+        boolean hardDeleted = productDAO.deleteVariantById(variantId, shopId);
+        if (hardDeleted) {
+            return true;
+        }
+        // Nếu có ràng buộc dữ liệu cũ (đơn hàng, lịch sử kho), chuyển sang xóa mềm để bảo toàn tính toàn vẹn
+        return productDAO.softDeleteVariant(variantId, shopId);
+    }
+
+    @Override
     public boolean softDeleteVariant(long variantId, long shopId) {
         if (variantId <= 0 || shopId <= 0) {
             throw new IllegalArgumentException("Mã sản phẩm hoặc cửa hàng không hợp lệ!");
@@ -281,6 +298,9 @@ public class ProductServiceImpl implements IProductService {
         String updatedSku = sku == null || sku.trim().isEmpty() ? existingVariant.getSku() : sku.trim();
         if (updatedSku != null && productDAO.isSkuUsedByAnotherVariant(updatedSku, variantId)) {
             throw new IllegalArgumentException("Mã SKU đã tồn tại, vui lòng nhập mã khác.");
+        }
+        if (productDAO.isVariantNameUsedByAnother(existingVariant.getProductId(), variantId, variantName.trim())) {
+            throw new IllegalArgumentException("Tên quy cách '" + variantName.trim() + "' đã được sử dụng bởi biến thể khác của sản phẩm này.");
         }
         boolean updated = productDAO.updateVariantDetails(shopId, variantId, updatedSku, variantName, unit, price,
                 originalPrice, stockQuantity, lowStockThreshold, isActive);

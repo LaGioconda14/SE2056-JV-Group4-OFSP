@@ -164,11 +164,19 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                                    Số lượng tồn kho <span class="text-rose-500">*</span>
-                                </label>
-                                <input type="number" name="stockQuantity" value="${variant.stockQuantity}" required min="0" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-extrabold focus:outline-none focus:border-emerald-500 focus:bg-white transition-all">
-                                <p class="text-[11px] text-slate-400 mt-1">Số lượng hiện có trong kho.</p>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                                        Số lượng tồn kho hiện tại
+                                    </label>
+                                    <a href="${pageContext.request.contextPath}/shop/inventory/batches?action=restock&variantId=${variant.variantId}" class="text-[11px] text-emerald-700 font-bold hover:underline flex items-center gap-1 text-decoration-none">
+                                        <i class="fa-solid fa-plus text-[10px]"></i>Nhập lô mới
+                                    </a>
+                                </div>
+                                <input type="number" name="stockQuantity" value="${variant.stockQuantity}" readonly class="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-extrabold text-slate-600 cursor-not-allowed">
+                                <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                                    <i class="fa-solid fa-lock text-[10px] text-slate-400"></i>
+                                    <span>Chỉ xem. Để tăng/giảm tồn kho, vui lòng thực hiện tại <a href="${pageContext.request.contextPath}/shop/inventory" class="text-emerald-700 font-bold hover:underline">Quản lý kho</a>.</span>
+                                </p>
                             </div>
                         </div>
 

@@ -52,8 +52,6 @@ public class DBContext {
 
     static {
         loadProperties();
-        initPool();
-        registerShutdownHook();
     }
 
     private static synchronized void loadProperties() {
@@ -111,37 +109,19 @@ public class DBContext {
         }
     }
 
-    private static void initPool() {
-        if (POOL_INITIALIZED.compareAndSet(false, true)) {
-            new Thread(() -> {
-                for (int i = 0; i < INITIAL_POOL_SIZE; i++) {
-                    try {
-                        Connection conn = createPhysicalConnection();
-                        if (conn != null) {
-                            POOL.offer(conn);
-                            TOTAL_PHYSICAL_CONNECTIONS.incrementAndGet();
-                        }
-                    } catch (Exception e) {
-                        LOGGER.log(Level.WARNING, "Could not warm-up connection #" + (i + 1) + ": " + e.getMessage());
-                        break;
-                    }
-                }
-                LOGGER.info("DBContext connection pool initialized with " + TOTAL_PHYSICAL_CONNECTIONS.get() + " connections.");
-            }, "DBContext-PoolWarmup").start();
-        }
-    }
-
-    private static void registerShutdownHook() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.info("Shutting down DBContext connection pool...");
-            Connection c;
-            while ((c = POOL.poll()) != null) {
-                try {
-                    c.close();
-                } catch (Exception ignored) {
-                }
+    /**
+     * Gracefully close all pooled connections when the web application stops.
+     */
+    public static void shutdownPool() {
+        LOGGER.info("Shutting down DBContext connection pool...");
+        Connection c;
+        while ((c = POOL.poll()) != null) {
+            try {
+                c.close();
+            } catch (Exception ignored) {
             }
-        }, "DBContext-Shutdown"));
+        }
+        TOTAL_PHYSICAL_CONNECTIONS.set(0);
     }
 
     private static String getProperty(String key, String fallbackKey, String defaultValue) {

@@ -51,7 +51,7 @@ public class ShopAddVariantServlet extends HttpServlet {
                     request.getParameter("stockQuantity"), request.getParameter("lowStockThreshold"),
                     request.getParameter("isActive") != null);
 
-            request.getSession().setAttribute("successMessage", "Đã thêm biến thể mới.");
+            request.getSession().setAttribute("successMessage", "Đã thêm biến thể mới (Tồn kho khởi tạo = 0). Vui lòng vào mục Quản lý kho để nhập lô hàng kèm Hạn sử dụng.");
             response.sendRedirect(request.getContextPath() + "/shop/product/variants?productId=" + productId);
         } catch (IllegalArgumentException e) {
             request.setAttribute("errorMessage", e.getMessage());

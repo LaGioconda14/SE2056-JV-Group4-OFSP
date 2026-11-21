@@ -1852,6 +1852,41 @@ public class ProductDAO extends DBContext {
         }
     }
 
+    public boolean isVariantNameExists(long productId, String variantName) {
+        if (variantName == null || variantName.trim().isEmpty() || productId <= 0) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM product_variants WHERE product_id = ? AND LOWER(LTRIM(RTRIM(variant_name))) = LOWER(LTRIM(RTRIM(?)))";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setString(2, variantName.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean isVariantNameUsedByAnother(long productId, long variantId, String variantName) {
+        if (variantName == null || variantName.trim().isEmpty() || productId <= 0) {
+            return false;
+        }
+        String sql = "SELECT 1 FROM product_variants WHERE product_id = ? AND variant_id <> ? AND LOWER(LTRIM(RTRIM(variant_name))) = LOWER(LTRIM(RTRIM(?)))";
+        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, productId);
+            ps.setLong(2, variantId);
+            ps.setString(3, variantName.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public List<ProductVariant> getShopVariantsByProductId(long shopId, long productId) {
         List<ProductVariant> list = new ArrayList<>();
         String sql = "SELECT pv.variant_id, pv.product_id, pv.sku, pv.variant_name, pv.unit, pv.price, "
@@ -2044,8 +2079,9 @@ public class ProductDAO extends DBContext {
     public boolean updateVariantDetails(long shopId, long variantId, String sku, String variantName,
             String unit, BigDecimal price, BigDecimal originalPrice, int stockQuantity,
             int lowStockThreshold, boolean isActive) {
+        // Bảo vệ toàn vẹn dữ liệu: Không UPDATE stock_quantity tại đây (số lượng tồn chỉ được thay đổi qua Quản lý kho theo Lô)
         String sql = "UPDATE pv SET pv.sku = ?, pv.variant_name = ?, pv.unit = ?, pv.price = ?, "
-                + "pv.original_price = ?, pv.stock_quantity = ?, pv.low_stock_threshold = ?, pv.is_active = ?, "
+                + "pv.original_price = ?, pv.low_stock_threshold = ?, pv.is_active = ?, "
                 + "pv.updated_at = CURRENT_TIMESTAMP FROM product_variants pv "
                 + "JOIN products p ON pv.product_id = p.product_id WHERE pv.variant_id = ? AND p.shop_id = ?";
         try (Connection conn = getConnection(); PreparedStatement statement = conn.prepareStatement(sql)) {
@@ -2054,11 +2090,10 @@ public class ProductDAO extends DBContext {
             statement.setString(3, unit.trim());
             statement.setBigDecimal(4, price);
             statement.setBigDecimal(5, originalPrice != null ? originalPrice : price);
-            statement.setInt(6, stockQuantity);
-            statement.setInt(7, lowStockThreshold);
-            statement.setBoolean(8, isActive);
-            statement.setLong(9, variantId);
-            statement.setLong(10, shopId);
+            statement.setInt(6, lowStockThreshold);
+            statement.setBoolean(7, isActive);
+            statement.setLong(8, variantId);
+            statement.setLong(9, shopId);
             return statement.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
