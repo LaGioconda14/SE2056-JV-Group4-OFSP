@@ -32,6 +32,7 @@ public class OrderDetailDTO implements Serializable {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
+    // Bản nháp checkout và chi tiết đơn đã lưu dùng chung cấu trúc, nhưng bản nháp chưa phải đơn đã đặt.
     private ShippingAddress shippingAddress;
     private List<SubOrderDTO> subOrders = new ArrayList<>();
 

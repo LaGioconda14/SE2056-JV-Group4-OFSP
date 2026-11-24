@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import model.entity.user.User;
 
+/** Bảo vệ giỏ hàng theo session; checkout/đặt hàng còn kiểm tra người dùng ở servlet riêng. */
 @WebFilter(filterName = "AuthFilter", urlPatterns = {"/change-password", "/profile", "/cart", "/cart/*", "/choose-role", "/register-shop", "/seller/*"})
 public class AuthFilter implements Filter {
 

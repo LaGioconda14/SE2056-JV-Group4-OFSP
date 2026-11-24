@@ -74,7 +74,7 @@ public class UpdateCartServlet extends HttpServlet {
         }
 
         try {
-            // Cập nhật số lượng sản phẩm tương ứng trong giỏ hàng
+            // Service đối chiếu tồn kho và quyền sở hữu trước khi lưu số lượng mới.
             cartService.updateQuantity(user.getId(),
                     Long.parseLong(request.getParameter("cartItemId")),
                     Integer.parseInt(request.getParameter("quantity")));

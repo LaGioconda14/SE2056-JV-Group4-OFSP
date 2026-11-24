@@ -12,6 +12,7 @@ public class OrderItemDetailDTO implements Serializable {
 
     private long orderItemId;
     private long subOrderId;
+    // Tên/SKU là ảnh chụp tại lúc đặt hàng; ảnh và productId phục vụ hiển thị/điều hướng.
     private Long variantId;
     private Long productId;
     private String productNameSnapshot;

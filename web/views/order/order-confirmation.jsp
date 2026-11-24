@@ -48,6 +48,7 @@
                 <section class="empty-state"><span class="material-symbols-outlined">receipt_long</span><h1>Không tìm thấy đơn hàng</h1><p>Thông tin đơn hàng không khả dụng.</p><a class="primary-button" href="<c:out value='${homeUrl}'/>">Về trang chủ</a></section>
             </c:when>
             <c:otherwise>
+                <%-- Thông điệp theo tham số return chỉ phục vụ hiển thị; trạng thái thanh toán bên dưới lấy từ đơn đã tải. --%>
                 <section class="success-hero">
                     <div class="success-icon"><span class="material-symbols-outlined"><c:choose><c:when test="${param.payment eq 'failed' or param.payment eq 'invalid'}">error</c:when><c:otherwise>check</c:otherwise></c:choose></span></div>
                     <p class="eyebrow"><c:choose><c:when test="${param.payment eq 'success'}">Thanh toán thành công</c:when><c:when test="${param.payment eq 'failed'}">Thanh toán chưa thành công</c:when><c:when test="${param.payment eq 'invalid'}">Kết quả thanh toán không hợp lệ</c:when><c:otherwise>Đặt hàng thành công</c:otherwise></c:choose></p>
@@ -56,6 +57,7 @@
                     <c:if test="${order.paymentStatus eq 'PENDING' and order.paymentMethod eq 'CARD'}"><p>Đơn hàng đã được ghi nhận, thanh toán chưa hoàn tất. Không có khoản thanh toán thẻ nào được thực hiện tại trang này.</p></c:if>
                     <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'failed'}"><p>VNPAY chưa ghi nhận thanh toán thành công. Bạn có thể thực hiện lại thanh toán từ đơn hàng của mình.</p></c:if>
                     <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'invalid'}"><p>Không thể xác minh chữ ký phản hồi từ VNPAY. Trạng thái thanh toán không được thay đổi.</p></c:if>
+                    <%-- Thử thanh toán lại dùng orderId; endpoint tạo thanh toán phải tự kiểm tra chủ đơn/trạng thái. --%>
                     <c:if test="${order.paymentMethod eq 'VNPAY' and (param.payment eq 'failed' or param.payment eq 'invalid')}">
                         <div class="mt-3 mb-2">
                             <a href="${pageContext.request.contextPath}/payment/vnpay/create?orderId=${order.orderId}"
@@ -119,6 +121,7 @@
                                 <div class="payment-method-row"><span>Phương thức thanh toán</span><strong><c:choose><c:when test="${order.paymentMethod eq 'VNPAY'}">VNPAY</c:when><c:when test="${order.paymentMethod eq 'COD'}">Thanh toán khi nhận hàng</c:when><c:when test="${order.paymentMethod eq 'CARD'}">Thẻ ngân hàng</c:when><c:otherwise><c:out value="${order.paymentMethod}"/></c:otherwise></c:choose></strong></div>
                                 <div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${order.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                             </div>
+                            <%-- Trạng thái thanh toán tách khỏi tiến độ giao từng shop và thông điệp return của trình duyệt. --%>
                             <div class="payment-state">
                                 <span class="material-symbols-outlined"><c:choose><c:when test="${order.paymentStatus eq 'PAID'}">check_circle</c:when><c:when test="${order.paymentStatus eq 'FAILED'}">cancel</c:when><c:when test="${order.paymentStatus eq 'REFUNDED'}">currency_exchange</c:when><c:otherwise>schedule</c:otherwise></c:choose></span>
                                 <span>

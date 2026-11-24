@@ -94,6 +94,7 @@ public class CartBadgeFilter implements Filter {
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
         if (user != null && user.isActive()) {
+            // Badge là cache của số dòng giỏ hàng, không phải dữ liệu quyết định số lượng khi checkout.
             Object cachedCartSize = (session != null) ? session.getAttribute("cartSize") : null;
             if (cachedCartSize == null) {
                 try {

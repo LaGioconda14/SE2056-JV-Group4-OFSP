@@ -3,6 +3,7 @@ package enums;
 import java.util.Locale;
 
 public enum PaymentStatus {
+    // Trạng thái thanh toán của đơn, không phải trạng thái của một lần thử giao dịch VNPAY.
     PENDING,
     PAID,
     FAILED,

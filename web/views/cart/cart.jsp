@@ -149,6 +149,7 @@
                             <label class="flex items-center gap-3 normal-case text-sm text-gray-900 cursor-pointer"><input type="checkbox" data-select-all class="select-all-toggle w-4 h-4 rounded accent-[#00652c]" aria-label="Chọn tất cả sản phẩm">Sản phẩm (<span id="select-all-count"><c:out value="${cart.items.size()}"/></span>)</label>
                             <span class="text-center">Đơn giá</span><span class="text-center">Số lượng</span><span class="text-center">Số tiền</span><span class="text-center">Thao tác</span>
                         </div>
+                        <%-- Nhóm theo shop chỉ để hiển thị/chọn nhanh; danh sách dòng mua thực tế do form checkout gửi. --%>
                         <c:forEach var="shopEntry" items="${cart.itemsByShop}">
                             <c:set var="shopItems" value="${shopEntry.value}"/>
                             <c:set var="shop" value="${shopItems[0].variant}"/>

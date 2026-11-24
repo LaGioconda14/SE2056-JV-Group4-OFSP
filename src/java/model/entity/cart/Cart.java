@@ -43,6 +43,7 @@ public class Cart {
         this.items = items != null ? items : new ArrayList<>();
     }
 
+    /** Tổng giỏ chỉ tính dòng còn mua được; các dòng cần đổi biến thể vẫn được giữ để khách xử lý. */
     public BigDecimal getTotalAmount() {
         BigDecimal total = BigDecimal.ZERO;
         for (CartItem item : items) {

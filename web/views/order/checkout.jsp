@@ -71,6 +71,7 @@
             <form method="post" action="<c:out value='${placeOrderUrl}'/>" id="checkout-form"
                   class="space-y-4">
 
+                <%-- Giữ nguồn chọn giỏ/buy-now qua các lần dựng lại bản nháp; hidden field và giá hiển thị không phải dữ liệu tin cậy khi đặt hàng. --%>
                 <!-- Hidden parameters -->
                 <input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.cartCsrfToken}'/>">
                 <c:forEach var="cartItemId" items="${cartItemIds}">
@@ -87,6 +88,7 @@
                         <input type="hidden" name="shopCoupon_${entry.key}" value="<c:out value='${entry.value}'/>">
                     </c:if>
                 </c:forEach>
+                <%-- Khi bật checkoutAction, cùng form này POST lại /checkout để đổi địa chỉ/voucher thay vì /order/place. --%>
                 <input type="hidden" name="checkoutAction" id="checkout-action" disabled>
                 <input type="hidden" name="targetShopId" id="target-shop-id" disabled>
                 <input type="hidden" name="newCouponCode" id="new-coupon-code" disabled>
@@ -221,7 +223,8 @@
                                     </c:forEach>
                                 </div>
 
-                                <!-- Shop Voucher Row (Giống Shopee) -->
+                                 <%-- Mỗi shop có mã giảm riêng; chiết khấu lấy từ draftOrder, không từ phép tính trên trình duyệt. --%>
+                                 <!-- Shop Voucher Row (Giống Shopee) -->
                                 <c:set var="currentShopCode" value="${shopCouponCodes[shopEntry.key]}"/>
                                 <c:set var="currentSubOrder" value="${null}"/>
                                 <c:forEach var="sub" items="${draftOrder.subOrders}">
@@ -313,6 +316,7 @@
                     </c:when>
                 </c:choose>
 
+                <%-- Voucher sàn nằm ở cấp đơn tổng; khi POST đặt hàng điều kiện và mức giảm phải được kiểm tra lại. --%>
                 <!-- ==================== 4. VOUCHER GỐC VƯỜN CARD (GIỐNG SHOPEE) ==================== -->
                 <div class="bg-white rounded-xl shadow-xs border border-gray-200/70 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
                     <div class="flex items-center gap-2.5">
@@ -461,6 +465,7 @@
                         </div>
                     </div>
 
+                    <%-- Nút đặt hàng POST /order/place; chọn VNPAY chỉ dẫn sang cổng thanh toán sau khi tạo đơn. --%>
                     <!-- Nút Hủy / Đặt Hàng -->
                     <div class="pt-6 border-t border-gray-100 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
                         <a href="<c:out value='${cartUrl}'/>"
@@ -651,6 +656,7 @@
 
 <!-- ==================== JAVASCRIPT XỬ LÝ THANH TOÁN ==================== -->
 <script>
+    // POST dựng lại bản nháp; các giá trị form (kể cả mã voucher) được server kiểm tra lại.
     function submitCheckoutAction(action, values = {}) {
         const form = document.getElementById('checkout-form');
         if (!form) return;
@@ -800,6 +806,7 @@
             } else {
                 coupons.forEach(c => {
                     const isApplied = currentApplied && currentApplied.toUpperCase() === c.code.toUpperCase();
+                    // Điều kiện tại đây chỉ để bật/tắt nút trong bản xem trước, không xác nhận quyền dùng voucher.
                     const isEligible = Number(shopSubtotal) >= Number(c.minOrderValue);
 
                     let discountLabel = '';

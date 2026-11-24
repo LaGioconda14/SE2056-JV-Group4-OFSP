@@ -80,6 +80,7 @@ public class OrderDAO extends DBContext {
     /**
      * Lấy danh sách các sản phẩm trong giỏ hàng được khách hàng chọn để checkout.
      * Kèm theo thông tin chi tiết biến thể, sản phẩm, cửa hàng và ảnh đại diện.
+     * JOIN carts giới hạn theo customerId; truy vấn đọc này không khóa hoặc giữ tồn kho.
      *
      * @param customerId  ID khách hàng
      * @param cartItemIds danh sách ID các dòng giỏ hàng
@@ -346,6 +347,7 @@ public class OrderDAO extends DBContext {
             conn.setAutoCommit(false); // Báº®T Äáº¦U TRANSACTION
 
             if (consumeCart) {
+                // Chặn thay đổi giỏ giữa lúc dựng draft và lúc ghi đơn; mua ngay không có dòng giỏ để khóa.
                 lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
             }
 
@@ -391,6 +393,7 @@ public class OrderDAO extends DBContext {
             }
 
             BigDecimal totalDiscounts = totalShopDiscounts.add(order.getPlatformDiscount());
+            // Tính lại tổng từ voucher đã xác thực trong transaction; không dùng nguyên tổng của draft.
             order.setFinalAmount(order.getTotalGoodsAmount()
                     .add(order.getTotalShippingFee())
                     .subtract(totalDiscounts)
@@ -634,6 +637,7 @@ public class OrderDAO extends DBContext {
 
     private void lockAndValidateCartItems(Connection conn, OrderDetailDTO order,
             List<Long> cartItemIds) throws SQLException {
+        // Khóa các dòng thuộc khách và đối chiếu số dòng cùng tổng số lượng theo variant với draft.
         if (cartItemIds == null || cartItemIds.isEmpty()) {
             throw new SQLException("KhÃ´ng cÃ³ sáº£n pháº©m nÃ o Ä‘Æ°á»£c chá»n Ä‘á»ƒ Ä‘áº·t hÃ ng!");
         }
@@ -752,6 +756,7 @@ public class OrderDAO extends DBContext {
 
     private BigDecimal getCouponEligibleAmount(Connection conn, Coupon coupon,
             List<OrderItemDetailDTO> items, BigDecimal fullSubtotal) throws SQLException {
+        // Danh sách sản phẩm áp dụng được đọc lại trên cùng connection khi chốt voucher.
         if (!"PRODUCTS".equalsIgnoreCase(coupon.getAppliesTo())) return fullSubtotal;
         List<Long> productIds = couponDAO.getApplicableProductIds(conn, coupon.getCouponId());
         BigDecimal eligible = BigDecimal.ZERO;

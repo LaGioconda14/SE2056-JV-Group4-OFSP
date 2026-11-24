@@ -3,6 +3,7 @@ package enums;
 import java.util.Locale;
 
 public enum SubOrderStatus {
+    // Mỗi shop xử lý phần đơn của mình; DELIVERED không đồng nghĩa đơn tổng đã thanh toán.
     NEW,
     CONFIRMED,
     PACKING,

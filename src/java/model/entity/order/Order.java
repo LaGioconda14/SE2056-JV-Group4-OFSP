@@ -17,6 +17,7 @@ public class Order implements Serializable {
     private String orderCode;
     private long customerId;
     private Integer couponId;
+    // Tổng cấp đơn gồm các shop; trạng thái thanh toán tách biệt tiến trình xử lý đơn.
     private BigDecimal totalGoodsAmount = BigDecimal.ZERO;
     private BigDecimal totalShippingFee = BigDecimal.ZERO;
     private BigDecimal platformDiscount = BigDecimal.ZERO;

@@ -2,6 +2,7 @@ package model.entity.order;
 
 public class ShippingAddress {
 
+    // Bản địa chỉ gắn với đơn đã đặt, không phụ thuộc thay đổi địa chỉ trong hồ sơ về sau.
     private long orderId;
     private String recipientName;
     private String recipientPhone;

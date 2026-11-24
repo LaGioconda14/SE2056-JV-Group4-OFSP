@@ -11,6 +11,7 @@ public class OrderItem implements Serializable {
 
     private long orderItemId;
     private long subOrderId;
+    // Giữ tên/SKU tại thời điểm mua ngay cả khi biến thể gốc thay đổi hoặc bị xóa.
     private Long variantId;
     private String productNameSnapshot;
     private String variantNameSnapshot;

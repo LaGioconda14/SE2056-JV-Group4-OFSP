@@ -45,6 +45,7 @@ public class VnpayPaymentService {
      * Tạo đường dẫn (URL) chuyển hướng người dùng sang cổng thanh toán VNPAY.
      * Các tham số bao gồm: mã merchant (vnp_TmnCode), số tiền x100 (vnp_Amount),
      * mã tham chiếu đơn hàng (vnp_TxnRef), IP khách hàng, thời gian tạo và hết hạn.
+     * vnp_TxnRef là orderId nội bộ, không phải orderCode hiển thị.
      *
      * @param order     đơn hàng cần thanh toán
      * @param clientIp  địa chỉ IP của khách hàng
@@ -84,6 +85,8 @@ public class VnpayPaymentService {
      * - Trích xuất mã đơn hàng (vnp_TxnRef) và số tiền (vnp_Amount).
      * - Kiểm tra mã phản hồi vnp_ResponseCode = "00" và mã trạng thái vnp_TransactionStatus = "00".
      * - Cập nhật trạng thái đơn hàng (PAID nếu thành công, FAILED nếu thất bại).
+     * Phương thức này không kiểm tra chữ ký: servlet Return/IPN phải gọi
+     * VnpayUtil.isValidSignature trước khi chuyển tham số vào đây.
      *
      * @param parameters map tham số HTTP nhận từ callback của VNPAY
      * @return CallbackResult chứa trạng thái cập nhật đơn hàng và kết quả xử lý

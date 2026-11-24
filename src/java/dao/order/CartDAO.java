@@ -93,6 +93,7 @@ public class CartDAO extends DBContext {
             try {
                 // Khóa các dòng trong lúc đối chiếu để quantity trả về luôn khớp với dữ liệu đã commit.
                 List<CartItem> items = loadItemsForReconciliation(conn, cartId);
+                // Chỉ giảm lượng của biến thể vẫn mua được; item hết hàng giữ trạng thái để chọn biến thể khác.
                 for (CartItem item : items) {
                     if (item.isQuantityAdjusted()
                             && !updateQuantityByCart(conn, cartId, item.getCartItemId(), item.getQuantity())) {
@@ -129,6 +130,7 @@ public class CartDAO extends DBContext {
             try {
                 Cart cart = findOrCreateCart(conn, customerId);
                 CartItem existing = findItemByVariantId(conn, cart.getCartId(), variantId);
+                // So tồn kho với tổng sau khi gộp, không chỉ lượng vừa gửi từ request.
                 long requestedQuantity = (existing == null ? 0L : existing.getQuantity()) + quantity;
                 ProductVariantDetailDTO variant = findAvailableVariant(conn, variantId);
                 validateStock(variant, requestedQuantity);
@@ -244,6 +246,7 @@ public class CartDAO extends DBContext {
                 CartItem target = findItemByVariantId(conn, cartId, newVariantId);
                 long combinedQuantity = current.getQuantity()
                         + (target != null ? target.getQuantity() : 0L);
+                // Đổi biến thể chặn ở mức kho hiện tại thay vì giữ nguyên tổng vượt kho.
                 int finalQuantity = (int) Math.min(combinedQuantity,
                         (long) newVariant.getStockQuantity());
                 if (finalQuantity <= 0) {

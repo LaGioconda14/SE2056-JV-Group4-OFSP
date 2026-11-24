@@ -81,10 +81,18 @@ public class VoucherDAO extends DBContext {
 
     /** tab: ALL | ONGOING | UPCOMING | PAUSED | FINISHED (ENDED, EXPIRED, SOLD_OUT) */
     public List<Voucher> listByShop(long shopId, String tab, String keyword) {
+        return listByOwner(shopId, tab, keyword);
+    }
+
+    public List<Voucher> listPlatform(String tab, String keyword) {
+        return listByOwner(null, tab, keyword);
+    }
+
+    private List<Voucher> listByOwner(Long shopId, String tab, String keyword) {
         List<Voucher> list = new ArrayList<>();
-        StringBuilder sql = new StringBuilder(SELECT_COLS).append("WHERE c.shop_id = ? ");
+        StringBuilder sql = new StringBuilder(SELECT_COLS).append(shopId == null ? "WHERE c.shop_id IS NULL " : "WHERE c.shop_id = ? ");
         List<Object> params = new ArrayList<>();
-        params.add(shopId);
+        if (shopId != null) params.add(shopId);
 
         if ("ONGOING".equals(tab) || "UPCOMING".equals(tab) || "PAUSED".equals(tab)) {
             sql.append("AND ").append(STATUS_EXPR).append(" = '").append(tab).append("' ");
@@ -116,15 +124,24 @@ public class VoucherDAO extends DBContext {
 
     /** Số voucher theo từng nhóm trạng thái: all, ongoing, upcoming, paused, finished. */
     public Map<String, Integer> countByTab(long shopId) {
+        return countByOwner(shopId);
+    }
+
+    public Map<String, Integer> countPlatformByTab() {
+        return countByOwner(null);
+    }
+
+    private Map<String, Integer> countByOwner(Long shopId) {
         Map<String, Integer> m = new LinkedHashMap<>();
         m.put("all", 0);
         m.put("ongoing", 0);
         m.put("upcoming", 0);
         m.put("paused", 0);
         m.put("finished", 0);
-        String sql = "SELECT " + STATUS_EXPR + " AS st, COUNT(*) AS n FROM coupons c WHERE c.shop_id = ? GROUP BY " + STATUS_EXPR;
+        String sql = "SELECT " + STATUS_EXPR + " AS st, COUNT(*) AS n FROM coupons c WHERE c.shop_id "
+                + (shopId == null ? "IS NULL" : "= ?") + " GROUP BY " + STATUS_EXPR;
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, shopId);
+            if (shopId != null) ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     String st = rs.getString("st");
@@ -144,15 +161,24 @@ public class VoucherDAO extends DBContext {
 
     /** Tổng lượt dùng, tổng tiền đã giảm, số khách đã dùng voucher của shop. */
     public Map<String, Object> getShopSummary(long shopId) {
+        return getOwnerSummary(shopId);
+    }
+
+    public Map<String, Object> getPlatformSummary() {
+        return getOwnerSummary(null);
+    }
+
+    private Map<String, Object> getOwnerSummary(Long shopId) {
         Map<String, Object> m = new HashMap<>();
         m.put("totalUsed", 0);
         m.put("totalDiscount", BigDecimal.ZERO);
         m.put("uniqueCustomers", 0);
         String sql = "SELECT COUNT(u.usage_id) AS used, COALESCE(SUM(u.discount_amount), 0) AS disc, "
                 + "COUNT(DISTINCT u.customer_id) AS cust "
-                + "FROM coupon_usages u JOIN coupons c ON c.coupon_id = u.coupon_id WHERE c.shop_id = ?";
+                + "FROM coupon_usages u JOIN coupons c ON c.coupon_id = u.coupon_id WHERE c.shop_id "
+                + (shopId == null ? "IS NULL" : "= ?");
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, shopId);
+            if (shopId != null) ps.setLong(1, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     m.put("totalUsed", rs.getInt("used"));
@@ -172,10 +198,18 @@ public class VoucherDAO extends DBContext {
 
     /** Lấy voucher của đúng shop (kèm danh sách sản phẩm áp dụng). */
     public Voucher findByIdAndShop(int couponId, long shopId) {
-        String sql = SELECT_COLS + "WHERE c.coupon_id = ? AND c.shop_id = ?";
+        return findByOwner(couponId, shopId);
+    }
+
+    public Voucher findPlatformById(int couponId) {
+        return findByOwner(couponId, null);
+    }
+
+    private Voucher findByOwner(int couponId, Long shopId) {
+        String sql = SELECT_COLS + "WHERE c.coupon_id = ? AND c.shop_id " + (shopId == null ? "IS NULL" : "= ?");
         try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, couponId);
-            ps.setLong(2, shopId);
+            if (shopId != null) ps.setLong(2, shopId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     Voucher v = map(rs);
@@ -265,11 +299,49 @@ public class VoucherDAO extends DBContext {
         return -1;
     }
 
+    /** Voucher admin luôn do sàn tài trợ và áp dụng toàn sàn, không nhận shop_id từ form. */
+    public int createPlatform(Voucher v) {
+        String sql = "INSERT INTO coupons (shop_id, code, title, description, discount_type, discount_value, min_order_value, "
+                + "max_discount_amount, usage_limit, used_count, per_user_limit, applies_to, sponsor_type, start_date, end_date, is_active) "
+                + "VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 'ALL', 'PLATFORM', ?, ?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, v.getCode());
+            ps.setString(2, v.getTitle());
+            ps.setString(3, v.getDescription());
+            ps.setString(4, v.getDiscountType());
+            ps.setBigDecimal(5, v.getDiscountValue());
+            ps.setBigDecimal(6, v.getMinOrderValue());
+            ps.setBigDecimal(7, v.getMaxDiscountAmount());
+            ps.setInt(8, v.getUsageLimit());
+            ps.setInt(9, v.getPerUserLimit());
+            ps.setTimestamp(10, v.getStartDate());
+            ps.setTimestamp(11, v.getEndDate());
+            ps.setBoolean(12, v.isActive());
+            ps.executeUpdate();
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                return keys.next() ? keys.getInt(1) : -1;
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            return -1;
+        }
+    }
+
     /** Cập nhật voucher (chỉ của đúng shop). Không đổi mã và không đổi used_count. */
     public boolean update(Voucher v, long shopId) {
+        return updateByOwner(v, shopId);
+    }
+
+    public boolean updatePlatform(Voucher v) {
+        return updateByOwner(v, null);
+    }
+
+    private boolean updateByOwner(Voucher v, Long shopId) {
         String sql = "UPDATE coupons SET title = ?, description = ?, discount_type = ?, discount_value = ?, min_order_value = ?, "
                 + "max_discount_amount = ?, usage_limit = ?, per_user_limit = ?, applies_to = ?, start_date = ?, end_date = ?, "
-                + "is_active = ?, updated_at = GETDATE() WHERE coupon_id = ? AND shop_id = ? AND terminated_at IS NULL";
+                + "is_active = ?, updated_at = GETDATE() WHERE coupon_id = ? AND shop_id "
+                + (shopId == null ? "IS NULL" : "= ?") + " AND terminated_at IS NULL";
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -286,7 +358,7 @@ public class VoucherDAO extends DBContext {
                 ps.setTimestamp(11, v.getEndDate());
                 ps.setBoolean(12, v.isActive());
                 ps.setInt(13, v.getCouponId());
-                ps.setLong(14, shopId);
+                if (shopId != null) ps.setLong(14, shopId);
                 if (ps.executeUpdate() == 0) {
                     conn.rollback();
                     return false;
@@ -337,12 +409,23 @@ public class VoucherDAO extends DBContext {
         return exec(sql, active, couponId, shopId);
     }
 
+    public boolean setPlatformActive(int couponId, boolean active) {
+        return exec("UPDATE coupons SET is_active = ?, updated_at = GETDATE() "
+                + "WHERE coupon_id = ? AND shop_id IS NULL AND terminated_at IS NULL", active, couponId);
+    }
+
     /** Kết thúc sớm: ngừng hẳn, không kích hoạt lại được; lịch sử sử dụng vẫn giữ nguyên. */
     public boolean terminate(int couponId, long shopId) {
         String sql = "UPDATE coupons SET terminated_at = GETDATE(), is_active = 0, updated_at = GETDATE(), "
                 + "end_date = CASE WHEN end_date > GETDATE() THEN GETDATE() ELSE end_date END "
                 + "WHERE coupon_id = ? AND shop_id = ? AND terminated_at IS NULL";
         return exec(sql, couponId, shopId);
+    }
+
+    public boolean terminatePlatform(int couponId) {
+        return exec("UPDATE coupons SET terminated_at = GETDATE(), is_active = 0, updated_at = GETDATE(), "
+                + "end_date = CASE WHEN end_date > GETDATE() THEN GETDATE() ELSE end_date END "
+                + "WHERE coupon_id = ? AND shop_id IS NULL AND terminated_at IS NULL", couponId);
     }
 
     private boolean exec(String sql, Object... params) {

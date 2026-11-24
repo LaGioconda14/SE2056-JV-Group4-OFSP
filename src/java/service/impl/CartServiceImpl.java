@@ -45,7 +45,7 @@ public class CartServiceImpl implements ICartService {
         Cart cart = cartDAO.findOrCreateCartByCustomerId(customerId);
         // Tải các item và tự động đối soát tồn kho
         java.util.List<CartItem> loaded = cartDAO.loadAndReconcileItems(cart.getCartId());
-        // Tính toán lại giá bán sau khi áp dụng chương trình khuyến mãi (Promotion)
+        // Giá ưu đãi ở đây chỉ là snapshot khi xem giỏ; đặt hàng còn phải giữ quota trong DB.
         util.PromotionPricing.applyToCartItems(loaded);
         cart.setItems(loaded);
         return cart;

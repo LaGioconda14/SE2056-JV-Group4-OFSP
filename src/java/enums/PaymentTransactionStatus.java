@@ -3,6 +3,7 @@ package enums;
 import java.util.Locale;
 
 public enum PaymentTransactionStatus {
+    // Mỗi lần thử thanh toán có kết quả riêng; cần đối chiếu với đơn trước khi cập nhật PaymentStatus.
     PENDING,
     SUCCESS,
     FAILED;

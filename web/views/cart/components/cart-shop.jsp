@@ -12,6 +12,7 @@
         </div>
         <a href="${pageContext.request.contextPath}/store?id=${shopEntry.key}" class="text-xs font-semibold text-[#00652c] hover:underline">Xem Shop</a>
     </div>
+    <%-- Dòng không khả dụng vẫn hiển thị để đổi biến thể/xóa nhưng checkbox mua hàng bị khóa. --%>
     <c:forEach var="item" items="${shopItems}">
         <c:set var="available" value="${item.availabilityStatus eq 'AVAILABLE'}"/>
         <%@ include file="cart-item.jsp" %>

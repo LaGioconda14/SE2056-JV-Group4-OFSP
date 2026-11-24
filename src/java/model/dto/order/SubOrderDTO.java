@@ -37,7 +37,7 @@ public class SubOrderDTO implements Serializable {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
-    // Joined / Draft fields
+    // Dữ liệu ghép cho checkout/xác nhận: voucher theo shop và trạng thái thanh toán của đơn tổng.
     private String shopName;
     private String shopLogoUrl;
     private String orderCode;
@@ -270,6 +270,7 @@ public class SubOrderDTO implements Serializable {
         this.paymentStatus = paymentStatus != null ? paymentStatus.name() : PaymentStatus.PENDING.name();
     }
 
+    /** Trạng thái hiển thị cho phương thức online chưa PAID; không tự xác nhận kết quả giao dịch. */
     public boolean isWaitingOnlinePayment() {
         boolean isOnline = PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)
                 || PaymentMethod.CARD.name().equalsIgnoreCase(paymentMethod);

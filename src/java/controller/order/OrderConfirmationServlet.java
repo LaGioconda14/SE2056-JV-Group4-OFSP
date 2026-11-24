@@ -54,6 +54,7 @@ public class OrderConfirmationServlet extends HttpServlet {
             long orderId = Long.parseLong(orderIdParam.trim());
             OrderDetailDTO order = orderService.getOrderDetails(orderId);
 
+            // URL xác nhận có thể được chia sẻ; chỉ chủ đơn mới xem được chi tiết của mình.
             if (order == null || order.getCustomerId() != user.getId()) {
                 response.sendRedirect(request.getContextPath() + "/home");
                 return;

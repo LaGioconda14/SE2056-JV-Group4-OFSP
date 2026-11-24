@@ -81,6 +81,8 @@ public class VnpayPaymentDAO extends DBContext {
      * - Kiểm tra tính hợp lệ của phương thức thanh toán, số tiền thanh toán (paidAmount so với final_amount).
      * - Đảm bảo tính Idempotency: nếu đơn đã PAID thì không ghi đè lại.
      * - Cập nhật trạng thái payment_status trong bảng orders và bảng payments.
+     * Chỉ xử lý dữ liệu callback đã được servlet xác thực chữ ký; DAO tự đối chiếu
+     * phương thức và số tiền, không xác thực nguồn request.
      *
      * @param orderId    ID đơn hàng
      * @param paidAmount số tiền thực tế khách đã trả qua VNPAY
@@ -128,6 +130,7 @@ public class VnpayPaymentDAO extends DBContext {
                 return CallbackResult.INVALID_AMOUNT;
             }
             if (PaymentStatus.PAID.name().equalsIgnoreCase(currentStatus)) {
+                // Callback đến sau không được đổi một đơn đã PAID thành FAILED.
                 conn.rollback();
                 return CallbackResult.ALREADY_CONFIRMED;
             }

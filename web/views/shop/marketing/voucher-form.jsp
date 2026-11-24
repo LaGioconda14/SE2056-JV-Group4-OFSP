@@ -8,38 +8,49 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <title>${editing ? 'Chỉnh sửa' : 'Tạo'} voucher - Kênh Người Bán</title>
+    <title>${editing ? 'Chỉnh sửa' : 'Tạo'} voucher - ${adminMode ? 'Quản trị sàn' : 'Kênh Người Bán'}</title>
+    <c:if test="${adminMode}">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="${ctx}/assets/css/admin.css?v=16">
+    </c:if>
     <jsp:include page="/views/shop/layout/head.jsp" />
     <link rel="stylesheet" href="${ctx}/assets/css/shop-marketing.css"/>
+    <c:if test="${adminMode}">
+        <style>
+            .admin-page-content.voucher-form-content .shop-content-container { max-width: 1480px; }
+        </style>
+    </c:if>
     <script src="${ctx}/assets/js/shop-marketing.js" defer></script>
 </head>
-<body class="bg-[#f8fafc] text-[#0f172a]">
+<body class="${adminMode ? 'admin-body' : 'bg-[#f8fafc] text-[#0f172a]'}">
 
-    <jsp:include page="/views/shop/layout/sidebar.jsp"><jsp:param name="active" value="vouchers" /></jsp:include>
-    <jsp:include page="/views/shop/layout/header.jsp" />
+    <c:if test="${adminMode}"><div class="admin-wrapper"><jsp:include page="/views/admin/layout/sidebar.jsp"><jsp:param name="activePage" value="vouchers" /></jsp:include><div class="admin-main"><jsp:include page="/views/admin/layout/header.jsp" /></c:if>
+    <c:if test="${not adminMode}"><jsp:include page="/views/shop/layout/sidebar.jsp"><jsp:param name="active" value="vouchers" /></jsp:include><jsp:include page="/views/shop/layout/header.jsp" /></c:if>
 
-    <main class="shop-main-wrapper">
+    <main class="${adminMode ? 'admin-page-content voucher-form-content' : 'shop-main-wrapper'}">
         <div class="shop-content-container">
 
             <nav class="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                <span>Kênh Người Bán</span>
+                <span>${adminMode ? 'Quản trị sàn' : 'Kênh Người Bán'}</span>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-                <a href="${ctx}/shop/vouchers" class="hover:text-emerald-700">Voucher Shop</a>
+                <a href="${ctx}${adminMode ? '/admin/vouchers' : '/shop/vouchers'}" class="hover:text-emerald-700">${adminMode ? 'Voucher toàn sàn' : 'Voucher Shop'}</a>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
                 <span class="text-slate-800 font-semibold">${editing ? 'Chỉnh sửa voucher' : 'Tạo voucher mới'}</span>
             </nav>
 
             <div>
                 <h1 class="text-2xl font-black text-slate-900 tracking-tight">${editing ? 'Chỉnh sửa voucher' : 'Tạo voucher mới'}</h1>
-                <p class="text-sm text-slate-500 mt-1">Thiết lập mức giảm, điều kiện áp dụng và thời gian hiệu lực của voucher.</p>
+                <p class="text-sm text-slate-500 mt-1">${adminMode ? 'Voucher do sàn tài trợ, áp dụng cho đơn hàng toàn sàn; không tạo voucher cho shop.' : 'Thiết lập mức giảm, điều kiện áp dụng và thời gian hiệu lực của voucher.'}</p>
             </div>
 
             <c:if test="${not empty formError}">
                 <div class="mk-alert-error"><i class="fa-solid fa-circle-exclamation mt-0.5"></i><span><c:out value="${formError}"/></span></div>
             </c:if>
 
-            <form method="post" action="${ctx}/shop/vouchers" class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            <form method="post" action="${ctx}${adminMode ? '/admin/vouchers' : '/shop/vouchers'}" class="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 <input type="hidden" name="action" value="save">
+                <c:if test="${adminMode}"><input type="hidden" name="csrfToken" value="<c:out value='${sessionScope.adminVoucherCsrf}'/>"></c:if>
                 <c:if test="${editing}"><input type="hidden" name="couponId" value="${voucher.couponId}"></c:if>
 
                 <div class="xl:col-span-8 flex flex-col gap-6">
@@ -57,7 +68,7 @@
                             <div>
                                 <label class="mk-label">Tên chương trình <span class="text-red-500">*</span></label>
                                 <input type="text" id="titleInput" name="title" class="mk-input" maxlength="150"
-                                       value="<c:out value='${voucher.title}'/>" placeholder="VD: Giảm 10% toàn shop" required>
+                                        value="<c:out value='${voucher.title}'/>" placeholder="${adminMode ? 'VD: Giảm 10% toàn sàn' : 'VD: Giảm 10% toàn shop'}" required>
                             </div>
                         </div>
                         <div>
@@ -127,16 +138,23 @@
                     </div>
 
                     <!-- 4. Phạm vi -->
-                    <div class="mk-card mk-card-pad flex flex-col gap-4">
-                        <h2 class="mk-h2"><i class="fa-solid fa-bullseye"></i> Phạm vi áp dụng</h2>
-                        <div class="mk-seg self-start">
-                            <label><input type="radio" name="appliesTo" value="ALL" ${voucher.appliesTo != 'PRODUCTS' ? 'checked' : ''}><span><i class="fa-solid fa-store"></i> Toàn bộ sản phẩm của shop</span></label>
-                            <label><input type="radio" name="appliesTo" value="PRODUCTS" ${voucher.appliesTo == 'PRODUCTS' ? 'checked' : ''}><span><i class="fa-solid fa-apple-whole"></i> Sản phẩm được chọn</span></label>
-                        </div>
-                        <div id="scopeProducts" style="display:none;">
-                            <jsp:include page="/views/shop/components/marketing/product-picker-modal.jsp" />
-                        </div>
-                    </div>
+                    <c:choose>
+                        <c:when test="${adminMode}">
+                            <div class="mk-card mk-card-pad"><h2 class="mk-h2"><i class="fa-solid fa-globe"></i> Phạm vi áp dụng</h2><p class="mk-hint mt-2">Toàn sàn · 100% sàn tài trợ. Khách có thể dùng voucher này cho đơn hàng từ mọi gian hàng.</p></div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="mk-card mk-card-pad flex flex-col gap-4">
+                                <h2 class="mk-h2"><i class="fa-solid fa-bullseye"></i> Phạm vi áp dụng</h2>
+                                <div class="mk-seg self-start">
+                                    <label><input type="radio" name="appliesTo" value="ALL" ${voucher.appliesTo != 'PRODUCTS' ? 'checked' : ''}><span><i class="fa-solid fa-store"></i> Toàn bộ sản phẩm của shop</span></label>
+                                    <label><input type="radio" name="appliesTo" value="PRODUCTS" ${voucher.appliesTo == 'PRODUCTS' ? 'checked' : ''}><span><i class="fa-solid fa-apple-whole"></i> Sản phẩm được chọn</span></label>
+                                </div>
+                                <div id="scopeProducts" style="display:none;">
+                                    <jsp:include page="/views/shop/components/marketing/product-picker-modal.jsp" />
+                                </div>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
                 <!-- Cột phải: xem trước + lưu -->
@@ -163,12 +181,13 @@
                                 <label class="mk-switch"><input type="checkbox" name="active" ${voucher.active ? 'checked' : ''}><i></i></label>
                             </div>
                             <button type="submit" class="mk-btn-primary justify-center"><i class="fa-solid fa-floppy-disk"></i> ${editing ? 'Lưu thay đổi' : 'Tạo voucher'}</button>
-                            <a href="${ctx}/shop/vouchers" class="mk-btn-ghost justify-center">Hủy</a>
+                            <a href="${ctx}${adminMode ? '/admin/vouchers' : '/shop/vouchers'}" class="mk-btn-ghost justify-center">Hủy</a>
                         </div>
                     </div>
                 </div>
             </form>
         </div>
     </main>
+    <c:if test="${adminMode}"></div></div></c:if>
 </body>
 </html>

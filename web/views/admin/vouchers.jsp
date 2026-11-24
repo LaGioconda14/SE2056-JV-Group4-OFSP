@@ -39,6 +39,7 @@
         <jsp:include page="layout/header.jsp" />
 
         <main class="admin-page-content">
+            <jsp:include page="/views/shop/components/common/flash-message.jsp" />
             <!-- Breadcrumbs -->
             <div class="admin-breadcrumbs mb-2 text-muted fs-7">
                 <span>Quản trị sàn</span>
@@ -65,9 +66,9 @@
                     <button class="btn btn-outline-secondary btn-sm bg-white text-dark fw-bold border shadow-xs" onclick="window.print()">
                         <i class="bi bi-printer me-1"></i> In danh sách voucher
                     </button>
-                    <button class="btn btn-admin-primary btn-sm fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#createVoucherModal">
+                    <a class="btn btn-admin-primary btn-sm fw-bold shadow-xs" href="${pageContext.request.contextPath}/admin/vouchers?action=new">
                         <i class="bi bi-plus-circle me-1"></i> Tạo Voucher Toàn Sàn Mới
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -406,79 +407,6 @@
     </div>
 </div>
 
-<!-- Modal: Tạo Voucher Toàn Sàn Mới -->
-<div class="modal fade" id="createVoucherModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-bottom">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="bg-success-subtle text-success p-2 rounded-2">
-                        <i class="bi bi-ticket-perforated-fill fs-5"></i>
-                    </div>
-                    <div>
-                        <h5 class="modal-title fw-bold mb-0">Tạo Voucher Khuyến Mại Toàn Sàn Mới</h5>
-                        <div class="text-muted fs-8">Hệ thống phân bổ ngân sách tự động từ quỹ kích cầu nền tảng</div>
-                    </div>
-                </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label fs-7 fw-bold">Mã Voucher (Code):</label>
-                        <input type="text" class="form-control form-control-sm text-uppercase font-monospace" placeholder="VD: FRESHMANGO20" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fs-7 fw-bold">Loại Chương Trình:</label>
-                        <select class="form-select form-select-sm">
-                            <option>Giảm Giá % Giá Trị Đơn Hàng</option>
-                            <option>Giảm Số Tiền Cố Định</option>
-                        </select>
-                    </div>
-                    <div class="col-md-12">
-                        <label class="form-label fs-7 fw-bold">Tên Chiến Dịch Hiển Thị:</label>
-                        <input type="text" class="form-control form-control-sm" placeholder="VD: Tuần Lễ Xoài Cát Chu Cao Lãnh Đồng Tháp">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fs-7 fw-bold">Mức Giảm:</label>
-                        <input type="text" class="form-control form-control-sm" placeholder="VD: 30.000 đ hoặc 15%">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fs-7 fw-bold">Đơn Tối Thiểu:</label>
-                        <input type="text" class="form-control form-control-sm" placeholder="VD: 200.000 đ">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label fs-7 fw-bold">Hạn Mức Ngân Sách:</label>
-                        <input type="text" class="form-control form-control-sm" placeholder="VD: 20.000.000 đ">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fs-7 fw-bold">Nguồn Tài Trợ:</label>
-                        <select class="form-select form-select-sm">
-                            <option>100% Sàn Gốc Vườn Tài Trợ</option>
-                            <option>Đồng Tài Trợ Co-funding (Sàn 65% - Shop 35%)</option>
-                            <option>Đồng Tài Trợ Co-funding (Sàn 70% - Shop 30%)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fs-7 fw-bold">Thời Gian Áp Dụng:</label>
-                        <div class="input-group input-group-sm">
-                            <input type="date" class="form-control">
-                            <span class="input-group-text">đến</span>
-                            <input type="date" class="form-control">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-top bg-light">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" class="btn btn-admin-primary btn-sm" onclick="saveNewVoucher()">
-                    <i class="bi bi-check-circle me-1"></i> Lưu &amp; Kích Hoạt Voucher
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/js/admin.js?v=7"></script>
 <script>
@@ -562,14 +490,6 @@
     // Publish voucher early
     function publishVoucherEarly(code) {
         showToast('Đã kích hoạt phát hành sớm mã voucher: ' + code + '!');
-    }
-
-    // Save new voucher
-    function saveNewVoucher() {
-        const modalEl = document.getElementById('createVoucherModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-        showToast('Đã tạo thành công voucher mới và phân bổ ngân sách toàn sàn!');
     }
 
     // Export report

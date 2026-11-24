@@ -6,6 +6,7 @@ import java.util.Properties;
 
 public final class VnpayConfig {
 
+    // Nạp file một lần; mỗi lần đọc ưu tiên biến môi trường để không phụ thuộc secret trong file.
     private static final Properties PROPERTIES = loadProperties();
 
     private VnpayConfig() {
@@ -69,6 +70,7 @@ public final class VnpayConfig {
     }
 
     private static String required(String environmentName, String propertyName) {
+        // Thiếu mã merchant/secret phải dừng tạo chữ ký, không dùng placeholder để gửi giao dịch.
         String configured = value(environmentName, propertyName, null);
         if (configured == null || configured.isBlank() || configured.contains("YOUR_")) {
             throw new IllegalStateException("Thiếu cấu hình " + propertyName

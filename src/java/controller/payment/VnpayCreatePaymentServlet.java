@@ -49,6 +49,7 @@ public class VnpayCreatePaymentServlet extends HttpServlet {
 
         try {
             long orderId = Long.parseLong(request.getParameter("orderId"));
+            // Không cho dùng orderId của khách khác để khởi tạo URL thanh toán.
             Order order = paymentService.getOrder(orderId);
             if (order == null || order.getCustomerId() != user.getId()
                     || !PaymentMethod.VNPAY.name().equalsIgnoreCase(order.getPaymentMethod())) {

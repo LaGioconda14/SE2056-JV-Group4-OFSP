@@ -61,6 +61,7 @@
         return input ? clampQuantity(input) : 1;
     }
 
+    // Chỉ gom các dòng AVAILABLE đã chọn; số liệu dùng cho UI, không phải giá trị đặt hàng chính thức.
     function snapshot() {
         const items = [];
         const shopSubtotals = {};
@@ -164,6 +165,7 @@
         button.setAttribute('aria-expanded', String(opening));
     }
 
+    // Gửi ID dòng đã chọn, không gửi giá; buộc lưu số lượng đã sửa trước khi dựng bản nháp.
     function submitCheckout() {
         const currentSnapshot = snapshot();
         if (!currentSnapshot.items.length) {

@@ -3,26 +3,32 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <fmt:setLocale value="vi_VN"/>
 <c:set var="ctx" value="${pageContext.request.contextPath}" />
+<c:set var="voucherPath" value="${adminMode ? '/admin/vouchers' : '/shop/vouchers'}" />
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <title>Lịch sử sử dụng voucher - Kênh Người Bán</title>
+    <title>Lịch sử sử dụng voucher - ${adminMode ? 'Quản trị sàn' : 'Kênh Người Bán'}</title>
+    <c:if test="${adminMode}">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="${ctx}/assets/css/admin.css?v=16">
+    </c:if>
     <jsp:include page="/views/shop/layout/head.jsp" />
     <link rel="stylesheet" href="${ctx}/assets/css/shop-marketing.css"/>
     <script src="${ctx}/assets/js/shop-marketing.js" defer></script>
 </head>
-<body class="bg-[#f8fafc] text-[#0f172a]">
+<body class="${adminMode ? 'admin-body' : 'bg-[#f8fafc] text-[#0f172a]'}">
 
-    <jsp:include page="/views/shop/layout/sidebar.jsp"><jsp:param name="active" value="vouchers" /></jsp:include>
-    <jsp:include page="/views/shop/layout/header.jsp" />
+    <c:if test="${adminMode}"><div class="admin-wrapper"><jsp:include page="/views/admin/layout/sidebar.jsp"><jsp:param name="activePage" value="vouchers" /></jsp:include><div class="admin-main"><jsp:include page="/views/admin/layout/header.jsp" /></c:if>
+    <c:if test="${not adminMode}"><jsp:include page="/views/shop/layout/sidebar.jsp"><jsp:param name="active" value="vouchers" /></jsp:include><jsp:include page="/views/shop/layout/header.jsp" /></c:if>
 
-    <main class="shop-main-wrapper">
+    <main class="${adminMode ? 'admin-page-content voucher-content' : 'shop-main-wrapper'}">
         <div class="shop-content-container">
 
             <nav class="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                <span>Kênh Người Bán</span>
+                <span>${adminMode ? 'Quản trị sàn' : 'Kênh Người Bán'}</span>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
-                <a href="${ctx}/shop/vouchers" class="hover:text-emerald-700">Voucher Shop</a>
+                <a href="${ctx}${voucherPath}" class="hover:text-emerald-700">${adminMode ? 'Voucher toàn sàn' : 'Voucher Shop'}</a>
                 <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
                 <span class="text-slate-800 font-semibold">Lịch sử sử dụng</span>
             </nav>
@@ -39,9 +45,9 @@
                     </p>
                 </div>
                 <div class="flex gap-2">
-                    <a href="${ctx}/shop/vouchers" class="mk-btn-ghost"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
+                    <a href="${ctx}${voucherPath}" class="mk-btn-ghost"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
                     <c:if test="${voucher.status != 'ENDED'}">
-                        <a href="${ctx}/shop/vouchers?action=edit&id=${voucher.couponId}" class="mk-btn-primary"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a>
+                        <a href="${ctx}${voucherPath}?action=edit&id=${voucher.couponId}" class="mk-btn-primary"><i class="fa-solid fa-pen"></i> Chỉnh sửa</a>
                     </c:if>
                 </div>
             </div>
@@ -103,5 +109,6 @@
             </div>
         </div>
     </main>
+    <c:if test="${adminMode}"></div></div></c:if>
 </body>
 </html>

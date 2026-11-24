@@ -3,6 +3,7 @@ package enums;
 import java.util.Locale;
 
 public enum PaymentMethod {
+    // Phương thức khách chọn, không phải xác nhận tiền đã thu; chỉ UI checkout hiện COD/VNPAY.
     COD,
     CARD,
     VNPAY,

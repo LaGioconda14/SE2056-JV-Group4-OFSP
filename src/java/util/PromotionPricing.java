@@ -138,7 +138,8 @@ public final class PromotionPricing {
     // Giỏ hàng / checkout / tạo đơn
     // ------------------------------------------------------------------
 
-    /** Gắn promotion + tiền giảm vào từng dòng giỏ hàng. CartItem.getSubtotal() sẽ là số tiền phải trả. */
+    /** Gắn promotion + tiền giảm vào từng dòng giỏ hàng. CartItem.getSubtotal() phản ánh tiền tạm tính;
+     * quota chỉ được giữ trong transaction tạo đơn, không phải ở bước hiển thị giỏ/checkout. */
     public static void applyToCartItems(Collection<CartItem> items) {
         if (items == null || items.isEmpty()) {
             return;

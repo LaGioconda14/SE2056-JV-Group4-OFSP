@@ -11,7 +11,9 @@ public interface ICartService {
 
     /**
      * Nạp toàn bộ giỏ hàng của khách hàng và đối soát lại số lượng theo tồn kho thực tế.
-     * Tự động điều chỉnh giảm số lượng nếu vượt quá tồn kho hiện tại hoặc hết hàng.
+     * Chỉ giảm số lượng vượt kho đối với biến thể còn mua được; mục hết hàng giữ trạng thái để khách đổi biến thể.
+     * Việc nạp có thể ghi lại số lượng bị giảm; giá khuyến mãi chỉ được tính để hiển thị,
+     * không giữ tồn kho hoặc suất ưu đãi cho bước đặt hàng.
      *
      * @param customerId ID của khách hàng
      * @return đối tượng Cart chứa danh sách sản phẩm và thông tin giỏ hàng
@@ -57,6 +59,7 @@ public interface ICartService {
     /**
      * Đổi biến thể (variant) của một mục đã có trong giỏ hàng.
      * Nếu biến thể mới đã có trong giỏ thì gộp số lượng và xóa mục cũ.
+     * Số lượng sau khi gộp bị giới hạn bởi tồn kho của biến thể đích.
      *
      * @param customerId ID của khách hàng
      * @param cartItemId ID của mục giỏ hàng hiện tại

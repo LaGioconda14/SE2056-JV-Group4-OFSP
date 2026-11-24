@@ -6,4 +6,4 @@ db.database=OnlineFruitShop
 # Leave instance empty if using default MSSQLSERVER instance
 db.instance=SQLEXPRESS
 db.username=sa
-db.password=YOUR_PASSWORD_HERE
+db.password=sa

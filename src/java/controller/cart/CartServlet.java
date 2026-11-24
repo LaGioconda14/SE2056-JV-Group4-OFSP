@@ -82,7 +82,7 @@ public class CartServlet extends HttpServlet {
 
         Cart cart;
         try {
-            // Lấy giỏ hàng và đồng bộ số lượng thực tế theo tồn kho của từng biến thể
+            // Đối soát lại với DB mỗi lần mở giỏ, thay vì dùng giá/tồn kho đã chụp trong session.
             cart = cartService.loadCartAndReconcile((long) user.getId());
         } catch (IllegalArgumentException ex) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

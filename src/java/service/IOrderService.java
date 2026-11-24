@@ -23,6 +23,8 @@ public interface IOrderService {
     /**
      * Lấy danh sách sản phẩm được chọn từ giỏ hàng để chuẩn bị checkout.
      * Áp dụng khuyến mãi hiện hành và xác thực tính khả dụng của từng sản phẩm.
+     * Chỉ lấy các dòng thuộc giỏ của customerId; danh sách này là bản xem trước,
+     * các điều kiện có thể thay đổi trước khi transaction đặt hàng hoàn tất.
      *
      * @param customerId  ID của khách hàng
      * @param cartItemIds danh sách ID các mục giỏ hàng được chọn
@@ -63,6 +65,8 @@ public interface IOrderService {
 
     /**
      * Tạo đơn hàng tạm tính đầy đủ có tính toán phí vận chuyển dựa trên tỉnh/thành của khách và shop.
+     * Draft không ghi DB hoặc giữ voucher; khi đặt hàng DAO kiểm tra lại quota,
+     * số lượng giỏ, giá và tồn kho trong transaction.
      *
      * @param customerId       ID khách hàng
      * @param selectedItems    danh sách sản phẩm
@@ -97,6 +101,8 @@ public interface IOrderService {
 
     /**
      * Đặt hàng từ giỏ hàng đầy đủ: ngày giao hàng, khung giờ, ghi chú từng shop và phương thức thanh toán.
+     * Chỉ các cartItemIds được chọn mới bị xóa sau khi tạo đơn thành công;
+     * orderId trả về chưa đồng nghĩa thanh toán trực tuyến đã thành công.
      *
      * @param customerId       ID khách hàng
      * @param cartItemIds      danh sách mục giỏ hàng được đặt
@@ -131,6 +137,7 @@ public interface IOrderService {
 
     /**
      * Đặt đơn "Mua ngay" đầy đủ ngày giao, khung giờ, ghi chú và phương thức thanh toán.
+     * Không tiêu thụ các dòng trong giỏ hàng; vẫn kiểm tra và trừ kho khi tạo đơn.
      *
      * @param customerId       ID khách hàng
      * @param variantId        ID biến thể sản phẩm

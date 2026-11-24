@@ -25,7 +25,7 @@ import service.impl.ShopVoucherServiceImpl;
 @WebServlet(name = "ShopVoucherServlet", urlPatterns = {"/shop/vouchers"})
 public class ShopVoucherServlet extends BaseShopServlet {
 
-    private final IShopVoucherService voucherService = new ShopVoucherServiceImpl();
+    protected final IShopVoucherService voucherService = new ShopVoucherServiceImpl();
     private final IShopPromotionService promotionService = new ShopPromotionServiceImpl();
 
     @Override
@@ -171,7 +171,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
         request.getRequestDispatcher("/views/shop/marketing/voucher-form.jsp").forward(request, response);
     }
 
-    private Voucher readForm(HttpServletRequest req, Voucher existing) {
+    protected Voucher readForm(HttpServletRequest req, Voucher existing) {
         Voucher v = new Voucher();
         if (existing != null) {
             v.setCouponId(existing.getCouponId());
@@ -201,7 +201,7 @@ public class ShopVoucherServlet extends BaseShopServlet {
     }
 
     /** Trả về thông báo lỗi đầu tiên, hoặc null nếu hợp lệ. */
-    private String validate(Voucher v, boolean editing, Voucher existing) {
+    protected String validate(Voucher v, boolean editing, Voucher existing) {
         if (!editing) {
             if (!v.getCode().matches("^[A-Z0-9_-]{4,20}$")) {
                 return "Mã voucher gồm 4–20 ký tự: chữ cái không dấu, số, dấu gạch ngang hoặc gạch dưới.";

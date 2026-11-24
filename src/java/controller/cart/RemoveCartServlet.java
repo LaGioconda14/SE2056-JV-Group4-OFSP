@@ -75,7 +75,7 @@ public class RemoveCartServlet extends HttpServlet {
         }
 
         try {
-            // Xóa mục sản phẩm khỏi giỏ hàng theo mã cartItemId
+            // Service/DAO giới hạn cartItemId theo user hiện tại, không xóa theo ID trần từ client.
             cartService.removeItem(user.getId(),
                     Long.parseLong(request.getParameter("cartItemId")));
 

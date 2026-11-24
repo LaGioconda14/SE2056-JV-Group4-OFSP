@@ -3,6 +3,7 @@ package enums;
 import java.util.Locale;
 
 public enum OrderStatus {
+    // Tiến trình đơn tổng độc lập với PaymentStatus và trạng thái giao hàng từng shop.
     PENDING,
     CONFIRMED,
     PROCESSING,

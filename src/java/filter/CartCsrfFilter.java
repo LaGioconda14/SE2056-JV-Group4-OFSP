@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
+/** Cấp token trong session cho form giỏ hàng/checkout và chặn POST thiếu hoặc sai token. */
 @WebFilter(filterName = "CartCsrfFilter", urlPatterns = {
     "", "/home", "/products", "/search", "/detail", "/cart", "/cart/*", "/checkout", "/order/place",
     "/wishlist", "/wishlist/*", "/store", "/shop/storefront", "/shop/detail", "/shop-detail"
@@ -33,6 +34,7 @@ public class CartCsrfFilter implements Filter {
                 session.setAttribute("cartCsrfToken", token);
             }
         }
+        // Không thực thi mutation khi token sai; trả về trang nhập lại tương ứng.
         if ("POST".equals(req.getMethod()) && !token.equals(req.getParameter("csrfToken"))) {
             session.setAttribute("checkoutError",
                     "Phiên làm việc đã thay đổi. Vui lòng kiểm tra lại thông tin và thực hiện thao tác lần nữa!");

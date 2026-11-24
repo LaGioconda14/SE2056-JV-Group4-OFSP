@@ -28,6 +28,7 @@ public final class VnpayUtil {
             return false;
         }
 
+        // Chỉ ký lại các trường vnp_ ngoài checksum; tham số khác trong URL không tham gia chữ ký.
         Map<String, String> fields = new java.util.HashMap<>();
         for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
             if (entry.getKey().startsWith("vnp_")
@@ -43,6 +44,7 @@ public final class VnpayUtil {
     }
 
     public static String buildSignedData(Map<String, String> parameters) {
+        // Cả URL gửi đi lẫn callback phải dùng cùng thứ tự khóa và cùng cách mã hóa form UTF-8.
         List<String> keys = new ArrayList<>(parameters.keySet());
         Collections.sort(keys);
         StringBuilder result = new StringBuilder();
@@ -60,6 +62,7 @@ public final class VnpayUtil {
     }
 
     public static String getClientIp(jakarta.servlet.http.HttpServletRequest request) {
+        // X-Forwarded-For chỉ dùng làm IP gửi cổng thanh toán, không phải bằng chứng xác thực khách hàng.
         String forwardedFor = request.getHeader("X-Forwarded-For");
         String ip = forwardedFor != null && !forwardedFor.isBlank()
                 ? forwardedFor.split(",")[0].trim() : request.getRemoteAddr();

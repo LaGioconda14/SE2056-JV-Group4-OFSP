@@ -35,6 +35,7 @@ public class VnpayReturnServlet extends HttpServlet {
         long orderId;
         try {
             orderId = VnpayPaymentService.parseOrderId(request.getParameter("vnp_TxnRef"));
+            // Return đi qua trình duyệt: tham số URL không đáng tin cho đến khi xác thực chữ ký.
             if (VnpayUtil.isValidSignature(request.getParameterMap())) {
                 CallbackResult result = paymentService.processCallback(request.getParameterMap());
                 if (result == CallbackResult.SUCCESS || result == CallbackResult.ALREADY_CONFIRMED) {

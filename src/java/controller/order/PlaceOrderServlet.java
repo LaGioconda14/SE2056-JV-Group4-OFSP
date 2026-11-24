@@ -21,6 +21,7 @@ import service.impl.OrderServiceImpl;
 import service.INotificationService;
 import service.impl.NotificationServiceImpl;
 
+/** Chốt đơn từ form checkout; giá/tồn kho/voucher được kiểm tra lại tại service/DAO. */
 @WebServlet(name = "PlaceOrderServlet", urlPatterns = {"/order/place"})
 public class PlaceOrderServlet extends HttpServlet {
 
@@ -122,6 +123,7 @@ public class PlaceOrderServlet extends HttpServlet {
             }
         }
 
+        // Địa chỉ đã lưu phải được tìm theo chính customerId, không tin ID địa chỉ trong form.
         ShippingAddress shippingAddress = new ShippingAddress();
         if (addressSelection != null && addressSelection.startsWith("saved:")) {
             try {
@@ -154,6 +156,7 @@ public class PlaceOrderServlet extends HttpServlet {
             return;
         }
 
+        // Hai luồng mua ngay/giỏ hàng cùng đi qua nghiệp vụ tạo đơn; thanh toán VNPay bắt đầu sau khi đơn đã lưu.
         try {
             long orderId;
             if (buyNow) {
@@ -177,7 +180,7 @@ public class PlaceOrderServlet extends HttpServlet {
             // Các mặt hàng vừa đặt đã bị xóa khỏi DB; buộc badge đọc lại số lượng còn lại.
             session.removeAttribute("cartSize");
             session.setAttribute("orderSuccess", "Chúc mừng bạn đã đặt hàng thành công! Mã đơn: #" + orderId);
-            // Gửi thông báo đặt hàng thành công
+            // Thông báo là tác vụ phụ, lỗi gửi thông báo không làm đảo ngược đơn đã tạo.
             try {
                 INotificationService notiService = new NotificationServiceImpl();
                 notiService.notifyOrderPlaced(user.getId(), orderId, String.valueOf(orderId), 0);

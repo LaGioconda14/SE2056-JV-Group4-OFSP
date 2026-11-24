@@ -43,6 +43,7 @@ public class VnpayIpnServlet extends HttpServlet {
                 code = "97";
                 message = "Invalid checksum";
             } else {
+                // IPN là thông báo server-to-server; DAO xử lý trạng thái giao dịch trước khi phản hồi mã cho VNPay.
                 CallbackResult result = paymentService.processCallback(request.getParameterMap());
                 switch (result) {
                     case SUCCESS:

@@ -1,4 +1,5 @@
 <%@page pageEncoding="UTF-8"%>
+<%-- data-cart-status và giá/khuyến mãi phục vụ tính tổng tức thời ở JS; server vẫn xác thực lại trước khi đặt. --%>
 <div class="grid grid-cols-1 gap-4 border-b border-gray-100 px-5 py-5 transition hover:bg-gray-50/50 lg:grid-cols-[minmax(0,1fr)_140px_180px_150px_72px] lg:items-center"
      id="cart-item-${item.cartItemID}" data-cart-row data-item-id="${item.cartItemID}" data-shop-id="${shopEntry.key}" data-cart-status="<c:out value='${item.availabilityStatus}'/>" data-unit-price="${item.variant.price}"<c:if test="${not empty item.promotion}"> data-promo-type="<c:out value='${item.promotion.promotionType}'/>" data-promo-value="${item.promotion.discountValue}" data-promo-max="${empty item.promotion.maxDiscountAmount ? 0 : item.promotion.maxDiscountAmount}" data-promo-min="${empty item.promotion.minQuantity ? 0 : item.promotion.minQuantity}" data-promo-remain="${empty item.promotion.quota ? -1 : item.promotion.remainingQuota}"</c:if>>
     <div class="flex min-w-0 items-start gap-3">
@@ -29,6 +30,7 @@
         <span class="text-xs text-on-surface-variant lg:hidden">Số lượng</span>
         <c:choose>
             <c:when test="${available}">
+                <%-- Lưu số lượng qua POST riêng; chỉnh ô số lượng trên trang chưa cập nhật giỏ ở server. --%>
                 <form method="post" action="<c:out value='${updateUrl}'/>" class="flex items-center gap-2" data-quantity-form>
                     <input type="hidden" name="cartItemId" value="${item.cartItemID}"><c:if test="${not empty sessionScope.cartCsrfToken}"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"></c:if>
                     <div class="flex overflow-hidden rounded-lg border border-outline-variant/40"><button type="button" data-cart-action="decrement" aria-label="Giảm số lượng" class="h-8 w-8 hover:bg-surface-container">−</button><input name="quantity" type="number" min="1" max="${item.variant.stockQuantity}" value="${item.quantity}" data-quantity-input data-saved-quantity="${item.quantityAdjusted ? item.previousQuantity : item.quantity}" aria-label="Số lượng <c:out value='${item.variant.productName}'/>" class="h-8 w-11 border-x border-outline-variant/30 text-center text-sm font-bold outline-none"><button type="button" data-cart-action="increment" aria-label="Tăng số lượng" class="h-8 w-8 hover:bg-surface-container">+</button></div>
@@ -39,5 +41,6 @@
         </c:choose>
     </div>
     <div class="flex items-center justify-between lg:justify-center"><span class="text-xs text-gray-500 lg:hidden">Số tiền</span><strong data-line-subtotal class="text-sm font-bold text-rose-600"><fmt:formatNumber value="${item.subtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+    <%-- Xóa là POST có CSRF; cartItemId trong form không thay thế kiểm tra quyền sở hữu phía server. --%>
     <form method="post" action="<c:out value='${removeUrl}'/>" class="flex justify-end lg:justify-center"><input type="hidden" name="cartItemId" value="${item.cartItemID}"><c:if test="${not empty sessionScope.cartCsrfToken}"><input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}"></c:if><button type="submit" aria-label="Xóa <c:out value='${item.variant.productName}'/>" class="flex items-center gap-1 text-xs text-error hover:underline"><span class="material-symbols-outlined text-[17px]">delete</span>Xóa</button></form>
 </div>

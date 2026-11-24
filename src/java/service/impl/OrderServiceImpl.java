@@ -103,6 +103,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new IllegalArgumentException("Không tìm thấy sản phẩm hợp lệ nào trong giỏ hàng!");
         }
         if (selected.size() != uniqueIds.size()) {
+            // Không bỏ qua ID lạ: request phải khớp hoàn toàn các dòng thuộc giỏ khách hàng.
             throw new IllegalArgumentException("Có sản phẩm không thuộc giỏ hàng của bạn hoặc đã bị xóa!");
         }
 
@@ -180,6 +181,7 @@ public class OrderServiceImpl implements IOrderService {
      * - Áp dụng voucher riêng của từng Shop nếu có.
      * - Áp dụng voucher toàn sàn trên tổng tiền hàng.
      * - Tính tổng tiền cuối cùng (FinalAmount) sau khi trừ mọi khoản giảm giá và cộng phí ship.
+     * Đây là bản xem trước; dữ liệu voucher và quota được đọc lại khi DAO tạo đơn.
      */
     @Override
     public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
@@ -413,6 +415,7 @@ public class OrderServiceImpl implements IOrderService {
 
     private BigDecimal getCouponEligibleAmount(Coupon coupon, List<OrderItemDetailDTO> items,
             BigDecimal fullSubtotal) {
+        // Voucher PRODUCTS chỉ tính tiền các sản phẩm được chỉ định, không tính toàn bộ shop/đơn.
         if (!"PRODUCTS".equalsIgnoreCase(coupon.getAppliesTo())) return fullSubtotal;
         List<Long> productIds = couponDAO.getApplicableProductIds(coupon.getCouponId());
         BigDecimal eligible = BigDecimal.ZERO;
@@ -470,6 +473,7 @@ public class OrderServiceImpl implements IOrderService {
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
         OrderDetailDTO order = prepareOrder(customerId, selectedItems, address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
+        // DTO đã tính trước vẫn được DAO khóa và kiểm tra lại trước khi ghi đơn/xóa giỏ.
         return orderDAO.createOrder(order, address, cartItemIds,
                 order.getPaymentMethod(), saveAddress);
     }
@@ -506,6 +510,7 @@ public class OrderServiceImpl implements IOrderService {
         CartItem item = getBuyNowItemForCheckout(variantId, quantity);
         OrderDetailDTO order = prepareOrder(customerId, List.of(item), address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
+        // Mua ngay đi cùng transaction tạo đơn nhưng không xóa item giỏ hàng.
         return orderDAO.createBuyNowOrder(order, address, order.getPaymentMethod(), saveAddress);
     }
 

@@ -12,6 +12,7 @@ public class CartItem {
     private long cartItemId;
     private ProductVariantDetailDTO variant;
     private int quantity;
+    // Lưu số lượng trước khi đối chiếu tồn kho để giao diện báo khi hệ thống phải giảm số lượng.
     private int previousQuantity;
     private boolean quantityAdjusted;
     private CartItemAvailability availability = CartItemAvailability.AVAILABLE;
@@ -104,6 +105,7 @@ public class CartItem {
                 ? alternativeVariants : new ArrayList<>();
     }
 
+    /** Chỉ AVAILABLE được chọn để thanh toán; trạng thái này cần đối chiếu lại khi đặt hàng. */
     public boolean isPurchasable() {
         return availability == CartItemAvailability.AVAILABLE;
     }
@@ -135,6 +137,7 @@ public class CartItem {
 
     public boolean isOnPromotion() { return promotion != null && promotionDiscount.signum() > 0; }
 
+    /** Xóa đồng thời thông tin và mức giảm để không mang khuyến mãi cũ sang lần tính giá sau. */
     public void clearPromotion() {
         this.promotion = null;
         this.promotionDiscount = BigDecimal.ZERO;

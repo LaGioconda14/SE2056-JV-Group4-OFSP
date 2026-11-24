@@ -75,7 +75,7 @@ public class ChangeCartVariantServlet extends HttpServlet {
         }
 
         try {
-            // Thực hiện đổi sang biến thể mới cho mục giỏ hàng
+            // Service xử lý trường hợp biến thể đích đã có sẵn trong giỏ (gộp dòng nếu cần).
             cartService.changeVariant(user.getId(),
                     Long.parseLong(request.getParameter("cartItemId")),
                     Long.parseLong(request.getParameter("variantId")));

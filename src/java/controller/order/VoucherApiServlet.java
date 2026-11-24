@@ -59,6 +59,7 @@ public class VoucherApiServlet extends HttpServlet {
             BigDecimal subtotal = new BigDecimal(request.getParameter("subtotal"));
             Map<Long, BigDecimal> lines = parseItems(request.getParameter("items"));
 
+            // Các số tiền/dòng hàng ở đây do client gửi: chỉ để xem trước, DAO đặt hàng xác thực lại.
             VoucherCheckResult r = voucherDAO.validate(request.getParameter("code"), shopId, user.getId(), subtotal, lines);
 
             Map<String, Object> out = new LinkedHashMap<>();

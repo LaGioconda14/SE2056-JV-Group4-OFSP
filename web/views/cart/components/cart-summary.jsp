@@ -25,6 +25,7 @@
         </div>
     </div>
 </div>
+<%-- JS điền cartItemIds đã chọn vào POST /checkout; tổng tiền phía trên chỉ là tạm tính trên trình duyệt. --%>
 <form id="checkout-form" method="post" action="<c:out value='${checkoutUrl}'/>" class="hidden">
     <c:if test="${not empty sessionScope.cartCsrfToken}">
         <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">

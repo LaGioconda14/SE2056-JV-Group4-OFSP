@@ -14,6 +14,7 @@ public class SubOrder implements Serializable {
 
     private long subOrderId;
     private String subOrderCode;
+    // Một đơn tổng tách theo shop để mỗi shop có phí giao, chiết khấu và trạng thái riêng.
     private long orderId;
     private long shopId;
     private java.time.LocalDate deliveryDate;

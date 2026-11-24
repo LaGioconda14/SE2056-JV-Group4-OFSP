@@ -36,6 +36,7 @@ import service.impl.AddressLookupServiceImpl;
 import service.impl.CustomerAddressServiceImpl;
 import service.impl.OrderServiceImpl;
 
+/** Chuẩn bị bản nháp thanh toán; chưa tạo đơn hay trừ tồn kho tại endpoint này. */
 @WebServlet(name = "CheckoutServlet", urlPatterns = {"/checkout"})
 public class CheckoutServlet extends HttpServlet {
 
@@ -90,6 +91,7 @@ public class CheckoutServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
+        // Giữ dữ liệu form qua các lần POST chọn địa chỉ/mã giảm giá; lựa chọn hàng vẫn được tải lại từ DB.
         Map<String, String> draft = draft(session, user.getId());
         saveDraft(request, draft);
         if ("selectProvince".equals(action) || "createAddress".equals(action)) {
@@ -158,6 +160,7 @@ public class CheckoutServlet extends HttpServlet {
         } else if ("removeCoupon".equals(action)) {
             session.removeAttribute("checkoutCouponCode");
         } else if ("applyShopCoupon".equals(action) || "removeShopCoupon".equals(action)) {
+            // Chỉ chấp nhận mã shop thuộc các dòng hàng đang được chọn cho lần thanh toán này.
             try {
                 long shopId = parsePositiveId(request.getParameter("targetShopId"), "Cửa hàng không hợp lệ!");
                 if (loadSelectedItems(user.getId(), restoreSelection(session))
@@ -196,6 +199,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         try {
+            // Session chỉ giữ ID/lựa chọn; service tải lại hàng và tính giá để không tin dữ liệu từ trình duyệt.
             CheckoutSelection selection = parseSelection(request, session);
             List<CartItem> selectedItems = loadSelectedItems(user.getId(), selection);
             if (!Boolean.TRUE.equals(request.getAttribute("checkoutActionHandled"))) {
@@ -256,6 +260,7 @@ public class CheckoutServlet extends HttpServlet {
                 source.buyNowQuantity(), couponCode, shopCoupons);
     }
 
+    /** Mỗi lượt checkout chỉ chọn một nguồn: dòng giỏ hàng hoặc biến thể "mua ngay". */
     private CheckoutSelection parseOrRestoreSource(HttpServletRequest request, HttpSession session) {
         String[] values = request.getParameterValues("cartItemIds");
         if (values != null && values.length > 0) {
@@ -466,6 +471,7 @@ public class CheckoutServlet extends HttpServlet {
         return grouped;
     }
 
+    /** Giữ các mã hợp lệ độc lập khi một mã khác làm bản nháp thất bại; đặt hàng vẫn phải kiểm tra lại. */
     private DraftResult buildDraftWithVoucherFallback(long customerId, List<CartItem> items,
             String couponCode, Map<Long, String> shopCoupons, String customerProvince,
             HttpServletRequest request,
@@ -592,6 +598,7 @@ public class CheckoutServlet extends HttpServlet {
         }
     }
 
+    /** Bản nháp form gắn với customerId để không tái dùng dữ liệu khi session đổi tài khoản. */
     @SuppressWarnings("unchecked")
     private Map<String, String> draft(HttpSession session, long userId) {
         Map<String, String> draft = (Map<String, String>) session.getAttribute("checkoutFormDraft");
