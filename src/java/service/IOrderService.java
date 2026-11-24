@@ -42,28 +42,6 @@ public interface IOrderService {
     CartItem getBuyNowItemForCheckout(long variantId, int quantity);
 
     /**
-     * Tạo đơn hàng tạm tính (Draft Order) để hiển thị chi phí tại trang Checkout.
-     *
-     * @param customerId    ID khách hàng
-     * @param selectedItems danh sách sản phẩm được chọn
-     * @param couponCode    mã giảm giá toàn sàn (nếu có)
-     * @return OrderDetailDTO chứa thông tin chia theo từng shop và tổng thanh toán
-     */
-    OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode);
-
-    /**
-     * Tạo đơn hàng tạm tính kèm theo mã giảm giá riêng của từng shop.
-     *
-     * @param customerId       ID khách hàng
-     * @param selectedItems    danh sách sản phẩm
-     * @param couponCode       mã giảm giá toàn sàn
-     * @param shopCouponCodes  map chứa [shopId -> mã voucher của shop]
-     * @return OrderDetailDTO chứa thông tin chi tiết tiền hàng và giảm giá
-     */
-    OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
-            Map<Long, String> shopCouponCodes);
-
-    /**
      * Tạo đơn hàng tạm tính đầy đủ có tính toán phí vận chuyển dựa trên tỉnh/thành của khách và shop.
      * Draft không ghi DB hoặc giữ voucher; khi đặt hàng DAO kiểm tra lại quota,
      * số lượng giỏ, giá và tồn kho trong transaction.
@@ -77,27 +55,6 @@ public interface IOrderService {
      */
     OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes, String customerProvince);
-
-    /**
-     * Đặt hàng từ giỏ hàng (phiên bản cơ bản).
-     */
-    long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
-            boolean saveAddress) throws Exception;
-
-    /**
-     * Đặt hàng từ giỏ hàng kèm voucher riêng của từng shop.
-     */
-    long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception;
-
-    /**
-     * Đặt hàng từ giỏ hàng kèm voucher riêng và ghi chú lời nhắn riêng cho từng shop.
-     */
-    long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
 
     /**
      * Đặt hàng từ giỏ hàng đầy đủ: ngày giao hàng, khung giờ, ghi chú từng shop và phương thức thanh toán.
@@ -119,20 +76,6 @@ public interface IOrderService {
      */
     long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
             String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
-
-    /**
-     * Đặt đơn "Mua ngay" cho một sản phẩm duy nhất (không qua giỏ hàng).
-     */
-    long placeBuyNowOrder(long customerId, long variantId, int quantity, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception;
-
-    /**
-     * Đặt đơn "Mua ngay" kèm ghi chú lời nhắn cho shop.
-     */
-    long placeBuyNowOrder(long customerId, long variantId, int quantity, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
 
     /**

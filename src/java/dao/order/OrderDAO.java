@@ -344,7 +344,7 @@ public class OrderDAO extends DBContext {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try {
-            conn.setAutoCommit(false); // Báº®T Äáº¦U TRANSACTION
+            conn.setAutoCommit(false); // BẮT ĐẦU TRANSACTION
 
             if (consumeCart) {
                 // Chặn thay đổi giỏ giữa lúc dựng draft và lúc ghi đơn; mua ngay không có dòng giỏ để khóa.
@@ -500,7 +500,7 @@ public class OrderDAO extends DBContext {
                     }
                 }
 
-                // D. INSERT Tá»ªNG ORDER_ITEM
+                // D. INSERT TỪNG ORDER_ITEM
                 for (OrderItemDetailDTO item : sub.getItems()) {
                     try (PreparedStatement ps = conn.prepareStatement(insertOrderItemSql)) {
                         ps.setLong(1, subOrderId);
@@ -536,7 +536,7 @@ public class OrderDAO extends DBContext {
                         }
                     }
 
-                    // E. TRá»ª Tá»’N KHO NGUYÃŠN Tá»¬
+                    // E. TRỪ TỒN KHO NGUYÊN TỬ
                     if (item.getVariantId() != null) {
                         try (PreparedStatement ps = conn.prepareStatement(deductStockSql)) {
                             ps.setInt(1, item.getQuantity());
@@ -546,9 +546,9 @@ public class OrderDAO extends DBContext {
 
                             int updated = ps.executeUpdate();
                             if (updated == 0) {
-                                throw new SQLException("Sáº£n pháº©m '" + item.getProductNameSnapshot()
-                                        + "' vá»«a háº¿t hÃ ng, Ä‘á»•i giÃ¡ hoáº·c cá»­a hÃ ng Ä‘Ã£ ngá»«ng hoáº¡t Ä‘á»™ng. "
-                                        + "Vui lÃ²ng quay láº¡i giá» hÃ ng Ä‘á»ƒ kiá»ƒm tra!");
+                                throw new SQLException("Sản phẩm '" + item.getProductNameSnapshot()
+                                        + "' vừa hết hàng, đổi giá hoặc cửa hàng đã ngừng hoạt động. "
+                                        + "Vui lòng quay lại giỏ hàng để kiểm tra!");
                             }
                         }
 
@@ -559,8 +559,8 @@ public class OrderDAO extends DBContext {
                 }
             }
 
-            // F. XÃ“A CÃC Sáº¢N PHáº¨M ÄÃƒ MUA KHá»ŽI GIá»Ž HÃ€NG
-            if (consumeCart && cartItemIdsToDelete != null && !cartItemIdsToDelete.isEmpty()) {
+            // F. XÓA CÁC SẢN PHẨM ĐÃ MUA KHỎI GIỎ HÀNG
+            if (consumeCart) {
                 try (PreparedStatement ps = conn.prepareStatement(deleteCartItemsSql)) {
                     for (Long itemId : cartItemIdsToDelete) {
                         ps.setLong(1, itemId);
@@ -570,13 +570,13 @@ public class OrderDAO extends DBContext {
                     int[] deletedRows = ps.executeBatch();
                     for (int deleted : deletedRows) {
                         if (deleted == 0) {
-                            throw new SQLException("CÃ³ sáº£n pháº©m khÃ´ng cÃ²n thuá»™c giá» hÃ ng cá»§a báº¡n!");
+                            throw new SQLException("Có sản phẩm không còn thuộc giỏ hàng của bạn!");
                         }
                     }
                 }
             }
 
-            // Chá»‰ tÄƒng used_count náº¿u má»i bÆ°á»›c táº¡o Ä‘Æ¡n, trá»« kho vÃ  xÃ³a giá» Ä‘á»u thÃ nh cÃ´ng.
+            // Chỉ tăng used_count nếu mọi bước tạo đơn, trừ kho và xóa giỏ đều thành công.
             if (order.getCouponId() != null) {
                 couponDAO.incrementUsage(conn, order.getCouponId());
                 couponDAO.recordUsage(conn, order.getCouponId(), orderId, order.getCustomerId(), order.getPlatformDiscount());
@@ -588,7 +588,7 @@ public class OrderDAO extends DBContext {
                 }
             }
 
-            // Ghi nháº­n phÆ°Æ¡ng thá»©c thanh toÃ¡n trong cÃ¹ng transaction.
+            // Ghi nhận phương thức thanh toán trong cùng transaction.
             try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
                 ps.setLong(1, orderId);
                 ps.setString(2, paymentMethod);
@@ -599,12 +599,12 @@ public class OrderDAO extends DBContext {
                 ps.executeUpdate();
             }
 
-            conn.commit(); // THÃ€NH CÃ”NG -> COMMIT!
+            conn.commit(); // THÀNH CÔNG -> COMMIT!
             return orderId;
 
         } catch (Exception ex) {
             try {
-                conn.rollback(); // Lá»–I -> HOÃ€N TÃC TOÃ€N Bá»˜!
+                conn.rollback(); // LỖI -> HOÀN TÁC TOÀN BỘ!
             } catch (SQLException rEx) {
                 LOGGER.log(Level.SEVERE, "Rollback failed", rEx);
             }
@@ -639,7 +639,7 @@ public class OrderDAO extends DBContext {
             List<Long> cartItemIds) throws SQLException {
         // Khóa các dòng thuộc khách và đối chiếu số dòng cùng tổng số lượng theo variant với draft.
         if (cartItemIds == null || cartItemIds.isEmpty()) {
-            throw new SQLException("KhÃ´ng cÃ³ sáº£n pháº©m nÃ o Ä‘Æ°á»£c chá»n Ä‘á»ƒ Ä‘áº·t hÃ ng!");
+            throw new SQLException("Không có sản phẩm nào được chọn để đặt hàng!");
         }
 
         StringBuilder placeholders = new StringBuilder();
@@ -843,7 +843,7 @@ public class OrderDAO extends DBContext {
             }
 
             if (order != null) {
-                // Láº¥y sub_orders
+                // Lấy sub_orders
                 try (PreparedStatement psSub = conn.prepareStatement(sqlSub)) {
                     psSub.setLong(1, orderId);
                     try (ResultSet rsSub = psSub.executeQuery()) {
@@ -871,7 +871,7 @@ public class OrderDAO extends DBContext {
                             sub.setStatus(rsSub.getString("status"));
                             sub.setCreatedAt(rsSub.getTimestamp("created_at"));
 
-                            // Láº¥y order_items cá»§a tá»«ng sub_order
+                            // Lấy order_items của từng sub_order
                             try (PreparedStatement psItem = conn.prepareStatement(sqlItems)) {
                                 psItem.setLong(1, sub.getSubOrderId());
                                 try (ResultSet rsItem = psItem.executeQuery()) {

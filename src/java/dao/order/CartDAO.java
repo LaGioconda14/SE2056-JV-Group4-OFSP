@@ -253,7 +253,7 @@ public class CartDAO extends DBContext {
                     throw new IllegalArgumentException("Biến thể thay thế đã hết hàng!");
                 }
 
-                if (target != null && target.getCartItemId() != cartItemId) {
+                if (target != null) {
                     // Hai dòng cùng biến thể không được tồn tại; gộp số lượng rồi xóa dòng nguồn trong cùng transaction.
                     if (!updateQuantityByCart(conn, cartId, target.getCartItemId(), finalQuantity)
                             || !deleteItemByCart(conn, cartId, cartItemId)) {

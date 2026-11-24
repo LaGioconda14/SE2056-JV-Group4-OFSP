@@ -172,7 +172,7 @@ public class CheckoutServlet extends HttpServlet {
                     codes.remove(shopId);
                 } else {
                     String code = request.getParameter("newShopCouponCode");
-                    if (code == null || code.isBlank() || code.length() > 100) {
+                    if (code == null || code.isBlank()) {
                         throw new IllegalArgumentException("Mã giảm giá cửa hàng không hợp lệ!");
                     }
                     putOrRemoveCoupon(codes, shopId, code);

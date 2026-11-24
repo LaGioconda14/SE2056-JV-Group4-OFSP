@@ -7,7 +7,9 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import model.entity.order.ShippingAddress;
 
 /**
@@ -200,5 +202,27 @@ public class OrderDetailDTO implements Serializable {
 
     public void setSubOrders(List<SubOrderDTO> subOrders) {
         this.subOrders = subOrders != null ? subOrders : new ArrayList<>();
+    }
+
+    public BigDecimal getTotalVoucherDiscount() {
+        BigDecimal total = platformDiscount != null ? platformDiscount : BigDecimal.ZERO;
+        if (subOrders != null) {
+            for (SubOrderDTO sub : subOrders) {
+                if (sub.getShopDiscount() != null) {
+                    total = total.add(sub.getShopDiscount());
+                }
+            }
+        }
+        return total;
+    }
+
+    public Map<Long, SubOrderDTO> getSubOrdersByShop() {
+        Map<Long, SubOrderDTO> map = new LinkedHashMap<>();
+        if (subOrders != null) {
+            for (SubOrderDTO sub : subOrders) {
+                map.put(sub.getShopId(), sub);
+            }
+        }
+        return map;
     }
 }

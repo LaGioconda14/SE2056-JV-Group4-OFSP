@@ -164,10 +164,7 @@
                             <c:set var="shopItems" value="${shopEntry.value}"/>
                             <c:set var="shopNoteKey" value="shopNote_${shopEntry.key}"/>
                             <c:set var="shop" value="${shopItems[0].variant}"/>
-                            <c:set var="shopSubtotal" value="${0}"/>
-                            <c:forEach var="item" items="${shopItems}">
-                                <c:set var="shopSubtotal" value="${shopSubtotal + item.subtotal}"/>
-                            </c:forEach>
+                            <c:set var="currentSubOrder" value="${draftOrder.subOrdersByShop[shopEntry.key]}"/>
 
                             <section class="bg-white rounded-xl shadow-xs border border-gray-200/70 overflow-hidden">
                                 <!-- Shop Header -->
@@ -226,12 +223,6 @@
                                  <%-- Mỗi shop có mã giảm riêng; chiết khấu lấy từ draftOrder, không từ phép tính trên trình duyệt. --%>
                                  <!-- Shop Voucher Row (Giống Shopee) -->
                                 <c:set var="currentShopCode" value="${shopCouponCodes[shopEntry.key]}"/>
-                                <c:set var="currentSubOrder" value="${null}"/>
-                                <c:forEach var="sub" items="${draftOrder.subOrders}">
-                                    <c:if test="${sub.shopId eq shopEntry.key}">
-                                        <c:set var="currentSubOrder" value="${sub}"/>
-                                    </c:if>
-                                </c:forEach>
 
                                 <div class="px-6 py-3 border-t border-dashed border-gray-200 flex flex-wrap items-center justify-between gap-3 text-xs bg-gray-50/40">
                                     <div class="flex items-center gap-2 text-gray-700 flex-wrap">
@@ -247,7 +238,7 @@
                                     <div class="flex items-center gap-2">
                                         <c:choose>
                                             <c:when test="${not empty currentShopCode and not empty currentSubOrder and currentSubOrder.shopDiscount gt 0}">
-                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng'}"/>', ${shopSubtotal})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
+                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng'}"/>', ${not empty currentSubOrder ? currentSubOrder.shopSubtotal : 0})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
                                                     Thay Đổi
                                                 </button>
                                                 <button type="button" onclick="removeShopCoupon('${shopEntry.key}')" class="text-red-500 hover:underline font-semibold cursor-pointer">
@@ -255,7 +246,7 @@
                                                 </button>
                                             </c:when>
                                             <c:otherwise>
-                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng'}"/>', ${shopSubtotal})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
+                                                <button type="button" onclick="openShopVoucherModal('${shopEntry.key}', '<c:out value="${not empty shop.shopName ? shop.shopName : 'Gian hàng'}"/>', ${not empty currentSubOrder ? currentSubOrder.shopSubtotal : 0})" class="text-blue-600 hover:underline font-semibold cursor-pointer">
                                                     Chọn Voucher
                                                 </button>
                                             </c:otherwise>
@@ -420,19 +411,11 @@
                         </c:forEach>
 
                         <!-- 3. Tổng cộng giảm giá từ voucher -->
-                        <c:set var="totalVoucherDiscount" value="${0}"/>
-                        <c:forEach var="sub" items="${draftOrder.subOrders}">
-                            <c:set var="totalVoucherDiscount" value="${totalVoucherDiscount + sub.shopDiscount}"/>
-                        </c:forEach>
-                        <c:if test="${draftOrder.platformDiscount gt 0}">
-                            <c:set var="totalVoucherDiscount" value="${totalVoucherDiscount + draftOrder.platformDiscount}"/>
-                        </c:if>
-
                         <c:choose>
-                            <c:when test="${totalVoucherDiscount gt 0}">
+                            <c:when test="${draftOrder.totalVoucherDiscount gt 0}">
                                 <div class="flex justify-between w-full sm:w-96 text-amber-700 font-medium pt-1">
                                     <span>Tổng cộng giảm giá từ voucher:</span>
-                                    <span class="font-bold text-amber-700">-<fmt:formatNumber value="${totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
+                                    <span class="font-bold text-amber-700">-<fmt:formatNumber value="${draftOrder.totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></span>
                                 </div>
                                 <c:forEach var="sub" items="${draftOrder.subOrders}">
                                     <c:if test="${sub.shopDiscount gt 0}">
@@ -654,534 +637,35 @@
 <!-- Footer Chuẩn Đồng Bộ Website Gốc Vườn -->
 <jsp:include page="/views/common/site-footer.jsp" />
 
-<!-- ==================== JAVASCRIPT XỬ LÝ THANH TOÁN ==================== -->
+<!-- ==================== DỮ LIỆU CẤU HÌNH & JAVASCRIPT THANH TOÁN ==================== -->
 <script>
-    // POST dựng lại bản nháp; các giá trị form (kể cả mã voucher) được server kiểm tra lại.
-    function submitCheckoutAction(action, values = {}) {
-        const form = document.getElementById('checkout-form');
-        if (!form) return;
-        const actionInput = document.getElementById('checkout-action');
-        actionInput.disabled = false;
-        actionInput.value = action;
-        ['targetShopId', 'newCouponCode', 'newShopCouponCode'].forEach(id => {
-            const input = form.elements.namedItem(id);
-            if (input) {
-                input.disabled = !(id in values);
-                input.value = values[id] || '';
-            }
-        });
-        form.action = '<c:out value="${checkoutUrl}"/>';
-        form.submit();
-    }
-
-    document.getElementById('checkoutCitySelect')?.addEventListener('change', () => submitCheckoutAction('selectProvince'));
-    document.getElementById('checkout-form')?.addEventListener('submit', function(event) {
-        if (document.getElementById('checkout-action')?.disabled &&
-                document.querySelector('input[name="addressSelection"]:checked')?.value === 'new') {
-            event.preventDefault();
-            openAddressModal();
-            alert('Vui lòng xác nhận và lưu địa chỉ mới trước khi đặt hàng!');
+    window.CHECKOUT_CONFIG = {
+        checkoutUrl: '<c:out value="${checkoutUrl}"/>',
+        openAddressModal: ${not empty selectedItems and not empty draftOrder and formDraft.openAddressModal eq 'true'},
+        shopCouponsData: {
+            <c:forEach var="entry" items="${availableShopCoupons}" varStatus="status">
+                "${entry.key}": [
+                    <c:forEach var="c" items="${entry.value}" varStatus="cStatus">
+                        {
+                            code: "<c:out value='${c.code}'/>",
+                            discountType: "<c:out value='${c.discountType}'/>",
+                            discountValue: <c:out value='${c.discountValue}'/>,
+                            minOrderValue: <c:out value='${c.minOrderValue}'/>,
+                            maxDiscountAmount: <c:out value='${not empty c.maxDiscountAmount ? c.maxDiscountAmount : "null"}'/>,
+                            active: <c:out value='${c.active}'/>
+                        }<c:if test="${not cStatus.last}">,</c:if>
+                    </c:forEach>
+                ]<c:if test="${not status.last}">,</c:if>
+            </c:forEach>
+        },
+        appliedShopCouponsData: {
+            <c:forEach var="entry" items="${shopCouponCodes}" varStatus="status">
+                "${entry.key}": "<c:out value='${entry.value}'/>"<c:if test="${not status.last}">,</c:if>
+            </c:forEach>
         }
-    });
-
-    function openAddressModal() {
-        document.getElementById('address-modal')?.showModal();
-    }
-
-    function closeAddressModal() {
-        const dialog = document.getElementById('address-modal');
-        if (dialog) dialog.close();
-    }
-
-    // Toggle hiển thị form địa chỉ mới khi chọn radio
-    document.querySelectorAll('input[name="addressSelection"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const newInputs = document.getElementById('new-address-inputs');
-            if (newInputs) {
-                if (this.value === 'new') {
-                    newInputs.classList.remove('hidden');
-                } else {
-                    newInputs.classList.add('hidden');
-                }
-            }
-        });
-    });
-
-    function confirmAddressSelection() {
-        const selected = document.querySelector('input[name="addressSelection"]:checked');
-        if (!selected) {
-            closeAddressModal();
-            return;
-        }
-
-        const nameEl = document.getElementById('display-recipient-name');
-        const addrEl = document.getElementById('display-recipient-address');
-        const badgeEl = document.getElementById('display-default-badge');
-
-        if (selected.value === 'new') {
-            const name = (document.querySelector('input[name="recipientName"]')?.value || '').trim();
-            const phone = (document.querySelector('input[name="recipientPhone"]')?.value || '').trim();
-            const street = (document.querySelector('input[name="streetAddress"]')?.value || '').trim();
-            const city = (document.getElementById('checkoutCitySelect')?.value || '').trim();
-            const ward = (document.getElementById('checkoutWardSelect')?.value || '').trim();
-            if (!name || !phone || !street || !city || !ward) {
-                alert('Vui lòng điền đầy đủ họ tên, số điện thoại, tỉnh/thành phố, phường/xã và địa chỉ cụ thể!');
-                return;
-            }
-            submitCheckoutAction('createAddress');
-            return;
-        }
-
-        // Chọn một địa chỉ đã có sẵn
-        const name = selected.dataset.name;
-        const phone = selected.dataset.phone;
-        const full = selected.dataset.full;
-        const isDef = selected.dataset.default === 'true';
-
-        if (nameEl) nameEl.textContent = name + ' (' + phone + ')';
-        if (addrEl) addrEl.textContent = full;
-        if (badgeEl) {
-            if (isDef) badgeEl.classList.remove('hidden');
-            else badgeEl.classList.add('hidden');
-        }
-        closeAddressModal();
-        submitCheckoutAction('selectAddress');
-    }
-
-    <c:if test="${not empty selectedItems and not empty draftOrder and formDraft.openAddressModal eq 'true'}">
-    openAddressModal();
-    </c:if>
-
-    // Dữ liệu voucher của các shop và voucher đã áp dụng
-    const shopCouponsData = {
-        <c:forEach var="entry" items="${availableShopCoupons}" varStatus="status">
-            "${entry.key}": [
-                <c:forEach var="c" items="${entry.value}" varStatus="cStatus">
-                    {
-                        code: "<c:out value='${c.code}'/>",
-                        discountType: "<c:out value='${c.discountType}'/>",
-                        discountValue: <c:out value='${c.discountValue}'/>,
-                        minOrderValue: <c:out value='${c.minOrderValue}'/>,
-                        maxDiscountAmount: <c:out value='${not empty c.maxDiscountAmount ? c.maxDiscountAmount : "null"}'/>,
-                        active: <c:out value='${c.active}'/>
-                    }<c:if test="${not cStatus.last}">,</c:if>
-                </c:forEach>
-            ]<c:if test="${not status.last}">,</c:if>
-        </c:forEach>
     };
-
-    const appliedShopCouponsData = {
-        <c:forEach var="entry" items="${shopCouponCodes}" varStatus="status">
-            "${entry.key}": "<c:out value='${entry.value}'/>"<c:if test="${not status.last}">,</c:if>
-        </c:forEach>
-    };
-
-    let currentModalShopId = null;
-
-    function formatVND(amount) {
-        if (amount == null) return '0₫';
-        return Number(amount).toLocaleString('vi-VN') + '₫';
-    }
-
-    // 2. Xử lý Voucher của Shop
-    function openShopVoucherModal(shopId, shopName, shopSubtotal) {
-        currentModalShopId = String(shopId);
-        const dialog = document.getElementById('shop-voucher-modal');
-        const title = document.getElementById('shop-voucher-modal-title');
-        const input = document.getElementById('manual-shop-coupon-input');
-        const container = document.getElementById('shop-voucher-list-container');
-
-        if (title) title.textContent = 'Chọn Voucher của ' + (shopName || 'Shop');
-        if (input) input.value = '';
-
-        if (container) {
-            container.innerHTML = '';
-            const coupons = shopCouponsData[currentModalShopId] || [];
-            const currentApplied = appliedShopCouponsData[currentModalShopId] || '';
-
-            if (coupons.length === 0) {
-                container.innerHTML = '<div class="p-6 text-center text-xs text-gray-500 bg-gray-50 rounded-xl border border-gray-100">'
-                    + '<span class="material-symbols-outlined text-gray-400 text-3xl mb-1 block">sentiment_dissatisfied</span>'
-                    + 'Cửa hàng hiện chưa có voucher hiển thị sẵn. Bạn có thể nhập mã voucher ở trên nếu có!</div>';
-            } else {
-                coupons.forEach(c => {
-                    const isApplied = currentApplied && currentApplied.toUpperCase() === c.code.toUpperCase();
-                    // Điều kiện tại đây chỉ để bật/tắt nút trong bản xem trước, không xác nhận quyền dùng voucher.
-                    const isEligible = Number(shopSubtotal) >= Number(c.minOrderValue);
-
-                    let discountLabel = '';
-                    if (c.discountType === 'PERCENTAGE') {
-                        discountLabel = 'Giảm ' + c.discountValue + '%';
-                        if (c.maxDiscountAmount) {
-                            discountLabel += ' (tối đa ' + formatVND(c.maxDiscountAmount) + ')';
-                        }
-                    } else {
-                        discountLabel = 'Giảm ' + formatVND(c.discountValue);
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'p-3.5 border rounded-xl flex items-center justify-between gap-3 text-xs '
-                        + (isApplied ? 'border-amber-400 bg-amber-50/50' : (isEligible ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200 bg-gray-50/60 opacity-60'));
-
-                    const info = document.createElement('div');
-                    info.className = 'min-w-0 flex-1';
-
-                    const headerRow = document.createElement('div');
-                    headerRow.className = 'flex items-center gap-2';
-
-                    const codeStrong = document.createElement('strong');
-                    codeStrong.className = 'text-sm font-bold text-amber-800';
-                    codeStrong.textContent = c.code;
-                    headerRow.appendChild(codeStrong);
-
-                    const tag = document.createElement('span');
-                    tag.className = 'px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-900 font-semibold';
-                    tag.textContent = 'Voucher Shop';
-                    headerRow.appendChild(tag);
-
-                    if (isApplied) {
-                        const appliedBadge = document.createElement('span');
-                        appliedBadge.className = 'px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-bold';
-                        appliedBadge.textContent = 'Đang dùng';
-                        headerRow.appendChild(appliedBadge);
-                    }
-
-                    info.appendChild(headerRow);
-
-                    const desc = document.createElement('p');
-                    desc.className = 'text-gray-700 mt-1';
-                    desc.textContent = discountLabel + ' · Đơn từ ' + formatVND(c.minOrderValue);
-                    info.appendChild(desc);
-
-                    if (!isEligible) {
-                        const reason = document.createElement('p');
-                        reason.className = 'text-[11px] text-red-500 mt-0.5';
-                        reason.textContent = 'Chưa đủ điều kiện (Đơn tối thiểu ' + formatVND(c.minOrderValue) + ')';
-                        info.appendChild(reason);
-                    }
-
-                    card.appendChild(info);
-
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    if (isApplied) {
-                        btn.className = 'px-3.5 py-1.5 bg-gray-200 text-gray-500 rounded-lg font-bold text-xs cursor-default';
-                        btn.textContent = 'Đang chọn';
-                        btn.disabled = true;
-                    } else if (isEligible) {
-                        btn.className = 'px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold text-xs cursor-pointer transition';
-                        btn.textContent = 'Áp dụng';
-                        btn.onclick = function() {
-                            applyShopCoupon(currentModalShopId, c.code);
-                        };
-                    } else {
-                        btn.className = 'px-3.5 py-1.5 bg-gray-200 text-gray-400 rounded-lg font-bold text-xs cursor-not-allowed';
-                        btn.textContent = 'Chưa đủ';
-                        btn.disabled = true;
-                    }
-                    card.appendChild(btn);
-
-                    container.appendChild(card);
-                });
-            }
-        }
-
-        if (dialog) dialog.showModal();
-    }
-
-    function closeShopVoucherModal() {
-        const dialog = document.getElementById('shop-voucher-modal');
-        if (dialog) dialog.close();
-    }
-
-    function applyShopCoupon(shopId, code) {
-        if (!code || !code.trim()) return;
-        submitCheckoutAction('applyShopCoupon', {targetShopId: shopId, newShopCouponCode: code.trim().toUpperCase()});
-    }
-
-    function applyManualShopCoupon() {
-        const input = document.getElementById('manual-shop-coupon-input');
-        if (!input || !input.value.trim()) {
-            alert('Vui lòng nhập mã voucher của shop!');
-            return;
-        }
-        if (currentModalShopId) {
-            applyShopCoupon(currentModalShopId, input.value.trim().toUpperCase());
-        }
-    }
-
-    function removeShopCoupon(shopId) {
-        submitCheckoutAction('removeShopCoupon', {targetShopId: shopId});
-    }
-
-    // 3. Xử lý Voucher Sàn
-    function openCheckoutVoucherModal() {
-        const dialog = document.getElementById('checkout-voucher-modal');
-        if (dialog) dialog.showModal();
-    }
-
-    function closeCheckoutVoucherModal() {
-        const dialog = document.getElementById('checkout-voucher-modal');
-        if (dialog) dialog.close();
-    }
-
-    function applyCouponCode(code) {
-        submitCheckoutAction('applyCoupon', {newCouponCode: code});
-    }
-
-    function applyManualCoupon() {
-        const input = document.getElementById('manual-coupon-input');
-        if (input && input.value.trim()) {
-            applyCouponCode(input.value.trim().toUpperCase());
-        }
-    }
-
-    function removeCheckoutCoupon() {
-        submitCheckoutAction('removeCoupon');
-    }
-
-    // 3. Xử lý chuyển đổi phương thức thanh toán
-    const paymentForm = document.getElementById('checkout-form');
-        // ==================== KHUNG GIỜ VÀ NGÀY GIAO HÀNG CHUỖI LẠNH ====================
-    (function initDeliverySlotSystem() {
-        var dateTabsContainer = document.getElementById('delivery-date-tabs');
-        var slotsGridContainer = document.getElementById('delivery-slots-grid');
-        var inputDeliveryDate = document.getElementById('checkout-delivery-date');
-        var inputDeliverySlot = document.getElementById('checkout-delivery-slot');
-
-        if (!dateTabsContainer || !slotsGridContainer) return;
-
-        var today = new Date();
-        var dates = [];
-        var dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-
-        for (var i = 0; i < 4; i++) {
-            var d = new Date(today);
-            d.setDate(today.getDate() + i);
-            var yyyy = d.getFullYear();
-            var mm = String(d.getMonth() + 1).padStart(2, '0');
-            var dd = String(d.getDate()).padStart(2, '0');
-            var dateStr = yyyy + '-' + mm + '-' + dd;
-
-            var label = dd + '/' + mm;
-            if (i === 0) label = 'Hôm nay (' + dd + '/' + mm + ')';
-            else if (i === 1) label = 'Ngày mai (' + dd + '/' + mm + ')';
-            else label = dayNames[d.getDay()] + ' (' + dd + '/' + mm + ')';
-
-            dates.push({ dateStr: dateStr, label: label, isToday: (i === 0) });
-        }
-
-        var baseSlots = [
-            { code: '08:00 - 10:00', displayLabel: '08:00 - 10:00', period: 'MORNING', periodText: 'Sáng', startHour: 8, startMin: 0, endHour: 10, endMin: 0 },
-            { code: '10:00 - 12:00', displayLabel: '10:00 - 12:00', period: 'MORNING', periodText: 'Sáng', startHour: 10, startMin: 0, endHour: 12, endMin: 0 },
-            { code: '13:00 - 15:00', displayLabel: '13:00 - 15:00', period: 'AFTERNOON', periodText: 'Chiều', startHour: 13, startMin: 0, endHour: 15, endMin: 0 },
-            { code: '15:00 - 17:00', displayLabel: '15:00 - 17:00', period: 'AFTERNOON', periodText: 'Chiều', startHour: 15, startMin: 0, endHour: 17, endMin: 0 },
-            { code: '17:00 - 19:00', displayLabel: '17:00 - 19:00', period: 'EVENING', periodText: 'Tối', startHour: 17, startMin: 0, endHour: 19, endMin: 0 },
-            { code: '19:00 - 21:00', displayLabel: '19:00 - 21:00', period: 'EVENING', periodText: 'Tối', startHour: 19, startMin: 0, endHour: 21, endMin: 0 }
-        ];
-
-        var selectedDate = (inputDeliveryDate && inputDeliveryDate.value) ? inputDeliveryDate.value : dates[0].dateStr;
-        var selectedSlotCode = (inputDeliverySlot && inputDeliverySlot.value) ? inputDeliverySlot.value : '';
-
-        function renderDateTabs() {
-            dateTabsContainer.innerHTML = '';
-            dates.forEach(function(d) {
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                var isSelected = (d.dateStr === selectedDate);
-                btn.className = 'px-4 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ' +
-                    (isSelected
-                        ? 'border-2 border-[#00652c] bg-emerald-50 text-[#00652c] font-bold shadow-xs'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300');
-                btn.textContent = d.label;
-                btn.addEventListener('click', function() {
-                    selectedDate = d.dateStr;
-                    if (inputDeliveryDate) inputDeliveryDate.value = selectedDate;
-                    renderDateTabs();
-                    evaluateAndRenderSlots();
-                });
-                dateTabsContainer.appendChild(btn);
-            });
-        }
-
-        function evaluateAndRenderSlots() {
-            var now = new Date();
-            var isCurrentDateToday = (selectedDate === dates[0].dateStr);
-            var currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-            var computedSlots = baseSlots.map(function(s) {
-                var isPassed = isCurrentDateToday && (currentMinutes >= (s.startHour * 60 + s.startMin));
-                return {
-                    code: s.code,
-                    displayLabel: s.displayLabel,
-                    period: s.period,
-                    periodText: s.periodText,
-                    available: !isPassed,
-                    statusBadge: isPassed ? 'Quá giờ' : null
-                };
-            });
-
-            // Nếu slot đang chọn không còn khả dụng trên ngày này, tự chọn slot đầu tiên khả dụng (nếu có)
-            var currentValid = computedSlots.some(function(s) {
-                return s.code === selectedSlotCode && s.available;
-            });
-
-            if (!currentValid) {
-                var firstAvail = computedSlots.find(function(s) { return s.available; });
-                if (firstAvail) {
-                    selectedSlotCode = firstAvail.code;
-                } else {
-                    selectedSlotCode = '';
-                }
-                if (inputDeliverySlot) inputDeliverySlot.value = selectedSlotCode;
-            }
-
-            renderSlots(computedSlots);
-        }
-
-        function renderSlots(slots) {
-            slotsGridContainer.innerHTML = '';
-
-            slots.forEach(function(slot) {
-                var isSelected = (slot.code === selectedSlotCode && slot.available);
-                var card = document.createElement('div');
-
-                var periodIcon = 'wb_sunny';
-                if (slot.period === 'EVENING') {
-                    periodIcon = 'bedtime';
-                }
-
-                if (!slot.available) {
-                    card.className = 'p-3 rounded-xl border border-gray-100 bg-gray-50/70 opacity-60 cursor-not-allowed flex items-center justify-between gap-2 text-xs select-none';
-                    card.innerHTML = 
-                        '<div class="flex items-center gap-2.5 min-w-0">' +
-                        '  <span class="material-symbols-outlined text-gray-300 text-[20px] shrink-0">' + periodIcon + '</span>' +
-                        '  <div class="truncate leading-tight">' +
-                        '    <span class="font-medium text-gray-600 block">' + slot.displayLabel + '</span>' +
-                        '    <span class="text-[11px] text-gray-400">' + slot.periodText + '</span>' +
-                        '  </div>' +
-                        '</div>' +
-                        '<span class="px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 bg-gray-100 text-gray-400 border border-gray-200/60">' +
-                        (slot.statusBadge || 'Quá giờ') +
-                        '</span>';
-                } else {
-                    card.className = 'p-3 rounded-xl border cursor-pointer transition select-none flex items-center justify-between gap-2 text-xs ' +
-                        (isSelected
-                            ? 'border-2 border-[#00652c] bg-emerald-50/60 shadow-xs'
-                            : 'border-gray-200 hover:border-gray-300 bg-white');
-
-                    card.innerHTML = 
-                        '<div class="flex items-center gap-2.5 min-w-0">' +
-                        '  <span class="material-symbols-outlined ' + (isSelected ? 'text-[#00652c]' : 'text-gray-400') + ' text-[20px] shrink-0">' +
-                        (isSelected ? 'check_circle' : periodIcon) +
-                        '  </span>' +
-                        '  <div class="truncate leading-tight">' +
-                        '    <span class="font-bold ' + (isSelected ? 'text-[#00652c]' : 'text-gray-900') + ' block">' + slot.displayLabel + '</span>' +
-                        '    <span class="text-[11px] ' + (isSelected ? 'text-emerald-700' : 'text-gray-500') + '">' + slot.periodText + '</span>' +
-                        '  </div>' +
-                        '</div>';
-
-                    card.addEventListener('click', function() {
-                        selectedSlotCode = slot.code;
-                        if (inputDeliverySlot) inputDeliverySlot.value = selectedSlotCode;
-                        evaluateAndRenderSlots();
-                    });
-                }
-                slotsGridContainer.appendChild(card);
-            });
-        }
-
-        renderDateTabs();
-        if (inputDeliveryDate) inputDeliveryDate.value = selectedDate;
-        evaluateAndRenderSlots();
-    })();
-
-    const paymentLabels = document.querySelectorAll('.payment-method-pill');
-    const submitBtn = document.getElementById('submit-order-btn');
-
-    paymentLabels.forEach(label => {
-        label.addEventListener('click', function() {
-            paymentLabels.forEach(l => {
-                l.classList.remove('border-2', 'border-[#00652c]', 'bg-emerald-50/60', 'text-[#00652c]', 'font-bold');
-                l.classList.add('border-gray-200', 'text-gray-700', 'font-medium');
-                const checkIcon = l.querySelector('.material-symbols-outlined');
-                if (checkIcon) checkIcon.remove();
-            });
-
-            this.classList.add('border-2', 'border-[#00652c]', 'bg-emerald-50/60', 'text-[#00652c]', 'font-bold');
-            this.classList.remove('border-gray-200', 'text-gray-700', 'font-medium');
-
-            const check = document.createElement('span');
-            check.className = 'material-symbols-outlined text-[16px]';
-            check.textContent = 'check';
-            this.prepend(check);
-
-            const radio = this.querySelector('input[type="radio"]');
-            if (radio) {
-                radio.checked = true;
-                if (radio.value === 'VNPAY') {
-                    if (submitBtn) submitBtn.textContent = 'Thanh toán qua VNPAY';
-                } else {
-                    if (submitBtn) submitBtn.textContent = 'Đặt hàng';
-                }
-            }
-        });
-    });
-
-    if (paymentForm) {
-        paymentForm.addEventListener('submit', function(e) {
-            var slotInput = document.getElementById('checkout-delivery-slot');
-            if (!slotInput || !slotInput.value || slotInput.value.trim() === '') {
-                e.preventDefault();
-                alert('Vui lòng chọn khung giờ nhận hàng khả dụng (hoặc chuyển sang ngày khác nếu hôm nay đã quá giờ)!');
-                var slotSection = document.getElementById('delivery-slots-grid');
-                if (slotSection) {
-                    slotSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-                return false;
-            }
-        });
-    }
-
-    if (paymentForm?.querySelector('input[name="paymentMethod"]:checked')?.value === 'VNPAY') {
-        if (submitBtn) submitBtn.textContent = 'Thanh toán qua VNPAY';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const manualPlatform = document.getElementById('manual-coupon-input');
-        if (manualPlatform) {
-            manualPlatform.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    applyManualCoupon();
-                }
-            });
-        }
-        const manualShop = document.getElementById('manual-shop-coupon-input');
-        if (manualShop) {
-            manualShop.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    applyManualShopCoupon();
-                }
-            });
-        }
-
-        // Close on clicking backdrop
-        const shopDialog = document.getElementById('shop-voucher-modal');
-        if (shopDialog) {
-            shopDialog.addEventListener('click', function(e) {
-                if (e.target === shopDialog) closeShopVoucherModal();
-            });
-        }
-        const platformDialog = document.getElementById('checkout-voucher-modal');
-        if (platformDialog) {
-            platformDialog.addEventListener('click', function(e) {
-                if (e.target === platformDialog) closeCheckoutVoucherModal();
-            });
-        }
-    });
 </script>
+<script src="${pageContext.request.contextPath}/assets/js/checkout.js?v=20261124" defer></script>
 
 </body>
 </html>

@@ -96,10 +96,6 @@
                         </section>
                         <section class="panel compact-panel">
                             <div class="panel-heading"><span class="panel-icon material-symbols-outlined">receipt_long</span><div><p class="section-kicker">Thanh toán</p><h2>Tổng đơn hàng</h2></div></div>
-                            <c:set var="totalVoucherDiscount" value="${order.platformDiscount}"/>
-                            <c:forEach var="sub" items="${order.subOrders}">
-                                <c:set var="totalVoucherDiscount" value="${totalVoucherDiscount + sub.shopDiscount}"/>
-                            </c:forEach>
                             <div class="totals confirmation-totals">
                                 <div><span>Tổng tiền hàng</span><strong><fmt:formatNumber value="${order.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 <c:forEach var="sub" items="${order.subOrders}">
@@ -109,7 +105,7 @@
                                 <c:forEach var="sub" items="${order.subOrders}">
                                     <div class="total-detail"><span>• <c:out value="${sub.shopName}"/></span><strong><fmt:formatNumber value="${sub.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 </c:forEach>
-                                <div class="discount"><span>Tổng giảm giá voucher</span><strong><c:if test="${totalVoucherDiscount gt 0}">-</c:if><fmt:formatNumber value="${totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <div class="discount"><span>Tổng giảm giá voucher</span><strong><c:if test="${order.totalVoucherDiscount gt 0}">-</c:if><fmt:formatNumber value="${order.totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 <c:forEach var="sub" items="${order.subOrders}">
                                     <c:if test="${sub.shopDiscount gt 0}">
                                         <div class="total-detail discount"><span>• Voucher <c:out value="${sub.shopName}"/></span><strong>-<fmt:formatNumber value="${sub.shopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>

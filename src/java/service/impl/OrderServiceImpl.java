@@ -158,23 +158,6 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
-     * Tạo đơn hàng nháp (Draft Order) cơ bản với mã giảm giá toàn sàn.
-     */
-    @Override
-    public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode) {
-        return buildDraftOrder(customerId, selectedItems, couponCode, Collections.emptyMap());
-    }
-
-    /**
-     * Tạo đơn hàng nháp có áp dụng mã voucher riêng của từng shop.
-     */
-    @Override
-    public OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
-            Map<Long, String> shopCouponCodes) {
-        return buildDraftOrder(customerId, selectedItems, couponCode, shopCouponCodes, null);
-    }
-
-    /**
      * Tạo đơn hàng nháp đầy đủ:
      * - Phân nhóm sản phẩm theo từng Shop (tạo các đơn con SubOrder).
      * - Tính phí ship cho từng shop dựa trên tỉnh/thành của shop và người mua (cùng tỉnh 14k, khác tỉnh 30k).
@@ -356,9 +339,6 @@ public class OrderServiceImpl implements IOrderService {
      * Xác thực điều kiện chung của mã giảm giá: đang hoạt động, trong thời hạn, chưa hết lượt dùng và đạt giá trị tối thiểu.
      */
     private void validateCoupon(Coupon coupon, BigDecimal eligibleAmount) {
-        if (coupon == null) {
-            throw new IllegalArgumentException("Mã giảm giá không tồn tại!");
-        }
         if (!coupon.isActive()) {
             throw new IllegalArgumentException("Mã giảm giá hiện không hoạt động!");
         }
@@ -431,38 +411,6 @@ public class OrderServiceImpl implements IOrderService {
     }
 
     /**
-     * Đặt hàng từ giỏ hàng (phiên bản cơ bản không áp voucher shop).
-     */
-    @Override
-    public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
-            boolean saveAddress) throws Exception {
-        return placeOrder(customerId, cartItemIds, address, deliverySlot, paymentMethod, couponCode, Collections.emptyMap(), saveAddress);
-    }
-
-    /**
-     * Đặt hàng từ giỏ hàng kèm theo mã voucher của từng shop.
-     */
-    @Override
-    public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes,
-            boolean saveAddress) throws Exception {
-        return placeOrder(customerId, cartItemIds, address, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
-    }
-
-    /**
-     * Đặt hàng từ giỏ hàng kèm theo voucher shop và ghi chú cho từng shop.
-     */
-    @Override
-    public long placeOrder(long customerId, List<Long> cartItemIds, ShippingAddress address,
-            String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
-            boolean saveAddress) throws Exception {
-        return placeOrder(customerId, cartItemIds, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
-    }
-
-    /**
      * Đặt hàng từ giỏ hàng đầy đủ các trường: chuẩn bị đơn hàng, kiểm tra địa chỉ, tạo bản ghi Order và trừ tồn kho.
      */
     @Override
@@ -476,27 +424,6 @@ public class OrderServiceImpl implements IOrderService {
         // DTO đã tính trước vẫn được DAO khóa và kiểm tra lại trước khi ghi đơn/xóa giỏ.
         return orderDAO.createOrder(order, address, cartItemIds,
                 order.getPaymentMethod(), saveAddress);
-    }
-
-    /**
-     * Đặt đơn "Mua ngay" cho 1 biến thể sản phẩm (phiên bản cơ bản).
-     */
-    @Override
-    public long placeBuyNowOrder(long customerId, long variantId, int quantity,
-            ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, boolean saveAddress) throws Exception {
-        return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, Collections.emptyMap(), saveAddress);
-    }
-
-    /**
-     * Đặt đơn "Mua ngay" kèm ghi chú lời nhắn riêng cho shop.
-     */
-    @Override
-    public long placeBuyNowOrder(long customerId, long variantId, int quantity,
-            ShippingAddress address, String deliverySlot, String paymentMethod, String couponCode,
-            Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
-            boolean saveAddress) throws Exception {
-        return placeBuyNowOrder(customerId, variantId, quantity, address, null, deliverySlot, paymentMethod, couponCode, shopCouponCodes, shopNotes, saveAddress);
     }
 
     /**

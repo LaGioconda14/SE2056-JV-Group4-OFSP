@@ -91,13 +91,17 @@ public class VnpayPaymentService {
      * @param parameters map tham số HTTP nhận từ callback của VNPAY
      * @return CallbackResult chứa trạng thái cập nhật đơn hàng và kết quả xử lý
      */
-    public CallbackResult processCallback(Map<String, String[]> parameters) {
-        long orderId = parseOrderId(first(parameters.get("vnp_TxnRef")));
+    public CallbackResult processCallback(long orderId, Map<String, String[]> parameters) {
         BigDecimal amount = parseAmount(first(parameters.get("vnp_Amount")));
         // Mã "00" thể hiện giao dịch thanh toán thành công
         boolean successful = "00".equals(first(parameters.get("vnp_ResponseCode")))
                 && "00".equals(first(parameters.get("vnp_TransactionStatus")));
         return paymentDAO.processCallback(orderId, amount, successful);
+    }
+
+    public CallbackResult processCallback(Map<String, String[]> parameters) {
+        long orderId = parseOrderId(first(parameters.get("vnp_TxnRef")));
+        return processCallback(orderId, parameters);
     }
 
     /**
