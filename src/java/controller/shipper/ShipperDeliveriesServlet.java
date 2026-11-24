@@ -101,6 +101,30 @@ public class ShipperDeliveriesServlet extends HttpServlet {
         request.setAttribute("countCompleted", countCompleted);
         request.setAttribute("countFailed", countFailed);
 
+        String action = request.getParameter("action");
+        String deliveryIdParam = request.getParameter("deliveryId");
+        if (action != null && deliveryIdParam != null && !deliveryIdParam.trim().isEmpty()) {
+            try {
+                long delId = Long.parseLong(deliveryIdParam.trim());
+                Delivery selected = null;
+                if (deliveries != null) {
+                    for (Delivery d : deliveries) {
+                        if (d.getDeliveryId() == delId) {
+                            selected = d;
+                            break;
+                        }
+                    }
+                }
+                if (selected == null) {
+                    selected = deliveryService.getDeliveryById(delId, driverId);
+                }
+                if (selected != null) {
+                    request.setAttribute("selectedDelivery", selected);
+                }
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
         request.getRequestDispatcher("/views/shipper/deliveries.jsp").forward(request, response);
     }
 
@@ -125,18 +149,24 @@ public class ShipperDeliveriesServlet extends HttpServlet {
         }
         long driverId = user.getId();
 
+        String statusFilterParam = request.getParameter("statusFilter");
+        String redirectUrl = request.getContextPath() + "/shipper/deliveries";
+        if (statusFilterParam != null && !statusFilterParam.trim().isEmpty() && !"all".equalsIgnoreCase(statusFilterParam.trim())) {
+            redirectUrl += "?statusFilter=" + statusFilterParam.trim();
+        }
+
         String action = request.getParameter("action");
         String deliveryIdStr = request.getParameter("deliveryId");
 
         if (deliveryIdStr == null || deliveryIdStr.trim().isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+            response.sendRedirect(redirectUrl);
             return;
         }
         long deliveryId;
         try {
             deliveryId = Long.parseLong(deliveryIdStr.trim());
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+            response.sendRedirect(redirectUrl);
             return;
         }
         if ("pickup".equalsIgnoreCase(action)) {
@@ -146,7 +176,7 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             } else {
                 session.setAttribute("errorMessage", "Không thể xác nhận lấy hàng. Vui lòng thử lại!");
             }
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+            response.sendRedirect(redirectUrl);
             return;
         }
 
@@ -193,7 +223,7 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             } else {
                 session.setAttribute("errorMessage", "Không thể hoàn tất giao hàng. Vui lòng thử lại!");
             }
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+            response.sendRedirect(redirectUrl);
             return;
         }
 
@@ -205,10 +235,10 @@ public class ShipperDeliveriesServlet extends HttpServlet {
             } else {
                 session.setAttribute("errorMessage", "Không thể ghi nhận sự cố. Vui lòng thử lại!");
             }
-            response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+            response.sendRedirect(redirectUrl);
             return;
         }
 
-        response.sendRedirect(request.getContextPath() + "/shipper/deliveries");
+        response.sendRedirect(redirectUrl);
     }
 }

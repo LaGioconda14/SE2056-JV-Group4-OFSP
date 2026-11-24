@@ -51,7 +51,7 @@
         <div class="alert alert-success alert-dismissible fade show d-flex align-items-center mb-4 shadow-sm rounded-4" role="alert">
             <i class="bi bi-check-circle-fill me-2 fs-5 flex-shrink-0"></i>
             <div>${sessionScope.successMessage}</div>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <a href="${pageContext.request.contextPath}/shipper/deliveries${not empty statusFilter ? '?statusFilter='.concat(statusFilter) : ''}" class="btn-close ms-auto" aria-label="Close"></a>
         </div>
         <c:remove var="successMessage" scope="session" />
     </c:if>
@@ -59,7 +59,7 @@
         <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center mb-4 shadow-sm rounded-4" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2 fs-5 flex-shrink-0"></i>
             <div>${sessionScope.errorMessage}</div>
-            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <a href="${pageContext.request.contextPath}/shipper/deliveries${not empty statusFilter ? '?statusFilter='.concat(statusFilter) : ''}" class="btn-close ms-auto" aria-label="Close"></a>
         </div>
         <c:remove var="errorMessage" scope="session" />
     </c:if>
@@ -143,7 +143,7 @@
         </a>
     </div>
 
-    <!-- SEARCH TOOLBAR -->
+<!--     SEARCH TOOLBAR 
     <form method="get" action="${pageContext.request.contextPath}/shipper/deliveries" class="mb-3">
         <input type="hidden" name="statusFilter" value="${not empty statusFilter ? statusFilter : 'all'}">
         <div class="input-group shadow-xs rounded-pill overflow-hidden bg-white border">
@@ -159,18 +159,7 @@
             </c:if>
             <button type="submit" class="btn btn-success px-4 fw-bold">Tìm kiếm</button>
         </div>
-    </form>
-
-    <!-- SORT INFO BANNER -->
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 px-1">
-        <div class="text-muted small">
-            <i class="bi bi-sort-down text-primary me-1"></i> 
-            Sắp xếp: <strong>Đơn mới nhận nhất lên đầu (Mới &rarr; Cũ)</strong>
-        </div>
-        <div class="text-muted small">
-            Đang hiển thị: <strong class="text-dark">${not empty deliveries ? deliveries.size() : 0}</strong> chuyến giao
-        </div>
-    </div>
+    </form>-->
 
     <!-- Deliveries List -->
     <c:choose>
@@ -318,7 +307,9 @@
                                 <!-- PoD Evidence Photo (if DELIVERED) -->
                                 <c:if test="${statusUpper == 'DELIVERED' and not empty del.proofImageUrl}">
                                     <div class="d-flex align-items-center gap-3 p-2 bg-success-subtle rounded-3 mb-3 border border-success-subtle">
-                                        <img src="${del.proofImageUrl}" class="pod-preview-image" alt="Proof of Delivery" onclick="viewImageModal('${del.proofImageUrl}')">
+                                        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}&action=view_pod&deliveryId=${del.deliveryId}" title="Bấm để phóng to ảnh PoD">
+                                            <img src="${del.proofImageUrl}" class="pod-preview-image" alt="Proof of Delivery">
+                                        </a>
                                         <div>
                                             <strong class="text-success small d-block"><i class="bi bi-camera-fill me-1"></i> Bằng chứng giao hàng (PoD)</strong>
                                             <span class="text-muted fs-xs">Bấm vào ảnh để phóng to xác thực chữ ký/ảnh nhận.</span>
@@ -342,7 +333,8 @@
                                         <form method="post" action="${pageContext.request.contextPath}/shipper/deliveries">
                                             <input type="hidden" name="action" value="pickup">
                                             <input type="hidden" name="deliveryId" value="${del.deliveryId}">
-                                            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 rounded-3 shadow-xs" onclick="return confirm('Bạn xác nhận đã nhận đủ kiện hoa quả tươi từ Shop?')">
+                                            <input type="hidden" name="statusFilter" value="${statusFilter}">
+                                            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 rounded-3 shadow-xs">
                                                 <i class="bi bi-box-arrow-in-down me-1"></i> Xác Nhận Đã Lấy Hàng Tại Shop
                                             </button>
                                         </form>
@@ -352,14 +344,14 @@
                                     <c:when test="${statusUpper == 'DELIVERING' or statusUpper == 'IN_TRANSIT'}">
                                         <div class="d-flex flex-column gap-2">
                                             <div class="d-flex gap-2">
-                                                <button type="button" class="btn btn-success flex-grow-1 fw-bold py-2 rounded-3 shadow-xs"
-                                                        onclick="openCompleteModal('${del.deliveryId}', '${del.trackingNumber}', '${del.formattedTotal}', ${del.COD})">
+                                                <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}&action=complete&deliveryId=${del.deliveryId}"
+                                                   class="btn btn-success flex-grow-1 fw-bold py-2 rounded-3 shadow-xs text-decoration-none text-center">
                                                     <i class="bi bi-check-circle-fill me-1"></i> Giao Thành Công (Chụp PoD)
-                                                </button>
-                                                <button type="button" class="btn btn-outline-danger px-3 py-2 rounded-3 fw-semibold"
-                                                        onclick="openFailedModal('${del.deliveryId}', '${del.trackingNumber}')" title="Khách từ chối nhận hoặc quả hỏng">
+                                                </a>
+                                                <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}&action=failed&deliveryId=${del.deliveryId}"
+                                                   class="btn btn-outline-danger px-3 py-2 rounded-3 fw-semibold text-decoration-none text-center" title="Khách từ chối nhận hoặc quả hỏng">
                                                     <i class="bi bi-x-circle"></i> Báo Sự Cố
-                                                </button>
+                                                </a>
                                             </div>
                                             <div class="d-flex justify-content-end align-items-center small text-muted">
                                                 <a href="https://maps.google.com/?q=${del.fullDeliveryAddress}" target="_blank" class="text-decoration-none text-primary fw-semibold">
@@ -401,77 +393,86 @@
 </div>
 
 <!-- ========================================================================
-     MODALS CHO SHIPPER
+     MODALS CHO SHIPPER (100% No-JS - Server-Rendered qua URL Query Params)
      ======================================================================== -->
 
 <!-- 1. Modal Hoàn Tất Giao Hàng & Upload PoD (Proof of Delivery) -->
-<div class="modal fade" id="completeDeliveryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+<c:if test="${param.action eq 'complete' and not empty selectedDelivery}">
+    <div class="nojs-modal-backdrop">
+        <!-- Bấm ra ngoài nền đen để đóng popup (thẻ <a> sạch, không cần JS) -->
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="nojs-modal-backdrop-dismiss" tabindex="-1" aria-label="Đóng popup"></a>
+
+        <div class="nojs-modal-card">
+            <div class="modal-header bg-success text-white px-4 py-3 border-0">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0">
                     <i class="bi bi-camera-fill"></i> Xác Nhận Giao Thành Công
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+                   class="btn-close btn-close-white text-decoration-none" aria-label="Close"></a>
             </div>
+
             <form method="post" action="${pageContext.request.contextPath}/shipper/deliveries" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="complete">
-                <input type="hidden" name="deliveryId" id="completeDeliveryId">
-                <div class="modal-body p-4">
+                <input type="hidden" name="deliveryId" value="${selectedDelivery.deliveryId}">
+                <input type="hidden" name="statusFilter" value="${statusFilter}">
+
+                <div class="p-4">
                     <div class="mb-3">
                         <span class="text-muted small d-block">Mã vận đơn:</span>
-                        <strong class="fs-6 text-dark" id="completeTrackingNumber"></strong>
+                        <strong class="fs-6 text-dark">${not empty selectedDelivery.trackingNumber ? selectedDelivery.trackingNumber : selectedDelivery.subOrderCode} <span class="text-muted fw-normal">(${selectedDelivery.subOrderCode})</span></strong>
+                    </div>
+
+                    <!-- Thông tin người nhận -->
+                    <div class="mb-3 p-2.5 bg-light rounded-3 border text-dark small">
+                        <div><i class="bi bi-person me-1 text-primary"></i> <strong>Khách nhận:</strong> ${selectedDelivery.recipientName} - <strong>${selectedDelivery.recipientPhone}</strong></div>
+                        <div class="text-muted fs-xs mt-1"><i class="bi bi-geo-alt me-1 text-danger"></i> ${selectedDelivery.fullDeliveryAddress}</div>
                     </div>
 
                     <!-- COD Amount Check -->
-                    <div id="completeCodInfoBox" class="alert alert-warning py-2 px-3 rounded-3 mb-3 d-flex align-items-center justify-content-between">
-                        <div>
-                            <i class="bi bi-cash-stack fs-5 me-1 text-danger"></i>
-                            <strong>Số tiền COD cần thu từ khách:</strong>
-                        </div>
-                        <span class="fs-5 fw-bold text-danger" id="completeCodAmount">0₫</span>
-                    </div>
+                    <c:choose>
+                        <c:when test="${selectedDelivery.COD and selectedDelivery.paymentStatus ne 'PAID'}">
+                            <div class="alert alert-warning py-2 px-3 rounded-3 mb-3 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <i class="bi bi-cash-stack fs-5 me-1 text-danger"></i>
+                                    <strong>Số tiền COD cần thu từ khách:</strong>
+                                </div>
+                                <span class="fs-5 fw-bold text-danger">${selectedDelivery.formattedTotal}</span>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="alert alert-success py-2 px-3 rounded-3 mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                                <div class="small">
+                                    <strong>Đơn hàng đã thanh toán Online:</strong> Không thu tiền mặt của khách (0₫).
+                                </div>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
 
-                    <!-- Proof of Delivery Image Selection / Input -->
+                    <!-- Proof of Delivery Image Selection / Input (Native HTML5 Camera Capture) -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-dark d-flex align-items-center justify-content-between">
                             <span><i class="bi bi-camera-fill text-success me-1"></i> Ảnh bằng chứng giao hàng (PoD): <span class="text-danger">*</span></span>
                             <span class="text-muted" style="font-size: 0.7rem;">Hỗ trợ JPG, PNG (tối đa 10MB)</span>
                         </label>
                         
-                        <div class="p-3 border border-2 border-dashed rounded-3 text-center bg-light position-relative" style="border-color: #10b981 !important;">
-                            <input type="file" class="d-none" name="proofImageFile" id="proofImageFile" 
-                                   accept="image/*" capture="environment" onchange="handlePoDFileSelect(this)">
-                            <div id="podUploadPlaceholder" class="py-2" style="cursor: pointer;" onclick="document.getElementById('proofImageFile').click()">
-                                <i class="bi bi-cloud-arrow-up-fill fs-1 text-success d-block mb-1"></i>
-                                <span class="fw-bold text-dark small d-block">Bấm để chụp ảnh hoặc chọn ảnh từ máy</span>
-                                <span class="text-muted" style="font-size: 0.72rem;">Ảnh chụp giỏ hoa quả trao tay khách hoặc chữ ký nhận</span>
-                            </div>
-                            <!-- Khung xem trước ảnh vừa chọn/chụp -->
-                            <div id="podPreviewWrapper" class="d-none position-relative">
-                                <img id="podPreviewImg" src="" alt="PoD Preview" class="img-fluid rounded-3 shadow-sm border" style="max-height: 200px; object-fit: contain;">
-                                <div class="mt-2 d-flex justify-content-center gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="document.getElementById('proofImageFile').click()">
-                                        <i class="bi bi-arrow-repeat me-1"></i> Chọn ảnh khác
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="clearPoDSelection()">
-                                        <i class="bi bi-trash me-1"></i> Xóa ảnh
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="p-3 border border-2 border-dashed rounded-3 text-center bg-light" style="border-color: #10b981 !important;">
+                            <input type="file" name="proofImageFile" id="proofImageFile" 
+                                   accept="image/*" capture="environment" required 
+                                   class="form-control form-control-sm mb-2">
+                            <span class="text-muted d-block" style="font-size: 0.75rem;">
+                                <i class="bi bi-phone me-1"></i> Trên điện thoại, chọn tệp sẽ tự động kích hoạt Camera để chụp ảnh trao hoa quả tươi tận tay khách.
+                            </span>
                         </div>
 
                         <!-- Link URL dự phòng (tùy chọn) -->
                         <div class="mt-2">
-                            <a href="javascript:void(0)" class="text-muted text-decoration-none" style="font-size: 0.72rem;" onclick="document.getElementById('manualUrlBox').classList.toggle('d-none')">
-                                <i class="bi bi-link-45deg me-1"></i> Hoặc nhập link ảnh trực tiếp (tùy chọn)
-                            </a>
-                            <div id="manualUrlBox" class="d-none mt-1">
-                                <input type="text" class="form-control form-control-sm" name="proofImageUrl" id="proofImageUrlInput"
-                                       placeholder="https://..." value="">
-                            </div>
+                            <input type="text" class="form-control form-control-sm" name="proofImageUrl"
+                                   placeholder="Hoặc dán trực tiếp link ảnh PoD (nếu có): https://...">
                         </div>
                     </div>
+
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" id="checkQcInspection" checked required>
                         <label class="form-check-label small text-muted" for="checkQcInspection">
@@ -479,38 +480,48 @@
                         </label>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-success fw-bold rounded-pill px-4">
+
+                <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-end gap-2">
+                    <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+                       class="btn btn-secondary rounded-pill px-4 text-decoration-none">Hủy</a>
+                    <button type="submit" class="btn btn-success fw-bold rounded-pill px-4 shadow-xs">
                         <i class="bi bi-check2-circle me-1"></i> Hoàn Tất Chuyến Giao
                     </button>
                 </div>
             </form>
         </div>
     </div>
-</div>
+</c:if>
 
 <!-- 2. Modal Báo Giao Thất Bại & Kích Hoạt Hoàn Hàng (Record Failed Delivery) -->
-<div class="modal fade" id="failedDeliveryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+<c:if test="${param.action eq 'failed' and not empty selectedDelivery}">
+    <div class="nojs-modal-backdrop">
+        <!-- Bấm ra ngoài nền đen để đóng popup (thẻ <a> sạch, không cần JS) -->
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="nojs-modal-backdrop-dismiss" tabindex="-1" aria-label="Đóng popup"></a>
+
+        <div class="nojs-modal-card">
+            <div class="modal-header bg-danger text-white px-4 py-3 border-0">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2 mb-0">
                     <i class="bi bi-exclamation-triangle-fill"></i> Báo Giao Hàng Thất Bại
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+                   class="btn-close btn-close-white text-decoration-none" aria-label="Close"></a>
             </div>
+
             <form method="post" action="${pageContext.request.contextPath}/shipper/deliveries">
                 <input type="hidden" name="action" value="failed">
-                <input type="hidden" name="deliveryId" id="failedDeliveryId">
-                <div class="modal-body p-4">
+                <input type="hidden" name="deliveryId" value="${selectedDelivery.deliveryId}">
+                <input type="hidden" name="statusFilter" value="${statusFilter}">
+
+                <div class="p-4">
                     <div class="mb-3">
                         <span class="text-muted small d-block">Mã vận đơn:</span>
-                        <strong class="fs-6 text-dark" id="failedTrackingNumber"></strong>
+                        <strong class="fs-6 text-dark">${not empty selectedDelivery.trackingNumber ? selectedDelivery.trackingNumber : selectedDelivery.subOrderCode} <span class="text-muted fw-normal">(${selectedDelivery.subOrderCode})</span></strong>
                     </div>
 
                     <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
-                        <i class="bi bi-info-circle me-1"></i> Khi xác nhận sự cố, đơn hàng sẽ chuyển sang trạng thái <strong>Giao thất bại</strong>.
+                        <i class="bi bi-info-circle me-1"></i> Khi xác nhận sự cố, đơn hàng sẽ chuyển sang trạng thái <strong>Giao thất bại</strong> và hệ thống tự động kích hoạt quy trình Trả hàng/Hoàn tiền.
                     </div>
 
                     <div class="mb-3">
@@ -525,31 +536,38 @@
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger fw-bold rounded-pill px-4" onclick="return confirm('Bạn chắc chắn muốn báo giao thất bại cho đơn này?')">
+
+                <div class="modal-footer bg-light px-4 py-3 border-top d-flex justify-content-end gap-2">
+                    <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+                       class="btn btn-secondary rounded-pill px-4 text-decoration-none">Hủy</a>
+                    <button type="submit" class="btn btn-danger fw-bold rounded-pill px-4 shadow-xs">
                         <i class="bi bi-arrow-return-left me-1"></i> Xác Nhận Trả Hàng
                     </button>
                 </div>
             </form>
         </div>
     </div>
-</div>
+</c:if>
 
 <!-- 3. Modal Phóng To Ảnh PoD -->
-<div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content bg-transparent border-0 text-center">
-            <div class="modal-body p-0 position-relative">
-                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3" data-bs-dismiss="modal"></button>
-                <img id="imageViewModalImg" src="" class="img-fluid rounded-4 shadow-lg border border-3 border-white">
-            </div>
+<c:if test="${param.action eq 'view_pod' and not empty selectedDelivery}">
+    <div class="nojs-modal-backdrop">
+        <!-- Bấm ra ngoài nền đen để đóng popup (thẻ <a> sạch, không cần JS) -->
+        <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+           class="nojs-modal-backdrop-dismiss" tabindex="-1" aria-label="Đóng popup"></a>
+
+        <div class="position-relative text-center z-1" style="max-width: 90vw; max-height: 90vh;">
+            <a href="${pageContext.request.contextPath}/shipper/deliveries?statusFilter=${not empty statusFilter ? statusFilter : 'all'}${not empty keyword ? '&keyword='.concat(keyword) : ''}" 
+               class="btn btn-dark btn-sm rounded-circle position-absolute top-0 end-0 m-2 shadow text-white" style="z-index: 10;" title="Đóng">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            <img src="${selectedDelivery.proofImageUrl}" alt="Bằng chứng giao hàng PoD" 
+                 class="img-fluid rounded-4 shadow-lg border border-3 border-white" style="max-height: 85vh; object-fit: contain;">
         </div>
     </div>
-</div>
+</c:if>
 
-<!-- Bootstrap Bundle & Custom Shipper JS -->
+<!-- Bootstrap Bundle (Cho dropdown navbar nếu cần) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="${pageContext.request.contextPath}/assets/js/shipper.js"></script>
 </body>
 </html>
