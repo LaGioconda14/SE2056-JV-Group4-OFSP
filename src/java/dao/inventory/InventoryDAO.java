@@ -703,9 +703,13 @@ public class InventoryDAO extends DBContext {
         List<InventoryTransaction> historyList = new ArrayList<>();
 
         // Thêm điều kiện t.batch_id = ? để lọc chính xác theo lô
-        String sql = "SELECT it.*, u.full_name AS fullName, u.avatar_url AS userAvatar, u.email AS userEmail "
+        String sql = "SELECT it.*, COALESCE(it.cost_price, pv.price) AS resolved_price, "
+                + "pv.variant_name AS variantName, pv.sku AS variantSku, pb.batch_code AS batchCode, "
+                + "u.full_name AS fullName, u.avatar_url AS userAvatar, u.email AS userEmail "
                 + "FROM inventory_transactions it "
                 + "LEFT JOIN users u ON it.user_id = u.user_id "
+                + "LEFT JOIN product_variants pv ON it.variant_id = pv.variant_id "
+                + "LEFT JOIN product_batches pb ON it.batch_id = pb.batch_id "
                 + "WHERE it.variant_id = ? AND it.batch_id = ? AND it.shop_id = ? "
                 + "ORDER BY it.created_at DESC";
 
@@ -729,6 +733,19 @@ public class InventoryDAO extends DBContext {
                     it.setNewStock(rs.getInt("new_stock"));
                     it.setReason(rs.getString("reason"));
                     it.setCreatedAt(rs.getTimestamp("created_at"));
+                    it.setWasteStage(rs.getString("waste_stage"));
+                    it.setVariantName(rs.getString("variantName"));
+                    it.setSku(rs.getString("variantSku"));
+                    it.setBatchCode(rs.getString("batchCode"));
+
+                    BigDecimal resolvedPrice = rs.getBigDecimal("resolved_price");
+                    BigDecimal estLoss = rs.getBigDecimal("estimated_loss");
+                    int absQty = Math.abs(it.getQuantityChanged());
+                    if (estLoss == null && resolvedPrice != null && absQty > 0) {
+                        estLoss = resolvedPrice.multiply(BigDecimal.valueOf(absQty));
+                    }
+                    it.setCostPrice(resolvedPrice);
+                    it.setEstimatedLoss(estLoss);
 
                     // Map thông tin người thực hiện (JOIN từ bảng users)
                     it.setFullName(rs.getString("fullName"));
@@ -749,19 +766,21 @@ public class InventoryDAO extends DBContext {
      * Kiểm tra xem lô hàng và biến thể có thuộc quyền sở hữu của shop hay không
      */
     public boolean checkBatchBelongsToShop(int variantId, int batchId, int shopId) {
-        String sql = "SELECT 1 FROM product_batches b "
+        String sql = "SELECT TOP 1 b.batch_id "
+                + "FROM product_batches b "
                 + "JOIN product_variants v ON b.variant_id = v.variant_id "
                 + "JOIN products p ON v.product_id = p.product_id "
                 + "WHERE b.batch_id = ? AND v.variant_id = ? AND p.shop_id = ?";
 
-        try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, batchId);
             ps.setInt(2, variantId);
             ps.setInt(3, shopId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // Trả về true nếu tồn tại bản ghi khớp, ngược lại false
+                return rs.next(); // Có dòng trả về => đúng là lô hàng của shop
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -64,6 +64,14 @@ public class InventoryHistoryServlet extends HttpServlet {
                 if ("Quá hạn".equals(b.getStatusText()) || "Cận date".equals(b.getStatusText())) {
                     nearExpiryCount++;
                 }
+                if (b.getBatchId() == batchId) {
+                    request.setAttribute("currentBatch", b);
+                    request.setAttribute("currentBatchCode", b.getBatchCode());
+                    request.setAttribute("currentVariantName", b.getVariantName());
+                    if (productName == null || productName.isBlank()) {
+                        productName = b.getProductName();
+                    }
+                }
                 variantBatchMap.computeIfAbsent(b.getVariantId(), k -> new ArrayList<>()).add(b);
             }
 
