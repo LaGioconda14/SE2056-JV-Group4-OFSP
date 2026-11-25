@@ -185,6 +185,20 @@
 
                         <!-- Cột Phải: Thông Tin & Đặt Hàng -->
                         <div class="lg:col-span-7 flex flex-col justify-between">
+                            <c:set var="selectedVariant" value="${null}" />
+                            <c:if test="${not empty product.variants}">
+                                <c:forEach var="v" items="${product.variants}" varStatus="vStatus">
+                                    <c:if test="${empty selectedVariant and ((not empty param.variantId and param.variantId == v.variantId) or (empty param.variantId and vStatus.first))}">
+                                        <c:set var="selectedVariant" value="${v}" />
+                                    </c:if>
+                                </c:forEach>
+                            </c:if>
+                            <c:set var="initialStock" value="${not empty selectedVariant ? selectedVariant.stockQuantity : product.stockQuantity}" />
+                            <c:set var="initialUnit" value="${not empty selectedVariant and not empty selectedVariant.unit ? selectedVariant.unit : (not empty product.unit ? product.unit : 'kg')}" />
+                            <c:set var="initialPrice" value="${not empty selectedVariant ? selectedVariant.price : product.price}" />
+                            <c:set var="initialOldPrice" value="${not empty selectedVariant ? (selectedVariant.originalPrice != null ? selectedVariant.originalPrice : selectedVariant.price) : product.oldPrice}" />
+                            <c:set var="hasInitialDiscount" value="${initialOldPrice gt initialPrice}" />
+
                             <div>
                                 <!-- Xuất Xứ & Phân Loại -->
                                 <div class="text-[11px] font-bold text-gray-400 tracking-wider uppercase mb-1.5 flex items-center gap-2 flex-wrap">
@@ -226,16 +240,16 @@
                                 <!-- Khung Giá & Tiết Kiệm -->
                                 <div class="flex items-baseline gap-3.5 mb-3 flex-wrap">
                                     <span id="detail-price" class="text-3xl sm:text-4xl font-extrabold text-[#00652c] tracking-tight">
-                                        <fmt:formatNumber value="${product.price}" pattern="#,###" />đ
+                                        <fmt:formatNumber value="${initialPrice}" pattern="#,###" />đ
                                     </span>
                                     <span id="detail-unit" class="text-lg font-bold text-gray-600">
-                                        /${not empty product.unit ? product.unit : 'sản phẩm'}
+                                        /${initialUnit}
                                     </span>
-                                    <span id="detail-old-price" class="text-base sm:text-lg text-gray-400 line-through" style="${product.oldPrice gt product.price ? '' : 'display:none'}">
-                                        <fmt:formatNumber value="${product.oldPrice}" pattern="#,###" />đ/${product.unit}
+                                    <span id="detail-old-price" class="text-base sm:text-lg text-gray-400 line-through" style="${hasInitialDiscount ? '' : 'display:none'}">
+                                        <fmt:formatNumber value="${initialOldPrice}" pattern="#,###" />đ/${initialUnit}
                                     </span>
-                                    <span id="detail-savings-badge" class="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider" style="${product.oldPrice gt product.price ? '' : 'display:none'}">
-                                        Tiết kiệm <fmt:formatNumber value="${product.oldPrice - product.price}" pattern="#,###" />đ (${product.discountPercent}% GIẢM)
+                                    <span id="detail-savings-badge" class="bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider" style="${hasInitialDiscount ? '' : 'display:none'}">
+                                        Tiết kiệm <fmt:formatNumber value="${initialOldPrice - initialPrice}" pattern="#,###" />đ
                                     </span>
                                 </div>
 
@@ -249,11 +263,11 @@
 
                                 <!-- Trạng Thái Tồn Kho Thực Tế Từ DB -->
                                 <div class="flex items-center gap-2 mb-4 text-xs font-semibold text-gray-700">
-                                    <span class="w-2.5 h-2.5 rounded-full ${product.stockQuantity > 0 ? 'bg-emerald-500' : 'bg-red-500'} inline-block animate-pulse"></span>
+                                    <span class="w-2.5 h-2.5 rounded-full ${initialStock > 0 ? 'bg-emerald-500' : 'bg-red-500'} inline-block animate-pulse"></span>
                                     <span id="detail-stock-text">
                                         <c:choose>
-                                            <c:when test="${product.stockQuantity > 0}">
-                                                Còn hàng — Còn ${product.stockQuantity} ${product.unit} trong kho
+                                            <c:when test="${initialStock > 0}">
+                                                Còn hàng — Còn ${initialStock} ${initialUnit} trong kho
                                             </c:when>
                                             <c:otherwise>
                                                 Tạm hết hàng
@@ -281,11 +295,12 @@
                                         <c:choose>
                                             <c:when test="${not empty product.variants}">
                                                 <c:forEach var="variant" items="${product.variants}" varStatus="vStatus">
-                                                    <c:set var="isVarActive" value="${(not empty param.variantId and param.variantId == variant.variantId) or (empty param.variantId and vStatus.first)}" />
+                                                    <c:set var="isVarActive" value="${(not empty selectedVariant and selectedVariant.variantId == variant.variantId) or (empty selectedVariant and vStatus.first)}" />
                                                     <fmt:formatDate value="${variant.promotionEndDate}" pattern="HH:mm dd/MM/yyyy" var="variantPromotionEnd" />
                                                     <div onclick="selectPackageVariant(${variant.variantId}, ${variant.price}, '${variant.unit}', ${variant.stockQuantity}, ${variant.originalPrice != null ? variant.originalPrice : variant.price}, this)" 
                                                          data-variant-id="${variant.variantId}"
                                                          data-stock="${variant.stockQuantity}"
+                                                         data-unit="${variant.unit}"
                                                          data-promotion-id="${variant.promotionId}"
                                                          data-promotion-name="${fn:escapeXml(variant.promotionName)}"
                                                          data-promotion-label="${fn:escapeXml(variant.promotionLabel)}"
@@ -318,7 +333,7 @@
                             <form id="order-form" action="${pageContext.request.contextPath}/cart/add" method="POST" class="pt-4 border-t border-gray-100 space-y-3">
                                 <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}" />
                                 <input type="hidden" name="returnUrl" value="/detail?id=${product.id}" />
-                                <input type="hidden" id="selected-variant-id" name="variantId" value="${not empty param.variantId ? param.variantId : (not empty product.variants ? product.variants[0].variantId : (not empty product.defaultVariantId ? product.defaultVariantId : 1))}" />
+                                <input type="hidden" id="selected-variant-id" name="variantId" value="${not empty selectedVariant ? selectedVariant.variantId : (not empty param.variantId ? param.variantId : (not empty product.defaultVariantId ? product.defaultVariantId : 1))}" />
                                 
                                 <!-- Hàng 1: Bộ Tăng Giảm Số Lượng + Nút Thêm Vào Giỏ Hàng + Yêu Thích + Chia Sẻ -->
                                 <div class="flex items-center gap-3">
@@ -327,19 +342,19 @@
                                         <button type="button" onclick="adjustQuantity(-1)" class="w-10 h-10 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-black text-lg flex items-center justify-center transition shadow-sm">
                                             -
                                         </button>
-                                        <input type="number" id="buy-quantity" name="quantity" value="1" min="1" max="99" 
-                                               onchange="recalculateCartTotal()" class="w-12 text-center bg-transparent font-extrabold text-sm text-gray-900 outline-none">
+                                        <input type="number" id="buy-quantity" name="quantity" value="1" min="1" max="${initialStock > 0 ? initialStock : 1}" 
+                                               onchange="recalculateCartTotal()" class="w-12 text-center bg-transparent font-extrabold text-sm text-gray-900 outline-none" ${initialStock <= 0 ? 'disabled' : ''}>
                                         <button type="button" onclick="adjustQuantity(1)" class="w-10 h-10 rounded-xl bg-white hover:bg-gray-50 text-gray-700 font-black text-lg flex items-center justify-center transition shadow-sm">
                                             +
                                         </button>
                                     </div>
 
                                     <!-- Nút Thêm Vào Giỏ Hàng -->
-                                    <button type="submit" id="btn-add-to-cart" name="action" value="addToCart" class="flex-1 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold py-3.5 px-5 rounded-2xl transition shadow-lg shadow-emerald-900/15 flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">
+                                    <button type="submit" id="btn-add-to-cart" name="action" value="addToCart" class="flex-1 bg-[#00652c] hover:bg-[#005323] text-white font-extrabold py-3.5 px-5 rounded-2xl transition shadow-lg shadow-emerald-900/15 flex items-center justify-center gap-2 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400" ${initialStock <= 0 ? 'disabled' : ''}>
                                         <i class="fa-solid fa-cart-plus text-base"></i>
-                                        <span id="btn-add-to-cart-text">Thêm Vào Giỏ Hàng</span>
+                                        <span id="btn-add-to-cart-text">${initialStock <= 0 ? 'Tạm Hết Hàng' : 'Thêm Vào Giỏ Hàng'}</span>
                                         <span>•</span>
-                                        <span id="cart-btn-total"><fmt:formatNumber value="${product.price}" pattern="#,###"/>đ</span>
+                                        <span id="cart-btn-total"><fmt:formatNumber value="${initialPrice}" pattern="#,###"/>đ</span>
                                     </button>
 
                                     <!-- Nút Chia Sẻ Liên Kết (Lưu URL vào bộ nhớ tạm) -->
@@ -351,9 +366,9 @@
                                 <!-- Hàng 2: Nút Mua Ngay -->
                                 <button type="submit" id="btn-buy-now" name="checkoutMode" value="buyNow"
                                         formaction="${pageContext.request.contextPath}/checkout"
-                                        class="w-full bg-[#9a3412] hover:bg-[#7c2d12] text-white font-extrabold py-3.5 px-6 rounded-2xl transition shadow-md shadow-orange-900/20 flex items-center justify-center gap-2 text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400">
+                                        class="w-full bg-[#9a3412] hover:bg-[#7c2d12] text-white font-extrabold py-3.5 px-6 rounded-2xl transition shadow-md shadow-orange-900/20 flex items-center justify-center gap-2 text-sm tracking-wide disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-400" ${initialStock <= 0 ? 'disabled' : ''}>
                                     <i class="fa-solid fa-bolt text-amber-300"></i>
-                                    <span id="btn-buy-now-text">Mua Ngay</span>
+                                    <span id="btn-buy-now-text">${initialStock <= 0 ? 'Tạm Hết Hàng' : 'Mua Ngay'}</span>
                                 </button>
                             </form>
 
@@ -516,10 +531,10 @@
 
                                 <div class="flex flex-col sm:flex-row sm:items-center">
                                     <span class="w-full sm:w-56 text-gray-400 shrink-0 mb-1 sm:mb-0">Tình trạng kho</span>
-                                    <span class="text-emerald-700 font-bold uppercase">
+                                    <span id="detail-stock-status" class="text-emerald-700 font-bold uppercase">
                                         <c:choose>
-                                            <c:when test="${product.stockQuantity > 0}">
-                                                CÒN HÀNG (${product.stockQuantity} ${product.unit})
+                                            <c:when test="${initialStock > 0}">
+                                                CÒN HÀNG (${initialStock} ${initialUnit})
                                             </c:when>
                                             <c:otherwise>
                                                 TẠM HẾT HÀNG
