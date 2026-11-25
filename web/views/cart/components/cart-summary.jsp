@@ -1,6 +1,9 @@
 <%@page pageEncoding="UTF-8"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%-- cart.items là các dòng trong giỏ; productsUrl và checkoutUrl dẫn tới cửa hàng và xử lý thanh toán. --%>
+<%-- Các giá trị data-*, id trên thanh tổng kết giúp JavaScript tìm phần tử cần cập nhật. --%>
+<%-- Thanh tổng kết cố định: chọn sản phẩm, xem tổng tiền và chuyển đến thanh toán. --%>
 <div class="sticky bottom-0 z-30 overflow-hidden rounded-2xl border border-gray-200 bg-white/95 shadow-[0_-10px_35px_rgba(15,23,42,0.14)] backdrop-blur-xl">
     <div class="flex flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex flex-wrap items-center gap-5 text-sm">
@@ -10,6 +13,7 @@
             <a href="<c:out value='${productsUrl}'/>" class="text-[#00652c] font-medium hover:underline">Tiếp tục mua hàng</a>
             <span data-selected-summary-count aria-live="polite" class="text-gray-600 text-xs sm:text-sm">Đã chọn: <strong class="text-gray-900 font-bold">0/<c:out value="${cart.items.size()}"/> món</strong></span>
         </div>
+        <%-- Tổng tiền ban đầu bằng 0; JavaScript cập nhật theo sản phẩm được chọn. --%>
         <div class="flex items-center justify-between gap-5 lg:justify-end">
             <div class="text-right">
                 <div class="text-xs text-gray-500">Tổng tiền hàng (<span id="items-count-text">0 món</span>)</div>
@@ -17,6 +21,7 @@
                     <fmt:formatNumber value="0" type="currency" currencyCode="VND" maxFractionDigits="0"/>
                 </strong>
             </div>
+            <%-- Nút thanh toán ban đầu bị khóa khi chưa chọn sản phẩm. --%>
             <button type="button" data-cart-action="checkout" id="btn-checkout" disabled aria-disabled="true" 
                     class="inline-flex min-w-[200px] items-center justify-center gap-2 rounded-xl bg-[#00652c] hover:bg-[#005323] px-6 py-3.5 font-bold text-white shadow-md transition disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 disabled:shadow-none cursor-pointer">
                 <span id="btn-checkout-label">Chọn món để mua</span>
@@ -30,6 +35,8 @@
     <c:if test="${not empty sessionScope.cartCsrfToken}">
         <input type="hidden" name="csrfToken" value="${sessionScope.cartCsrfToken}">
     </c:if>
+    <%-- couponCode ban đầu rỗng; replaceShopCoupons được gửi với giá trị true. --%>
+    <%-- checkout-form-items là nơi JavaScript thêm các ID dòng hàng đã chọn trước khi gửi. --%>
     <input type="hidden" name="couponCode" id="checkout-form-coupon" value="">
     <input type="hidden" name="replaceShopCoupons" value="true">
     <div id="checkout-form-items"></div>

@@ -1,18 +1,22 @@
 (() => {
+    // Định dạng tiền theo kiểu Việt Nam, đơn vị VND và không có phần thập phân.
     const currency = new Intl.NumberFormat('vi-VN', {
         style: 'currency',
         currency: 'VND',
         maximumFractionDigits: 0
     });
 
+    // Lưu phần tử giỏ hàng và nút đã mở hộp thoại để trả lại tiêu điểm khi đóng.
     let cart;
     let lastVariantTrigger = null;
 
+    // Chuyển giá trị sang số; trả về 0 nếu không phải số hữu hạn.
     function numberValue(value) {
         const parsed = Number(value);
         return Number.isFinite(parsed) ? parsed : 0;
     }
 
+    // Làm tròn và giới hạn số lượng trong khoảng min, max của ô nhập.
     function clampQuantity(input) {
         const minimum = numberValue(input.min) || 1;
         const maximum = input.max ? numberValue(input.max) : Number.MAX_SAFE_INTEGER;
@@ -21,6 +25,7 @@
         return Number(input.value);
     }
 
+    // Lấy các dòng sản phẩm; chỉ dòng có trạng thái AVAILABLE mới được mua.
     function rows() {
         return cart ? Array.from(cart.querySelectorAll('[data-cart-row]')) : [];
     }
@@ -36,10 +41,12 @@
         const type = row.dataset.promoType;
         if (!type) return gross;
         const remain = numberValue(row.dataset.promoRemain);   // -1 = không giới hạn suất
+        // Chỉ áp dụng giảm giá cho số lượng còn trong hạn mức khuyến mãi.
         const units = remain >= 0 ? Math.min(qty, remain) : qty;
         if (units <= 0) return gross;
         const value = numberValue(row.dataset.promoValue);
         const max = numberValue(row.dataset.promoMax);
+        // Tính mức giảm cho một đơn vị theo loại khuyến mãi, không vượt quá giá bán.
         const perUnit = () => {
             let d;
             if (type === 'FIXED_AMOUNT' || type === 'TIME_WINDOW') d = value;
@@ -48,6 +55,7 @@
             return Math.max(0, Math.min(d, price));
         };
         let discount = 0;
+        // Khuyến mãi theo số lượng chỉ áp dụng khi đạt số lượng tối thiểu.
         if (type === 'VOLUME') {
             if (qty >= numberValue(row.dataset.promoMin)) discount = perUnit() * units;
         } else {
@@ -56,6 +64,7 @@
         return Math.max(0, gross - Math.min(discount, gross));
     }
 
+    // Lấy số lượng hợp lệ của dòng; dùng 1 nếu dòng không có ô nhập.
     function rowQuantity(row) {
         const input = row.querySelector('[data-quantity-input]');
         return input ? clampQuantity(input) : 1;
@@ -82,6 +91,7 @@
         return {items, subtotal, shopSubtotals};
     }
 
+    // Đồng bộ checkbox chọn tất cả và checkbox từng shop với các dòng được chọn.
     function updateCheckboxes() {
         const itemCheckboxes = purchasableRows().map(row => row.querySelector('[data-cart-item]')).filter(Boolean);
         const selectedCount = itemCheckboxes.filter(checkbox => checkbox.checked).length;
@@ -102,6 +112,7 @@
         });
     }
 
+    // Cập nhật thành tiền từng dòng, số món đã chọn, tổng tiền và nút mua hàng.
     function updateSummary() {
         if (!cart) return;
         purchasableRows().forEach(row => {
@@ -134,6 +145,7 @@
         if (totalOutput) totalOutput.textContent = currency.format(currentSnapshot.subtotal);
     }
 
+    // Nút cộng/trừ thay đổi số lượng trên giao diện; cần lưu riêng để cập nhật server.
     function changeQuantity(button, offset) {
         const row = button.closest('[data-cart-row]');
         const input = row && row.querySelector('[data-quantity-input]');
@@ -143,6 +155,7 @@
         updateSummary();
     }
 
+    // Mở hoặc đóng hộp thoại chọn phân loại tương ứng với mã dòng giỏ hàng.
     function openVariant(button) {
         const itemId = button.dataset.itemId;
         const dialog = document.getElementById('variant-dialog-' + itemId);
@@ -157,6 +170,7 @@
         if (dialog && dialog.open) dialog.close();
     }
 
+    // Hiện hoặc ẩn bảng thông báo và cập nhật trạng thái hỗ trợ truy cập.
     function toggleNotifications(button) {
         const popover = document.getElementById('header-noti-popover');
         if (!popover) return;
@@ -172,6 +186,7 @@
             window.alert('Vui lòng chọn ít nhất một sản phẩm để mua hàng!');
             return;
         }
+        // So sánh số lượng hiện tại với số lượng đã lưu trước khi thanh toán.
         const dirty = currentSnapshot.items.some(item => {
             const row = cart.querySelector('[data-cart-row][data-item-id="' + CSS.escape(item.itemId) + '"]');
             const input = row && row.querySelector('[data-quantity-input]');
@@ -192,6 +207,7 @@
         form.submit();
     }
 
+    // Tạo trường ẩn để đưa ID sản phẩm đã chọn vào biểu mẫu thanh toán.
     function hiddenInput(name, value) {
         const input = document.createElement('input');
         input.type = 'hidden';
@@ -200,6 +216,7 @@
         return input;
     }
 
+    // Dựa vào data-cart-action để xử lý các nút thông qua một sự kiện click chung.
     function handleAction(event) {
         const button = event.target.closest('[data-cart-action]');
         if (!button) return;
@@ -213,6 +230,7 @@
         if (action === 'clear-notifications') document.getElementById('header-noti-badge')?.classList.add('hidden');
     }
 
+    // Chọn tất cả, chọn theo shop hoặc cập nhật khi checkbox/số lượng thay đổi.
     function handleChange(event) {
         if (event.target.matches('[data-select-all]')) {
             purchasableRows().forEach(row => { row.querySelector('[data-cart-item]').checked = event.target.checked; });
@@ -225,6 +243,7 @@
         updateSummary();
     }
 
+    // Khởi tạo sự kiện khi trang có vùng giỏ hàng.
     function init() {
         cart = document.querySelector('[data-cart]');
         if (!cart) return;
@@ -233,6 +252,7 @@
         cart.addEventListener('input', event => {
             if (event.target.matches('[data-quantity-input]')) updateSummary();
         });
+        // Đóng hộp thoại khi bấm bên ngoài và trả tiêu điểm về nút đã mở.
         document.querySelectorAll('[data-variant-dialog]').forEach(dialog => {
             dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
             dialog.addEventListener('close', () => {
@@ -242,6 +262,7 @@
                 lastVariantTrigger = null;
             });
         });
+        // Đóng bảng thông báo khi bấm ra ngoài hoặc nhấn Escape.
         document.addEventListener('click', event => {
             const container = document.getElementById('header-noti-container');
             const popover = document.getElementById('header-noti-popover');
@@ -264,6 +285,7 @@
         updateSummary();
     }
 
+    // Cung cấp các thao tác giỏ hàng cho mã khác và cập nhật lại khi trang được hiển thị.
     window.CartPage = {formatCurrency: value => currency.format(numberValue(value)), snapshot, recalculate: updateSummary};
     window.addEventListener('pageshow', updateSummary);
     document.addEventListener('DOMContentLoaded', init);

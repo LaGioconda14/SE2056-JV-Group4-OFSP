@@ -6,10 +6,12 @@
 (() => {
     'use strict';
 
+    // Lay cau hinh checkout do JSP cung cap; dung doi tuong rong neu chua co.
     function getConfig() {
         return window.CHECKOUT_CONFIG || {};
     }
 
+    // Gui lai form den checkout de xu ly dia chi hoac voucher va cap nhat don nhap.
     function submitCheckoutAction(action, values) {
         values = values || {};
         const form = document.getElementById('checkout-form');
@@ -30,6 +32,7 @@
         form.submit();
     }
 
+    // Mo va dong hop thoai chon dia chi nhan hang.
     function openAddressModal() {
         document.getElementById('address-modal')?.showModal();
     }
@@ -39,6 +42,7 @@
         if (dialog) dialog.close();
     }
 
+    // Kiem tra dia chi moi hoac hien thi dia chi da chon truoc khi gui len server.
     function confirmAddressSelection() {
         const selected = document.querySelector('input[name="addressSelection"]:checked');
         if (!selected) {
@@ -79,6 +83,7 @@
         submitCheckoutAction('selectAddress');
     }
 
+    // Luu shop dang mo voucher va dinh dang so tien theo VND.
     let currentModalShopId = null;
 
     function formatVND(amount) {
@@ -86,6 +91,7 @@
         return Number(amount).toLocaleString('vi-VN') + '₫';
     }
 
+    // Tao danh sach voucher theo shop, trang thai da ap dung va dieu kien don hang.
     function openShopVoucherModal(shopId, shopName, shopSubtotal) {
         currentModalShopId = String(shopId);
         const dialog = document.getElementById('shop-voucher-modal');
@@ -193,6 +199,7 @@
         if (dialog) dialog.showModal();
     }
 
+    // Dong hop thoai, ap dung hoac xoa voucher cua shop.
     function closeShopVoucherModal() {
         const dialog = document.getElementById('shop-voucher-modal');
         if (dialog) dialog.close();
@@ -218,6 +225,7 @@
         submitCheckoutAction('removeShopCoupon', {targetShopId: shopId});
     }
 
+    // Quan ly hop thoai va cac thao tac ap dung, xoa voucher san.
     function openCheckoutVoucherModal() {
         const dialog = document.getElementById('checkout-voucher-modal');
         if (dialog) dialog.showModal();
@@ -243,6 +251,7 @@
         submitCheckoutAction('removeCoupon');
     }
 
+    // Tao ngay giao hang va cac khung gio cho phep chon tren giao dien.
     function initDeliverySlotSystem() {
         const dateTabsContainer = document.getElementById('delivery-date-tabs');
         const slotsGridContainer = document.getElementById('delivery-slots-grid');
@@ -283,6 +292,7 @@
         let selectedDate = (inputDeliveryDate && inputDeliveryDate.value) ? inputDeliveryDate.value : dates[0].dateStr;
         let selectedSlotCode = (inputDeliverySlot && inputDeliverySlot.value) ? inputDeliverySlot.value : '';
 
+        // Ve danh sach ngay; khi doi ngay thi tinh lai cac khung gio.
         function renderDateTabs() {
             dateTabsContainer.innerHTML = '';
             dates.forEach(d => {
@@ -304,6 +314,7 @@
             });
         }
 
+        // Khung gio da bat dau trong ngay hien tai se khong con kha dung.
         function evaluateAndRenderSlots() {
             const now = new Date();
             const isCurrentDateToday = (selectedDate === dates[0].dateStr);
@@ -331,6 +342,7 @@
             renderSlots(computedSlots);
         }
 
+        // Hien thi khung gio va cap nhat gia tri duoc gui trong form.
         function renderSlots(slots) {
             slotsGridContainer.innerHTML = '';
             slots.forEach(slot => {
@@ -383,6 +395,7 @@
         evaluateAndRenderSlots();
     }
 
+    // Dong bo giao dien khi doi phuong thuc thanh toan va kiem tra khung gio.
     function initPaymentMethodToggles() {
         const paymentLabels = document.querySelectorAll('.payment-method-pill');
         const submitBtn = document.getElementById('submit-order-btn');
@@ -437,6 +450,7 @@
         }
     }
 
+    // Gan cac su kien gui form, nhap voucher va dong hop thoai.
     function initListeners() {
         document.getElementById('checkoutCitySelect')?.addEventListener('change', () => submitCheckoutAction('selectProvince'));
 
@@ -502,6 +516,7 @@
     }
 
     // Xuất các hàm để các nút onclick trong HTML tiếp tục hoạt động
+    // Cong khai cac ham duoc goi tu thuoc tinh su kien trong JSP.
     window.submitCheckoutAction = submitCheckoutAction;
     window.openAddressModal = openAddressModal;
     window.closeAddressModal = closeAddressModal;
@@ -517,6 +532,7 @@
     window.applyManualCoupon = applyManualCoupon;
     window.removeCheckoutCoupon = removeCheckoutCoupon;
 
+    // Khoi tao giao dien sau khi tai xong noi dung trang.
     document.addEventListener('DOMContentLoaded', () => {
         initDeliverySlotSystem();
         initPaymentMethodToggles();

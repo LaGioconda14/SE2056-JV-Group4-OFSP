@@ -1,5 +1,8 @@
 <%@page pageEncoding="UTF-8"%>
+<%-- shopEntry.key là mã shop, shop.shopName là tên shop và shopItems là danh sách dòng hàng của shop. --%>
+<%-- Nhóm các sản phẩm thuộc cùng một shop trong giỏ hàng. --%>
 <section class="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-xs" data-shop-group="${shopEntry.key}">
+    <%-- Chọn sản phẩm theo shop và liên kết đến trang của shop. --%>
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4 bg-gray-50/50">
         <div class="flex items-center gap-3">
             <label class="flex items-center cursor-pointer">
@@ -14,7 +17,9 @@
     </div>
     <%-- Dòng không khả dụng vẫn hiển thị để đổi biến thể/xóa nhưng checkbox mua hàng bị khóa. --%>
     <c:forEach var="item" items="${shopItems}">
+        <%-- available là true khi trạng thái sản phẩm bằng AVAILABLE; eq nghĩa là bằng. --%>
         <c:set var="available" value="${item.availabilityStatus eq 'AVAILABLE'}"/>
+        <%-- Ghép giao diện sản phẩm; NOT_FOUND biểu thị sản phẩm không còn tồn tại nên không tạo hộp đổi phân loại. --%>
         <%@ include file="cart-item.jsp" %>
         <c:if test="${item.availabilityStatus ne 'NOT_FOUND'}"><%@ include file="variant-dialog.jsp" %></c:if>
     </c:forEach>

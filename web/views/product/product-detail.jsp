@@ -931,14 +931,15 @@
 
         <!-- JAVASCRIPT ĐIỀU KHIỂN CHI TIẾT SẢN PHẨM HOÀN TOÀN BẰNG TIẾNG VIỆT -->
         <script>
-            let currentUnitPrice = Number("${not empty product.price ? product.price : 0}");
+            let currentUnitPrice = Number("${initialPrice}");
             const baseUnitPrice = currentUnitPrice;
             const currencyFormatter = new Intl.NumberFormat('vi-VN');
-            let currentStock = Number("${not empty product.variants ? product.variants[0].stockQuantity : (not empty product.stockQuantity ? product.stockQuantity : 0)}");
+            let currentStock = Number("${initialStock}");
 
             function updateStockAndButtons(stock, unit) {
                 currentStock = Number(stock);
                 const stockText = document.getElementById('detail-stock-text');
+                const stockStatus = document.getElementById('detail-stock-status');
                 const addToCartBtn = document.getElementById('btn-add-to-cart');
                 const addToCartText = document.getElementById('btn-add-to-cart-text');
                 const buyNowBtn = document.getElementById('btn-buy-now');
@@ -947,9 +948,17 @@
 
                 if (stockText) {
                     if (currentStock > 0) {
-                        stockText.textContent = 'Còn hàng — Còn ' + currentStock + ' ' + (unit || '${product.unit}') + ' trong kho';
+                        stockText.textContent = 'Còn hàng — Còn ' + currentStock + ' ' + (unit || '${initialUnit}') + ' trong kho';
                     } else {
                         stockText.textContent = 'Tạm hết hàng';
+                    }
+                }
+
+                if (stockStatus) {
+                    if (currentStock > 0) {
+                        stockStatus.textContent = 'CÒN HÀNG (' + currentStock + ' ' + (unit || '${initialUnit}') + ')';
+                    } else {
+                        stockStatus.textContent = 'TẠM HẾT HÀNG';
                     }
                 }
 
@@ -1236,18 +1245,17 @@
             document.addEventListener('DOMContentLoaded', function () {
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetVariantId = urlParams.get('variantId');
+                let targetCard = null;
                 if (targetVariantId) {
-                    const targetCard = document.querySelector('.variant-card[data-variant-id="' + targetVariantId + '"]');
-                    if (targetCard) {
-                        targetCard.click();
-                    }
+                    targetCard = document.querySelector('.variant-card[data-variant-id="' + targetVariantId + '"]');
+                }
+                if (!targetCard) {
+                    targetCard = document.querySelector('.variant-card.selected') || document.querySelector('.variant-card');
+                }
+                if (targetCard) {
+                    targetCard.click();
                 } else {
-                    const activeVariantCard = document.querySelector('.variant-card.selected');
-                    if (activeVariantCard && activeVariantCard.dataset.stock !== undefined) {
-                        currentStock = Number(activeVariantCard.dataset.stock);
-                    }
-                    if (activeVariantCard) updatePromotionNotice(activeVariantCard);
-                    updateStockAndButtons(currentStock, '${product.unit}');
+                    updateStockAndButtons(currentStock, '${initialUnit}');
                 }
                 recalculateCartTotal();
                 const toast = document.getElementById('product-toast');

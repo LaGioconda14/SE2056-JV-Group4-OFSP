@@ -17,7 +17,8 @@
     <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <!-- Tailwind CSS CDN (Non-blocking) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"
+          rel="stylesheet">
     <link href="<c:out value='${checkoutCssUrl}'/>" rel="stylesheet">
     <style>
         .page-main.confirmation-main {
@@ -41,22 +42,46 @@
 
 <main class="page-main confirmation-main flex-1">
     <div class="shell confirmation-shell">
-        <nav class="stepper" aria-label="Tiến trình thanh toán"><div class="step complete"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Giỏ hàng</span></div><span class="step-line active"></span><div class="step complete"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Thanh toán</span></div><span class="step-line active"></span><div class="step complete current" aria-current="step"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Hoàn tất</span></div></nav>
+        <%-- Các bước thanh toán đã hoàn tất. --%>
+        <nav class="stepper" aria-label="Tiến trình thanh toán"><%--
+            --%><div class="step complete"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Giỏ hàng</span></div><%--
+            --%><span class="step-line active"></span><%--
+            --%><div class="step complete"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Thanh toán</span></div><%--
+            --%><span class="step-line active"></span><%--
+            --%><div class="step complete current" aria-current="step"><span class="step-dot"><span class="material-symbols-outlined">check</span></span><span>Hoàn tất</span></div><%--
+        --%></nav>
 
         <c:choose>
             <c:when test="${empty order}">
-                <section class="empty-state"><span class="material-symbols-outlined">receipt_long</span><h1>Không tìm thấy đơn hàng</h1><p>Thông tin đơn hàng không khả dụng.</p><a class="primary-button" href="<c:out value='${homeUrl}'/>">Về trang chủ</a></section>
+                <%-- Trường hợp không có đơn hàng để hiển thị. --%>
+                <section class="empty-state"><span class="material-symbols-outlined">receipt_long</span><%--
+                    --%><h1>Không tìm thấy đơn hàng</h1><p>Thông tin đơn hàng không khả dụng.</p><%--
+                    --%><a class="primary-button" href="<c:out value='${homeUrl}'/>">Về trang chủ</a></section>
             </c:when>
             <c:otherwise>
                 <%-- Thông điệp theo tham số return chỉ phục vụ hiển thị; trạng thái thanh toán bên dưới lấy từ đơn đã tải. --%>
                 <section class="success-hero">
-                    <div class="success-icon"><span class="material-symbols-outlined"><c:choose><c:when test="${param.payment eq 'failed' or param.payment eq 'invalid'}">error</c:when><c:otherwise>check</c:otherwise></c:choose></span></div>
-                    <p class="eyebrow"><c:choose><c:when test="${param.payment eq 'success'}">Thanh toán thành công</c:when><c:when test="${param.payment eq 'failed'}">Thanh toán chưa thành công</c:when><c:when test="${param.payment eq 'invalid'}">Kết quả thanh toán không hợp lệ</c:when><c:otherwise>Đặt hàng thành công</c:otherwise></c:choose></p>
-                    <h1><c:choose><c:when test="${param.payment eq 'success'}">VNPAY đã xác nhận thanh toán!</c:when><c:when test="${param.payment eq 'failed' or param.payment eq 'invalid'}">Đơn hàng đã được ghi nhận</c:when><c:otherwise>Cảm ơn bạn đã mua hàng!</c:otherwise></c:choose></h1>
-                    <p><c:choose><c:when test="${not empty sessionScope.orderSuccess}"><c:out value="${sessionScope.orderSuccess}"/></c:when><c:otherwise>Đơn hàng của bạn đã được Gốc Vườn tiếp nhận.</c:otherwise></c:choose></p>
-                    <c:if test="${order.paymentStatus eq 'PENDING' and order.paymentMethod eq 'CARD'}"><p>Đơn hàng đã được ghi nhận, thanh toán chưa hoàn tất. Không có khoản thanh toán thẻ nào được thực hiện tại trang này.</p></c:if>
-                    <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'failed'}"><p>VNPAY chưa ghi nhận thanh toán thành công. Bạn có thể thực hiện lại thanh toán từ đơn hàng của mình.</p></c:if>
-                    <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'invalid'}"><p>Không thể xác minh chữ ký phản hồi từ VNPAY. Trạng thái thanh toán không được thay đổi.</p></c:if>
+                    <div class="success-icon"><span class="material-symbols-outlined"><c:choose><%--
+                        --%><c:when test="${param.payment eq 'failed' or param.payment eq 'invalid'}">error</c:when><%--
+                        --%><c:otherwise>check</c:otherwise></c:choose></span></div>
+                    <p class="eyebrow"><c:choose><%--
+                        --%><c:when test="${param.payment eq 'success'}">Thanh toán thành công</c:when><%--
+                        --%><c:when test="${param.payment eq 'failed'}">Thanh toán chưa thành công</c:when><%--
+                        --%><c:when test="${param.payment eq 'invalid'}">Kết quả thanh toán không hợp lệ</c:when><%--
+                        --%><c:otherwise>Đặt hàng thành công</c:otherwise></c:choose></p>
+                    <h1><c:choose><%--
+                        --%><c:when test="${param.payment eq 'success'}">VNPAY đã xác nhận thanh toán!</c:when><%--
+                        --%><c:when test="${param.payment eq 'failed' or param.payment eq 'invalid'}">Đơn hàng đã được ghi nhận</c:when><%--
+                        --%><c:otherwise>Cảm ơn bạn đã mua hàng!</c:otherwise></c:choose></h1>
+                    <p><c:choose><%--
+                        --%><c:when test="${not empty sessionScope.orderSuccess}"><c:out value="${sessionScope.orderSuccess}"/></c:when><%--
+                        --%><c:otherwise>Đơn hàng của bạn đã được Gốc Vườn tiếp nhận.</c:otherwise></c:choose></p>
+                    <c:if test="${order.paymentStatus eq 'PENDING' and order.paymentMethod eq 'CARD'}"><%--
+                        --%><p>Đơn hàng đã được ghi nhận, thanh toán chưa hoàn tất. Không có khoản thanh toán thẻ nào được thực hiện tại trang này.</p></c:if>
+                    <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'failed'}"><%--
+                        --%><p>VNPAY chưa ghi nhận thanh toán thành công. Bạn có thể thực hiện lại thanh toán từ đơn hàng của mình.</p></c:if>
+                    <c:if test="${order.paymentMethod eq 'VNPAY' and param.payment eq 'invalid'}"><%--
+                        --%><p>Không thể xác minh chữ ký phản hồi từ VNPAY. Trạng thái thanh toán không được thay đổi.</p></c:if>
                     <%-- Thử thanh toán lại dùng orderId; endpoint tạo thanh toán phải tự kiểm tra chủ đơn/trạng thái. --%>
                     <c:if test="${order.paymentMethod eq 'VNPAY' and (param.payment eq 'failed' or param.payment eq 'invalid')}">
                         <div class="mt-3 mb-2">
@@ -73,65 +98,118 @@
 
                 <div class="confirmation-grid">
                     <div class="confirmation-content">
+                        <%-- Sản phẩm và chi phí được nhóm theo shop. --%>
                         <section class="panel">
                             <div class="panel-heading"><span class="panel-icon material-symbols-outlined">inventory_2</span><div><p class="section-kicker">Chi tiết đơn hàng</p><h2>Sản phẩm đã đặt</h2></div></div>
                             <c:forEach var="subOrder" items="${order.subOrders}">
                                 <div class="shop-block">
-                                    <div class="shop-heading"><span><span class="material-symbols-outlined">storefront</span><strong><c:out value="${subOrder.shopName}"/></strong></span><span class="order-status"><c:choose><c:when test="${subOrder.status eq 'NEW'}">Chờ Shop xác nhận</c:when><c:when test="${subOrder.status eq 'PACKING'}">Đang đóng gói</c:when><c:when test="${subOrder.status eq 'SHIPPING'}">Đang giao hàng</c:when><c:when test="${subOrder.status eq 'DELIVERED'}">Đã giao hàng</c:when><c:when test="${subOrder.status eq 'CANCELLED'}">Đã hủy</c:when><c:otherwise><c:out value="${subOrder.status}"/></c:otherwise></c:choose></span></div>
+                                    <%-- Trạng thái xử lý của từng shop. --%>
+                                    <div class="shop-heading"><span><span class="material-symbols-outlined">storefront</span><%--
+                                        --%><strong><c:out value="${subOrder.shopName}"/></strong></span><span class="order-status"><c:choose><%--
+                                        --%><c:when test="${subOrder.status eq 'NEW'}">Chờ Shop xác nhận</c:when><%--
+                                        --%><c:when test="${subOrder.status eq 'PACKING'}">Đang đóng gói</c:when><%--
+                                        --%><c:when test="${subOrder.status eq 'SHIPPING'}">Đang giao hàng</c:when><%--
+                                        --%><c:when test="${subOrder.status eq 'DELIVERED'}">Đã giao hàng</c:when><%--
+                                        --%><c:when test="${subOrder.status eq 'CANCELLED'}">Đã hủy</c:when><%--
+                                        --%><c:otherwise><c:out value="${subOrder.status}"/></c:otherwise></c:choose></span></div>
                                     <div class="confirmed-items">
                                         <c:forEach var="item" items="${subOrder.items}">
-                                            <article class="confirmed-product"><div class="snapshot-icon"><span class="material-symbols-outlined">nutrition</span></div><div><strong><c:out value="${item.productNameSnapshot}"/></strong><small><c:out value="${item.variantNameSnapshot}"/><c:if test="${not empty item.unit}"> · <c:out value="${item.unit}"/></c:if></small><span><fmt:formatNumber value="${item.unitPrice}" type="currency" currencyCode="VND" maxFractionDigits="0"/> × <c:out value="${item.quantity}"/></span></div><strong><fmt:formatNumber value="${item.totalPrice}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></article>
+                                            <%-- Tên, biến thể và giá tại thời điểm đặt hàng. --%>
+                                            <article class="confirmed-product"><div class="snapshot-icon"><span
+                                                class="material-symbols-outlined">nutrition</span></div><%--
+                                                --%><div><strong><c:out value="${item.productNameSnapshot}"/></strong><%--
+                                                --%><small><c:out value="${item.variantNameSnapshot}"/><c:if test="${not empty item.unit}"> · <c:out value="${item.unit}"/></c:if></small><%--
+                                                --%><span><fmt:formatNumber value="${item.unitPrice}" type="currency"
+                                                    currencyCode="VND" maxFractionDigits="0"/> × <c:out value="${item.quantity}"/></span></div><%--
+                                                --%><strong><fmt:formatNumber value="${item.totalPrice}" type="currency"
+                                                    currencyCode="VND" maxFractionDigits="0"/></strong></article>
                                         </c:forEach>
                                     </div>
-                                    <div class="shop-totals"><span>Tiền hàng: <strong><fmt:formatNumber value="${subOrder.shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><span>Phí giao: <strong><fmt:formatNumber value="${subOrder.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><c:if test="${not empty subOrder.deliverySlot}"><span>Khung giờ: <strong><c:out value="${subOrder.deliverySlot}"/></strong></span></c:if><c:if test="${not empty subOrder.note}"><span>Lời nhắn: <strong><c:out value="${subOrder.note}"/></strong></span></c:if></div>
+                                    <div class="shop-totals"><%--
+                                        --%><span>Tiền hàng: <strong><fmt:formatNumber value="${subOrder.shopSubtotal}"
+                                            type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><%--
+                                        --%><span>Phí giao: <strong><fmt:formatNumber value="${subOrder.shopShippingFee}"
+                                            type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></span><%--
+                                        --%><c:if test="${not empty subOrder.deliverySlot}"><span>Khung giờ: <strong><c:out value="${subOrder.deliverySlot}"/></strong></span></c:if><%--
+                                        --%><c:if test="${not empty subOrder.note}"><span>Lời nhắn: <strong><c:out value="${subOrder.note}"/></strong></span></c:if></div>
                                 </div>
                             </c:forEach>
                         </section>
                     </div>
 
                     <aside class="confirmation-aside">
+                        <%-- Địa chỉ nhận hàng đã lưu trong đơn. --%>
                         <section class="panel compact-panel">
                             <div class="panel-heading"><span class="panel-icon material-symbols-outlined">location_on</span><div><p class="section-kicker">Giao đến</p><h2>Địa chỉ nhận hàng</h2></div></div>
-                            <c:choose><c:when test="${not empty order.shippingAddress}"><address class="address-card"><strong><c:out value="${order.shippingAddress.recipientName}"/></strong><span><c:out value="${order.shippingAddress.recipientPhone}"/></span><p><c:out value="${order.shippingAddress.fullAddress}"/></p></address></c:when><c:otherwise><p class="muted-text">Không có thông tin địa chỉ.</p></c:otherwise></c:choose>
+                            <c:choose><c:when test="${not empty order.shippingAddress}"><address class="address-card"><%--
+                                --%><strong><c:out value="${order.shippingAddress.recipientName}"/></strong><%--
+                                --%><span><c:out value="${order.shippingAddress.recipientPhone}"/></span><%--
+                                --%><p><c:out value="${order.shippingAddress.fullAddress}"/></p></address></c:when><%--
+                                --%><c:otherwise><p class="muted-text">Không có thông tin địa chỉ.</p></c:otherwise></c:choose>
                         </section>
+                        <%-- Tổng tiền, giảm giá và phương thức thanh toán. --%>
                         <section class="panel compact-panel">
                             <div class="panel-heading"><span class="panel-icon material-symbols-outlined">receipt_long</span><div><p class="section-kicker">Thanh toán</p><h2>Tổng đơn hàng</h2></div></div>
                             <div class="totals confirmation-totals">
-                                <div><span>Tổng tiền hàng</span><strong><fmt:formatNumber value="${order.totalGoodsAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <div><span>Tổng tiền hàng</span><strong><fmt:formatNumber value="${order.totalGoodsAmount}"
+                                    type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 <c:forEach var="sub" items="${order.subOrders}">
-                                    <div class="total-detail"><span>• <c:out value="${sub.shopName}"/></span><strong><fmt:formatNumber value="${sub.shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                    <div class="total-detail"><span>• <c:out value="${sub.shopName}"/></span><strong><fmt:formatNumber
+                                        value="${sub.shopSubtotal}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 </c:forEach>
-                                <div><span>Tổng phí vận chuyển</span><strong><fmt:formatNumber value="${order.totalShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <div><span>Tổng phí vận chuyển</span><strong><fmt:formatNumber value="${order.totalShippingFee}"
+                                    type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 <c:forEach var="sub" items="${order.subOrders}">
-                                    <div class="total-detail"><span>• <c:out value="${sub.shopName}"/></span><strong><fmt:formatNumber value="${sub.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                    <div class="total-detail"><span>• <c:out value="${sub.shopName}"/></span><strong><fmt:formatNumber
+                                        value="${sub.shopShippingFee}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 </c:forEach>
-                                <div class="discount"><span>Tổng giảm giá voucher</span><strong><c:if test="${order.totalVoucherDiscount gt 0}">-</c:if><fmt:formatNumber value="${order.totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <div class="discount"><span>Tổng giảm giá voucher</span><strong><c:if test="${order.totalVoucherDiscount gt 0}">-</c:if><fmt:formatNumber
+                                    value="${order.totalVoucherDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 <c:forEach var="sub" items="${order.subOrders}">
                                     <c:if test="${sub.shopDiscount gt 0}">
-                                        <div class="total-detail discount"><span>• Voucher <c:out value="${sub.shopName}"/></span><strong>-<fmt:formatNumber value="${sub.shopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                        <div class="total-detail discount"><span>• Voucher <c:out value="${sub.shopName}"/></span><strong>-<fmt:formatNumber
+                                            value="${sub.shopDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                     </c:if>
                                 </c:forEach>
                                 <c:if test="${order.platformDiscount gt 0}">
-                                    <div class="total-detail discount platform-discount"><span>• Voucher sàn Gốc Vườn</span><strong>-<fmt:formatNumber value="${order.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                    <div class="total-detail discount platform-discount"><span>• Voucher sàn Gốc Vườn</span><strong>-<fmt:formatNumber
+                                        value="${order.platformDiscount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                                 </c:if>
-                                <div class="payment-method-row"><span>Phương thức thanh toán</span><strong><c:choose><c:when test="${order.paymentMethod eq 'VNPAY'}">VNPAY</c:when><c:when test="${order.paymentMethod eq 'COD'}">Thanh toán khi nhận hàng</c:when><c:when test="${order.paymentMethod eq 'CARD'}">Thẻ ngân hàng</c:when><c:otherwise><c:out value="${order.paymentMethod}"/></c:otherwise></c:choose></strong></div>
-                                <div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${order.finalAmount}" type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
+                                <div class="payment-method-row"><span>Phương thức thanh toán</span><strong><c:choose><%--
+                                    --%><c:when test="${order.paymentMethod eq 'VNPAY'}">VNPAY</c:when><%--
+                                    --%><c:when test="${order.paymentMethod eq 'COD'}">Thanh toán khi nhận hàng</c:when><%--
+                                    --%><c:when test="${order.paymentMethod eq 'CARD'}">Thẻ ngân hàng</c:when><%--
+                                    --%><c:otherwise><c:out value="${order.paymentMethod}"/></c:otherwise></c:choose></strong></div>
+                                <div class="grand-total"><span>Tổng thanh toán</span><strong><fmt:formatNumber value="${order.finalAmount}"
+                                    type="currency" currencyCode="VND" maxFractionDigits="0"/></strong></div>
                             </div>
                             <%-- Trạng thái thanh toán tách khỏi tiến độ giao từng shop và thông điệp return của trình duyệt. --%>
                             <div class="payment-state">
-                                <span class="material-symbols-outlined"><c:choose><c:when test="${order.paymentStatus eq 'PAID'}">check_circle</c:when><c:when test="${order.paymentStatus eq 'FAILED'}">cancel</c:when><c:when test="${order.paymentStatus eq 'REFUNDED'}">currency_exchange</c:when><c:otherwise>schedule</c:otherwise></c:choose></span>
+                                <span class="material-symbols-outlined"><c:choose><%--
+                                    --%><c:when test="${order.paymentStatus eq 'PAID'}">check_circle</c:when><%--
+                                    --%><c:when test="${order.paymentStatus eq 'FAILED'}">cancel</c:when><%--
+                                    --%><c:when test="${order.paymentStatus eq 'REFUNDED'}">currency_exchange</c:when><%--
+                                    --%><c:otherwise>schedule</c:otherwise></c:choose></span>
                                 <span>
                                     <small>Trạng thái thanh toán</small>
-                                    <strong><c:choose><c:when test="${order.paymentStatus eq 'PAID'}">Đã thanh toán</c:when><c:when test="${order.paymentStatus eq 'FAILED'}">Thanh toán thất bại</c:when><c:when test="${order.paymentStatus eq 'REFUNDED'}">Đã hoàn tiền</c:when><c:when test="${order.paymentStatus eq 'PENDING'}">Chờ thanh toán</c:when><c:otherwise><c:out value="${order.paymentStatus}"/></c:otherwise></c:choose></strong>
+                                    <strong><c:choose><%--
+                                        --%><c:when test="${order.paymentStatus eq 'PAID'}">Đã thanh toán</c:when><%--
+                                        --%><c:when test="${order.paymentStatus eq 'FAILED'}">Thanh toán thất bại</c:when><%--
+                                        --%><c:when test="${order.paymentStatus eq 'REFUNDED'}">Đã hoàn tiền</c:when><%--
+                                        --%><c:when test="${order.paymentStatus eq 'PENDING'}">Chờ thanh toán</c:when><%--
+                                        --%><c:otherwise><c:out value="${order.paymentStatus}"/></c:otherwise></c:choose></strong>
                                 </span>
                             </div>
                         </section>
                     </aside>
                 </div>
                 <div class="confirmation-actions">
-                    <a class="secondary-button" href="<c:out value='${homeUrl}'/>"><span class="material-symbols-outlined">home</span> Về trang chủ</a>
-                    <a class="primary-button" href="${pageContext.request.contextPath}/profile#orders"><span class="material-symbols-outlined">receipt_long</span> Xem đơn hàng của tôi</a>
-                    <a class="secondary-button" href="<c:out value='${productsUrl}'/>">Tiếp tục mua sắm <span class="material-symbols-outlined">arrow_forward</span></a>
+                    <a class="secondary-button" href="<c:out value='${homeUrl}'/>"><span
+                        class="material-symbols-outlined">home</span> Về trang chủ</a>
+                    <a class="primary-button" href="${pageContext.request.contextPath}/profile#orders"><span
+                        class="material-symbols-outlined">receipt_long</span> Xem đơn hàng của tôi</a>
+                    <a class="secondary-button" href="<c:out value='${productsUrl}'/>">Tiếp tục mua sắm <span
+                        class="material-symbols-outlined">arrow_forward</span></a>
                 </div>
             </c:otherwise>
         </c:choose>
