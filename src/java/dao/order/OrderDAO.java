@@ -60,6 +60,7 @@ public class OrderDAO extends DBContext {
      * Kiểm tra cơ sở dữ liệu có các cột promotion trong bảng order_items hay không
      * (để tương thích ngược với các phiên bản DB migration khác nhau).
      */
+    // Cache toan JVM ca khi truy van metadata loi; chi kiem tra cot promotion_id.
     private boolean checkHasOrderItemPromotionCols(Connection conn) {
         if (HAS_ORDER_ITEM_PROMOTION_COLS != null) {
             return HAS_ORDER_ITEM_PROMOTION_COLS;
@@ -97,6 +98,8 @@ public class OrderDAO extends DBContext {
             placeholders.append("?");
         }
 
+        // Chi lay ID thuoc gio cua customer; ID khong khop bi bo qua. Trang thai khong duoc loc.
+        // Anh la thumbnail dau tien theo display_order; truy van khong giu hang.
         String sql = "SELECT ci.cart_item_id, ci.quantity, "
                 + "       pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -151,6 +154,7 @@ public class OrderDAO extends DBContext {
      * @param quantity  số lượng mua
      * @return CartItem đại diện hoặc null nếu không tìm thấy
      */
+    // Khong doc gio hang, khong kiem tra quantity hay loc trang thai; cart item ID la 0.
     public CartItem getBuyNowItem(long variantId, int quantity) {
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "       pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -184,6 +188,7 @@ public class OrderDAO extends DBContext {
         }
     }
 
+    // Anh mac dinh theo ten san pham neu thumbnail rong; gia va ton la gia tri luc doc.
     private ProductVariantDetailDTO mapCheckoutVariant(ResultSet rs) throws SQLException {
         ProductVariantDetailDTO v = new ProductVariantDetailDTO();
         v.setVariantId(rs.getLong("variant_id"));
@@ -256,6 +261,7 @@ public class OrderDAO extends DBContext {
      */
     public long createOrder(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        // Đặt từ giỏ: trừ kho và xóa các dòng đã mua trong cùng giao dịch tạo đơn.
         return createOrderInternal(order, address, cartItemIdsToDelete, paymentMethod,
                 saveCustomerAddress, true);
     }
@@ -272,6 +278,7 @@ public class OrderDAO extends DBContext {
      */
     public long createBuyNowOrder(OrderDetailDTO order, ShippingAddress address,
             String paymentMethod, boolean saveCustomerAddress) throws Exception {
+        // Mua ngay vẫn trừ kho như đặt từ giỏ, nhưng không khóa hoặc xóa dòng giỏ hàng.
         return createOrderInternal(order, address, Collections.emptyList(), paymentMethod,
                 saveCustomerAddress, false);
     }
@@ -290,6 +297,9 @@ public class OrderDAO extends DBContext {
      * 7. Chèn bản ghi thanh toán (payments).
      * 8. Lưu địa chỉ vào sổ địa chỉ khách hàng nếu được yêu cầu.
      */
+    // Ham so huu connection va transaction; cac DAO nhan conn tham gia cung transaction.
+    // DTO dau vao bi cap nhat ma, ID va tien giam ngay ca khi transaction sau do rollback.
+    // Tong hang, phi van chuyen va snapshot san pham lay tu draft, khong tinh lai tu DB.
     private long createOrderInternal(OrderDetailDTO order, ShippingAddress address, List<Long> cartItemIdsToDelete,
             String paymentMethod, boolean saveCustomerAddress, boolean consumeCart) throws Exception {
         String insertOrderSql = "INSERT INTO orders (order_code, customer_id, coupon_id, total_goods_amount, "
@@ -302,6 +312,8 @@ public class OrderDAO extends DBContext {
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
 
+        // Chỉ trừ tồn của biến thể đích nếu còn đủ hàng, giá khớp bản nháp và biến thể,
+        // sản phẩm, shop vẫn hoạt động. Kiểm tra và trừ trong cùng một câu UPDATE.
         String deductStockSql = "UPDATE pv SET pv.stock_quantity = pv.stock_quantity - ? "
                 + "FROM product_variants pv "
                 + "INNER JOIN products p ON p.product_id = pv.product_id "
@@ -351,6 +363,8 @@ public class OrderDAO extends DBContext {
                 lockAndValidateCartItems(conn, order, cartItemIdsToDelete);
             }
 
+            // So dia chi va snapshot giao hang cua don la hai ban ghi rieng; dia chi moi
+            // chi mac dinh neu user chua co dia chi nao. Viec luu cung bi rollback neu loi.
             if (saveCustomerAddress) {
                 insertCustomerAddress(conn, insertCustomerAddressSql,
                         order.getCustomerId(), address);
@@ -392,6 +406,7 @@ public class OrderDAO extends DBContext {
                 order.setPlatformDiscount(BigDecimal.ZERO);
             }
 
+            // Khong co shop coupon thi shopDiscount co san trong draft van duoc giu lai.
             BigDecimal totalDiscounts = totalShopDiscounts.add(order.getPlatformDiscount());
             // Tính lại tổng từ voucher đã xác thực trong transaction; không dùng nguyên tổng của draft.
             order.setFinalAmount(order.getTotalGoodsAmount()
@@ -461,6 +476,7 @@ public class OrderDAO extends DBContext {
                 long subOrderId;
                 String subCode = "SUB-" + System.currentTimeMillis() + "-" + sub.getShopId() + "-" + (int) (Math.random() * 900 + 100);
                 sub.setSubOrderCode(subCode);
+                // Hoa hong co dinh 8% subtotal truoc phi va giam gia, lam tron hai chu so.
                 BigDecimal commissionRate = new BigDecimal("8.00");
                 BigDecimal commissionAmount = sub.getShopSubtotal().multiply(new BigDecimal("0.08")).setScale(2, RoundingMode.HALF_UP);
 
@@ -537,8 +553,10 @@ public class OrderDAO extends DBContext {
                     }
 
                     // E. TRỪ TỒN KHO NGUYÊN TỬ
+                    // Không có mã biến thể thì bỏ qua cả trừ tồn tổng và trừ tồn theo lô.
                     if (item.getVariantId() != null) {
                         try (PreparedStatement ps = conn.prepareStatement(deductStockSql)) {
+                            // Thứ tự tham số SQL: lượng trừ, mã biến thể, tồn tối thiểu, giá trong bản nháp.
                             ps.setInt(1, item.getQuantity());
                             ps.setLong(2, item.getVariantId());
                             ps.setInt(3, item.getQuantity());
@@ -546,6 +564,7 @@ public class OrderDAO extends DBContext {
 
                             int updated = ps.executeUpdate();
                             if (updated == 0) {
+                                // Không còn khớp điều kiện UPDATE; báo lỗi để rollback cả đơn.
                                 throw new SQLException("Sản phẩm '" + item.getProductNameSnapshot()
                                         + "' vừa hết hàng, đổi giá hoặc cửa hàng đã ngừng hoạt động. "
                                         + "Vui lòng quay lại giỏ hàng để kiểm tra!");
@@ -553,6 +572,8 @@ public class OrderDAO extends DBContext {
                         }
 
                         // E2. TRỪ TỒN KHO LÔ HÀNG THEO CHUẨN FEFO & GHI BIẾN ĐỘNG KHO
+                        // Dùng chung connection để nếu thiếu lô còn hạn đến ngày giao,
+                        // rollback sẽ hoàn tác cả phần tồn tổng vừa trừ ở bước E.
                         deductBatchStock(conn, subOrderId, sub.getShopId(), order.getCustomerId(),
                                 item.getVariantId(), item.getQuantity(), subCode, item.getUnitPrice(),
                                 order.getDeliveryDate());
@@ -590,6 +611,8 @@ public class OrderDAO extends DBContext {
             }
 
             // Ghi nhận phương thức thanh toán trong cùng transaction.
+            // payments luu paymentMethod goc, ke ca null; orders co the dung COD mac dinh.
+            // Payment luon PENDING; COD la CASH, cac gia tri khac la ONLINE.
             try (PreparedStatement ps = conn.prepareStatement(insertPaymentSql)) {
                 ps.setLong(1, orderId);
                 ps.setString(2, paymentMethod);
@@ -636,6 +659,8 @@ public class OrderDAO extends DBContext {
         }
     }
 
+    // UPDLOCK/HOLDLOCK giu khoa trong transaction cua caller. So dong phai bang so ID
+    // va tong quantity theo variant phai trung draft; ID trung lap cung khong dat dieu kien.
     private void lockAndValidateCartItems(Connection conn, OrderDetailDTO order,
             List<Long> cartItemIds) throws SQLException {
         // Khóa các dòng thuộc khách và đối chiếu số dòng cùng tổng số lượng theo variant với draft.
@@ -729,6 +754,8 @@ public class OrderDAO extends DBContext {
     /**
      * Tính toán số tiền được giảm giá của coupon trong transaction tạo đơn.
      */
+    // PERCENTAGE hoac FIXED_AMOUNT, gioi han boi maxDiscountAmount va eligibleAmount.
+    // shippingFee duoc truyen vao nhung khong tham gia phep tinh hien tai.
     private BigDecimal calculateCouponDiscount(Coupon coupon, BigDecimal eligibleAmount,
             BigDecimal shippingFee)
             throws SQLException {
@@ -779,6 +806,9 @@ public class OrderDAO extends DBContext {
      * @param orderId ID đơn hàng
      * @return OrderDetailDTO chi tiết hoặc null nếu không tìm thấy
      */
+    // Chi loc theo orderId, khong kiem tra customer; caller phai tu kiem tra quyen truy cap.
+    // Ten/gia hang la snapshot; product_id uu tien variant, neu thieu thi tim TOP 1 theo ten.
+    // Nhieu truy van khong co transaction snapshot; loi SQL hoac thieu connection tra null.
     public OrderDetailDTO getOrderById(long orderId) {
         String sqlOrder = "SELECT o.order_id, o.order_code, o.customer_id, o.coupon_id, o.total_goods_amount, "
                 + "o.total_shipping_fee, o.platform_discount, o.final_amount, o.payment_status, o.payment_method, "
@@ -913,6 +943,9 @@ public class OrderDAO extends DBContext {
      * @param customerId ID khách hàng
      * @return danh sách SubOrderDTO
      */
+    // Loc don cha theo customerId, sap xep moi nhat; JOIN delivery co the nhan ban dong,
+    // nen chi giu dong dau cho moi sub-order ma khong chon delivery theo tieu chi rieng.
+    // Anh lay tu du lieu hien tai, khong phai snapshot; loi SQL co the tra danh sach mot phan.
     public List<SubOrderDTO> getSubOrdersByCustomerId(long customerId) {
         List<SubOrderDTO> list = new ArrayList<>();
         Connection conn = getConnection();
@@ -1065,6 +1098,10 @@ public class OrderDAO extends DBContext {
      * @return true nếu hủy thành công
      * @throws Exception nếu xảy ra lỗi nghiệp vụ hoặc SQL
      */
+    // Tim sub-order truoc don cha, chap nhan code hoac ID dang chuoi va rang buoc customer.
+    // Chi kiem tra status doi tuong tim thay; nhanh don cha khong kiem tra tung don con.
+    // Huy rieng don con khong hoan coupon; nhanh don cha moi xu ly coupon_usages.
+    // Khong cap nhat payment hay hoan tien. Thong bao gui sau commit, loi bi bo qua.
     public boolean cancelOrderByCustomer(long customerId, String orderIdentifier, String cancelReason) throws Exception {
         String findSubSql = "SELECT so.sub_order_id, so.order_id, so.status AS sub_status, o.customer_id, o.coupon_id "
                           + "FROM sub_orders so "
@@ -1261,6 +1298,11 @@ public class OrderDAO extends DBContext {
         }
     }
 
+    // Tim theo code hoac ID, uu tien sub-order va luon loc chu don. Khong tim thay tra false.
+    // Khong kiem tra status truoc: nhanh sub cap nhat truc tiep; nhanh don cha bo qua
+    // sub CANCELLED nhung cap nhat delivery cua moi sub thuoc don.
+    // Khi khong con sub ngoai DELIVERED/CANCELLED, don cha COMPLETED va COD thanh PAID
+    // tren orders; bang payments khong duoc cap nhat. Moi thay doi cung commit/rollback.
     public boolean confirmReceivedByCustomer(long customerId, String orderIdentifier) throws Exception {
         String findSubSql = "SELECT so.sub_order_id, so.order_id, so.status AS sub_status "
                           + "FROM sub_orders so "
@@ -1383,10 +1425,13 @@ public class OrderDAO extends DBContext {
     /**
      * Trừ tồn kho lô hàng theo nguyên tắc FEFO (First Expired, First Out - hết hạn sớm nhất xuất trước)
      * và ghi nhận giao dịch xuất bán vào bảng inventory_transactions.
+     * Dùng giao dịch của bên gọi; nếu thiếu lô hợp lệ thì ném lỗi để bên gọi hoàn tác toàn bộ.
      */
     private void deductBatchStock(Connection conn, long subOrderId, long shopId, long customerId,
                                   long variantId, int quantityToDeduct, String subOrderCode,
                                   BigDecimal unitPrice, java.time.LocalDate deliveryDate) throws SQLException {
+        // Khóa các lô đang bán còn hàng và còn hạn đến cả hôm nay lẫn ngày giao.
+        // Lô hết hạn sớm hơn được ưu tiên; nếu cùng hạn thì chọn theo mã lô nội bộ (batch_id).
         String queryBatchesSql = "SELECT batch_id, batch_code, current_quantity "
                 + "FROM product_batches WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE variant_id = ? AND status = 'ACTIVE' AND current_quantity > 0 "
@@ -1405,6 +1450,7 @@ public class OrderDAO extends DBContext {
                 + " quantity_changed, previous_stock, new_stock, cost_price, reason, created_at) "
                 + "VALUES (?, ?, ?, ?, ?, 'SALE', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
+        // Lập danh sách xuất kho trước; chỉ cập nhật lô khi đã gom đủ số lượng cho dòng hàng.
         int remainingQty = quantityToDeduct;
         List<BatchDeductInfo> batchesToDeduct = new ArrayList<>();
 
@@ -1416,6 +1462,7 @@ public class OrderDAO extends DBContext {
                     long bId = rs.getLong("batch_id");
                     String bCode = rs.getString("batch_code");
                     int curQty = rs.getInt("current_quantity");
+                    // Nếu lô không đủ, lấy hết lô này và chuyển phần còn thiếu sang lô kế tiếp.
                     int deduct = Math.min(curQty, remainingQty);
                     batchesToDeduct.add(new BatchDeductInfo(bId, bCode, curQty, deduct));
                     remainingQty -= deduct;
@@ -1427,7 +1474,7 @@ public class OrderDAO extends DBContext {
             throw new SQLException("Không đủ hàng từ các lô còn hạn đến ngày giao dự kiến. Vui lòng giảm số lượng hoặc chọn ngày giao sớm hơn.");
         }
 
-        // Cập nhật từng lô theo thứ tự FEFO
+        // Cập nhật tồn từng lô theo thứ tự FEFO; lô về 0 chuyển sang DEPLETED.
         for (BatchDeductInfo b : batchesToDeduct) {
             int newQty = b.currentQty() - b.deductQty();
             try (PreparedStatement psUpBatch = conn.prepareStatement(updateBatchSql)) {
@@ -1437,6 +1484,8 @@ public class OrderDAO extends DBContext {
                 psUpBatch.executeUpdate();
             }
 
+            // Ghi SALE cho từng lô: lượng xuất là số âm, kèm tồn trước/sau và đơn con.
+            // user_id là người mua; cost_price nhận đơn giá của dòng hàng.
             try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
                 psTrans.setLong(1, b.batchId());
                 psTrans.setLong(2, variantId);
@@ -1461,6 +1510,9 @@ public class OrderDAO extends DBContext {
     /**
      * Hoàn trả tồn kho lô hàng khi đơn hàng con (SubOrder) bị hủy hoặc từ chối.
      */
+    // Dung connection cua caller, khong tu commit, rollback hay dong connection.
+    // Moi SALE co batch_id duoc cong lai vao lo va ghi RESTOCK; khong kiem tra RESTOCK cu,
+    // nen caller phai tranh goi lap. Ham nay khong hoan stock_quantity cua variant.
     public static void restoreBatchStockBySubOrder(Connection conn, long subOrderId) throws SQLException {
         String findDeductedBatchesSql = "SELECT it.batch_id, it.variant_id, it.shop_id, it.user_id, "
                 + "       ABS(it.quantity_changed) AS qty, it.cost_price, ISNULL(pb.current_quantity, 0) AS current_quantity, pb.batch_code "
@@ -1528,6 +1580,7 @@ public class OrderDAO extends DBContext {
     /**
      * Hoàn trả tồn kho lô hàng cho tất cả đơn con của đơn hàng cha khi bị hủy.
      */
+    // Duyet moi sub-order cua don cha, khong loc trang thai, tren transaction cua caller.
     private static void restoreBatchStockByOrder(Connection conn, long orderId) throws SQLException {
         String findSubOrdersSql = "SELECT sub_order_id FROM sub_orders WHERE order_id = ?";
         List<Long> subOrderIds = new ArrayList<>();

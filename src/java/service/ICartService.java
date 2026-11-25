@@ -9,6 +9,8 @@ import model.dto.cart.CartMutationResult;
  */
 public interface ICartService {
 
+    // Hop dong trien khai hien tai yeu cau moi ID va quantity duoc truyen vao deu duong.
+    // customerId phai duoc lop goi lay tu danh tinh da xac thuc; interface khong xac thuc user.
     /**
      * Nạp toàn bộ giỏ hàng của khách hàng và đối soát lại số lượng theo tồn kho thực tế.
      * Chỉ giảm số lượng vượt kho đối với biến thể còn mua được; mục hết hàng giữ trạng thái để khách đổi biến thể.
@@ -20,6 +22,7 @@ public interface ICartService {
      */
     Cart loadCartAndReconcile(long customerId);
 
+    // Phep dem khong tao gio moi va dem so dong item, khong cong quantity cua cac dong.
     /**
      * Đếm tổng số lượng dòng sản phẩm trong giỏ hàng của khách hàng.
      *
@@ -39,6 +42,7 @@ public interface ICartService {
      */
     CartMutationResult addItem(long customerId, long variantId, int quantity);
 
+    // Cap nhat dat quantity tuyet doi, khong phai cong them; vuot stock se bi tu choi.
     /**
      * Cập nhật số lượng của một mục sản phẩm trong giỏ hàng.
      *
@@ -56,6 +60,7 @@ public interface ICartService {
      */
     void removeItem(long customerId, long cartItemId);
 
+    // Variant dich phai dang hoat dong, thuoc cung product; tong moi co the bi cat theo stock.
     /**
      * Đổi biến thể (variant) của một mục đã có trong giỏ hàng.
      * Nếu biến thể mới đã có trong giỏ thì gộp số lượng và xóa mục cũ.

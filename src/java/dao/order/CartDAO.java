@@ -32,6 +32,8 @@ import util.DBContext;
  */
 public class CartDAO extends DBContext {
 
+    // DAO nhan customerId tu lop goi; viec xac thuc danh tinh khong duoc thuc hien o day.
+    // Cac gia tri SQL duoc bind qua PreparedStatement, khong noi truc tiep ID vao cau lenh.
     private static final Logger LOGGER = Logger.getLogger(CartDAO.class.getName());
 
     /**
@@ -63,6 +65,7 @@ public class CartDAO extends DBContext {
      * @return số lượng mục sản phẩm
      */
     public int countItemsByCustomerId(long customerId) {
+        // LEFT JOIN tra 0 khi khong co item; COUNT dem so dong, khong phai tong quantity.
         String sql = "SELECT COUNT(ci.cart_item_id) AS item_count "
                 + "FROM carts c LEFT JOIN cart_items ci ON ci.cart_id = c.cart_id "
                 + "WHERE c.customer_id = ?";
@@ -88,6 +91,8 @@ public class CartDAO extends DBContext {
      * @return danh sách CartItem đã đối soát
      */
     public List<CartItem> loadAndReconcileItems(long cartId) {
+        // Ham nay nhan cartId truc tiep, khong kiem tra owner; lop goi phai chon dung gio.
+        // Doc va ghi so luong cung transaction, nhung khong tru hay giu ton kho san pham.
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -102,6 +107,7 @@ public class CartDAO extends DBContext {
                 }
                 attachAlternativeVariants(conn, items);
                 conn.commit();
+                // Thu tu trang thai theo thu tu enum; sap xep sau khi transaction da commit.
                 items.sort(Comparator.comparing(CartItem::getAvailability));
                 return items;
             } catch (SQLException | RuntimeException ex) {
@@ -125,6 +131,7 @@ public class CartDAO extends DBContext {
      * @return CartMutationResult chứa thông tin item vừa thêm/sửa và tổng số lượng mục trong giỏ
      */
     public CartMutationResult addCartItem(long customerId, long variantId, int quantity) {
+        // Lop service kiem tra ID va quantity duong; validateStock o DAO khong kiem tra can duoi.
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -146,6 +153,7 @@ public class CartDAO extends DBContext {
                 }
                 int cartItemCount = countItemsByCartId(conn, cart.getCartId());
                 conn.commit();
+                // Ket qua dem so dong sau thay doi, khong phai tong don vi san pham.
                 return new CartMutationResult(
                         new CartItem(cartItemId, variant, (int) requestedQuantity), cartItemCount);
             } catch (SQLException | RuntimeException ex) {
@@ -165,6 +173,7 @@ public class CartDAO extends DBContext {
      * @param quantity   số lượng mới
      */
     public void updateCartItemQuantity(long customerId, long cartItemId, int quantity) {
+        // Tim cart theo customerId roi gioi han lookup va UPDATE bang ca cartId va itemId.
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -222,6 +231,7 @@ public class CartDAO extends DBContext {
      * @param newVariantId ID biến thể mới
      */
     public void changeCartItemVariant(long customerId, long cartItemId, long newVariantId) {
+        // Variant cu duoc doc ca khi khong kha dung de kiem tra cung product voi variant moi.
         try (Connection conn = requireConnection()) {
             conn.setAutoCommit(false);
             try {
@@ -239,6 +249,7 @@ public class CartDAO extends DBContext {
                     throw new IllegalArgumentException("Biến thể thay thế không hợp lệ!");
                 }
                 if (current.getVariant().getVariantId() == newVariantId) {
+                    // Chi bo qua sau khi da kiem tra variant moi dang hoat dong va cung product.
                     conn.commit();
                     return;
                 }
@@ -246,6 +257,7 @@ public class CartDAO extends DBContext {
                 CartItem target = findItemByVariantId(conn, cartId, newVariantId);
                 long combinedQuantity = current.getQuantity()
                         + (target != null ? target.getQuantity() : 0L);
+                // Phan vuot kho bi cat bo, ke ca khi variant dich chua co trong gio.
                 // Đổi biến thể chặn ở mức kho hiện tại thay vì giữ nguyên tổng vượt kho.
                 int finalQuantity = (int) Math.min(combinedQuantity,
                         (long) newVariant.getStockQuantity());
@@ -276,6 +288,8 @@ public class CartDAO extends DBContext {
      * Tìm giỏ hàng hiện có của khách hoặc tạo mới bằng INSERT trong transaction (sử dụng HOLDLOCK tránh race condition).
      */
     private Cart findOrCreateCart(Connection conn, long customerId) throws SQLException {
+        // Lock hint la cu phap SQL Server; pham vi khoa thuc te phu thuoc ke hoach va index DB.
+        // Ham dung connection cua caller; caller chiu trach nhiem commit hoac rollback.
         // HOLDLOCK bảo đảm hai request đồng thời không cùng tạo cart cho một khách hàng.
         String selectSql = "SELECT cart_id FROM carts WITH (UPDLOCK, HOLDLOCK) WHERE customer_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(selectSql)) {
@@ -323,6 +337,8 @@ public class CartDAO extends DBContext {
      * Nạp toàn bộ danh sách item trong giỏ cùng thông tin biến thể, sản phẩm, cửa hàng và khóa UPDLOCK, HOLDLOCK.
      */
     private List<CartItem> loadItemsForReconciliation(Connection conn, long cartId) throws SQLException {
+        // INNER JOIN bo qua cac dong khong con ban ghi variant, product hoac shop tuong ung.
+        // Chi cart_items co lock hint o truy van nay; khong suy ra ton kho duoc giu cho checkout.
         String sql = "SELECT ci.cart_item_id, ci.quantity, "
                 + "pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -371,6 +387,8 @@ public class CartDAO extends DBContext {
      * Xác định trạng thái khả dụng của sản phẩm (hết hàng, ngừng bán, còn hàng) và tự động điều chỉnh số lượng nếu vượt quá tồn kho.
      */
     private void determineAvailability(CartItem item, ResultSet rs) throws SQLException {
+        // Uu tien: product/shop khong hoat dong, het moi variant, variant nay khong kha dung,
+        // sau do moi la AVAILABLE. Chi AVAILABLE duoc ha quantity xuong muc stock hien tai.
         ProductVariantDetailDTO variant = item.getVariant();
         boolean productAvailable = variant.isProductActive()
                 && "ACTIVE".equalsIgnoreCase(rs.getString("shop_status"));
@@ -393,6 +411,7 @@ public class CartDAO extends DBContext {
      * Gắn danh sách các biến thể thay thế (cùng sản phẩm nhưng khác variantId) vào từng CartItem.
      */
     private void attachAlternativeVariants(Connection conn, List<CartItem> items) throws SQLException {
+        // Lay theo product khac NOT_FOUND va loai variant hien tai khoi moi danh sach.
         List<Long> productIds = items.stream()
                 .filter(item -> item.getAvailability() != CartItemAvailability.NOT_FOUND)
                 .map(item -> item.getVariant().getProductId())
@@ -418,6 +437,8 @@ public class CartDAO extends DBContext {
      */
     private Map<Long, List<ProductVariantDetailDTO>> findVariantsByProductIds(Connection conn,
             Collection<Long> productIds) throws SQLException {
+        // IN chi tao dau ? theo so ID; gia tri duoc bind ben duoi. Caller bo qua danh sach rong.
+        // Query khong loc variant inactive/het hang: chung xep sau variant active con hang.
         String placeholders = productIds.stream().map(id -> "?").collect(Collectors.joining(","));
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
@@ -448,6 +469,8 @@ public class CartDAO extends DBContext {
      * Tìm biến thể đang hoạt động và shop đang hoạt động (có khóa UPDLOCK).
      */
     private ProductVariantDetailDTO findAvailableVariant(Connection conn, long variantId) throws SQLException {
+        // Loc trang thai variant, product, shop; stock duoc kiem tra rieng tai noi su dung.
+        // UPDLOCK/HOLDLOCK ap dung cho variant; product va shop dung HOLDLOCK trong transaction.
         String sql = "SELECT pv.variant_id, pv.sku, pv.variant_name, pv.unit, pv.weight_kg, "
                 + "pv.price, pv.stock_quantity, pv.is_active AS variant_active, "
                 + "p.product_id, p.shop_id, p.name AS product_name, p.origin, p.is_active AS product_active "
@@ -502,6 +525,7 @@ public class CartDAO extends DBContext {
      * Thực hiện truy vấn một dòng duy nhất trong cart_items.
      */
     private CartItem findSingleItem(Connection conn, String sql, long cartId, long id) throws SQLException {
+        // DTO tai day chi co variantId; gap nhieu hon mot dong thi bao loi thay vi chon tuy y.
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, cartId);
             ps.setLong(2, id);
@@ -606,6 +630,7 @@ public class CartDAO extends DBContext {
      * Kiểm tra số lượng yêu cầu so với tồn kho của biến thể.
      */
     private void validateStock(ProductVariantDetailDTO variant, long quantity) {
+        // Chi chan variant null hoac quantity vuot stock, khong tu kiem tra quantity > 0.
         if (variant == null) {
             throw new IllegalArgumentException("Sản phẩm hiện không khả dụng!");
         }
@@ -627,6 +652,7 @@ public class CartDAO extends DBContext {
     }
 
     private void rollback(Connection conn, Exception cause) {
+        // Giu loi goc; neu rollback cung loi thi gan suppressed exception va ghi log.
         try {
             conn.rollback();
         } catch (SQLException ex) {
@@ -636,6 +662,7 @@ public class CartDAO extends DBContext {
     }
 
     private IllegalStateException databaseFailure(SQLException cause) {
+        // Ghi chi tiet SQL vao log, tra thong bao chung va giu cause cho lop goi.
         LOGGER.log(Level.SEVERE, "Cart database operation failed", cause);
         return new IllegalStateException(
                 "Không thể xử lý giỏ hàng. Vui lòng thử lại sau!", cause);

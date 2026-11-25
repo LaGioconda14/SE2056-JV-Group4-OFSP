@@ -70,6 +70,8 @@ public class CheckoutServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // POST yeu cau user dang hoat dong; neu khong co session/user hop le thi chuyen den login.
+        // checkoutAction rong vao luong hien thi; buyNow luc nay xoa cac ma coupon cu trong session.
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession(false);
         User user = session != null ? (User) session.getAttribute("user") : null;
@@ -86,6 +88,7 @@ public class CheckoutServlet extends HttpServlet {
             processCheckout(request, response);
             return;
         }
+        // Chi cac action duoc liet ke moi duoc xu ly; action khac nhan HTTP 400.
         if (!List.of("selectProvince", "selectAddress", "createAddress", "applyCoupon", "removeCoupon",
                 "applyShopCoupon", "removeShopCoupon").contains(action)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -99,6 +102,8 @@ public class CheckoutServlet extends HttpServlet {
         } else {
             draft.remove("openAddressModal");
         }
+        // Doi tinh xoa phuong da chon; dia chi saved:<id> duoc tra theo user hien tai.
+        // createAddress tra ma tinh/phuong thanh ten, luu qua service va redirect de tranh gui lai form.
         if ("selectProvince".equals(action)) {
             draft.put("addressSelection", "new");
             draft.remove("wardCode");
@@ -150,6 +155,7 @@ public class CheckoutServlet extends HttpServlet {
             } catch (IllegalArgumentException ex) {
                 request.setAttribute("addressError", ex.getMessage());
             }
+        // Ma san duoc trim, viet hoa va gioi han 100 ky tu; day chua phai buoc xac nhan voucher.
         } else if ("applyCoupon".equals(action)) {
             String code = request.getParameter("newCouponCode");
             if (code != null && !code.isBlank() && code.length() <= 100) {
@@ -182,6 +188,7 @@ public class CheckoutServlet extends HttpServlet {
                 request.setAttribute("checkoutError", ex.getMessage());
             }
         }
+        // Loi action duoc dua vao request de hien thi lai checkout, khong tao don hang.
         request.setAttribute("checkoutActionHandled", true);
         processCheckout(request, response);
     }
@@ -240,6 +247,8 @@ public class CheckoutServlet extends HttpServlet {
                     && request.getAttribute("addressError") == null) {
                 request.setAttribute("addressError", "Không thể tải danh sách phường/xã. Vui lòng thử lại sau!");
             }
+            // Thanh cong forward kem draft, dia chi va voucher; loi du lieu ve gio hang,
+            // loi runtime duoc ghi log va tra thong bao chung qua session.
             request.getRequestDispatcher("/views/order/checkout.jsp").forward(request, response);
         } catch (IllegalArgumentException ex) {
             session.setAttribute("cartError", ex.getMessage());
@@ -262,6 +271,8 @@ public class CheckoutServlet extends HttpServlet {
 
     /** Mỗi lượt checkout chỉ chọn một nguồn: dòng giỏ hàng hoặc biến thể "mua ngay". */
     private CheckoutSelection parseOrRestoreSource(HttpServletRequest request, HttpSession session) {
+        // cartItemIds uu tien hon checkoutMode=buyNow; neu khong co dau vao thi khoi phuc session.
+        // Moi ID phai duong, khong trung va toi da 100 dong; buyNow can variantId va quantity duong.
         String[] values = request.getParameterValues("cartItemIds");
         if (values != null && values.length > 0) {
             List<Long> itemIds = parseItemIds(values);
@@ -343,6 +354,7 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private List<CartItem> loadSelectedItems(long customerId, CheckoutSelection selection) {
+        // Gio hang duoc nap theo customerId; mua ngay nap bien the va so luong qua service.
         if (selection.isBuyNow()) {
             return List.of(orderService.getBuyNowItemForCheckout(
                     selection.buyNowVariantId(), selection.buyNowQuantity()));
@@ -364,6 +376,8 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private String parsePlatformCoupon(HttpServletRequest request, HttpSession session) {
+        // Khi co checkoutAction, dung ma da luu; neu khong, couponCode rong hoac
+        // removeCoupon=true/1 se xoa ma, con tham so thieu giu nguyen ma trong session.
         if (request.getParameter("checkoutAction") != null) {
             return (String) session.getAttribute("checkoutCouponCode");
         }
@@ -386,6 +400,9 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private Map<Long, String> parseShopCoupons(HttpServletRequest request, HttpSession session) {
+        // Nhan cap shopId/shopCouponCode hoac cac tham so shopCoupon_<id>;
+        // replaceShopCoupons=true xoa danh sach cu, removeShopCoupon xoa theo ID.
+        // Gia tri rong xoa ma; ma khac duoc trim, viet hoa va gioi han 100 ky tu.
         Map<Long, String> coupons = restoredShopCoupons(session);
         if (request.getParameter("checkoutAction") != null) {
             return coupons;
@@ -483,6 +500,8 @@ public class CheckoutServlet extends HttpServlet {
             request.setAttribute("checkoutError", initialError.getMessage());
         }
 
+        // Neu tap voucher that bai, thu lai ma san rieng roi lan luot them ma shop;
+        // luu cac ma con dung vao session va hien loi ban dau tren trang checkout.
         String validPlatformCoupon = couponCode;
         if (validPlatformCoupon != null) {
             try {
@@ -519,6 +538,8 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private String resolveCheckoutProvince(long customerId, Map<String, String> formDraft) {
+        // Tinh dung cho draft lay tu dia chi da chon, tinh moi, hoac dia chi mac dinh/
+        // dau tien; dia chi saved duoc tra lai theo customerId thay vi tin session.
         String selection = formDraft.get("addressSelection");
         if (selection != null && selection.startsWith("saved:")) {
             try {
@@ -551,6 +572,7 @@ public class CheckoutServlet extends HttpServlet {
 
     private void setViewAttributes(HttpServletRequest request, long customerId, CheckoutSelection selection,
             List<CartItem> selectedItems, Map<Long, List<CartItem>> itemsByShop, DraftResult draft) {
+        // JSP nhan hang theo shop, tong draft, dia chi, nguon mua va cac voucher kha dung/da chon.
         CustomerAddress defaultAddress = orderService.getDefaultCustomerAddress(customerId);
         List<CustomerAddress> customerAddresses = orderService.getCustomerAddresses(customerId);
         Map<Long, List<Coupon>> availableShopCoupons = new HashMap<>();
@@ -611,6 +633,10 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private void saveDraft(HttpServletRequest request, Map<String, String> draft) {
+        // Chi luu cac truong form duoc liet ke: addressSelection toi da 32 ky tu,
+        // cac truong khac 255; shopNote_<id> co ten duoi 40 va noi dung toi da 500.
+        // Tham so vang mat giu gia tri cu, rieng isDefault phu thuoc su hien dien;
+        // paymentMethod khac COD/CARD duoc dua ve COD trong form draft.
         for (String key : List.of("addressSelection", "recipientName", "recipientPhone", "streetAddress",
                 "provinceCode", "wardCode", "paymentMethod", "deliveryDate", "deliverySlot")) {
             String value = request.getParameter(key);
@@ -643,6 +669,7 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private List<AddressOption> parseOptions(String json, String property) {
+        // Du lieu tra cuu dia chi loi tra danh sach rong va ghi log, de trang hien thong bao.
         try {
             JsonElement root = JsonParser.parseString(json);
             JsonArray array = property == null ? root.getAsJsonArray() : root.getAsJsonObject().getAsJsonArray(property);

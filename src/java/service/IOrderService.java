@@ -20,6 +20,8 @@ import model.entity.order.ShippingAddress;
  */
 public interface IOrderService {
 
+    // Checkout chi la anh chup tai thoi diem doc; ID trung duoc gop va moi ID
+    // con lai phai thuoc gio cua khach, khong am tham bo qua ID khong hop le.
     /**
      * Lấy danh sách sản phẩm được chọn từ giỏ hàng để chuẩn bị checkout.
      * Áp dụng khuyến mãi hiện hành và xác thực tính khả dụng của từng sản phẩm.
@@ -41,6 +43,9 @@ public interface IOrderService {
      */
     CartItem getBuyNowItemForCheckout(long variantId, int quantity);
 
+    // Draft nhom theo shop, dung tien hang sau khuyen mai san pham va khong
+    // dat truoc ton kho hay luot voucher. Tong cuoi = tien hang - giam shop
+    // + phi ship - giam san, gioi han toi thieu bang 0.
     /**
      * Tạo đơn hàng tạm tính đầy đủ có tính toán phí vận chuyển dựa trên tỉnh/thành của khách và shop.
      * Draft không ghi DB hoặc giữ voucher; khi đặt hàng DAO kiểm tra lại quota,
@@ -56,6 +61,8 @@ public interface IOrderService {
     OrderDetailDTO buildDraftOrder(long customerId, List<CartItem> selectedItems, String couponCode,
             Map<Long, String> shopCouponCodes, String customerProvince);
 
+    // Khi dat, service kiem tra va tinh lai draft; DAO chiu trach nhiem
+    // transaction, kiem tra lai du lieu canh tranh va commit hoac rollback.
     /**
      * Đặt hàng từ giỏ hàng đầy đủ: ngày giao hàng, khung giờ, ghi chú từng shop và phương thức thanh toán.
      * Chỉ các cartItemIds được chọn mới bị xóa sau khi tạo đơn thành công;
@@ -78,6 +85,7 @@ public interface IOrderService {
             String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes, boolean saveAddress) throws Exception;
 
+    // Mua ngay dung cung cac quy tac chuan bi don, nhung khong xoa gio hang.
     /**
      * Đặt đơn "Mua ngay" đầy đủ ngày giao, khung giờ, ghi chú và phương thức thanh toán.
      * Không tiêu thụ các dòng trong giỏ hàng; vẫn kiểm tra và trừ kho khi tạo đơn.

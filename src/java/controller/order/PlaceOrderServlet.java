@@ -35,6 +35,7 @@ public class PlaceOrderServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
+        // Chi user dang hoat dong duoc dat hang; session cu bi huy truoc khi chuyen login.
         if (user == null || !user.isActive()) {
             if (session != null) session.invalidate();
             request.getSession(true).setAttribute("errorMessage", "Vui lòng đăng nhập để hoàn tất đơn hàng!");
@@ -42,6 +43,7 @@ public class PlaceOrderServlet extends HttpServlet {
             return;
         }
 
+        // checkoutMode=buyNow can variantId va quantity la so duong; loi quay ve checkout.
         boolean buyNow = "buyNow".equals(request.getParameter("checkoutMode"));
         Long buyNowVariantId = null;
         Integer buyNowQuantity = null;
@@ -60,6 +62,8 @@ public class PlaceOrderServlet extends HttpServlet {
         }
 
         // Lấy danh sách cartItemIds
+        // Moi gia tri khong parse duoc bi bo qua; luong gio hang can it nhat mot ID
+        // va danh sach parse duoc khong vuot 100 dong. Service tiep tuc kiem tra nghiep vu.
         String[] itemIdParams = request.getParameterValues("cartItemIds");
         List<Long> cartItemIds = new ArrayList<>();
         if (itemIdParams != null) {
@@ -82,6 +86,8 @@ public class PlaceOrderServlet extends HttpServlet {
             return;
         }
 
+        // Form gui lua chon dia chi, ngay/khung giao, phuong thuc thanh toan va couponCode;
+        // saveAddress=true chi duoc chuyen cho service khi dang dung dia chi moi.
         String addressSelection = request.getParameter("addressSelection");
         String deliveryDate = request.getParameter("deliveryDate");
         String deliverySlot = request.getParameter("deliverySlot");
@@ -90,6 +96,9 @@ public class PlaceOrderServlet extends HttpServlet {
         boolean saveAddress = "true".equalsIgnoreCase(request.getParameter("saveAddress"));
 
         // Thu thập shop coupon codes và shop notes
+        // Ten tham so shopCoupon_<id> va shopNote_<id> duoc tach ID so; gia tri rong
+        // hoac ID khong parse duoc bi bo qua. Ma duoc trim/viet hoa, ghi chu duoc trim.
+        // Neu khong co ma shop nao trong request, dung danh sach da luu trong session.
         Map<Long, String> shopCouponCodes = new LinkedHashMap<>();
         Map<Long, String> shopNotes = new LinkedHashMap<>();
         Enumeration<String> paramNames = request.getParameterNames();
@@ -124,6 +133,8 @@ public class PlaceOrderServlet extends HttpServlet {
         }
 
         // Địa chỉ đã lưu phải được tìm theo chính customerId, không tin ID địa chỉ trong form.
+        // saved:<id> lay thong tin tu service; new doc recipientName, recipientPhone,
+        // streetAddress, ward va city tu form. Lua chon thieu va ID sai dinh dang ve checkout.
         ShippingAddress shippingAddress = new ShippingAddress();
         if (addressSelection != null && addressSelection.startsWith("saved:")) {
             try {
@@ -195,6 +206,7 @@ public class PlaceOrderServlet extends HttpServlet {
                 }
             } catch (Exception ignored) {}
 
+            // Don da duoc tao truoc redirect: VNPAY sang tao thanh toan, con lai sang xac nhan.
             if (PaymentMethod.VNPAY.name().equalsIgnoreCase(paymentMethod)) {
                 response.sendRedirect(request.getContextPath() + "/payment/vnpay/create?orderId=" + orderId);
             } else {
@@ -202,6 +214,7 @@ public class PlaceOrderServlet extends HttpServlet {
             }
 
         } catch (Exception ex) {
+            // Loi trong khoi dat don duoc luu message vao session va chuyen ve checkout.
             session.setAttribute("checkoutError", ex.getMessage());
             response.sendRedirect(request.getContextPath() + "/checkout");
         }

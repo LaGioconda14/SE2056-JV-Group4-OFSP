@@ -14,6 +14,7 @@ import service.ICartService;
  */
 public class CartServiceImpl implements ICartService {
 
+    // Service chi kiem tra gia tri dau vao; customerId phai den tu nguon da xac thuc.
     private final CartDAO cartDAO;
 
     /**
@@ -41,10 +42,12 @@ public class CartServiceImpl implements ICartService {
     @Override
     public Cart loadCartAndReconcile(long customerId) {
         validateId(customerId);
+        // Tao/tim gio va doi soat la hai lan goi DAO voi transaction rieng, khong atomic chung.
         // Tìm giỏ hàng hiện tại hoặc tạo mới nếu khách hàng chưa có giỏ
         Cart cart = cartDAO.findOrCreateCartByCustomerId(customerId);
         // Tải các item và tự động đối soát tồn kho
         java.util.List<CartItem> loaded = cartDAO.loadAndReconcileItems(cart.getCartId());
+        // Tinh gia sau khi DAO doi soat va commit; khong ghi gia nay vao cart_items tai day.
         // Giá ưu đãi ở đây chỉ là snapshot khi xem giỏ; đặt hàng còn phải giữ quota trong DB.
         util.PromotionPricing.applyToCartItems(loaded);
         cart.setItems(loaded);
@@ -60,6 +63,7 @@ public class CartServiceImpl implements ICartService {
     @Override
     public int getCartItemCount(long customerId) {
         validateId(customerId);
+        // Chi dem dong hien co, khong tao gio va khong cong so luong san pham.
         return cartDAO.countItemsByCustomerId(customerId);
     }
 
@@ -73,6 +77,7 @@ public class CartServiceImpl implements ICartService {
      */
     @Override
     public CartMutationResult addItem(long customerId, long variantId, int quantity) {
+        // Kiem tra can duoi truoc DAO; DAO kiem tra trang thai va tong quantity so voi stock.
         validateId(customerId);
         validateId(variantId);
         validateQuantity(quantity);
@@ -88,6 +93,7 @@ public class CartServiceImpl implements ICartService {
      */
     @Override
     public void updateQuantity(long customerId, long cartItemId, int quantity) {
+        // quantity la gia tri moi; DAO kiem tra item thuoc gio va khong vuot stock.
         validateId(customerId);
         validateId(cartItemId);
         validateQuantity(quantity);
@@ -102,6 +108,7 @@ public class CartServiceImpl implements ICartService {
      */
     @Override
     public void removeItem(long customerId, long cartItemId) {
+        // DAO gioi han xoa theo gio cua customerId, khong chi dua vao cartItemId.
         validateId(customerId);
         validateId(cartItemId);
         cartDAO.deleteCartItem(customerId, cartItemId);
@@ -116,6 +123,7 @@ public class CartServiceImpl implements ICartService {
      */
     @Override
     public void changeVariant(long customerId, long cartItemId, long variantId) {
+        // DAO kiem tra cung product, trang thai variant dich va xu ly gop trong transaction.
         validateId(customerId);
         validateId(cartItemId);
         validateId(variantId);

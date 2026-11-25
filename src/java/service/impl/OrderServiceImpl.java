@@ -93,6 +93,7 @@ public class OrderServiceImpl implements IOrderService {
             throw new IllegalArgumentException("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
         }
 
+        // Gop ID trung nhung giu thu tu dau vao; ID null khong duoc chap nhan.
         Set<Long> uniqueIds = new LinkedHashSet<>(cartItemIds);
         if (uniqueIds.contains(null)) {
             throw new IllegalArgumentException("Danh sách sản phẩm thanh toán không hợp lệ!");
@@ -172,6 +173,8 @@ public class OrderServiceImpl implements IOrderService {
         OrderDetailDTO order = new OrderDetailDTO();
         order.setCustomerId(customerId);
 
+        // Moi shop tao mot don con; gia tri hang dung subtotal sau khuyen mai
+        // san pham, con unitPrice lay tu gia cua bien the trong CartItem.
         Map<Long, List<CartItem>> itemsByShop = new HashMap<>();
         Map<Long, String> shopNames = new HashMap<>();
 
@@ -231,6 +234,8 @@ public class OrderServiceImpl implements IOrderService {
                     shopProvinces.get(shopId), customerProvince);
             sub.setShopShippingFee(shopShippingFee);
 
+            // Dieu kien toi thieu kiem tra tren toan bo tien hang cua shop;
+            // co so tinh giam co the chi gom san pham ma voucher chi dinh.
             BigDecimal shopDiscount = BigDecimal.ZERO;
             if (shopCouponCodes != null && shopCouponCodes.containsKey(shopId)) {
                 String sCode = shopCouponCodes.get(shopId);
@@ -257,6 +262,8 @@ public class OrderServiceImpl implements IOrderService {
         order.setTotalGoodsAmount(totalGoods);
         order.setTotalShippingFee(totalShipping);
 
+        // Voucher san kiem tra muc toi thieu tren tong tien hang truoc khi
+        // tru voucher shop; khong phan bo khoan giam san vao shopTotal.
         BigDecimal discount = BigDecimal.ZERO;
         Integer couponId = null;
         if (couponCode != null && !couponCode.trim().isEmpty()) {
@@ -281,6 +288,8 @@ public class OrderServiceImpl implements IOrderService {
      * - Khác tỉnh/thành: 30.000 VNĐ
      */
     private BigDecimal calculateShippingFee(String shopProvince, String customerProvince) {
+        // Chua co tinh nguoi nhan thi chua tinh ship; neu co tinh nguoi nhan
+        // nhung thieu tinh shop, ap dung muc khac tinh.
         if (customerProvince == null || customerProvince.isBlank()) {
             return BigDecimal.ZERO;
         }
@@ -385,6 +394,8 @@ public class OrderServiceImpl implements IOrderService {
             throw new IllegalArgumentException("Loại mã giảm giá không hợp lệ!");
         }
 
+        // Ca hai loai deu bi chan boi maxDiscountAmount neu co va boi tien
+        // hang duoc ap dung; shippingFee hien khong tham gia phep tinh giam.
         if (coupon.getMaxDiscountAmount() != null
                 && discount.compareTo(coupon.getMaxDiscountAmount()) > 0) {
             discount = coupon.getMaxDiscountAmount();
@@ -418,6 +429,8 @@ public class OrderServiceImpl implements IOrderService {
             String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
+        // Buoc doc va tinh draft chay truoc transaction cua DAO, nen khong
+        // thay the viec khoa va kiem tra lai khi ghi don.
         List<CartItem> selectedItems = getSelectedItemsForCheckout(customerId, cartItemIds);
         OrderDetailDTO order = prepareOrder(customerId, selectedItems, address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
@@ -434,6 +447,7 @@ public class OrderServiceImpl implements IOrderService {
             ShippingAddress address, String deliveryDate, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes,
             boolean saveAddress) throws Exception {
+        // DAO dung transaction tao don rieng cho mua ngay, khong tieu thu gio.
         CartItem item = getBuyNowItemForCheckout(variantId, quantity);
         OrderDetailDTO order = prepareOrder(customerId, List.of(item), address, deliveryDate, deliverySlot,
                 paymentMethod, couponCode, shopCouponCodes, shopNotes);
@@ -451,6 +465,8 @@ public class OrderServiceImpl implements IOrderService {
     private OrderDetailDTO prepareOrder(long customerId, List<CartItem> selectedItems, ShippingAddress address,
             String deliveryDateStr, String deliverySlot, String paymentMethod, String couponCode,
             Map<Long, String> shopCouponCodes, Map<Long, String> shopNotes) {
+        // Bat buoc ten, dien thoai, dia chi cu the, phuong va tinh; quan co
+        // the trong. Dien thoai bat dau bang 0 hoac +84, theo sau 9-10 chu so.
         if (address == null || address.getRecipientName() == null
                 || address.getRecipientName().trim().isEmpty()) {
             throw new IllegalArgumentException("Vui lòng nhập họ tên người nhận!");
@@ -488,6 +504,8 @@ public class OrderServiceImpl implements IOrderService {
         OrderDetailDTO order = buildDraftOrder(customerId, selectedItems, couponCode,
                 shopCouponCodes, address.getCity());
 
+        // Ngay trong hoac sai dinh dang ISO duoc thay bang ngay hien tai;
+        // khong co kiem tra ngay giao phai o tuong lai tai day.
         // Chuẩn hóa ngày giao
         LocalDate selectedDate;
         try {
@@ -501,6 +519,8 @@ public class OrderServiceImpl implements IOrderService {
         }
         String formattedDate = selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 
+        // Khung gio khong nhan dien giu nguyen nhan hien thi, nhung slotId
+        // van la 1; gia tri trong mac dinh la 08:00 - 10:00.
         // Chuẩn hóa khung giờ giao hàng
         int slotId = 1;
         String slotText = "08:00 - 10:00";
@@ -542,6 +562,7 @@ public class OrderServiceImpl implements IOrderService {
                 sub.setNote(note.trim());
             }
         }
+        // Tao don khong xac nhan da thanh toan, ke ca voi phuong thuc online.
         order.setPaymentStatus(PaymentStatus.PENDING);
         order.setPaymentMethod(selectedPayment);
 
@@ -614,6 +635,7 @@ public class OrderServiceImpl implements IOrderService {
 
     @Override
     public boolean confirmReceivedByCustomer(long customerId, String orderIdentifier) throws Exception {
+        // DAO xu ly quyen so huu, trang thai va transaction xac nhan nhan hang.
         return orderDAO.confirmReceivedByCustomer(customerId, orderIdentifier);
     }
 }

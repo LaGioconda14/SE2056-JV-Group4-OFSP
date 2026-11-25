@@ -69,6 +69,8 @@ public class CartServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setContentType("text/html; charset=UTF-8");
+        // GET khong doc tham so gio hang; lay user tu session hien co, khong tu request.
+        // Khac cac action POST, nhanh nay chi kiem tra user != null, khong kiem tra ID hay active.
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
@@ -84,6 +86,8 @@ public class CartServlet extends HttpServlet {
         try {
             // Đối soát lại với DB mỗi lần mở giỏ, thay vì dùng giá/tồn kho đã chụp trong session.
             cart = cartService.loadCartAndReconcile((long) user.getId());
+        // Loi tham so tra HTTP 400; loi runtime duoc log va tra HTTP 500.
+        // Ca hai van forward JSP voi gio rong va errorMessage trong request.
         } catch (IllegalArgumentException ex) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             request.setAttribute("errorMessage", ex.getMessage());
@@ -110,6 +114,7 @@ public class CartServlet extends HttpServlet {
             session.removeAttribute("cartSuccess");
         }
         if (errorMsg != null) {
+            // Flash loi, neu co, ghi de errorMessage tu loi tai gio o tren.
             request.setAttribute("errorMessage", errorMsg);
             session.removeAttribute("cartError");
         }

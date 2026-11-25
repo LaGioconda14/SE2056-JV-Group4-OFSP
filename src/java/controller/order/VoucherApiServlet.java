@@ -45,6 +45,8 @@ public class VoucherApiServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/json;charset=UTF-8");
 
+        // Chi kiem tra session co doi tuong User, khong kiem tra isActive tai day;
+        // neu khong co tra HTTP 401 va JSON valid=false, message.
         HttpSession session = request.getSession(false);
         Object u = session != null ? session.getAttribute("user") : null;
         if (!(u instanceof User)) {
@@ -54,6 +56,8 @@ public class VoucherApiServlet extends HttpServlet {
         }
         User user = (User) u;
 
+        // shopId la long, subtotal la BigDecimal, code truyen thang cho DAO;
+        // items tuy chon co dang productId:amount,productId:amount.
         try {
             long shopId = Long.parseLong(request.getParameter("shopId"));
             BigDecimal subtotal = new BigDecimal(request.getParameter("subtotal"));
@@ -62,6 +66,8 @@ public class VoucherApiServlet extends HttpServlet {
             // Các số tiền/dòng hàng ở đây do client gửi: chỉ để xem trước, DAO đặt hàng xác thực lại.
             VoucherCheckResult r = voucherDAO.validate(request.getParameter("code"), shopId, user.getId(), subtotal, lines);
 
+            // JSON luon co valid/message; khi hop le moi them couponId, code, title,
+            // discountType va discount. Loi parse shopId/subtotal hoac gia tri null tra 400.
             Map<String, Object> out = new LinkedHashMap<>();
             out.put("valid", r.isValid());
             out.put("message", r.getMessage());
@@ -80,6 +86,8 @@ public class VoucherApiServlet extends HttpServlet {
     }
 
     private static Map<Long, BigDecimal> parseItems(String items) {
+        // Thieu/rong tra null; tung cap sai dinh dang bi bo qua, ID trung duoc cong amount.
+        // Cac gia tri nay do client gui va chi phuc vu xem truoc, khong la gia don hang tin cay.
         if (items == null || items.trim().isEmpty()) {
             return null;
         }

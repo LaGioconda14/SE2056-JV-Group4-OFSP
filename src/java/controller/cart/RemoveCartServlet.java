@@ -63,6 +63,8 @@ public class RemoveCartServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // Khong tao session khi doc user; yeu cau User co ID duong va dang hoat dong.
+        // Neu khong dat, luu errorMessage vao session va redirect /login.
         HttpSession session = request.getSession(false);
         Object sessionUser = session != null ? session.getAttribute("user") : null;
         User user = sessionUser instanceof User ? (User) sessionUser : null;
@@ -75,6 +77,7 @@ public class RemoveCartServlet extends HttpServlet {
         }
 
         try {
+            // cartItemId duoc ep sang long; userId lay tu session, khong lay tu client.
             // Service/DAO giới hạn cartItemId theo user hiện tại, không xóa theo ID trần từ client.
             cartService.removeItem(user.getId(),
                     Long.parseLong(request.getParameter("cartItemId")));
@@ -83,6 +86,8 @@ public class RemoveCartServlet extends HttpServlet {
             session.setAttribute("cartSize", cartService.getCartItemCount(user.getId()));
             session.setAttribute("cartSuccess", "Đã xóa sản phẩm khỏi giỏ hàng!");
             session.removeAttribute("cartError");
+        // Sau khi xoa, getCartItemCount cap nhat badge; neu loi, luu flash loi thay cho thanh cong.
+        // Loi so va runtime dung thong bao chung; IllegalArgumentException dung message cua service.
         } catch (NumberFormatException ex) {
             session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
             session.removeAttribute("cartSuccess");
@@ -95,6 +100,7 @@ public class RemoveCartServlet extends HttpServlet {
             session.removeAttribute("cartSuccess");
         }
 
+        // Ca thanh cong va that bai deu redirect ve /cart; runtime duoc ghi log o tren.
         response.sendRedirect(request.getContextPath() + "/cart");
     }
 }

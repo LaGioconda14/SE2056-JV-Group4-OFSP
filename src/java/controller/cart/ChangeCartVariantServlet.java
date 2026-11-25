@@ -63,6 +63,8 @@ public class ChangeCartVariantServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // Doc user tu session hien co; chi cho phep User co ID duong va dang hoat dong.
+        // Truong hop khong hop le luu errorMessage va redirect /login, khong goi service.
         HttpSession session = request.getSession(false);
         Object sessionUser = session != null ? session.getAttribute("user") : null;
         User user = sessionUser instanceof User ? (User) sessionUser : null;
@@ -75,6 +77,8 @@ public class ChangeCartVariantServlet extends HttpServlet {
         }
 
         try {
+            // cartItemId va variantId deu duoc ep sang long; userId lay tu session.
+            // Service nhan ca ba gia tri de xu ly viec doi bien the.
             // Service xử lý trường hợp biến thể đích đã có sẵn trong giỏ (gộp dòng nếu cần).
             cartService.changeVariant(user.getId(),
                     Long.parseLong(request.getParameter("cartItemId")),
@@ -84,6 +88,8 @@ public class ChangeCartVariantServlet extends HttpServlet {
             session.setAttribute("cartSize", cartService.getCartItemCount(user.getId()));
             session.setAttribute("cartSuccess", "Đã đổi phân loại sản phẩm trong giỏ hàng!");
             session.removeAttribute("cartError");
+        // getCartItemCount cap nhat badge sau khi doi; loi ep so dung thong bao chung.
+        // IllegalArgumentException dung message cua service; runtime duoc log va bao loi chung.
         } catch (NumberFormatException ex) {
             session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
             session.removeAttribute("cartSuccess");
@@ -96,6 +102,7 @@ public class ChangeCartVariantServlet extends HttpServlet {
             session.removeAttribute("cartSuccess");
         }
 
+        // Ca thanh cong va that bai deu redirect /cart; flash loi xoa flash thanh cong cu.
         response.sendRedirect(request.getContextPath() + "/cart");
     }
 }

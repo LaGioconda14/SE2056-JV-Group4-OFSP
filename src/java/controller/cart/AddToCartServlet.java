@@ -80,6 +80,8 @@ public class AddToCartServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // Khong tao session khi doc user; chi chap nhan User co ID duong va dang hoat dong.
+        // returnUrl la tuy chon, duoc loc truoc khi dung lam dich redirect.
         HttpSession session = request.getSession(false);
         Object sessionUser = session != null ? session.getAttribute("user") : null;
         User user = sessionUser instanceof User ? (User) sessionUser : null;
@@ -92,6 +94,7 @@ public class AddToCartServlet extends HttpServlet {
         }
 
         try {
+            // variantId la long, quantity la int; servlet chi ep kieu, service xu ly nghiep vu.
             long variantId = Long.parseLong(request.getParameter("variantId"));
             int quantity = Integer.parseInt(request.getParameter("quantity"));
 
@@ -102,6 +105,8 @@ public class AddToCartServlet extends HttpServlet {
 
             session.setAttribute("cartSuccess", "Đã thêm sản phẩm vào giỏ hàng!");
             session.removeAttribute("cartError");
+        // Sai dinh dang so, loi dau vao tu service va loi runtime co thong bao rieng.
+        // Loi runtime duoc ghi log; moi nhanh loi xoa flash thanh cong cu.
         } catch (NumberFormatException ex) {
             session.setAttribute("cartError", "Dữ liệu không hợp lệ!");
             session.removeAttribute("cartSuccess");
@@ -114,6 +119,7 @@ public class AddToCartServlet extends HttpServlet {
             session.removeAttribute("cartSuccess");
         }
 
+        // Sau ca thanh cong va that bai, ve returnUrl hop le hoac mac dinh /cart.
         response.sendRedirect(request.getContextPath()
                 + (returnUrl != null ? returnUrl : "/cart"));
     }
@@ -141,6 +147,7 @@ public class AddToCartServlet extends HttpServlet {
      * @return chuỗi đường dẫn tương đối an toàn hoặc null nếu không hợp lệ
      */
     private String safeReturnUrl(String returnUrl) {
+        // Trim va tu choi thieu dau /, dau //, :// hoac CR/LF; khong kiem tra URL theo cach khac.
         if (returnUrl == null) {
             return null;
         }

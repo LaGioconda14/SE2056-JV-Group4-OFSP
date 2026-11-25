@@ -39,11 +39,14 @@ public class OrderConfirmationServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         User user = (session != null) ? (User) session.getAttribute("user") : null;
 
+        // Endpoint nay kiem tra user trong session, khong kiem tra isActive tai day.
         if (user == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
+        // orderId bat buoc la chuoi parse duoc thanh long sau trim; thieu, rong,
+        // sai dinh dang, don khong ton tai hoac khong thuoc user deu redirect ve home.
         String orderIdParam = request.getParameter("orderId");
         if (orderIdParam == null || orderIdParam.trim().isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/home");
@@ -60,6 +63,7 @@ public class OrderConfirmationServlet extends HttpServlet {
                 return;
             }
 
+            // Chi sau khi doi chieu customerId moi forward DTO order sang JSP xac nhan.
             request.setAttribute("order", order);
             request.getRequestDispatcher("/views/order/order-confirmation.jsp").forward(request, response);
 
