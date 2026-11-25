@@ -554,7 +554,8 @@ public class OrderDAO extends DBContext {
 
                         // E2. TRỪ TỒN KHO LÔ HÀNG THEO CHUẨN FEFO & GHI BIẾN ĐỘNG KHO
                         deductBatchStock(conn, subOrderId, sub.getShopId(), order.getCustomerId(),
-                                item.getVariantId(), item.getQuantity(), subCode, item.getUnitPrice());
+                                item.getVariantId(), item.getQuantity(), subCode, item.getUnitPrice(),
+                                order.getDeliveryDate());
                     }
                 }
             }
@@ -1385,11 +1386,12 @@ public class OrderDAO extends DBContext {
      */
     private void deductBatchStock(Connection conn, long subOrderId, long shopId, long customerId,
                                   long variantId, int quantityToDeduct, String subOrderCode,
-                                  BigDecimal unitPrice) throws SQLException {
+                                  BigDecimal unitPrice, java.time.LocalDate deliveryDate) throws SQLException {
         String queryBatchesSql = "SELECT batch_id, batch_code, current_quantity "
-                + "FROM product_batches "
+                + "FROM product_batches WITH (UPDLOCK, HOLDLOCK) "
                 + "WHERE variant_id = ? AND status = 'ACTIVE' AND current_quantity > 0 "
                 + "  AND expiry_date >= CAST(GETDATE() AS DATE) "
+                + "  AND expiry_date >= COALESCE(?, CAST(GETDATE() AS DATE)) "
                 + "ORDER BY expiry_date ASC, batch_id ASC";
 
         String updateBatchSql = "UPDATE product_batches "
@@ -1408,6 +1410,7 @@ public class OrderDAO extends DBContext {
 
         try (PreparedStatement psQuery = conn.prepareStatement(queryBatchesSql)) {
             psQuery.setLong(1, variantId);
+            psQuery.setDate(2, deliveryDate == null ? null : java.sql.Date.valueOf(deliveryDate));
             try (ResultSet rs = psQuery.executeQuery()) {
                 while (rs.next() && remainingQty > 0) {
                     long bId = rs.getLong("batch_id");
@@ -1418,6 +1421,10 @@ public class OrderDAO extends DBContext {
                     remainingQty -= deduct;
                 }
             }
+        }
+
+        if (remainingQty > 0) {
+            throw new SQLException("Không đủ hàng từ các lô còn hạn đến ngày giao dự kiến. Vui lòng giảm số lượng hoặc chọn ngày giao sớm hơn.");
         }
 
         // Cập nhật từng lô theo thứ tự FEFO
@@ -1449,26 +1456,6 @@ public class OrderDAO extends DBContext {
             }
         }
 
-        // Nếu còn dư số lượng chưa trừ hết từ lô (do chưa tạo lô hoặc lô hết hàng)
-        if (remainingQty > 0) {
-            try (PreparedStatement psTrans = conn.prepareStatement(insertTransSql)) {
-                psTrans.setNull(1, Types.BIGINT);
-                psTrans.setLong(2, variantId);
-                psTrans.setLong(3, shopId);
-                psTrans.setLong(4, customerId);
-                psTrans.setLong(5, subOrderId);
-                psTrans.setInt(6, -remainingQty);
-                psTrans.setInt(7, 0);
-                psTrans.setInt(8, 0);
-                if (unitPrice != null) {
-                    psTrans.setBigDecimal(9, unitPrice);
-                } else {
-                    psTrans.setNull(9, Types.DECIMAL);
-                }
-                psTrans.setString(10, "Xuất kho bán hàng - Đơn " + subOrderCode);
-                psTrans.executeUpdate();
-            }
-        }
     }
 
     /**
